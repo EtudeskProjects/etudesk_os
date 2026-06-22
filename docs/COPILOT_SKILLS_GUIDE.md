@@ -40,7 +40,7 @@ priority: 5  # optionnel, plus eleve = prioritaire en cas de conflit
 | Mode | Tools disponibles |
 |------|-------------------|
 | **explore** | smart_search, sql_query, generate_document, file_reader, web_search, execute_action |
-| **study** | sql_query, youtube_search, analyze_youtube_video, generate_image, generate_diagram, file_reader, web_search, manage_skills, execute_action |
+| **study** | sql_query, youtube_search, generate_image, generate_diagram, file_reader, web_search, manage_skills, execute_action |
 | **org** | smart_search, sql_query, generate_document, file_reader, web_search, execute_action |
 
 Une skill ne doit declarer que des tools disponibles dans son mode.

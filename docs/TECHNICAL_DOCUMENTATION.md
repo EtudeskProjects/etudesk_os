@@ -18,7 +18,7 @@
 10. [API REST — Endpoints complets](#10-api-rest--endpoints-complets)
 11. [Authentification & Sécurité](#11-authentification--sécurité)
 12. [Copilote IA — Architecture agents](#12-copilote-ia--architecture-agents)
-13. [Copilote — Outils (12 tools)](#13-copilote--outils-12-tools)
+13. [Copilote — Outils (11 tools)](#13-copilote--outils-11-tools)
 14. [Copilote — Guardrails](#14-copilote--guardrails)
 15. [Copilote — Skills Library](#15-copilote--skills-library)
 16. [Copilote — Streaming SSE](#16-copilote--streaming-sse)
@@ -321,7 +321,7 @@ Le dégroupage crée des services isolés. La vraie valeur vient du **re-bundlin
 - Continuité éducative assurée pour 92 000+ étudiants via outils digitaux pendant les confinements
 - Adoption du smartphone en Afrique subsaharienne : quasi-doublement post-pandémie
 
-#### 3. Révolution IA (ère Claude + GPT + Gemini)
+#### 3. Révolution IA (ère Claude + GPT)
 - L'IA permet une éducation personnalisée et scalable à une fraction du coût traditionnel
 - [25 pays africains francophones et lusophones](https://www.gpekix.org/blog/commitment-action-advancing-use-ai-education-africa-through-regional-collaboration-and) ont participé au séminaire IA+Education de Dakar (octobre 2024)
 - Pilote Nigeria : étudiants avec tuteur IA surpassent significativement leurs pairs
@@ -433,7 +433,7 @@ Barème crédits (extrait):
 │  │  └────────┬───────┘  └──────┬───────┘  └────────┬────────┘  │   │
 │  │           │                 │                    │           │   │
 │  │  ┌────────┴─────────────────┴────────────────────┴────────┐  │   │
-│  │  │                    12 TOOLS                             │  │   │
+│  │  │                    11 TOOLS                             │  │   │
 │  │  │ smart_search | sql_query | youtube | generate_doc/img  │  │   │
 │  │  │ generate_diagram | file_reader | web_search            │  │   │
 │  │  │ manage_skills | execute_action                         │  │   │
@@ -461,10 +461,10 @@ Barème crédits (extrait):
 │  │ Paystack │  │  Resend  │  │Anthropic │  │  OpenAI  │           │
 │  │ Payments │  │  Email   │  │  Claude  │  │WebSearch │           │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                        │
-│  │  Google  │  │  OpenAI  │  │ YouTube  │                        │
-│  │  Gemini  │  │ IMG/STT  │  │  API v3  │                        │
-│  └──────────┘  └──────────┘  └──────────┘                        │
+│  ┌──────────┐  ┌──────────┐                                       │
+│  │  OpenAI  │  │ YouTube  │                                       │
+│  │ IMG/STT  │  │  API v3  │                                       │
+│  └──────────┘  └──────────┘                                       │
 │                    SERVICES EXTERNES                                │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -492,14 +492,14 @@ Barème crédits (extrait):
 
 ### IA & Machine Learning (Architecture multi-provider)
 
-3 providers simultanés — chaque provider est utilisé pour ses forces :
+2 providers simultanés — chaque provider est utilisé pour ses forces :
 
 | Technologie | Provider | Rôle |
 |-------------|----------|------|
 | **Anthropic SDK natif** | Anthropic | Agents copilot (boucle agentic manuelle) |
 | **claude-sonnet-4-6** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
 | **claude-haiku-4-5** (MODEL_FAST) | Anthropic | Guardrails, titres, summaries |
-| **gemini-2.5-flash-lite** (MODEL_SUGGESTION) | Google | Suggestions, objectifs quotidiens, bio |
+| **gpt-4.1-nano** (MODEL_SUGGESTION) | OpenAI | Suggestions, objectifs quotidiens, bio |
 | **gpt-4.1-mini** (MODEL_SEARCH) | OpenAI | WebSearchAgent, vision/extraction documents |
 | **gpt-4.1-nano** (MODEL_MATCH) | OpenAI | Recommendations candidats |
 | **gpt-image-1** (MODEL_IMAGE) | OpenAI | Génération d'images éducatives |
@@ -534,8 +534,7 @@ Barème crédits (extrait):
 | **Resend** | Email transactionnel (production) |
 | **Mailhog** | Email (développement) |
 | **Anthropic Claude** | Agents IA principaux (Sonnet, Haiku) |
-| **Google Gemini** | Suggestions formulaires (Flash Lite) |
-| **OpenAI** | Images, STT, embeddings, web search, vision |
+| **OpenAI** | Suggestions formulaires, images, STT, embeddings, web search, vision |
 | **OpenAI Web Search** | Recherche web (copilote, via OpenAI Responses API) |
 | **YouTube API** | Recherche de vidéos éducatives |
 | **Expo Push** | Notifications push (iOS/Android) |
@@ -596,9 +595,9 @@ backend/src/
 │   ├── matching.service.ts     # Matching talents/opportunités
 │   ├── ai/                     # Services IA (multi-provider)
 │   │   ├── models.ts           # Constantes modèles par usage (AGENT/FAST/SUGGESTION/MATCH/SEARCH)
-│   │   ├── provider.ts         # Config multi-provider (Anthropic, Gemini, OpenAI)
-│   │   ├── provider.ts          # 3 clients (Anthropic, OpenAI, Gemini)
-│   │   ├── agent-factory.ts    # Création agents (Anthropic pour copilot, Gemini pour suggestions)
+│   │   ├── provider.ts         # Config multi-provider (Anthropic, OpenAI)
+│   │   ├── provider.ts          # 2 clients (Anthropic, OpenAI)
+│   │   ├── agent-factory.ts    # Création agents (Anthropic pour copilot, OpenAI pour suggestions)
 │   │   └── talent-object.ts    # Contexte talent enrichi
 │   └── copilot/                # Copilote IA complet
 │       ├── index.ts            # Orchestration principale
@@ -971,7 +970,7 @@ Pour la documentation complete de l'architecture technique, voir [COPILOT_ARCHIT
 
 ---
 
-## 13. Copilote — Outils (12 tools)
+## 13. Copilote — Outils (11 tools)
 
 Pour la documentation complete de chaque tool (parametres, retours, securite), voir [COPILOT_TOOLS.md](./COPILOT_TOOLS.md).
 
@@ -980,7 +979,6 @@ Pour la documentation complete de chaque tool (parametres, retours, securite), v
 | `smart_search` | Recherche semantique 3 phases (Pinecone → PG → keyword) | explore, org |
 | `sql_query` | Requetes structurees par intent | tous |
 | `youtube_search` | YouTube Data API v3 | study |
-| `analyze_youtube_video` | Analyse pedagogique Gemini 2.5 Flash | study |
 | `generate_document` | Generation PDF/DOCX/CSV/XLS/TXT | explore, org |
 | `generate_image` | Generation images gpt-image-1 | study |
 | `generate_diagram` | Diagrammes Mermaid (client-side render) | study |
@@ -1167,15 +1165,14 @@ mobile/app/
 
 ## 20. Intégrations externes
 
-### IA & Machine Learning (3 providers)
+### IA & Machine Learning (2 providers)
 
 | Service | Modèle | Usage | Coût estimé |
 |---------|--------|-------|-------------|
 | **Anthropic** | claude-sonnet-4-6 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
 | **Anthropic** | claude-haiku-4-5 | Guardrails, titres, summaries, file_reader | $0.80/$4 per 1M tokens |
-| **Google** | gemini-2.5-flash-lite | Suggestions, objectifs, bio | ~$0.02/$0.07 per 1M tokens |
+| **OpenAI** | gpt-4.1-nano | Suggestions, objectifs, bio, recommendations candidats | $0.10/$0.40 per 1M tokens |
 | **OpenAI** | gpt-4.1-mini | Web search, vision/extraction | $0.40/$1.60 per 1M tokens |
-| **OpenAI** | gpt-4.1-nano | Recommendations candidats | $0.10/$0.40 per 1M tokens |
 | **OpenAI** | text-embedding-3-small | Embeddings vectoriels | $0.02 per 1M tokens |
 | **OpenAI** | gpt-image-1 | Génération d'images | $0.02-$0.19 per image |
 | **OpenAI** | gpt-4o-mini-transcribe | Transcription audio | $0.006 per minute |
@@ -1196,19 +1193,19 @@ mobile/app/
 | Input guardrail | `copilot/guardrails/input.guardrail.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
 | Session summarizer | `copilot/session-summarizer.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
 | Session title | `copilot/stream/sse.handler.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
-| Suggestions prompt | `copilot/stream/sse.handler.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
-| Intent suggestions | `routes/copilot.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
+| Suggestions prompt | `copilot/stream/sse.handler.ts` | OpenAI | gpt-4.1-nano | `Runner({ modelProvider: openaiProvider })` |
+| Intent suggestions | `routes/copilot.ts` | OpenAI | gpt-4.1-nano | `Runner({ modelProvider: openaiProvider })` |
 | **Copilot — Voice** | | | | |
 | Transcription audio (STT) | `routes/copilot.ts` | OpenAI | gpt-4o-mini-transcribe | `getOpenAIClient().audio.transcriptions` |
 | **Copilot — Images** | | | | |
 | Generation images | `copilot/tools/generate-image.tool.ts` | OpenAI | gpt-image-1 | `getImageClient().images.generate` |
 | **Suggestions formulaires** | | | | |
-| Suggestions espaces | `space-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
-| Suggestions communautes | `community-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
-| Suggestions opportunites | `opportunity-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
-| Objectifs quotidiens | `daily-objective.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
-| Generation bio | `routes/talents.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
-| Assistant WhatsApp | `whatsapp-assistant.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Suggestions espaces | `space-generation.service.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
+| Suggestions communautes | `community-generation.service.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
+| Suggestions opportunites | `opportunity-generation.service.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
+| Objectifs quotidiens | `daily-objective.service.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
+| Generation bio | `routes/talents.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
+| Assistant WhatsApp | `whatsapp-assistant.service.ts` | OpenAI | gpt-4.1-nano | `getOpenAIClient().chat.completions` |
 | **Vision & Extraction** | | | | |
 | Extraction CV/documents | `documents/extraction.service.ts` | OpenAI | gpt-4.1-mini | `getOpenAIClient().chat.completions` (vision) |
 | Verification KYC | `kyc-verification.service.ts` | OpenAI | gpt-4.1-mini | `getOpenAIClient().chat.completions` (vision) |
@@ -1282,10 +1279,7 @@ ADMIN_EMAILS=admin@etudesk.com
 # Anthropic Claude (agents principaux, guardrails, summaries, file_reader)
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Google Gemini (suggestions, objectifs, bio)
-GOOGLE_API_KEY=AIza...
-
-# OpenAI (images, STT, moderation, embeddings, web search, vision, recommendations)
+# OpenAI (suggestions, objectifs, bio, images, STT, moderation, embeddings, web search, vision, recommendations)
 OPENAI_API_KEY=sk-...
 
 # Pinecone
@@ -1375,8 +1369,8 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 | `docs/ONTOLOGY.md` | Ontologie complète (entités, relations, enums, règles métier) |
 | `docs/COPILOT_ARCHITECTURE.md` | Architecture agents, tools, boucle agentic, SSE |
 | `docs/COPILOT_PERIMETER.md` | 3 modes, 17 skills, exemples d'usage |
-| `docs/COPILOT_TOOLS.md` | 12 tools avec paramètres et retours |
-| `docs/AI_MODELS.md` | Architecture multi-provider (Anthropic + Gemini + OpenAI) |
+| `docs/COPILOT_TOOLS.md` | 11 tools avec paramètres et retours |
+| `docs/AI_MODELS.md` | Architecture multi-provider (Anthropic + OpenAI) |
 | `docs/COPILOT_SKILLS_GUIDE.md` | Guide creation et maintenance skills |
 | `docs/copilot-calibration-audit.md` | 14 tests calibration (100% pass) |
 
@@ -1407,11 +1401,11 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 | Sub-agent (web_search) | gpt-4.1-mini | OpenAI | ~$0.005-0.01 |
 | Guardrail input | claude-haiku-4-5 | Anthropic | ~$0.002 |
 | Titre session | claude-haiku-4-5 | Anthropic | ~$0.001 |
-| Suggestions | gemini-2.5-flash-lite | Google | ~$0.0005 |
+| Suggestions | gpt-4.1-nano | OpenAI | ~$0.0005 |
 | Recommendations | gpt-4.1-nano | OpenAI | ~$0.001 |
 | Embedding | text-embedding-3-small | OpenAI | ~$0.0001 |
 | Image | gpt-image-1 | OpenAI | $0.02-0.19 |
 
 ---
 
-> **Document mis à jour le 14 Février 2026** — Architecture multi-provider AI (Anthropic + Gemini + OpenAI)
+> **Document mis à jour le 22 Juin 2026** - Architecture multi-provider AI (Anthropic + OpenAI)

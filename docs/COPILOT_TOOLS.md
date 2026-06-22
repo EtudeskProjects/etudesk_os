@@ -1,7 +1,7 @@
 # Copilot Tools Reference — Etudesk OS
 
-> Reference complete des 12 tools du copilot. Source unique pour noms, parametres, modes et intents SQL.
-> Mis a jour : 21 Fevrier 2026
+> Reference complete des 11 tools du copilot. Source unique pour noms, parametres, modes et intents SQL.
+> Mis a jour : 22 Juin 2026
 
 ---
 
@@ -12,15 +12,14 @@
 | 1 | `smart_search` | explore, org | non (singleton) | Pinecone + PostgreSQL |
 | 2 | `sql_query` | explore, study, org | oui (talentId/orgId) | PostgreSQL |
 | 3 | `youtube_search` | study | non (singleton) | YouTube Data API v3 |
-| 4 | `analyze_youtube_video` | study | non (singleton) | Gemini 2.5 Flash |
-| 5 | `generate_document` | explore, org | oui (talentId, avatarUrl, orgId) | pdfkit, docx, exceljs |
-| 6 | `generate_image` | study | non (singleton) | OpenAI gpt-image-1 |
-| 7 | `generate_diagram` | study | non (singleton) | aucun (client-side render) |
-| 8 | `file_reader` | explore, study, org | oui (talentId ou orgId) | aucun (pdf-parse) |
-| 9 | `web_search` | explore, study, org | non (singleton) | OpenAI gpt-4.1-mini |
-| 10 | `manage_skills` | study | oui (talentId) | PostgreSQL |
-| 11 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
-| 12 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
+| 4 | `generate_document` | explore, org | oui (talentId, avatarUrl, orgId) | pdfkit, docx, exceljs |
+| 5 | `generate_image` | study | non (singleton) | OpenAI gpt-image-1 |
+| 6 | `generate_diagram` | study | non (singleton) | aucun (client-side render) |
+| 7 | `file_reader` | explore, study, org | oui (talentId ou orgId) | aucun (pdf-parse) |
+| 8 | `web_search` | explore, study, org | non (singleton) | OpenAI gpt-4.1-mini |
+| 9 | `manage_skills` | study | oui (talentId) | PostgreSQL |
+| 10 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
+| 11 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
 
 ### Allocation par mode
 
@@ -29,7 +28,6 @@
 | `smart_search` | x | | x |
 | `sql_query` | x (all my_*) | x (4 intents) | x (org_* only) |
 | `youtube_search` | | x | |
-| `analyze_youtube_video` | | x | |
 | `generate_document` | x | | x |
 | `generate_image` | | x | |
 | `generate_diagram` | | x | |
@@ -170,33 +168,11 @@ Recherche de videos pedagogiques via YouTube Data API v3.
 
 **Retour** : jusqu'a 5 videos avec `videoId`, `title`, `description` (200 chars), `channelName`, `thumbnailUrl`, `url`.
 
-**Regle agent** : presenter UN seul resultat comme bloc `youtube`. NE PAS appeler `analyze_youtube_video` apres.
+**Regle agent** : presenter UN seul resultat comme bloc `youtube`.
 
 ---
 
-## 4. analyze_youtube_video
-
-Analyse pedagogique de videos YouTube via Gemini 2.5 Flash.
-
-**Fichier :** `youtube-analyze.tool.ts`
-
-### Parametres
-
-```typescript
-{
-  urls: z.array(z.string()).min(1).max(3),
-  focusTopics: z.string().optional(),
-  language: z.enum(['fr', 'en']).default('fr'),
-}
-```
-
-Analyse 1-3 URLs en parallele. Si multiples, scoring (relevance 40%, pedagogical clarity 30%, production quality 30%).
-
-**Retour** : `bestVideoId`, `resume`, `concepts_cles[]`, `moments_importants[]`, `niveau`, `competences[]`, `elements_visuels[]`
-
----
-
-## 5. generate_document
+## 4. generate_document
 
 Generation de documents multi-format avec sauvegarde automatique.
 
@@ -228,7 +204,7 @@ Generation de documents multi-format avec sauvegarde automatique.
 
 ---
 
-## 6. generate_image
+## 5. generate_image
 
 Generation d'images via OpenAI gpt-image-1. **Async fire-and-forget** — retourne immediatement.
 
@@ -248,7 +224,7 @@ Generation d'images via OpenAI gpt-image-1. **Async fire-and-forget** — retour
 
 ---
 
-## 7. generate_diagram
+## 6. generate_diagram
 
 Generation de diagrammes Mermaid. **Rendu client-side uniquement** (pas d'API externe).
 
@@ -270,7 +246,7 @@ Validation et sanitization server-side : normalise case, corrige `<br/>` → `\n
 
 ---
 
-## 8. file_reader
+## 7. file_reader
 
 Lecture directe d'un document. **PAS un sub-agent** — tool direct avec `defineTool()`.
 
@@ -302,7 +278,7 @@ Lecture directe d'un document. **PAS un sub-agent** — tool direct avec `define
 
 ---
 
-## 9. web_search
+## 8. web_search
 
 Recherche web via OpenAI Responses API.
 
@@ -318,7 +294,7 @@ Delegue a un sub-agent OpenAI (`@openai/agents` Runner, gpt-4.1-mini) avec `webS
 
 ---
 
-## 10. manage_skills
+## 9. manage_skills
 
 Gestion des competences du talent (ajout/mise a jour).
 
@@ -345,7 +321,7 @@ Gestion des competences du talent (ajout/mise a jour).
 
 ---
 
-## 11. execute_action
+## 10. execute_action
 
 Actions de mutation avec confirmation.
 
@@ -383,7 +359,7 @@ Actions de mutation avec confirmation.
 
 ---
 
-## 12. cv_generation
+## 11. cv_generation
 
 Sub-agent complet pour generation de CV. Boucle agentic interne avec timeout.
 
@@ -413,7 +389,7 @@ createOrgFileReaderTool(orgId)
 createCvGenerationTool(talentId, avatarUrl?)
 ```
 
-5 tools static (pas de factory) : `smartSearchTool`, `youtubeSearchTool`, `analyzeYoutubeVideoTool`, `generateImageTool`, `generateDiagramTool`, `webSearchAsTool`
+5 tools static (pas de factory) : `smartSearchTool`, `youtubeSearchTool`, `generateImageTool`, `generateDiagramTool`, `webSearchAsTool`
 
 **Garanties** : l'agent ne peut pas usurper un autre user, les queries sont filtrees par talentId, les org_* verifient le membership.
 

@@ -304,7 +304,7 @@ Declared but not implemented in switch-case:
 ### 8.1 Mode -> tools
 
 - `EXPLORE` (Talent Agent): `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action`
-- `STUDY` (Talent Agent): restricted `sql_query`, `youtube_search`, `analyze_youtube_video`, `generate_image`, `generate_diagram`, `file_reader`, `web_search`, `manage_skills`, `execute_action`
+- `STUDY` (Talent Agent): restricted `sql_query`, `youtube_search`, `generate_image`, `generate_diagram`, `file_reader`, `web_search`, `manage_skills`, `execute_action`
 - `ORG` (Organization Agent): `smart_search`, restricted `sql_query`, `generate_document`, `web_search`, `execute_action`, org-scoped `file_reader`
 
 ### 8.2 Study mode SQL whitelist

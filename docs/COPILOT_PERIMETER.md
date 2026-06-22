@@ -115,14 +115,13 @@ Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendu
 | **Study** | TalentAgent | Apprentissage + gestion competences | Aucune (mode pedagogique) |
 | **Organization** | OrgAgent | Gestion organisation + creation d'entites | `talent`, `opportunity`, `document` |
 
-### Allocation des 12 Tools par Mode (source : [COPILOT_TOOLS.md](./COPILOT_TOOLS.md))
+### Allocation des 11 Tools par Mode (source : [COPILOT_TOOLS.md](./COPILOT_TOOLS.md))
 
-| Tool | Explorer (6) | Study (9) | Org (6) |
+| Tool | Explorer (6) | Study (8) | Org (6) |
 |------|:-:|:-:|:-:|
 | `smart_search` | x | | x |
 | `sql_query` | x (all my_*) | x (4 intents: my_profile, my_triggers, my_community_feed, my_community_members) | x (org_* only) |
 | `youtube_search` | | x | |
-| `analyze_youtube_video` | | x | |
 | `generate_document` | x | | x |
 | `generate_image` | | x | |
 | `generate_diagram` | | x | |
@@ -389,13 +388,12 @@ Le mode Study s'appuie sur 4 principes des sciences de l'education :
 | **Espaces** | — | Toute recherche |
 | **Actions** | — | Toute action (postuler, rejoindre, reserver, creer) |
 
-### Tools Disponibles (9 tools)
+### Tools Disponibles (8 tools)
 
 | Tool | Usage |
 |------|-------|
 | `sql_query` (restreint) | 4 intents : my_profile, my_triggers, my_community_feed, my_community_members. Skills et documents sont deja dans le contexte. |
 | `youtube_search` | YouTube Data API v3 (maxResults 1-5, priorite francophone UEMOA) |
-| `analyze_youtube_video` | Analyse pedagogique video via Gemini 2.5 Flash |
 | `generate_image` | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
 | `generate_diagram` | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
 | `file_reader` | Lecture directe d'UN document (PDF/texte). Cache par session. |
@@ -755,10 +753,9 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 | `web_search` | Benchmark marche, tendances secteur (OpenAI Responses API) |
 | `execute_action` | Actions talent + create/update_agenda_trigger |
 
-**Tools NON disponibles en Organization (6 bloques) :**
+**Tools NON disponibles en Organization (5 bloques) :**
 - `manage_skills` — pas de gestion de competences
 - `youtube_search` — pas de recherche video
-- `analyze_youtube_video` — pas d'analyse video
 - `generate_image` — pas de generation d'images
 - `generate_diagram` — pas de generation de diagrammes
 - `cv_generation` — pas de generation CV
@@ -1155,7 +1152,7 @@ createOrgFileReaderTool(orgId)       // direct tool, verifie ownership org + int
 createCvGenerationTool(talentId, avatarUrl?)
 ```
 
-**5 tools static (pas de factory) :** smartSearchTool, youtubeSearchTool, analyzeYoutubeVideoTool, generateImageTool, generateDiagramTool, webSearchAsTool
+**5 tools static (pas de factory) :** smartSearchTool, youtubeSearchTool, generateImageTool, generateDiagramTool, webSearchAsTool
 
 **Garanties :**
 - L'agent ne peut pas usurper l'identite d'un autre utilisateur
@@ -1233,9 +1230,9 @@ Validation post-reponse (log, ne bloque pas) :
 | Career & Compensation Guide | oui | | | smart_search, sql_query, web_search, generate_document |
 | Application Tracker | oui | | | sql_query, smart_search |
 | Onboarding | oui | | | sql_query, file_reader, generate_document |
-| Deep Dive Lesson | | oui | | youtube_search, analyze_youtube_video, manage_skills, generate_diagram, web_search |
+| Deep Dive Lesson | | oui | | youtube_search, manage_skills, generate_diagram, web_search |
 | Exam & Revision | | oui | | manage_skills, youtube_search, web_search |
-| Document Study Session | | oui | | sql_query, file_reader, manage_skills, analyze_youtube_video |
+| Document Study Session | | oui | | sql_query, file_reader, manage_skills |
 | Weekly Recap | | oui | | manage_skills |
 | Autodiagnostic Talent | | oui | | file_reader, manage_skills |
 | HR Skill Radar | | oui | oui | sql_query, file_reader |

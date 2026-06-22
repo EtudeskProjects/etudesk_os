@@ -22,7 +22,7 @@ Le copilot utilise **Anthropic SDK natif** (`@anthropic-ai/sdk`) pour tous les a
 
 | Cas | Provider | Modele |
 |-----|----------|--------|
-| Suggestions formulaires (Gemini) | `geminiProvider` (OpenAIProvider wrapping Gemini endpoint) | gemini-2.5-flash-lite |
+| Suggestions formulaires | `openaiProvider` (OpenAIProvider) | gpt-4.1-nano |
 | Web search tool (OpenAI Responses API) | `openaiResponsesProvider` (useResponses: true) | gpt-4.1-mini |
 
 Voir [AI_MODELS.md](./AI_MODELS.md) pour les constantes et pricing de tous les modeles.
@@ -219,7 +219,7 @@ Mode log-only (ne bloque jamais). Validations :
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /suggestions` | Gemini suggestions (cache 3min) |
+| `GET /suggestions` | Suggestions OpenAI gpt-4.1-nano (cache 3min) |
 | `PATCH /messages/:id/feedback` | DPO rating (1 ou 3) |
 | `POST /confirm` | Action confirmation handler |
 | `POST /voice-note` | Upload vocal (5MB limit) |
@@ -237,7 +237,7 @@ Modele : claude-haiku-4-5. Genere un titre de session apres le premier message.
 
 ### Suggestions Agent
 
-Modele : gemini-2.5-flash-lite via `@openai/agents` Runner. Cache 3 minutes.
+Modele : gpt-4.1-nano (OpenAI) via `@openai/agents` Runner. Cache 3 minutes.
 
 ---
 
@@ -306,7 +306,7 @@ Fichier : `uemoa-knowledge.ts`
 | `services/copilot/uemoa-knowledge.ts` | UEMOA knowledge injection |
 | `services/copilot/types.ts` | TalentContext, OrgContext, SSE types |
 | `services/ai/models.ts` | Constantes modeles |
-| `services/ai/provider.ts` | 3 clients (Anthropic, OpenAI, Gemini) |
+| `services/ai/provider.ts` | 2 clients (Anthropic, OpenAI) |
 | `routes/copilot.ts` | Route principale + endpoints |
 
 ---

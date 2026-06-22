@@ -17,13 +17,12 @@
 
 ## 2. Couts Variables Mensuels (AI — Architecture multi-provider)
 
-3 providers simultanes — chaque provider est utilise pour ses forces.
+2 providers simultanes — chaque provider est utilise pour ses forces.
 
 | Service | Plan | Modeles | Estimation | FCFA / mois |
 |---------|------|---------|------------|------------:|
 | Anthropic API | Pay-as-you-go | claude-sonnet-4-6, claude-haiku-4-5 | Phase lancement (< 500 users) | 55 500 — 110 000 |
-| OpenAI API | Pay-as-you-go | gpt-4.1-mini, gpt-4.1-nano, embeddings, gpt-image-1, STT/TTS | Phase lancement (< 500 users) | 16 650 — 55 500 |
-| Google Gemini API | Pay-as-you-go | gemini-2.5-flash-lite | Phase lancement (< 500 users) | 2 775 — 5 550 |
+| OpenAI API | Pay-as-you-go | gpt-4.1-nano, gpt-4.1-mini, embeddings, gpt-image-1, STT/TTS | Phase lancement (< 500 users) | 19 425 — 61 050 |
 | **Total AI** | | | Phase lancement (< 500 users) | **74 925 — 171 050** |
 | | | | Phase croissance (500-5000 users) | 171 050 — 555 000 |
 
@@ -41,18 +40,12 @@
 | Modele | Input | Output | Usage Etudesk |
 |--------|------:|-------:|---------------|
 | gpt-4.1-mini (MODEL_SEARCH) | 0,22 FCFA/1K tokens | 0,89 FCFA/1K tokens | Web search, vision/extraction documents, KYC |
-| gpt-4.1-nano (MODEL_MATCH) | 0,06 FCFA/1K tokens | 0,22 FCFA/1K tokens | Recommendations candidats |
+| gpt-4.1-nano (MODEL_MATCH + MODEL_SUGGESTION) | 0,06 FCFA/1K tokens | 0,22 FCFA/1K tokens | Recommendations candidats, suggestions, objectifs quotidiens, bio, assistant WhatsApp |
 | text-embedding-3-small (MODEL_EMBEDDING) | 0,01 FCFA/1K tokens | — | Embeddings Pinecone |
 | gpt-image-1 (MODEL_IMAGE) | 11 — 105 FCFA/image | — | Generation d'images (Study) |
 | gpt-4o-mini-transcribe (MODEL_STT) | 3,33 FCFA/minute | — | Transcription audio |
 | gpt-4o-mini-tts (MODEL_TTS) | variable | — | Text-to-speech |
 | omni-moderation-latest | gratuit | — | Auto-moderation contenu |
-
-### Google Gemini (suggestions, formulaires)
-
-| Modele | Input | Output | Usage Etudesk |
-|--------|------:|-------:|---------------|
-| gemini-2.5-flash-lite (MODEL_SUGGESTION) | ~0,01 FCFA/1K tokens | ~0,04 FCFA/1K tokens | Suggestions, objectifs quotidiens, bio, assistant WhatsApp |
 
 **Cout moyen par utilisateur/mois :**
 
@@ -90,7 +83,7 @@
 | Categorie | FCFA / mois |
 |-----------|------------:|
 | Fixes mensuels | 159 760 |
-| AI API (estimation basse, 3 providers) | 74 925 |
+| AI API (estimation basse, 2 providers) | 74 925 |
 | Annuels amortis | 5 412 |
 | Services gratuits | 0 |
 | **TOTAL MENSUEL** | **240 097** |
@@ -100,7 +93,7 @@
 | Categorie | FCFA / mois |
 |-----------|------------:|
 | Fixes mensuels | 159 760 |
-| AI API (estimation moyenne, 3 providers) | 277 500 |
+| AI API (estimation moyenne, 2 providers) | 277 500 |
 | Upgrades services (Pinecone Standard + Resend Pro) | 38 850 |
 | Annuels amortis | 5 412 |
 | **TOTAL MENSUEL** | **481 522** |

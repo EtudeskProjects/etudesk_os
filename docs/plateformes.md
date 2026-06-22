@@ -18,8 +18,7 @@
 | Plateforme | URL | Usage | Acces |
 |------------|-----|-------|-------|
 | Anthropic | https://console.anthropic.com | Claude (agents copilot: Sonnet 4.6, guardrails/summaries: Haiku 4.5) | [ ] |
-| OpenAI | https://platform.openai.com | Vision, embeddings, gpt-image-1, STT/TTS, web search (Responses API), recommendations, moderation | [ ] |
-| Google AI Studio | https://aistudio.google.com | Gemini 2.5 Flash Lite (suggestions, objectifs, bio, assistant WhatsApp) | [ ] |
+| OpenAI | https://platform.openai.com | Suggestions/objectifs/bio/assistant WhatsApp (gpt-4.1-nano), vision, embeddings, gpt-image-1, STT/TTS, web search (Responses API), recommendations, moderation | [ ] |
 | Pinecone | https://app.pinecone.io | Base vectorielle (index: etudesk, 1536-dim, cosine) | [ ] |
 | YouTube Data API | https://console.cloud.google.com | Recherche videos (copilot Study) | [ ] |
 
