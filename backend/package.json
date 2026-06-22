@@ -20,7 +20,7 @@
     "test:copilot": "tsx src/services/copilot/tools/__tests__/tools-audit.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.74.0",
+    "@anthropic-ai/sdk": "^0.104.2",
     "@openai/agents": "^0.4.4",
     "@pinecone-database/pinecone": "^3.0.3",
     "@types/multer": "^2.0.0",
