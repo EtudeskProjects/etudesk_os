@@ -1072,7 +1072,7 @@ const styles = StyleSheet.create({
         padding: SPACING.xs,
     },
     attachmentDocName: {
-        fontSize: 9,
+        fontSize: 10,
         textAlign: 'center',
         marginTop: 2,
     },

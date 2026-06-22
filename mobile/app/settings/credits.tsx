@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   balanceValue: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     letterSpacing: -0.5,
   },

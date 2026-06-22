@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
         borderRadius: BORDER.radius.sm,
     },
     scheduledBadgeText: {
-        fontSize: 9,
+        fontSize: 10,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
     scheduledTime: {
