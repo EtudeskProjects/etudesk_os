@@ -10,7 +10,7 @@ import { validate, updateTalentSchema } from '../middleware/validation.middlewar
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { MODEL_SUGGESTION } from '../services/ai/models';
-import { getGeminiClient } from '../services/ai/provider';
+import { getSuggestionClient } from '../services/ai/provider';
 import { buildBioGenSystemPrompt } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 import { normalizeCountryCode } from '../constants/countries';
@@ -276,7 +276,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
 
     const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const languageName = getLanguageDisplayName(language);
-    const openai = getGeminiClient();
+    const openai = getSuggestionClient();
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [

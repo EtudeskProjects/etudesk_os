@@ -7,7 +7,6 @@
  *
  * OPENAI_API_KEY is ALWAYS required.
  * ANTHROPIC_API_KEY required for Claude agents.
- * GOOGLE_API_KEY: no longer used (project banned). All Gemini calls migrated to OpenAI.
  */
 
 import dotenv from 'dotenv';
@@ -27,14 +26,7 @@ const openaiClient = new OpenAI({
 });
 
 // ---------------------------------------------------------------------------
-// 2. Suggestion Client — uses OpenAI (migrated from Gemini, Google API blocked)
-// ---------------------------------------------------------------------------
-
-// Gemini client kept as null — all callers fall back to OpenAI via getGeminiClient()
-const geminiClient: OpenAI | null = null;
-
-// ---------------------------------------------------------------------------
-// 3. Anthropic Client — Native SDK for agents, guardrails, titles
+// 2. Anthropic Client — Native SDK for agents, guardrails, titles
 // ---------------------------------------------------------------------------
 
 const anthropicClient = new Anthropic({
@@ -43,7 +35,7 @@ const anthropicClient = new Anthropic({
 
 // ---------------------------------------------------------------------------
 // ModelProvider instances for @openai/agents run() overrides
-// (Still needed for Gemini suggestions + OpenAI web search sub-agent)
+// (Used for OpenAI suggestions + web search sub-agent)
 // ---------------------------------------------------------------------------
 
 /** OpenAI provider for agents that MUST run on OpenAI (recommendations, etc.) */
@@ -58,26 +50,18 @@ export const openaiResponsesProvider = new OpenAIProvider({
   useResponses: true,
 });
 
-/** Suggestion provider for agents (migrated from Gemini to OpenAI) */
-export const geminiProvider = openaiProvider;
-
 // ---------------------------------------------------------------------------
 // Log provider status
 // ---------------------------------------------------------------------------
 
 if (process.env.ANTHROPIC_API_KEY) {
-  logger.info('[AI Provider] ANTHROPIC (native SDK for agents), OPENAI (images/STT/embeddings/vision/web-search), GEMINI (suggestions)');
+  logger.info('[AI Provider] ANTHROPIC (native SDK for agents), OPENAI (suggestions/images/STT/embeddings/vision/web-search)');
 } else {
   logger.warn('[AI Provider] ANTHROPIC_API_KEY missing — agents will fail');
 }
 
 if (!process.env.OPENAI_API_KEY) {
   logger.warn('[AI Provider] OPENAI_API_KEY missing — STT, moderation, embeddings, images unavailable');
-}
-
-// GOOGLE_API_KEY no longer required — all suggestions use OpenAI
-if (process.env.GOOGLE_API_KEY) {
-  logger.info('[AI Provider] GOOGLE_API_KEY present but unused — suggestions migrated to OpenAI');
 }
 
 // ---------------------------------------------------------------------------
@@ -87,8 +71,8 @@ if (process.env.GOOGLE_API_KEY) {
 /** Anthropic client — for main agents, guardrails, titles */
 export function getAnthropicClient(): Anthropic { return anthropicClient; }
 
-/** Suggestion client — returns OpenAI (migrated from Gemini) */
-export function getGeminiClient(): OpenAI {
+/** Suggestion client — OpenAI (gpt-4.1-nano for form/field suggestions) */
+export function getSuggestionClient(): OpenAI {
   return openaiClient;
 }
 

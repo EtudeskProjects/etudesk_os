@@ -4,7 +4,7 @@
  */
 
 import { MODEL_SUGGESTION } from './ai/models';
-import { getGeminiClient } from './ai/provider';
+import { getSuggestionClient } from './ai/provider';
 import { pool } from './database';
 import {
   CommunityType,
@@ -116,7 +116,7 @@ export async function generateCommunitySuggestion(
     logger.info('[CommunityGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = getGeminiClient();
+    const openai = getSuggestionClient();
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [

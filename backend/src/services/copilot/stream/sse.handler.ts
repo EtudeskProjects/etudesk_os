@@ -784,7 +784,7 @@ export async function generateSessionTitle(message: string, language: SupportedL
 }
 
 /**
- * Generate prompt suggestions using Gemini (unchanged — still via @openai/agents)
+ * Generate prompt suggestions (OpenAI via @openai/agents)
  */
 export async function generateSuggestions(
   mode: string,
@@ -795,12 +795,12 @@ export async function generateSuggestions(
     const { buildSuggestionsSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
     const { createSuggestionsAgent } = await import('../../ai/agent-factory');
     const { Runner } = await import('@openai/agents');
-    const { geminiProvider } = await import('../../ai/provider');
+    const { openaiProvider } = await import('../../ai/provider');
 
     const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary, getLanguageDisplayName(language));
     const agent = createSuggestionsAgent(systemPrompt);
-    const geminiRunner = new Runner({ modelProvider: geminiProvider });
-    const result = await geminiRunner.run(agent, `Generate the suggestions in ${getLanguageDisplayName(language)}.`);
+    const suggestionRunner = new Runner({ modelProvider: openaiProvider });
+    const result = await suggestionRunner.run(agent, `Generate the suggestions in ${getLanguageDisplayName(language)}.`);
     const text = result.finalOutput?.trim() || '[]';
     return JSON.parse(text);
   } catch {

@@ -1,7 +1,6 @@
 /**
  * Audio Analysis Service — OpenAI gpt-4o-mini-transcribe
  * Transcribes audio via OpenAI Whisper/STT, then analyzes with gpt-4.1-nano.
- * Migrated from Gemini 2.5 Flash (Google API key blocked).
  */
 
 import { logger } from '../../utils';

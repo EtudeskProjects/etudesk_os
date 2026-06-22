@@ -10,8 +10,6 @@ import { TalentContext } from '../types';
 import { smartSearchTool } from '../tools/smart-search.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { youtubeSearchTool } from '../tools/youtube-search.tool';
-// analyze_youtube_video disabled — Google API key blocked (2026-04-10)
-// import { analyzeYoutubeVideoTool } from '../tools/youtube-analyze.tool';
 import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { createGenerateImageTool } from '../tools/generate-image.tool';
 import { generateDiagramTool } from '../tools/generate-diagram.tool';
@@ -51,7 +49,6 @@ export function createTalentAgent(
     tools = [
       studySqlTool,
       youtubeSearchTool,
-      // analyzeYoutubeVideoTool disabled — Google API key blocked (2026-04-10)
       createGenerateImageTool(context.profile.id),
       generateDiagramTool,
       fileReaderTool,

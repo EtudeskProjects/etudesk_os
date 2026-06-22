@@ -4,7 +4,7 @@
  */
 
 import { MODEL_SUGGESTION } from './ai/models';
-import { getGeminiClient } from './ai/provider';
+import { getSuggestionClient } from './ai/provider';
 import { pool } from './database';
 import {
   OpportunityType,
@@ -253,7 +253,7 @@ export async function generateOpportunitySuggestion(
   });
 
   try {
-    const openai = getGeminiClient();
+    const openai = getSuggestionClient();
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [

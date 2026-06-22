@@ -11,7 +11,7 @@ import { logger } from '../../../utils';
 export const youtubeSearchTool = defineTool({
   name: 'youtube_search',
   description:
-    'Search YouTube for educational videos. Study mode only. Returns up to 5 results. Present ONLY THE SINGLE BEST video as ONE youtube block — never multiple youtube blocks. Do NOT call analyze_youtube_video after this.',
+    'Search YouTube for educational videos. Study mode only. Returns up to 5 results. Present ONLY THE SINGLE BEST video as ONE youtube block — never multiple youtube blocks.',
   parameters: z.object({
     query: z.string().describe('Search query in natural language. Include region/context when relevant. Example: "digital marketing training Côte d\'Ivoire"'),
     maxResults: z.number().min(1).max(5).default(5).describe('Max results (always 5).'),

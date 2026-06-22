@@ -14,7 +14,6 @@ export type { ToolDefinition, AgentConfig } from './tools/tool-helper';
 export { smartSearchTool } from './tools/smart-search.tool';
 export { createSqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
-export { analyzeYoutubeVideoTool } from './tools/youtube-analyze.tool';
 export { generateDocumentTool, createGenerateDocumentTool } from './tools/generate-document.tool';
 export { generateImageTool, createGenerateImageTool } from './tools/generate-image.tool';
 export { generateDiagramTool } from './tools/generate-diagram.tool';

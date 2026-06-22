@@ -2,7 +2,6 @@
  * Etudesk WhatsApp Agent — Agent-Native Support
  *
  * Powered by Claude (Anthropic) with full company context.
- * Replaces the legacy Gemini-based bot.
  *
  * Features:
  * - Claude Haiku for fast, intelligent responses

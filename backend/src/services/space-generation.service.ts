@@ -4,7 +4,7 @@
  */
 
 import { MODEL_SUGGESTION } from './ai/models';
-import { getGeminiClient } from './ai/provider';
+import { getSuggestionClient } from './ai/provider';
 import { pool } from './database';
 import {
   Sector,
@@ -124,7 +124,7 @@ export async function generateSpaceSuggestion(
     logger.info('[SpaceGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = getGeminiClient();
+    const openai = getSuggestionClient();
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [

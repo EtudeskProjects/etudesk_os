@@ -1266,19 +1266,19 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       sectors: profileRow.sectors,
     } : undefined;
 
-    // 3. Generate suggestions with Gemini
+    // 3. Generate suggestions (OpenAI)
     const { Runner } = await import('@openai/agents');
     const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
-    const { geminiProvider } = await import('../services/ai/provider');
+    const { openaiProvider } = await import('../services/ai/provider');
 
     const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext, languageName);
     const agent = createIntentSuggestionsAgent(systemPrompt);
-    const geminiRunner = new Runner({ modelProvider: geminiProvider });
+    const suggestionRunner = new Runner({ modelProvider: openaiProvider });
 
     let suggestions: string[] = [];
     try {
-      const result = await geminiRunner.run(agent, `Generate 4 suggestions in ${languageName}.`);
+      const result = await suggestionRunner.run(agent, `Generate 4 suggestions in ${languageName}.`);
       const text = result.finalOutput?.trim() || '[]';
       suggestions = JSON.parse(text);
 

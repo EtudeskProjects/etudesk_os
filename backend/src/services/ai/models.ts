@@ -3,12 +3,11 @@
  * Single source of truth — all model references import from here.
  *
  * Each constant targets the best provider for its use case:
- * - Google Gemini: form suggestions (cheapest, fastest)
  * - Anthropic Claude: agents + guardrails/summaries (best reasoning)
- * - OpenAI: images, web search, embeddings, STT, matching, vision
+ * - OpenAI: form suggestions, images, web search, embeddings, STT, matching, vision
  */
 
-// --- OpenAI (form suggestions — replaces Gemini, Google API key blocked) ---
+// --- OpenAI (form suggestions — gpt-4.1-nano) ---
 
 /** Form generation: spaces, communities, opportunities, bios, daily objectives, WhatsApp */
 export const MODEL_SUGGESTION = 'gpt-4.1-nano';

@@ -10,7 +10,7 @@ import { COMMUNITY_GEN_SYSTEM_PROMPT } from './prompts/community-gen.prompt';
 import { OPPORTUNITY_GEN_SYSTEM_PROMPT } from './prompts/opportunity-gen.prompt';
 import { RECOMMENDATION_SYSTEM_PROMPT } from './prompts/recommendation.prompt';
 
-// --- Space Generation (Gemini) ---
+// --- Space Generation (OpenAI) ---
 
 export function createSpaceGenAgent(): Agent {
   return new Agent({
@@ -20,7 +20,7 @@ export function createSpaceGenAgent(): Agent {
   });
 }
 
-// --- Community Generation (Gemini) ---
+// --- Community Generation (OpenAI) ---
 
 export function createCommunityGenAgent(): Agent {
   return new Agent({
@@ -30,7 +30,7 @@ export function createCommunityGenAgent(): Agent {
   });
 }
 
-// --- Opportunity Generation (Gemini) ---
+// --- Opportunity Generation (OpenAI) ---
 
 export function createOpportunityGenAgent(): Agent {
   return new Agent({
@@ -50,7 +50,7 @@ export function createRecommendationAgent(): Agent {
   });
 }
 
-// --- Suggestions (Gemini) ---
+// --- Suggestions (OpenAI) ---
 
 export function createSuggestionsAgent(systemPrompt: string): Agent {
   return new Agent({
@@ -60,7 +60,7 @@ export function createSuggestionsAgent(systemPrompt: string): Agent {
   });
 }
 
-// --- Intent Suggestions (Gemini) ---
+// --- Intent Suggestions (OpenAI) ---
 
 export function createIntentSuggestionsAgent(systemPrompt: string): Agent {
   return new Agent({

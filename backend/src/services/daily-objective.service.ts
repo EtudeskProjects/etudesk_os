@@ -5,13 +5,13 @@
  */
 
 import { MODEL_SUGGESTION } from './ai/models';
-import { getGeminiClient } from './ai/provider';
+import { getSuggestionClient } from './ai/provider';
 import { pool } from './database';
 import { logger } from '../utils';
 import { getLocaleForLanguage, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
-const openai = getGeminiClient();
+const openai = getSuggestionClient();
 
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_OBJECTIVE_LENGTH = 500;

@@ -1,6 +1,6 @@
 /**
  * KYC (Know Your Customer) Routes
- * Handles identity verification document uploads with Gemini vision verification
+ * Handles identity verification document uploads with OpenAI vision verification
  */
 
 import { Router, Response } from 'express';
@@ -110,7 +110,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
 
     logger.info(`📋 KYC submission received for talent ${req.talentId}`);
 
-    // Verify document with Gemini Vision
+    // Verify document with OpenAI vision
     let verificationResult: VerificationResult;
     try {
       verificationResult = await verifyKYCDocument(
