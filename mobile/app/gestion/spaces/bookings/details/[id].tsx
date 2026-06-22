@@ -31,7 +31,7 @@ import {
   Users,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
-import { Button, FooterNav, IconButton, Input, LoadingShimmer, SelectCard } from '../../../../../src/components/ui';
+import { Button, FooterNav, IconButton, Input, LoadingShimmer, SelectCard, TabBar } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { spaceBookingService, spaceBookingMessageService, SpaceBookingDetails, BookingStatus, BookingMessage } from '../../../../../src/services';
@@ -283,29 +283,6 @@ export default function BookingDetailsScreen() {
 
   const formatPrice = (amount: number): string => {
     return new Intl.NumberFormat(locale).format(amount) + ' FCFA';
-  };
-
-  const renderTab = (tab: Tab, label: string) => {
-    const isActive = activeTab === tab;
-
-    return (
-      <SelectCard
-        style={[styles.tab, isActive && { borderBottomColor: colors.primary }, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 }]}
-        onPress={() => setActiveTab(tab)}
-        selected={false}
-        accessibilityLabel={label}
-      >
-        <Text
-          style={[
-            styles.tabText,
-            { color: isActive ? colors.primary : colors.gray500 },
-            isActive && { fontWeight: TYPOGRAPHY.fontWeight.semibold },
-          ]}
-        >
-          {label}
-        </Text>
-      </SelectCard>
-    );
   };
 
   const renderProfileTab = () => {
@@ -699,11 +676,15 @@ export default function BookingDetailsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', t('gestion.memberDetails.tabProfile'))}
-        {renderTab('messages', t('gestion.memberDetails.tabMessages'))}
-        {renderTab('notes', t('gestion.memberDetails.tabNotes'))}
-      </View>
+      <TabBar
+        tabs={[
+          { key: 'profile', label: t('gestion.memberDetails.tabProfile') },
+          { key: 'messages', label: t('gestion.memberDetails.tabMessages') },
+          { key: 'notes', label: t('gestion.memberDetails.tabNotes') },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(key) => setActiveTab(key as Tab)}
+      />
 
       {/* Content */}
       <KeyboardAvoidingView
@@ -779,23 +760,6 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  tabsContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: BORDER.width.thin,
-  },
-
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-
-  tabText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 
   contentContainer: {

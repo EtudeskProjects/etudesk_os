@@ -27,7 +27,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
-import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, LoadingShimmer, TabBar } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { applicationService, applicationMessageService } from '../../../src/services';
@@ -185,39 +185,6 @@ export default function ApplicationDetailsScreen() {
           },
         },
       ] });
-  };
-
-  const renderTab = (tab: Tab, label: string, icon: typeof Briefcase) => {
-    const isActive = activeTab === tab;
-    const Icon = icon;
-
-    return (
-      <SelectCard
-        style={[
-          styles.tab,
-          { borderBottomColor: isActive ? colors.primary : 'transparent' },
-          { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
-        ]}
-        onPress={() => setActiveTab(tab)}
-        selected={false}
-        accessibilityLabel={label}
-      >
-        <Icon
-          size={18}
-          color={isActive ? colors.primary : colors.gray500}
-          strokeWidth={ICON.strokeWidth}
-        />
-        <Text
-          style={[
-            styles.tabText,
-            { color: isActive ? colors.primary : colors.gray500 },
-            isActive && { fontWeight: TYPOGRAPHY.fontWeight.semibold },
-          ]}
-        >
-          {label}
-        </Text>
-      </SelectCard>
-    );
   };
 
   const renderDetailsTab = () => {
@@ -443,10 +410,14 @@ export default function ApplicationDetailsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('details', t('myApplications.detail.tabs.details'), Briefcase)}
-        {renderTab('messages', t('myApplications.detail.tabs.messages'), MessageCircle)}
-      </View>
+      <TabBar
+        tabs={[
+          { key: 'details', label: t('myApplications.detail.tabs.details'), icon: Briefcase },
+          { key: 'messages', label: t('myApplications.detail.tabs.messages'), icon: MessageCircle },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(key) => setActiveTab(key as Tab)}
+      />
 
       {/* Content */}
       <KeyboardAvoidingView
@@ -510,25 +481,6 @@ const styles = StyleSheet.create({
 
   headerSpacer: {
     width: 40,
-  },
-
-  tabsContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: BORDER.width.thin,
-  },
-
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 2,
-  },
-
-  tabText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 
   keyboardAvoidingView: {

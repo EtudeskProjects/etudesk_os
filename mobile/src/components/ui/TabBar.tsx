@@ -8,7 +8,7 @@ import { Tap } from './Tap';
 interface Tab {
   key: string;
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   count?: number;
 }
 
@@ -34,7 +34,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
             style={styles.tab}
             onPress={() => onTabChange(tab.key)}
           >
-            <TabIcon size={ICON.size.md} color={color} strokeWidth={ICON.strokeWidth} />
+            {TabIcon && <TabIcon size={ICON.size.md} color={color} strokeWidth={ICON.strokeWidth} />}
             <Text style={[styles.tabText, { color }]}>{tab.label}</Text>
             {tab.count !== undefined && tab.count > 0 && (
               <View style={[styles.badge, { backgroundColor: isActive ? colors.primary : colors.gray300 }]}>
