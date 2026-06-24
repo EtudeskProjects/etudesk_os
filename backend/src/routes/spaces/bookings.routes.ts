@@ -530,6 +530,15 @@ router.post('/bookings/:id/confirm', authMiddleware, async (req: AuthRequest, re
     const { scheduleBookingReminders } = await import('../../services/notification.service');
     scheduleBookingReminders(id).catch(err => logger.error('Booking reminder scheduling error:', err));
 
+    // Participation validation: a confirmed booking validates the space's linked
+    // hard skills / tools for the booking talent (fire-and-forget, best-effort).
+    const booking = result.rows[0];
+    if (booking.talent_id && booking.space_id) {
+      const { validateFromSpace } = await import('../../services/skills/skill-validation.service');
+      validateFromSpace(booking.talent_id, booking.space_id)
+        .catch((err) => logger.error('Skill validation error:', err));
+    }
+
     res.json({ data: result.rows[0] });
   } catch (error) {
     handleRouteError(res, error, 'Error confirming booking');

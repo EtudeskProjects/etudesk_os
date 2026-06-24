@@ -19,7 +19,7 @@ const CV_CONTENT_CONTRACT = {
   city: '...',
   country: '...',
   bio: 'Profile summary...',
-  skills: [{ name: '...', level: 'EXPERT' }],
+  skills: [{ name: '...', level: 'advanced' }],
   languages: [{ language: 'Français', level: 'native' }],
   experiences: [{ title: '...', company: '...', location: '...', period: '2022 - Present', description: '• bullet1\\n• bullet2' }],
   education: [{ degree: '...', institution: '...', period: '2018 - 2020' }],

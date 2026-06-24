@@ -37,7 +37,8 @@ export type DocumentStatus =
 
 export interface ExtractedSkill {
   name: string;
-  type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL';
+  // Coarse hint only; authoritative type comes from the resolved catalog competency.
+  type?: 'knowledge' | 'hard_skill' | 'soft_skill';
   proficiency_hint?: string;
   context?: string;
 }

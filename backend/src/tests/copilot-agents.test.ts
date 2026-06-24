@@ -101,7 +101,9 @@ async function buildTestContext(talentId: string, mode: 'explore' | 'study'): Pr
   if (!profile) throw new Error(`Talent ${talentId} not found`);
 
   const skillsRes = await pool.query(
-    `SELECT canonical_name as name, proficiency_level as level FROM talent_skills WHERE talent_id = $1`,
+    `SELECT c.name AS name, ts.level AS level
+     FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+     WHERE ts.talent_id = $1`,
     [talentId]
   );
 

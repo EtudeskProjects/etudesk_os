@@ -51,11 +51,10 @@ Une skill ne doit declarer que des tools disponibles dans son mode.
 
 ### manage_skills
 
-- **origin** : `declared` \| `inferred` \| `extracted` — **PAS** "DOCUMENT_EXTRACTED" ou "SELF_DECLARED"
-- **type** : `HARD_SKILL` \| `SOFT_SKILL` \| `KNOWLEDGE`
-- **proficiencyLevel** : `BEGINNER` \| `INTERMEDIATE` \| `EXPERT` \| `MASTER` — **PAS** "ADVANCED"
-
-Toujours inclure `type` dans les appels manage_skills.
+- **skillQuery** : LABEL de competence (resolu au catalogue Etudesk ; un label hors catalogue est rejete avec des suggestions)
+- **level** : `beginner` \| `intermediate` \| `advanced` \| `master` — l'agent est plafonne a `advanced` (master = evaluation verifiee uniquement)
+- **origin** : `declared` \| `inferred` \| `extracted` (jamais `validated` — reserve a la validation par participation)
+- **axisA/axisC/axisI/axisT** (optionnels, 1-4) : Autonomy / Complexity / Impact / Transmission, pour un grading par le framework
 
 ---
 

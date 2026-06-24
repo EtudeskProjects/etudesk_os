@@ -12,6 +12,8 @@
 import { pool } from './database';
 
 import { logger } from '../utils';
+import * as catalog from './skills/catalog.service';
+import { LEVEL_SCORE } from '../constants/skills';
 // --- Types & Constants ---
 
 export interface MatchingScore {
@@ -160,39 +162,85 @@ function calculateLocationScore(
 // --- Skills Scoring 30 Points ---
 
 /**
- * Calculate skills match score
+ * Calculate skills match score from the catalog-structured opportunity_skills vs
+ * the talent's active catalog competencies. Direct hits score by proficiency
+ * relative to the required min_level; missing required skills get partial credit
+ * if the talent holds a prerequisite/sibling neighbor (graph). Required skills
+ * dominate the weight; nice_to_have contributes a smaller share.
  */
-async function calculateSkillsScore(
-  talentId: string,
-  opportunityId: string,
-  talentSkills?: string[]
-): Promise<number> {
+async function calculateSkillsScore(talentId: string, opportunityId: string): Promise<number> {
   const maxScore = WEIGHTS.skills;
 
   try {
-    // No opportunity_skills table anymore — use talent skills if available
-    if (talentSkills && talentSkills.length > 0) {
-      return maxScore * 0.7;
+    const oppSkillsResult = await pool.query(
+      `SELECT competency_slug, requirement, weight, min_level
+       FROM opportunity_skills WHERE opportunity_id = $1`,
+      [opportunityId]
+    );
+    const oppSkills = oppSkillsResult.rows as Array<{
+      competency_slug: string;
+      requirement: 'required' | 'nice_to_have';
+      weight: number;
+      min_level: string | null;
+    }>;
+
+    // No structured tags -> neutral (encourages tagging)
+    if (oppSkills.length === 0) return maxScore * 0.6;
+
+    const talentSkillsResult = await pool.query(
+      `SELECT competency_slug, score FROM talent_skills
+       WHERE talent_id = $1 AND is_visible = true AND decay_state = 'active'`,
+      [talentId]
+    );
+    const talentScoreBySlug = new Map<string, number>();
+    for (const r of talentSkillsResult.rows) talentScoreBySlug.set(r.competency_slug, r.score);
+
+    const REQUIRED_SHARE = 0.7;
+    const NICE_SHARE = 0.3;
+    const levelScoreOf = (lvl: string | null): number =>
+      lvl ? LEVEL_SCORE[lvl as keyof typeof LEVEL_SCORE] || 1 : 1;
+
+    let reqWeight = 0;
+    let reqCovered = 0;
+    let niceWeight = 0;
+    let niceCovered = 0;
+
+    for (const s of oppSkills) {
+      const w = s.weight || 1;
+      let coverage = 0;
+      const direct = talentScoreBySlug.get(s.competency_slug);
+      if (direct != null) {
+        const need = levelScoreOf(s.min_level);
+        coverage = Math.max(0.5, Math.min(1, direct / need)); // meeting min_level = full
+      } else {
+        // graph partial credit: does the talent hold a prereq/sibling of this skill?
+        const neighbors = await catalog.getNeighbors(s.competency_slug, {
+          relations: ['prerequisite', 'sibling'],
+          limit: 8,
+        });
+        let best = 0;
+        for (const n of neighbors) {
+          if (talentScoreBySlug.has(n.slug)) {
+            best = Math.max(best, Math.min(0.6, 0.4 + n.strength * 0.2));
+          }
+        }
+        coverage = best;
+      }
+      if (s.requirement === 'required') {
+        reqWeight += w;
+        reqCovered += w * coverage;
+      } else {
+        niceWeight += w;
+        niceCovered += w * coverage;
+      }
     }
 
-    // Get talent skills with proficiency (only visible skills for matching)
-    const talentSkillsResult = await pool.query(`
-      SELECT canonical_name, proficiency_level
-      FROM talent_skills
-      WHERE talent_id = $1 AND is_visible = true
-    `, [talentId]);
-
-    if (talentSkillsResult.rows.length === 0) {
-      return maxScore * 0.3;
-    }
-
-    return maxScore * 0.5;
+    const reqRatio = reqWeight > 0 ? reqCovered / reqWeight : 1;
+    const niceRatio = niceWeight > 0 ? niceCovered / niceWeight : 1;
+    const ratio = REQUIRED_SHARE * reqRatio + NICE_SHARE * niceRatio;
+    return Math.max(0, Math.min(maxScore, maxScore * ratio));
   } catch (error) {
     logger.error('Error calculating skills score:', error);
-    // Fallback: if talent has skills array, give partial credit
-    if (talentSkills && talentSkills.length > 0) {
-      return maxScore * 0.5;
-    }
     return maxScore * 0.3;
   }
 }
@@ -422,8 +470,7 @@ export async function calculateMatchingScore(
 
   const skillsScore = await calculateSkillsScore(
     application.talent_id,
-    application.opportunity_id,
-    talent.skills
+    application.opportunity_id
   );
 
   // Experience scoring removed - experience_level field is deprecated
@@ -505,7 +552,9 @@ export async function rankApplications(
         'region', t.region,
         'country', t.country,
         'bio', t.bio,
-        'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id AND is_visible = true),
+        'skills', (SELECT ARRAY_AGG(c.name ORDER BY ts.score DESC)
+                   FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+                   WHERE ts.talent_id = t.id AND ts.is_visible = true AND ts.decay_state = 'active'),
         'sectors', t.sectors,
         'remote_ready', t.remote_ready,
         'profile_tags', t.profile_tags,

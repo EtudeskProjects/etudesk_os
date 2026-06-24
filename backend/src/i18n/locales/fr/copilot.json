@@ -118,6 +118,8 @@
   "toolSkillAlreadyExists": "La compétence \"{{name}}\" existe déjà (niveau: {{level}}). Utilise l'action \"update\" pour changer le niveau.",
   "toolMaxSkillsReached": "Tu as atteint la limite de 100 compétences. Supprime ou modifie des compétences existantes depuis ton profil avant d'en ajouter de nouvelles.",
   "toolSkillAdded": "Compétence \"{{name}}\" ajoutée avec le niveau {{level}}.",
+  "toolSkillNotInCatalog": "\"{{name}}\" n'est pas dans le référentiel de compétences Etudesk.",
+  "toolSkillInsufficientEvidence": "Pas encore assez d'éléments pour enregistrer \"{{name}}\".",
   "toolSkillNotFound": "La compétence \"{{name}}\" n'existe pas. Utilise l'action \"add\" pour l'ajouter.",
   "toolSkillLevelUpdated": "Compétence \"{{name}}\" mise à jour au niveau {{level}}.",
   "toolFormatUnsupported": "Format non supporté: {{format}}. Formats valides: PDF, DOCX, XLS, CSV, TXT",

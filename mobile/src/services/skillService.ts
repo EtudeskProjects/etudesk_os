@@ -1,26 +1,55 @@
 /**
  * Skill Service
- * API calls for talent skills management
+ * API calls for talent skills management — catalog-constrained model.
  */
 
 import { api } from './api';
 import i18n from '../i18n';
+import { CatalogType, Level } from '../constants/skills';
 
+/** A talent's catalog-constrained competency (UserCompetency). */
 export interface TalentSkill {
   id: string;
-  proficiency_level: 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
-  context: string | null;
-  origin: 'declared' | 'inferred' | 'extracted';
-  canonical_name: string;
-  type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
+  competency_slug: string;
+  name: string;
+  name_fr?: string | null;
+  family?: string | null;
+  type: CatalogType;
+  level: Level;
+  score?: number;
+  confidence?: number;
+  origin: 'declared' | 'inferred' | 'extracted' | 'validated';
+  decay_state?: 'active' | 'stale' | 'archived';
+  context?: string[] | string | null;
   is_visible: boolean;
-  created_at: string | null;
+  created_at?: string | null;
 }
 
-export interface MergeReport {
-  merged: number;
-  kept_declared: number;
-  new_extracted: number;
+/** A catalog competency returned by the search endpoint. */
+export interface CatalogCompetency {
+  slug: string;
+  name: string;
+  name_fr?: string | null;
+  family: string;
+  type: CatalogType;
+}
+
+/** A skill tag attached to an opportunity / community / space. */
+export interface EntitySkillTag {
+  slug: string;
+  name: string;
+  name_fr?: string | null;
+  type: CatalogType;
+  family?: string | null;
+  requirement?: 'required' | 'nice_to_have'; // opportunities
+  role?: 'validates' | 'topic' | 'equipment'; // communities / spaces
+  min_level?: Level | null;
+}
+
+export interface DecayReport {
+  active: number;
+  stale: number;
+  archived: number;
 }
 
 export const getProficiencyLabel = (key: string): string =>
@@ -29,7 +58,7 @@ export const getProficiencyLabel = (key: string): string =>
 export const getSkillTypeLabel = (key: string): string =>
   i18n.t(`labels.skillTypes.${key}`);
 
-export const PROFICIENCY_LEVELS = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'] as const;
+export const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced', 'master'];
 
 const skillService = {
   async getMySkills(): Promise<TalentSkill[]> {
@@ -37,18 +66,34 @@ const skillService = {
     return response.data;
   },
 
-  async addSkill(input: {
-    skillName: string;
-    proficiencyLevel: string;
-    type: string;
-    context?: string;
-  }): Promise<{ id: string }> {
-    const response = await api.post<{ id: string }>('/api/skills/my', input);
+  /** Search the referential catalog (autocomplete for the skill picker). */
+  async searchCatalog(query: string): Promise<CatalogCompetency[]> {
+    const response = await api.get<CatalogCompetency[]>(
+      `/api/skills/catalog/search?q=${encodeURIComponent(query)}`
+    );
     return response.data;
   },
 
-  async updateSkill(id: string, proficiencyLevel: string): Promise<void> {
-    await api.put('/api/skills/my/' + id, { proficiencyLevel });
+  /**
+   * Declare a catalog skill. `skillOrLabel` is a catalog slug or a label that the
+   * backend resolves to one. On a non-catalog label the API returns 400 with
+   * `suggestions` — surfaced to the caller via the thrown error payload.
+   */
+  async addSkill(input: {
+    skillOrLabel: string;
+    level: Level;
+    context?: string;
+    is_visible?: boolean;
+  }): Promise<{ competency_slug: string; name: string; level: Level; confidence?: number }> {
+    const response = await api.post<{ competency_slug: string; name: string; level: Level; confidence?: number }>(
+      '/api/skills/my',
+      input
+    );
+    return response.data;
+  },
+
+  async updateSkill(id: string, level: Level): Promise<void> {
+    await api.put('/api/skills/my/' + id, { level });
   },
 
   async deleteSkill(id: string): Promise<void> {
@@ -57,11 +102,6 @@ const skillService = {
 
   async toggleVisibility(skillId: string, isVisible: boolean): Promise<void> {
     await api.patch('/api/skills/my/' + skillId + '/visibility', { is_visible: isVisible });
-  },
-
-  async mergeSkills(): Promise<MergeReport> {
-    const response = await api.post<MergeReport>('/api/skills/my/merge', {});
-    return response.data;
   },
 };
 

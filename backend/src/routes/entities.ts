@@ -234,16 +234,19 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (grouped.skill?.length) {
       queries.push(
         pool.query(
-          `SELECT id, canonical_name, proficiency_level, type, context, origin, is_visible, created_at
-           FROM talent_skills
-           WHERE id = ANY($1) AND talent_id = $2`,
+          `SELECT ts.id, ts.competency_slug AS slug, c.name, c.name_fr, c.family,
+                  c.type, ts.level, ts.score, ts.confidence,
+                  ts.context, ts.origin, ts.decay_state, ts.is_visible, ts.created_at
+           FROM talent_skills ts
+           JOIN competencies c ON c.slug = ts.competency_slug
+           WHERE ts.id = ANY($1) AND ts.talent_id = $2`,
           [grouped.skill, req.talentId]
         ).then(r => {
           for (const row of r.rows) {
             results[`skill:${row.id}`] = {
               ...row,
-              title: row.canonical_name,
-              subtitle: row.context?.slice(0, 80),
+              title: row.name_fr || row.name,
+              subtitle: Array.isArray(row.context) ? row.context.join(', ').slice(0, 80) : undefined,
             };
           }
         })

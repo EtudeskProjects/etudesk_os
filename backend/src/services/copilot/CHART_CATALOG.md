@@ -18,7 +18,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 ### #1 Radar competences personnel
 - **Skill** : autodiagnostic-talent, hr-skill-radar, weekly-recap
 - **Quand** : profil, bilan, "mes competences"
-- **Source** : `<skills>` contexte → grouper par canonical_name, mapper proficiency (BEGINNER=1, INTERMEDIATE=2, EXPERT=3, MASTER=4)
+- **Source** : `<skills>` contexte → grouper par competence, mapper le niveau (beginner=1, intermediate=2, advanced=3, master=4)
 - **Intelligence** : Top 5-8 skills max. Si < 3 skills → metric "Complete ton profil" au lieu du radar
 - **Format** :
 ```json
@@ -144,7 +144,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 ### #13 Distribution skills par niveau de maitrise
 - **Skill** : weekly-recap, autodiagnostic-talent
 - **Quand** : "mon bilan", diagnostic, recap
-- **Source** : `<skills>` contexte → count par proficiency_level
+- **Source** : `<skills>` contexte → count par niveau
 - **Intelligence** : Si trop de BEGINNER (>60%) → suggerer deep-dive. Si beaucoup d'EXPERT → suggerer exam pour MASTER.
 - **Format** :
 ```json

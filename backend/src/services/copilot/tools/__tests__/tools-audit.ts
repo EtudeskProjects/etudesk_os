@@ -418,34 +418,32 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
 
   const skillsTool = createManageSkillsTool(fixtures.talentId);
 
-  await runTest('manage_skills', 'Ajouter compétence Rust',
-    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'inferred' },
+  await runTest('manage_skills', 'Ajouter compétence catalogue (label)',
+    { skillQuery: 'Rust', level: 'beginner', origin: 'inferred' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'inferred', is_visible: true } }
+    { toolName: 'manage_skills', args: { skillQuery: 'Rust', level: 'beginner', origin: 'inferred' } }
   );
 
-  await runTest('manage_skills', 'Update compétence Rust -> INTERMEDIATE',
-    { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'inferred' },
+  await runTest('manage_skills', 'Monter niveau via axes A/C/I/T',
+    { skillQuery: 'Rust', level: 'advanced', origin: 'inferred', axisA: 3, axisC: 3, axisI: 3, axisT: 2 },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'inferred', is_visible: true } }
+    { toolName: 'manage_skills', args: { skillQuery: 'Rust', level: 'advanced', origin: 'inferred' } }
   );
 
-  await runTest('manage_skills', 'Ajouter doublon (edge)',
-    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'declared' },
+  await runTest('manage_skills', 'Label hors catalogue (edge) -> suggestions',
+    { skillQuery: 'CompetenceQuiExistePas_9999', level: 'advanced', origin: 'declared' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } }
-  );
-
-  await runTest('manage_skills', 'Update inexistant (edge)',
-    { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared' },
-    skillsTool,
-    { toolName: 'manage_skills', args: { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } },
+    { toolName: 'manage_skills', args: { skillQuery: 'CompetenceQuiExistePas_9999', level: 'advanced', origin: 'declared' } },
     { expectSuccess: false }
   );
 
-  // Cleanup
-  await pool.query(`DELETE FROM talent_skills WHERE talent_id = $1 AND canonical_name = 'Rust_Audit_Test'`, [fixtures.talentId]);
-  console.log('  🧹 Cleaned up Rust_Audit_Test');
+  // Cleanup (remove the Rust skill row added by this audit, by resolving its slug)
+  await pool.query(
+    `DELETE FROM talent_skills ts USING competencies c
+     WHERE ts.competency_slug = c.slug AND ts.talent_id = $1 AND lower(c.name) = 'rust'`,
+    [fixtures.talentId]
+  );
+  console.log('  🧹 Cleaned up Rust audit skill');
   console.log('');
 
   // ═══════════════════════════════════════════
@@ -580,7 +578,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
     { toolName: 'generate_document', output: { success: true, id: 'abc', metadata: { title: 'Mon CV' } }, args: {}, expected: 'Document généré', check: 'includes' },
     { toolName: 'generate_image', output: { success: true }, args: {}, expected: 'Image générée', check: 'exact' },
     { toolName: 'generate_diagram', output: { success: true }, args: {}, expected: 'Diagramme généré', check: 'exact' },
-    { toolName: 'manage_skills', output: { success: true }, args: { action: 'add', skillName: 'Python' }, expected: 'Ajoutée · Python', check: 'exact' },
+    { toolName: 'manage_skills', output: { success: true, skill: { name: 'Python', level: 'intermediate' } }, args: { skillQuery: 'Python' }, expected: 'Compétence · Python (intermediate)', check: 'exact' },
     { toolName: 'execute_action', output: { success: true }, args: { action: 'apply_opportunity' }, expected: 'Candidature soumise', check: 'exact' },
     { toolName: 'execute_action', output: { success: true }, args: { action: 'join_community' }, expected: 'Communauté rejointe', check: 'exact' },
     { toolName: 'execute_action', output: { success: true }, args: { action: 'book_space' }, expected: 'Espace réservé', check: 'exact' },

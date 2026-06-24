@@ -30,7 +30,7 @@ export const TalentProfileSchema = z.object({
   skills: z.array(
     z.object({
       name: z.string(),
-      level: z.enum(['beginner', 'intermediate', 'expert', 'master']).optional(),
+      level: z.enum(['beginner', 'intermediate', 'advanced', 'master']).optional(),
     })
   ).optional(),
 
@@ -579,9 +579,12 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   // Load skills + freshness + languages in parallel
   const [skillsResult, skillFreshnessResult, languagesResult] = await Promise.all([
     pool.query(
-      `SELECT canonical_name as name, proficiency_level
-       FROM talent_skills
-       WHERE talent_id = $1
+      `SELECT c.name AS name, c.name_fr AS name_fr, ts.competency_slug AS slug,
+              ts.level, ts.score
+       FROM talent_skills ts
+       JOIN competencies c ON c.slug = ts.competency_slug
+       WHERE ts.talent_id = $1 AND ts.decay_state <> 'archived'
+       ORDER BY ts.score DESC, c.name ASC
        LIMIT 50`,
       [talentId]
     ),
@@ -598,8 +601,8 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   ]);
 
   const skills = skillsResult.rows.map((s) => ({
-    name: s.name,
-    level: mapProficiencyLevel(s.proficiency_level),
+    name: s.name_fr || s.name,
+    level: mapProficiencyLevel(s.level),
   }));
 
   const languages = languagesResult.rows.map((l) => ({
@@ -1071,15 +1074,12 @@ function inferSectorsFromSkills(skillNames: string[]): string[] {
 
 // --- Helper Functions ---
 
-function mapProficiencyLevel(level: string | null): 'beginner' | 'intermediate' | 'expert' | 'master' | undefined {
-  if (!level) return undefined;
-  const mapping: Record<string, 'beginner' | 'intermediate' | 'expert' | 'master'> = {
-    BEGINNER: 'beginner',
-    INTERMEDIATE: 'intermediate',
-    EXPERT: 'expert',
-    MASTER: 'master',
-  };
-  return mapping[level.toUpperCase()];
+function mapProficiencyLevel(level: string | null): 'beginner' | 'intermediate' | 'advanced' | 'master' | undefined {
+  // talent_skills.level is always canonical lowercase (CHECK constraint).
+  if (level === 'beginner' || level === 'intermediate' || level === 'advanced' || level === 'master') {
+    return level;
+  }
+  return undefined;
 }
 
 function mapLanguageLevel(level: string | null): 'basic' | 'conversational' | 'fluent' | 'native' {

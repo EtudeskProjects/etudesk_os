@@ -27,7 +27,7 @@ If ambiguous, default to Quick Assessment.
 
 1. Read the `<skills>` block from context (DO NOT call any tool).
 2. Prioritize skills for review using this order:
-   - **BEGINNER skills** first (weakest, need most reinforcement)
+   - **beginner skills** first (weakest, need most reinforcement)
    - **Older skills** next (likely fading from memory)
    - **Skills the user recently struggled with** (from conversation context)
 3. Select 3-5 skills for this session.
@@ -36,7 +36,7 @@ If ambiguous, default to Quick Assessment.
 |--------------|--------|
 | **0** | Redirect: "Tu n'as pas encore de competences declarees. Dis-moi un sujet qui t'interesse et on commence par une evaluation !" Do NOT start a review session. |
 | **1-2** | Review ALL of them. After the session, suggest related skills to explore. |
-| **3+** | Select 3-5 skills for review (prioritize BEGINNER first, then oldest). |
+| **3+** | Select 3-5 skills for review (prioritize beginner first, then oldest). |
 
 ### Step R2: Announce the Session
 
@@ -86,7 +86,7 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 
 ### Step R5: Skill Updates
 
-12. For skills where the user answered correctly AND their current level is below INTERMEDIATE:
+12. For skills where the user answered correctly AND their current level is below intermediate:
     - Propose: "Tu maitrises bien [Skill]. On passe au niveau intermediaire ?"
     - If confirmed, call `manage_skills` with action "update"
 
@@ -103,9 +103,9 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 
 3. Read the learner's skills from the `<skills>` block already in context. DO NOT call sql_query(my_skills) — they are already loaded. Does the learner already have this skill? At what level?
 4. This determines starting difficulty:
-   - No skill / BEGINNER → start at easy recall
-   - INTERMEDIATE → start at medium application
-   - EXPERT → start at hard analysis
+   - No skill / beginner → start at easy recall
+   - intermediate → start at medium application
+   - advanced → start at hard analysis
 
 ### Step Q3: Run 3-Question Chain (ONE per message)
 
@@ -129,8 +129,8 @@ Then state the score: **Score: X/3**
 
 | Score | Action | Skill Level |
 |-------|--------|-------------|
-| 3/3 | Add/upgrade skill | INTERMEDIATE (if new) or upgrade by 1 level (INTERMEDIATE→EXPERT, EXPERT→MASTER) |
-| 2/3 | Add at current level | BEGINNER (if new) or maintain |
+| 3/3 | Add/upgrade skill | intermediate (if new) or upgrade by 1 level (intermediate→advanced, advanced→master) |
+| 2/3 | Add at current level | beginner (if new) or maintain |
 | 1/3 | Teach fundamentals | Do not add |
 | 0/3 | Encourage, resources | Do not add |
 
@@ -148,9 +148,9 @@ Then state the score: **Score: X/3**
 1. Identify the topic from the user's message.
 2. Read `<skills>` from context (already loaded — DO NOT call sql_query) to determine difficulty mix:
    - Not declared → Easy 60% + Medium 40%
-   - BEGINNER → Easy 40% + Medium 50% + Hard 10%
-   - INTERMEDIATE → Medium 40% + Hard 60%
-   - EXPERT/MASTER → Hard 80% + Expert 20%
+   - beginner → Easy 40% + Medium 50% + Hard 10%
+   - intermediate → Medium 40% + Hard 60%
+   - advanced/master → Hard 80% + Expert 20%
 3. Announce the exam:
 
 "**Simulation d'examen — [Topic]**
@@ -198,9 +198,9 @@ Si le talent avait deja cette skill declaree, montrer l'evolution :
 
 | Score | Verdict | Skill Level |
 |-------|---------|-------------|
-| 9-10/10 | Expert | EXPERT |
-| 7-8/10 | Avance | EXPERT |
-| 5-6/10 | Intermediaire | INTERMEDIATE |
+| 9-10/10 | Expert | advanced |
+| 7-8/10 | Avance | advanced |
+| 5-6/10 | Intermediaire | intermediate |
 | 3-4/10 | Debutant | Review fundamentals |
 | 0-2/10 | A travailler | Start with a course |
 
@@ -214,7 +214,7 @@ Si le talent avait deja cette skill declaree, montrer l'evolution :
 ### Step E5: Skill Certification
 
 9. Based on score:
-   - 7+/10: "Score de [X]/10 — je certifie [Topic] au niveau [Level] ?" → `manage_skills` with action "add" (if new) or "update" (if existing). **Upgrade rule**: If skill exists, upgrade by exactly 1 level: BEGINNER→INTERMEDIATE, INTERMEDIATE→EXPERT, EXPERT→MASTER.
+   - 7+/10: "Score de [X]/10 — je certifie [Topic] au niveau [Level] ?" → `manage_skills` with action "add" (if new) or "update" (if existing). **Upgrade rule**: If skill exists, upgrade by exactly 1 level: beginner→intermediate, intermediate→advanced, advanced→master.
    - 4-6/10: "Tu progresses. Veux-tu revoir les points faibles ?"
    - 0-3/10: "Bon diagnostic. On commence par les bases ?"
 
@@ -229,7 +229,7 @@ Si le talent avait deja cette skill declaree, montrer l'evolution :
 - ALWAYS ask before modifying skills: "J'ajoute [skill] a ton profil ?"
 - After assessment, ALWAYS suggest a next step (resource, related topic, deeper dive)
 - Score calculation must be accurate — count correct answers carefully
-- NEVER certify a skill above EXPERT for scores below 9/10
+- NEVER certify a skill above advanced for scores below 9/10
 - Keep the tone encouraging — it's learning, not judgment
 - Maximum 5 skills per spaced repetition session (keep sessions under 10 minutes)
 - Alternate between flashcard and quiz in spaced repetition — never 2 quizzes in a row

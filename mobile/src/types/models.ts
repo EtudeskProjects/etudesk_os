@@ -3,10 +3,25 @@
 
 import { BRAND_COLORS, LIGHT_COLORS } from '../constants/theme';
 import { getLabel } from '../utils/labels';
+import type { EntitySkillTag } from '../services/skillService';
+import type { CatalogType, Level } from '../constants/skills';
 
 export type UUID = string;
 export type ISODate = string;
 export type ISOTimestamp = string;
+
+/** A catalog competency on a talent profile (from /talents/:id). */
+export interface TalentProfileSkill {
+  slug?: string;
+  name: string;
+  name_fr?: string;
+  type?: CatalogType;
+  family?: string;
+  level?: Level;
+  score?: number;
+  confidence?: number;
+  origin?: string;
+}
 
 // --- Interfaces - User & Auth ---
 
@@ -348,6 +363,8 @@ export interface Opportunity {
   summary?: string;
   requirements?: string;
   nice_to_have?: string;
+  // Catalog skill tags (required / nice_to_have)
+  skills?: EntitySkillTag[];
   // Sectors
   sectors?: string[];
   // Compensation (min/max/frequency/currency only)
@@ -482,7 +499,9 @@ export interface Talent {
   sectors?: string[];
   profile_tags?: string[];
   goals?: string[];
-  skills?: string[];
+  // Catalog-constrained competencies (from /talents/:id). May arrive as plain
+  // names (string[]) from some endpoints or as rich rows from the profile.
+  skills?: Array<string | TalentProfileSkill>;
   languages?: string[];
   // === MÉTRIQUES PROFIL ===
   profile_views_count?: number;
@@ -514,6 +533,8 @@ export interface Community {
   name: string;
   type?: CommunityType;
   description?: string;
+  // Catalog skill tags the community validates / is about
+  skills?: EntitySkillTag[];
   // Visibility & Access
   visibility?: Visibility;
   access_type?: AccessType;

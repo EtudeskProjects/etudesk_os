@@ -26,6 +26,7 @@ import { rankApplications } from '../../services/matching.service';
 import { debitWalletForAction } from '../../services/billing/credit.service';
 import { getApplicationRecommendation } from '../../services/recommendation.service';
 import * as notificationService from '../../services/notification.service';
+import { validateFromOpportunity } from '../../services/skills/skill-validation.service';
 
 const router = Router();
 
@@ -357,6 +358,14 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
     if (oldStatus && oldStatus !== status) {
       notificationService.notifyApplicationStatusChanged(id, oldStatus, status)
         .catch(err => logger.error('Notification error:', err));
+    }
+
+    // Participation validation: being accepted to an opportunity validates the
+    // catalog skills linked to that opportunity (fire-and-forget, best-effort).
+    if (status === 'ACCEPTED' && oldStatus !== 'ACCEPTED') {
+      const app = result.rows[0];
+      validateFromOpportunity(app.talent_id, app.opportunity_id)
+        .catch(err => logger.error('Skill validation error:', err));
     }
 
     res.json({

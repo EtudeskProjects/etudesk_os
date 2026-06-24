@@ -35,6 +35,7 @@ import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import { getFileType, getFullFileUrl } from '../../../src/utils/file';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
+import { EntitySkillTags } from '../../../src/components/EntitySkillTags';
 import type { Opportunity, OpportunityAttachment } from '../../../src/types/models';
 import {
   getOpportunityTypeLabel,
@@ -516,6 +517,9 @@ export default function OpportunityDetailScreen() {
               </Text>
             </View>
           )}
+
+          {/* Catalog skill tags (required / nice_to_have) */}
+          <EntitySkillTags skills={opportunity.skills} title={t('opportunity.skillsRequired')} />
 
           {/* Attachments */}
           {(() => {

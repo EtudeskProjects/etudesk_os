@@ -190,7 +190,7 @@ export async function getApplicationRecommendation(applicationId: string): Promi
           'id', t.id,
           'first_name', t.first_name,
           'last_name', t.last_name,
-          'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id),
+          'skills', (SELECT ARRAY_AGG(c.name ORDER BY ts.score DESC) FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug WHERE ts.talent_id = t.id AND ts.decay_state = 'active'),
           'sectors', t.sectors,
           'city', t.city,
           'country', t.country,

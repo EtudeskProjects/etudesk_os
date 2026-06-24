@@ -125,7 +125,9 @@ Notes:
 
 - `TalentDocument`: typed, categorized, processing status, verification fields, soft-delete
 - `OrganizationDocument`: typed, categorized, processing status, soft-delete
-- `TalentSkill`: `canonical_name`, `type`, `proficiency_level`, `origin`, `document_id`, `context`, `is_visible`
+- `Competency` (catalog, single source of truth): `slug`, `family`, `type`, `name`, `name_fr`, `catalog_version`. Seeded from `datasets/etudesk_digital_skills` by `scripts/seed-competencies.ts`. `competency_edges` holds the prerequisite/co_occurrence/sibling graph.
+- `TalentSkill` (catalog-constrained UserCompetency): `competency_slug` (FK -> `competencies.slug`), `level`, `score`, `confidence`, `axis_a/c/i/t`, `origin`, `context[]`, `source_ref[]`, `inferred_from[]`, `decay_state`, `catalog_version`, `framework_version`, `is_visible`. Type/family are read from the joined catalog row. **Skills are catalog-constrained: only `competency_slug` values from the referential are valid — labels must be resolved to a slug (catalog.service) before any write.**
+- Entity skill tags (catalog only): `opportunity_skills` (required|nice_to_have, weight, min_level), `community_skills` (validates|topic), `space_skills` (validates|equipment).
 
 ### 2.7 Copilot and Planning
 
@@ -145,9 +147,10 @@ Notes:
 - `Sector`: `AGRICULTURE`, `RESOURCES`, `ENERGY`, `ENVIRONMENT`, `INDUSTRY`, `CONSTRUCTION`, `TRANSPORT`, `COMMERCE`, `FINANCE`, `DIGITAL`, `MEDIA`, `TOURISM`, `HEALTH`, `EDUCATION`, `PROFESSIONAL_SERVICES`, `RESEARCH`, `PUBLIC`, `SECURITY`, `SOCIAL_IMPACT`, `PERSONAL_SERVICES`, `CRAFTS`
 - `OpportunityStatus`: `DRAFT`, `OPEN`, `PAUSED`, `FILLED`, `EXPIRED`
 - `ApplicationStatus`: `SUBMITTED`, `IN_REVIEW`, `ACCEPTED`, `REJECTED`
-- `SkillType`: `KNOWLEDGE`, `SOFT_SKILL`, `HARD_SKILL`
-- `ProficiencyLevel`: `BEGINNER`, `INTERMEDIATE`, `EXPERT`, `MASTER`
-- `SkillOrigin`: `declared`, `inferred`, `extracted` (tool input), persisted in DB as lowercase by convention
+- `CompetencyType` (catalog `competencies.type`): `knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`
+- `Level` (talent_skills.level, EVALUATION_FRAMEWORK): `beginner`, `intermediate`, `advanced`, `master` (scores 1..4; `master` is only written by the evaluation service with confidence >= 0.80 and recent direct evidence)
+- `SkillOrigin`: `declared`, `inferred`, `extracted`, `validated` (validated = system-driven via participation; agents never set it)
+- `DecayState`: `active`, `stale`, `archived`
 
 ### 3.2 Community/Access values in current workflows
 
@@ -293,9 +296,10 @@ Declared but not implemented in switch-case:
 
 ### 7.4 Copilot skill management
 
-- `manage_skills` currently supports `add` and `update`
+- `manage_skills` resolves a skill LABEL to a catalog `competency_slug` (rejects non-catalog labels, returning suggestions). It writes through the evaluation service (framework guards apply) and is capped at `advanced` — the agent can never write `master`.
 - `remove` is not supported
-- If adding an existing skill with higher level, tool auto-upgrades
+- Stronger evaluations (higher score / direct evidence) win; weaker repeats do not downgrade.
+- Participation validates skills automatically: opportunity acceptance, community membership (soft skills), confirmed space/workshop bookings (hard skills/tools) — written with `origin='validated'`.
 
 ---
 

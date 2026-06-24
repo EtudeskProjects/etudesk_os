@@ -16,6 +16,7 @@ import {
   logger,
 } from '../../utils';
 import { communityPermissionService } from '../../services/community-permission.service';
+import { validateFromCommunity } from '../../services/skills/skill-validation.service';
 
 const router = Router();
 
@@ -646,6 +647,14 @@ router.put('/:id/members/:memberId', authMiddleware, async (req: AuthRequest, re
 
     if (result.rows.length === 0) {
       throw createNotFoundError('Member');
+    }
+
+    // Participation validation: an approved (ACTIVE) member gets the community's
+    // linked soft skills validated (fire-and-forget, best-effort).
+    if (status === 'ACTIVE') {
+      const m = result.rows[0];
+      validateFromCommunity(m.talent_id, m.community_id)
+        .catch((err) => logger.error('Skill validation error:', err));
     }
 
     res.json({ data: result.rows[0] });

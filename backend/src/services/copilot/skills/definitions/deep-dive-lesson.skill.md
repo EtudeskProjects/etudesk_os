@@ -37,9 +37,9 @@ If ambiguous, default to Direct Teaching.
 
 3. Silently set the lesson depth:
    - No skill declared → **Introduction level** (start from basics)
-   - BEGINNER → **Foundation level** (reinforce + extend)
-   - INTERMEDIATE → **Advanced level** (edge cases, patterns, best practices)
-   - EXPERT/MASTER → **Expert level** (architecture decisions, tradeoffs, advanced patterns)
+   - beginner → **Foundation level** (reinforce + extend)
+   - intermediate → **Advanced level** (edge cases, patterns, best practices)
+   - advanced/master → **Expert level** (architecture decisions, tradeoffs, advanced patterns)
 
 ### STEM Enhancement
 
@@ -249,11 +249,11 @@ Language is oral before written. Prioritize speaking exercises from the FIRST me
 ### Step L1: Assess Level & Set Context
 
 1. Identify the target language from the user's message.
-2. Check `<skills>` for existing language skills (e.g. "English — BEGINNER").
+2. Check `<skills>` for existing language skills (e.g. "English — beginner").
 3. Set difficulty:
-   - **BEGINNER**: Short phrases (3-5 words), basic vocabulary, greetings, introductions
-   - **INTERMEDIATE**: Full sentences, professional situations, grammar nuances
-   - **EXPERT**: Paragraphs, nuanced discussions, idiomatic expressions, debate
+   - **beginner**: Short phrases (3-5 words), basic vocabulary, greetings, introductions
+   - **intermediate**: Full sentences, professional situations, grammar nuances
+   - **advanced**: Paragraphs, nuanced discussions, idiomatic expressions, debate
 
 4. Greet briefly (1 sentence), then IMMEDIATELY launch the first vocal exercise.
 

@@ -241,7 +241,20 @@ router.get('/:id', async (req: Request, res: Response) => {
            WHERE op.opportunity_id = o.id),
           '[]'
         ) as organizations,
-        '[]'::json as skills,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'slug', os.competency_slug,
+            'name', c.name,
+            'name_fr', c.name_fr,
+            'type', c.type,
+            'family', c.family,
+            'requirement', os.requirement,
+            'min_level', os.min_level
+          ) ORDER BY os.requirement, c.name)
+           FROM opportunity_skills os JOIN competencies c ON c.slug = os.competency_slug
+           WHERE os.opportunity_id = o.id),
+          '[]'
+        ) as skills,
         (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count
       FROM opportunities o
       WHERE o.id = $1 AND o.deleted_at IS NULL

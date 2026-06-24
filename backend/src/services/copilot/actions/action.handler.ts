@@ -23,6 +23,7 @@ import {
   validateCreateSpace,
 } from './action.validators';
 import { resolveAgendaSchedule } from '../../agenda-scheduling.service';
+import { validateFromCommunity } from '../../skills/skill-validation.service';
 
 export interface ActionRequest {
   action: string;
@@ -133,6 +134,11 @@ export async function handleConfirmation(
         const message = tr('copilot:actionJoinCommunitySuccess', { name: validation.data?.name });
         await saveActionMessage(sessionId, message);
 
+        // Participation validation: active membership validates community soft skills.
+        validateFromCommunity(talentId, entityId).catch((err) =>
+          logger.error('Skill validation error:', err)
+        );
+
         logger.info(`[action.handler] Talent ${talentId} joined community ${entityId}`);
         return { success: true, message, data: { membershipId: result.rows[0].id } };
       }
@@ -183,6 +189,9 @@ export async function handleConfirmation(
                 `INSERT INTO community_members (talent_id, community_id, role, status, created_at)
                  VALUES ($1, $2, 'MEMBER', 'ACTIVE', NOW()) ON CONFLICT DO NOTHING`,
                 [talentId, inv.rows[0].community_id]
+              );
+              validateFromCommunity(talentId, inv.rows[0].community_id).catch((err) =>
+                logger.error('Skill validation error:', err)
               );
             }
           }

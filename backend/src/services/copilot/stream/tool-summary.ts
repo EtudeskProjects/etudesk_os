@@ -152,14 +152,12 @@ export function generateToolSummary(
       }
 
       case 'manage_skills': {
-        const action = args?.action as string | undefined;
-        const skill = args?.skillName as string | undefined;
-        const actionLabels: Record<string, string> = {
-          add: 'Ajoutée',
-          update: 'Mise à jour',
-        };
-        const actionLabel = action ? actionLabels[action] || action : 'Modifiée';
-        return skill ? `${actionLabel} · ${skill}` : `Compétence ${actionLabel.toLowerCase()}`;
+        // Prefer the resolved catalog skill name from the result; fall back to the query label.
+        const resolvedName = outputObj?.skill?.name as string | undefined;
+        const skill = resolvedName || (args?.skillQuery as string | undefined) || (args?.skillName as string | undefined);
+        const level = outputObj?.skill?.level as string | undefined;
+        if (skill) return level ? `Compétence · ${skill} (${level})` : `Compétence · ${skill}`;
+        return 'Compétence mise à jour';
       }
 
       case 'execute_action': {

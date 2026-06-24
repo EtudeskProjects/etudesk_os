@@ -16,9 +16,9 @@ const EXTRACTION_OUTPUT_CONTRACT = {
   description: 'Brève description',
   skills: [
     {
-      name: 'Nom avec casse naturelle (pas Title Case forcé)',
-      type: 'HARD_SKILL | SOFT_SKILL | KNOWLEDGE',
-      proficiency_hint: 'BEGINNER | INTERMEDIATE | EXPERT | MASTER',
+      name: 'Nom de compétence concret et standard (sera mappé au catalogue Etudesk)',
+      type: 'hard_skill | soft_skill | knowledge',
+      proficiency_hint: 'beginner | intermediate | advanced | master',
       context: "Contexte reliant la compétence à une expérience",
     },
   ],
@@ -52,8 +52,9 @@ ${toTOON(EXTRACTION_OUTPUT_CONTRACT)}
 Règles pour les compétences :
 - Noms avec casse naturelle (ex: "Gestion de projet", "Analyse de données", "Machine learning")
 - Acronymes en majuscules quand pertinent (ex: "IA", "R&D", "SQL", "API")
-- HARD_SKILL = technique/mesurable, SOFT_SKILL = comportemental, KNOWLEDGE = savoir théorique
-- Proficiency : MASTER (5+ ans), EXPERT (3-5 ans), INTERMEDIATE (1-3 ans), BEGINNER (< 1 an)
+- hard_skill = technique/mesurable, soft_skill = comportemental, knowledge = savoir théorique
+- Utilise des noms de compétences concrets et standards (ils sont ensuite mappés au référentiel Etudesk ; les noms trop vagues seront ignorés)
+- Proficiency : master (5+ ans), advanced (3-5 ans), intermediate (1-3 ans), beginner (< 1 an)
 - Context : relie à l'expérience/formation avec entité et période si possible
 - EXCLURE toute compétence déjà listée dans "Compétences DÉJÀ enregistrées" — ne retourne QUE les NOUVELLES compétences
 - Si une compétence existante a un nom similaire (variante, synonyme, traduction), ne pas la dupliquer
@@ -65,4 +66,4 @@ Règles pour les compétences :
 - JSON valide uniquement`;
 }
 
-export const EXTRACTION_SYSTEM_PROMPT = `Tu es un extracteur de métadonnées de documents professionnels et académiques. Réponds uniquement en JSON valide. Extrais les compétences avec une casse naturelle (pas de Title Case forcé), en gardant les acronymes pertinents en majuscules, avec les types HARD_SKILL, SOFT_SKILL ou KNOWLEDGE. Ne duplique JAMAIS une compétence déjà existante dans le profil du talent.`;
+export const EXTRACTION_SYSTEM_PROMPT = `Tu es un extracteur de métadonnées de documents professionnels et académiques. Réponds uniquement en JSON valide. Extrais les compétences avec une casse naturelle (pas de Title Case forcé), en gardant les acronymes pertinents en majuscules, avec les types hard_skill, soft_skill ou knowledge. Ne duplique JAMAIS une compétence déjà existante dans le profil du talent.`;

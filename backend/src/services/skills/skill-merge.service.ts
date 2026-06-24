@@ -1,79 +1,35 @@
 /**
- * Skill Merge Service
- * Merges extracted skills with declared skills for a talent
+ * Skill Reconciliation Service
+ *
+ * With the catalog-constrained model, a talent can hold at most one row per
+ * competency (UNIQUE(talent_id, competency_slug)), so the old declared/extracted
+ * de-duplication is enforced by the schema and the evaluation service. This entry
+ * point now just recomputes decay state for the talent's skills and reports the
+ * current active/stale split (kept for API compatibility with document.service).
  */
 
 import { pool } from '../database';
+import { applyDecay } from './evaluation.service';
 
 export interface MergeReport {
-  merged: number;
-  kept_declared: number;
-  new_extracted: number;
+  active: number;
+  stale: number;
+  archived: number;
 }
 
-const PROFICIENCY_ORDER = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'];
-
-/**
- * Merge extracted skills with declared skills for a talent.
- * - Declared always wins on origin
- * - Proficiency is upgraded if extracted is higher
- * - Extracted-only skills are kept as-is
- */
 export async function mergeExtractedSkills(talentId: string): Promise<MergeReport> {
-  const report: MergeReport = { merged: 0, kept_declared: 0, new_extracted: 0 };
-
-  // Get all talent_skills grouped by canonical_name
-  const result = await pool.query(
-    `SELECT id, canonical_name, proficiency_level, origin
-     FROM talent_skills
-     WHERE talent_id = $1
-     ORDER BY canonical_name, origin ASC`,
+  await applyDecay(talentId);
+  const { rows } = await pool.query(
+    `SELECT decay_state, COUNT(*)::int AS n
+     FROM talent_skills WHERE talent_id = $1 GROUP BY decay_state`,
     [talentId]
   );
-
-  // Group by canonical_name
-  const byName = new Map<string, Array<{ id: string; proficiency_level: string; origin: string }>>();
-  for (const row of result.rows) {
-    const list = byName.get(row.canonical_name) || [];
-    list.push(row);
-    byName.set(row.canonical_name, list);
+  const report: MergeReport = { active: 0, stale: 0, archived: 0 };
+  for (const r of rows) {
+    if (r.decay_state === 'active') report.active = r.n;
+    else if (r.decay_state === 'stale') report.stale = r.n;
+    else if (r.decay_state === 'archived') report.archived = r.n;
   }
-
-  for (const [, entries] of byName) {
-    if (entries.length <= 1) {
-      // No duplicates
-      if (entries[0].origin === 'extracted') {
-        report.new_extracted++;
-      } else {
-        report.kept_declared++;
-      }
-      continue;
-    }
-
-    // Multiple entries for same skill — find declared and extracted
-    const declared = entries.find((e) => e.origin === 'declared');
-    const extracted = entries.find((e) => e.origin === 'extracted');
-
-    if (declared && extracted) {
-      // Upgrade proficiency if extracted is higher
-      const declaredIdx = PROFICIENCY_ORDER.indexOf(declared.proficiency_level);
-      const extractedIdx = PROFICIENCY_ORDER.indexOf(extracted.proficiency_level);
-
-      if (extractedIdx > declaredIdx) {
-        await pool.query(
-          `UPDATE talent_skills SET proficiency_level = $1 WHERE id = $2`,
-          [extracted.proficiency_level, declared.id]
-        );
-      }
-
-      // Remove the extracted duplicate
-      await pool.query(`DELETE FROM talent_skills WHERE id = $1`, [extracted.id]);
-      report.merged++;
-    } else {
-      report.kept_declared++;
-    }
-  }
-
   return report;
 }
 

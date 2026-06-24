@@ -116,12 +116,12 @@ function formatEntity(type: string, data: Record<string, any>): string {
       break;
     }
     case 'skill': {
-      const title = data.title || data.canonical_name || data.name || '';
-      const level = data.proficiencyLevel || data.proficiency_level;
-      const skillType = data.skillType || data.type;
+      const title = data.title || data.name_fr || data.name || '';
+      const level = data.level;
+      const skillType = data.type;
       parts.push(title);
-      if (level) parts.push(getLabel('proficiencyLevels', level));
-      if (skillType) parts.push(getLabel('skillTypes', skillType));
+      if (level) parts.push(getLabel('proficiencyLevels', String(level)));
+      if (skillType) parts.push(getLabel('skillTypes', String(skillType)));
       break;
     }
     case 'notification': {

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react-native';
 	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 	import { useTheme } from '../../../src/hooks/useTheme';
+import { getSkillTypeConfig, getLevelConfig, skillDisplayName } from '../../../src/constants/skills';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { useI18n } from '../../../src/contexts/I18nContext';
@@ -63,21 +64,6 @@ const getLabelKeyFromData = (id: string, data: Array<{ id: string; labelKey: str
   return data.find((item) => item.id === id)?.labelKey || null;
 };
 
-// Skill type → base color + icon component (derive from current theme)
-const getSkillTypeConfig = (colors: any): Record<string, { color: string; icon: typeof Code }> => ({
-  HARD_SKILL: { color: colors.info, icon: Code },        // Savoir-faire
-  SOFT_SKILL: { color: colors.success, icon: Users },    // Savoir-etre
-  KNOWLEDGE: { color: colors.warning, icon: BookOpen },  // Savoir
-});
-
-// Proficiency → opacity multiplier for background gradient (darker = stronger)
-const PROFICIENCY_BG_OPACITY: Record<string, number> = {
-  BEGINNER: 0.08,
-  INTERMEDIATE: 0.15,
-  EXPERT: 0.25,
-  MASTER: 0.38,
-};
-
 const SKILLS_PREVIEW_COUNT = 10;
 
 const INVITE_ROLES = ['OWNER', 'ADMIN', 'MANAGER'];
@@ -86,10 +72,9 @@ export default function TalentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { isOrganizationSpace, selectedOrgId, selectedOrg } = useSpace();
   const { user } = useAuth();
-  const SKILL_TYPE_CONFIG = getSkillTypeConfig(colors);
 
   // Talent data
   const [talent, setTalent] = useState<Talent | null>(null);
@@ -407,7 +392,7 @@ export default function TalentDetailScreen() {
   }
 
   const createdAt = talent.created_at ? formatRelativeTime(talent.created_at) : null;
-  const skills: Array<{ name: string; type?: string; proficiency_level?: string }> =
+  const skills: Array<{ name: string; name_fr?: string; type?: string; level?: string }> =
     Array.isArray(talent.skills)
       ? talent.skills.map((s: any) => typeof s === 'string' ? { name: s } : s)
       : [];
@@ -536,20 +521,18 @@ export default function TalentDetailScreen() {
               </Text>
               <View style={styles.tagsContainer}>
                 {(showAllSkills ? skills : skills.slice(0, SKILLS_PREVIEW_COUNT)).map((skill, index) => {
-                  const config = skill.type ? SKILL_TYPE_CONFIG[skill.type] : null;
-                  const baseColor = config?.color || colors.gray500;
-                  const SkillIcon = config?.icon || BookOpen;
-                  const bgOpacity = skill.proficiency_level
-                    ? (PROFICIENCY_BG_OPACITY[skill.proficiency_level] || 0.10)
-                    : 0.10;
+                  const typeCfg = getSkillTypeConfig(skill.type, colors);
+                  const baseColor = typeCfg.color;
+                  const SkillIcon = typeCfg.Icon;
+                  const bg = skill.level ? getLevelConfig(skill.level, colors).bg : withOpacity(baseColor, 0.1);
                   return (
                     <View
                       key={index}
-                      style={[styles.skillPill, { backgroundColor: baseColor + Math.round(bgOpacity * 255).toString(16).padStart(2, '0') }]}
+                      style={[styles.skillPill, { backgroundColor: bg }]}
                     >
                       <SkillIcon size={COMPONENT.pill.iconSize} color={baseColor} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                       <Text style={[styles.skillPillText, { color: baseColor }]}>
-                        {skill.name}
+                        {skillDisplayName(skill, language)}
                       </Text>
                     </View>
                   );

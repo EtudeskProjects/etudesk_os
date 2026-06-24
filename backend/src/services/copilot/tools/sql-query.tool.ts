@@ -160,8 +160,8 @@ export function createSqlQueryTool(
                     t.city, t.country, t.email, t.phone, t.slug,
                     t.remote_ready, t.willing_to_relocate, t.sectors,
                     t.goals, t.profile_tags,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
-                     FROM talent_skills ts WHERE ts.talent_id = t.id) as skills
+                    (SELECT json_agg(json_build_object('slug', ts.competency_slug, 'name', c.name, 'name_fr', c.name_fr, 'level', ts.level, 'type', c.type, 'family', c.family, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at) ORDER BY ts.score DESC)
+                     FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug WHERE ts.talent_id = t.id AND ts.decay_state <> 'archived') as skills
              FROM talents t
              WHERE t.id = $1`,
               [talentId]
@@ -270,10 +270,10 @@ export function createSqlQueryTool(
 
           case 'my_skills': {
             const res = await pool.query(
-              `SELECT canonical_name as name, type, proficiency_level, origin
-             FROM talent_skills
-             WHERE talent_id = $1
-             ORDER BY canonical_name`,
+              `SELECT c.name as name, c.name_fr, c.type, ts.level, ts.score, ts.confidence, ts.origin, ts.decay_state
+             FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+             WHERE ts.talent_id = $1 AND ts.decay_state <> 'archived'
+             ORDER BY ts.score DESC, c.name`,
               [talentId]
             );
             return { skills: res.rows };
@@ -309,8 +309,8 @@ export function createSqlQueryTool(
             if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT om.role, om.created_at, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
-                     FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                    (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
+                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
              FROM organization_members om
              JOIN talents t ON om.talent_id = t.id
              WHERE om.organization_id = $1 AND om.status = 'ACTIVE'
@@ -329,8 +329,8 @@ export function createSqlQueryTool(
                     t.id as talent_id,
                     o.title as opportunity_title, o.id as opportunity_id,
                     o.summary as opportunity_summary, o.type as opportunity_type,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
-                     FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                    (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
+                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
              FROM opportunity_applications a
              JOIN opportunities o ON a.opportunity_id = o.id
              JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -506,8 +506,8 @@ export function createSqlQueryTool(
             SELECT a.talent_id as id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
                    t.bio, t.city, t.country, a.sources, a.first_interaction, a.last_interaction,
                    (otf.talent_id IS NOT NULL) as is_favorite,
-                   (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
-                    FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = a.talent_id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                   (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
+                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = a.talent_id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
             FROM aggregated a
             JOIN talents t ON a.talent_id = t.id
             LEFT JOIN organization_talent_favorites otf ON otf.talent_id = a.talent_id AND otf.organization_id = $1`;
@@ -561,8 +561,9 @@ export function createSqlQueryTool(
             );
             const [skillsRes, docsRes] = await Promise.all([
               pool.query(
-                `SELECT canonical_name as name, type, proficiency_level
-                 FROM talent_skills WHERE talent_id = $1 ORDER BY canonical_name`,
+                `SELECT c.name as name, c.name_fr, c.type, ts.level, ts.score, ts.origin
+                 FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+                 WHERE ts.talent_id = $1 AND ts.decay_state <> 'archived' ORDER BY ts.score DESC, c.name`,
                 [targetTalentId]
               ),
               pool.query(
@@ -656,13 +657,15 @@ export function createSqlQueryTool(
               JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL
               UNION SELECT DISTINCT om.talent_id FROM organization_members om WHERE om.organization_id = $1
             )
-            SELECT ts.canonical_name as skill_name, ts.proficiency_level, COUNT(*) as talent_count
+            SELECT c.name as skill_name, ts.level AS proficiency_level, COUNT(*) as talent_count
             FROM talent_skills ts
-            JOIN org_talent_ids oti ON ts.talent_id = oti.talent_id`;
+            JOIN competencies c ON c.slug = ts.competency_slug
+            JOIN org_talent_ids oti ON ts.talent_id = oti.talent_id
+            WHERE ts.decay_state <> 'archived'`;
             const queryParams: any[] = [orgId];
             let idx = 2;
-            if (skillType) { query += ` WHERE ts.type = $${idx}`; queryParams.push(skillType); idx++; }
-            query += ` GROUP BY ts.canonical_name, ts.proficiency_level ORDER BY talent_count DESC LIMIT $${idx}`;
+            if (skillType) { query += ` AND c.type = $${idx}`; queryParams.push(String(skillType).toLowerCase()); idx++; }
+            query += ` GROUP BY c.name, ts.level ORDER BY talent_count DESC LIMIT $${idx}`;
             queryParams.push(limit);
             const res = await pool.query(query, queryParams);
             return { skills: res.rows, chart_hint: 'bar' };

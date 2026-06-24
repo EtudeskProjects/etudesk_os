@@ -20,7 +20,8 @@ import { logger } from '../../utils';
 
 export interface ExtractedSkill {
   name: string;
-  type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL';
+  // Coarse hint only; the authoritative type comes from the resolved catalog competency.
+  type?: 'knowledge' | 'hard_skill' | 'soft_skill';
   proficiency_hint?: string;
   context?: string;
 }
@@ -173,13 +174,15 @@ export async function extractDocumentMetadata(
       const [talentObj, skillsResult] = await Promise.all([
         buildTalentObject(talentId, true),
         pool.query(
-          `SELECT canonical_name FROM talent_skills WHERE talent_id = $1 ORDER BY canonical_name`,
+          `SELECT c.name, c.name_fr
+           FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+           WHERE ts.talent_id = $1 ORDER BY c.name`,
           [talentId]
         ),
       ]);
       if (talentObj) talentContext = talentObjectToText(talentObj);
       if (skillsResult.rows.length > 0) {
-        existingSkills = skillsResult.rows.map((r: any) => r.canonical_name);
+        existingSkills = skillsResult.rows.map((r: any) => r.name_fr || r.name);
       }
     }
 

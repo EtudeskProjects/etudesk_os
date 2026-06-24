@@ -602,8 +602,12 @@
       "autoDiagnostic": "Auto-diagnostic",
       "autoDiagnosticPrompt": "Fais un auto-diagnostic de mes compétences",
       "modalTitle": "Ajouter une compétence",
-      "skillName": "Nom de la compétence",
+      "skillName": "Compétence",
       "skillNamePlaceholder": "Ex: React, Gestion de projet, Communication...",
+      "catalogSearchPlaceholder": "Rechercher dans le référentiel…",
+      "noCatalogMatch": "Aucune compétence correspondante dans le référentiel. Essaie une autre formulation.",
+      "selectedCatalog": "Compétence du référentiel sélectionnée ({{type}})",
+      "notInCatalogSuggestions": "Hors référentiel. Voulais-tu dire : {{names}} ?",
       "skillType": "Type de compétence *",
       "proficiency": "Niveau",
       "context": "Contexte",
@@ -611,7 +615,13 @@
       "origin": {
         "declared": "Déclaré",
         "extracted": "Extrait",
-        "inferred": "Inféré"
+        "inferred": "Inféré",
+        "validated": "Validé"
+      },
+      "decay": {
+        "active": "Actif",
+        "stale": "À rafraîchir",
+        "archived": "Archivé"
       },
       "timeAgo": {
         "weeks": "il y a {{count}} sem.",
@@ -1075,6 +1085,7 @@
     "startDate": "Début",
     "duration": "Durée",
     "niceToHave": "Atouts",
+    "skillsRequired": "Compétences requises",
     "aboutOrg": "À propos de {{name}}",
     "types": {
       "employment": "Emploi",
@@ -1244,6 +1255,7 @@
     }
   },
   "space": {
+    "skills": "Compétences pratiquées ici",
     "book": "Réserver",
     "visit": "Visiter",
     "about": "À propos",
@@ -1393,6 +1405,7 @@
     }
   },
   "community": {
+    "skills": "Compétences développées ici",
     "join": "Rejoindre",
     "joined": "Membre",
     "leave": "Quitter",
@@ -2948,16 +2961,23 @@
       "OTHER": "Autre"
     },
     "proficiencyLevels": {
-      "BEGINNER": "Débutant",
-      "INTERMEDIATE": "Intermédiaire",
-      "EXPERT": "Expert",
-      "MASTER": "Maître"
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé",
+      "master": "Maître"
     },
     "skillTypes": {
-      "KNOWLEDGE": "Connaissance",
-      "HARD_SKILL": "Compétence technique",
-      "SOFT_SKILL": "Compétence comportementale"
+      "knowledge": "Connaissance",
+      "hard_skill": "Compétence technique",
+      "soft_skill": "Compétence comportementale",
+      "tool_platform": "Outil / plateforme",
+      "language": "Langue"
     },
+    "skillRequirement": {
+      "required": "Requis",
+      "nice_to_have": "Atout"
+    },
+    "skillsSection": "Compétences",
     "orgDocumentTypes": {
       "POLICY": "Politique interne",
       "CONTRACT": "Contrat",

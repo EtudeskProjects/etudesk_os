@@ -304,20 +304,20 @@ Gestion des competences du talent (ajout/mise a jour).
 
 ```typescript
 {
-  action: z.string(),            // 'add' | 'update'
-  skillName: z.string(),
-  proficiencyLevel: z.string(),  // BEGINNER | INTERMEDIATE | EXPERT | MASTER
-  origin: z.string(),            // declared | inferred | extracted
-  type: z.string(),              // HARD_SKILL | SOFT_SKILL | KNOWLEDGE
+  skillQuery: z.string(),        // LABEL de competence, resolu au catalogue (slug ou nom)
+  level: z.enum(['beginner','intermediate','advanced','master']),
+  origin: z.enum(['declared','inferred','extracted']).default('inferred'),
+  axisA?: 1..4, axisC?: 1..4, axisI?: 1..4, axisT?: 1..4, // A/C/I/T optionnels
 }
 ```
 
 **Logique** :
-- `add` : verification doublon (case-insensitive, smart merge si nouveau niveau superieur), limite 100 skills
-- `update` : met a jour level + is_visible
-- Normalisation automatique des enums (uppercase/lowercase)
+- Resout `skillQuery` au catalogue Etudesk (`competencies`). Label non resolu -> `{ success:false, suggestions:[...] }`.
+- Ecrit via le service d'evaluation (EVALUATION_FRAMEWORK : axes A/C/I/T, confidence, guards).
+- **Plafonne a `advanced`** : l'agent ne peut jamais ecrire `master` (reserve a l'evaluation verifiee).
+- `origin='validated'` n'est jamais ecrit par l'agent (validation par participation uniquement).
 
-**Interdit** : suppression (pas d'action `remove`)
+**Interdit** : suppression (pas d'action `remove`), competences hors catalogue.
 
 ---
 

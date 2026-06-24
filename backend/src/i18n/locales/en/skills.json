@@ -1,8 +1,9 @@
 {
   "fetchError": "Error loading skills",
-  "invalidProficiencyLevel": "Invalid proficiency level",
-  "skillNameRequired": "skillName required",
-  "skillTypeRequired": "Skill type is required (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "invalidProficiencyLevel": "Invalid level (beginner, intermediate, advanced, master)",
+  "skillNameRequired": "A skill is required",
+  "notInCatalog": "\"{{name}}\" is not in the skills catalog",
+  "skillTypeRequired": "Skill type is required",
   "addError": "Error adding skill",
   "updateError": "Error updating skill",
   "isVisibleMustBeBoolean": "is_visible must be a boolean",

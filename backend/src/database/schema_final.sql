@@ -178,28 +178,84 @@ ALTER TABLE users ADD CONSTRAINT fk_users_talent
 CREATE INDEX idx_users_talent_id ON users(talent_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- SECTION 3: TALENT SKILLS (Self-contained, no separate skills table)
+-- SECTION 3: DIGITAL SKILLS REFERENTIAL (catalog backbone) + TALENT SKILLS
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- See migration 021_skills_referential.sql. The catalog (competencies +
+-- competency_edges) is the single source of truth, seeded from
+-- datasets/etudesk_digital_skills/*.csv by scripts/seed-competencies.ts.
+-- talent_skills is a catalog-constrained UserCompetency (EVALUATION_FRAMEWORK:
+-- A/C/I/T axes, confidence, decay, levels beginner|intermediate|advanced|master).
 
-CREATE TABLE talent_skills (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    canonical_name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    proficiency_level VARCHAR(20),
-    origin VARCHAR(50) DEFAULT 'declared',
-    document_id UUID,
-    context TEXT,
-    is_visible BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(talent_id, canonical_name)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE TABLE competencies (
+    slug            VARCHAR(120) PRIMARY KEY,
+    family          VARCHAR(40)  NOT NULL,
+    type            VARCHAR(20)  NOT NULL
+                    CHECK (type IN ('knowledge','hard_skill','soft_skill','tool_platform','language')),
+    name            VARCHAR(255) NOT NULL,
+    name_fr         VARCHAR(255) NOT NULL,
+    catalog_version VARCHAR(20)  NOT NULL,
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_talent_skills_talent_id ON talent_skills(talent_id);
-CREATE INDEX idx_talent_skills_canonical_name ON talent_skills(canonical_name);
-CREATE INDEX idx_talent_skills_type ON talent_skills(type);
-CREATE INDEX idx_talent_skills_talent ON talent_skills(talent_id, canonical_name);
+CREATE INDEX idx_competencies_family ON competencies(family);
+CREATE INDEX idx_competencies_type   ON competencies(type);
+CREATE UNIQUE INDEX uq_competencies_name    ON competencies (lower(name));
+CREATE UNIQUE INDEX uq_competencies_name_fr ON competencies (lower(name_fr));
+CREATE INDEX idx_competencies_name_trgm    ON competencies USING gin (lower(name)    gin_trgm_ops);
+CREATE INDEX idx_competencies_name_fr_trgm ON competencies USING gin (lower(name_fr) gin_trgm_ops);
+
+CREATE TRIGGER trigger_competencies_updated_at
+    BEFORE UPDATE ON competencies FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TABLE competency_edges (
+    from_slug VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE CASCADE,
+    to_slug   VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE CASCADE,
+    relation  VARCHAR(20)  NOT NULL CHECK (relation IN ('prerequisite','co_occurrence','sibling')),
+    strength  REAL         NOT NULL CHECK (strength > 0 AND strength <= 1),
+    reason    VARCHAR(64),
+    PRIMARY KEY (from_slug, to_slug)
+);
+
+CREATE INDEX idx_competency_edges_from ON competency_edges(from_slug);
+CREATE INDEX idx_competency_edges_to   ON competency_edges(to_slug);
+
+CREATE TABLE talent_skills (
+    id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    talent_id         UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
+    competency_slug   VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE RESTRICT,
+    level             VARCHAR(20) NOT NULL DEFAULT 'beginner'
+                      CHECK (level IN ('beginner','intermediate','advanced','master')),
+    score             SMALLINT NOT NULL DEFAULT 1 CHECK (score BETWEEN 1 AND 4),
+    confidence        REAL NOT NULL DEFAULT 0.30 CHECK (confidence >= 0 AND confidence <= 1),
+    axis_a            SMALLINT CHECK (axis_a BETWEEN 1 AND 4),
+    axis_c            SMALLINT CHECK (axis_c BETWEEN 1 AND 4),
+    axis_i            SMALLINT CHECK (axis_i BETWEEN 1 AND 4),
+    axis_t            SMALLINT CHECK (axis_t BETWEEN 1 AND 4),
+    origin            VARCHAR(20) NOT NULL DEFAULT 'declared'
+                      CHECK (origin IN ('declared','inferred','extracted','validated')),
+    context           TEXT[] NOT NULL DEFAULT '{}',
+    source_ref        TEXT[] NOT NULL DEFAULT '{}',
+    inferred_from     TEXT[] NOT NULL DEFAULT '{}',
+    evidence_hash     VARCHAR(64),
+    rationale         TEXT,
+    last_evidence_at  TIMESTAMP WITH TIME ZONE,
+    decay_state       VARCHAR(20) NOT NULL DEFAULT 'active'
+                      CHECK (decay_state IN ('active','stale','archived')),
+    catalog_version   VARCHAR(20)  NOT NULL,
+    framework_version VARCHAR(20)  NOT NULL,
+    evaluated_by      VARCHAR(64),
+    is_visible        BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (talent_id, competency_slug)
+);
+
+CREATE INDEX idx_talent_skills_talent        ON talent_skills(talent_id);
+CREATE INDEX idx_talent_skills_slug          ON talent_skills(competency_slug);
+CREATE INDEX idx_talent_skills_talent_active ON talent_skills(talent_id) WHERE decay_state = 'active';
 
 CREATE TRIGGER trigger_talent_skills_updated_at
     BEFORE UPDATE ON talent_skills FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -1545,6 +1601,39 @@ CREATE VIEW open_opportunities AS SELECT * FROM opportunities WHERE deleted_at I
 CREATE VIEW active_users AS SELECT u.*, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.avatar_url, t.slug as talent_slug FROM users u LEFT JOIN talents t ON u.talent_id = t.id WHERE u.deleted_at IS NULL AND u.is_active = TRUE;
 
 CREATE VIEW v_talent_documents AS SELECT td.id, td.talent_id, td.original_filename, td.stored_filename, td.mime_type, td.file_size, td.file_url, td.document_type, td.category, td.status, td.processing_error, td.processed_at, td.tags, td.title, td.description, td.is_public, td.is_verified, td.verified_at, td.verified_by, td.verification_notes, td.created_at, td.updated_at, t.first_name || ' ' || t.last_name AS talent_name, t.email AS talent_email FROM talent_documents td JOIN talents t ON t.id = td.talent_id WHERE td.deleted_at IS NULL;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- ENTITY ↔ CATALOG SKILL TAGS (only catalog slugs are taggable) — migration 021
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE opportunity_skills (
+    opportunity_id  UUID NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
+    competency_slug VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE RESTRICT,
+    requirement     VARCHAR(20) NOT NULL DEFAULT 'required'
+                    CHECK (requirement IN ('required','nice_to_have')),
+    weight          REAL NOT NULL DEFAULT 1.0 CHECK (weight > 0 AND weight <= 1),
+    min_level       VARCHAR(20) CHECK (min_level IN ('beginner','intermediate','advanced','master')),
+    PRIMARY KEY (opportunity_id, competency_slug)
+);
+CREATE INDEX idx_opportunity_skills_slug ON opportunity_skills(competency_slug);
+
+CREATE TABLE community_skills (
+    community_id    UUID NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
+    competency_slug VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE RESTRICT,
+    role            VARCHAR(20) NOT NULL DEFAULT 'validates'
+                    CHECK (role IN ('validates','topic')),
+    PRIMARY KEY (community_id, competency_slug)
+);
+CREATE INDEX idx_community_skills_slug ON community_skills(competency_slug);
+
+CREATE TABLE space_skills (
+    space_id        UUID NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
+    competency_slug VARCHAR(120) NOT NULL REFERENCES competencies(slug) ON DELETE RESTRICT,
+    role            VARCHAR(20) NOT NULL DEFAULT 'validates'
+                    CHECK (role IN ('validates','equipment')),
+    PRIMARY KEY (space_id, competency_slug)
+);
+CREATE INDEX idx_space_skills_slug ON space_skills(competency_slug);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- END OF SCHEMA

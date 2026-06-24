@@ -274,7 +274,17 @@ router.get('/slug/:slug', async (req: AuthRequest, res: Response) => {
     const { slug } = req.params;
 
     const result = await pool.query(
-      `SELECT * FROM spaces WHERE slug = $1 AND deleted_at IS NULL`,
+      `SELECT s.*,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'slug', sk.competency_slug, 'name', c.name, 'name_fr', c.name_fr,
+            'type', c.type, 'family', c.family, 'role', sk.role
+          ) ORDER BY c.name)
+           FROM space_skills sk JOIN competencies c ON c.slug = sk.competency_slug
+           WHERE sk.space_id = s.id),
+          '[]'
+        ) as skills
+       FROM spaces s WHERE s.slug = $1 AND s.deleted_at IS NULL`,
       [slug]
     );
 
@@ -303,7 +313,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
         o.headquarters_city as organization_city,
         (SELECT json_agg(sa.* ORDER BY sa.day_of_week, sa.start_time)
          FROM space_availabilities sa
-         WHERE sa.space_id = s.id AND sa.is_active = true) as availabilities
+         WHERE sa.space_id = s.id AND sa.is_active = true) as availabilities,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'slug', sk.competency_slug, 'name', c.name, 'name_fr', c.name_fr,
+            'type', c.type, 'family', c.family, 'role', sk.role
+          ) ORDER BY c.name)
+           FROM space_skills sk JOIN competencies c ON c.slug = sk.competency_slug
+           WHERE sk.space_id = s.id),
+          '[]'
+        ) as skills
       FROM spaces s
       LEFT JOIN organizations o ON s.organization_id = o.id
       WHERE (s.id::text = $1 OR s.slug = $1) AND s.deleted_at IS NULL

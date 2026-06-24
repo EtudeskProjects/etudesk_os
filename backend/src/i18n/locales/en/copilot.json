@@ -118,6 +118,8 @@
   "toolSkillAlreadyExists": "Skill \"{{name}}\" already exists (level: {{level}}). Use the \"update\" action to change the level.",
   "toolMaxSkillsReached": "You have reached the 100 skills limit. Remove or modify existing skills from your profile before adding new ones.",
   "toolSkillAdded": "Skill \"{{name}}\" added at {{level}} level.",
+  "toolSkillNotInCatalog": "\"{{name}}\" is not in the Etudesk skills catalog.",
+  "toolSkillInsufficientEvidence": "Not enough evidence yet to record \"{{name}}\".",
   "toolSkillNotFound": "Skill \"{{name}}\" does not exist. Use the \"add\" action to add it.",
   "toolSkillLevelUpdated": "Skill \"{{name}}\" updated to {{level}} level.",
   "toolFormatUnsupported": "Unsupported format: {{format}}. Valid formats: PDF, DOCX, XLS, CSV, TXT",

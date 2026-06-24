@@ -1,85 +1,49 @@
 /**
  * Skills Screen
- * Talent skills management - listing, adding, updating, and deleting
+ * Talent skills management — catalog-constrained (digital skills referential).
+ * Add via catalog autocomplete; each skill TYPE has its own icon (shared config).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   Modal,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Plus, Trash2, X, Gem, ChevronDown, Eye, EyeOff, Radar, Search } from 'lucide-react-native';
+import { RefreshControl } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors, COMPONENT, LAYOUT } from '../../src/constants/theme';
+import { Button, Chip, EmptyState, IconButton, Input, FooterNav, LoadingShimmer } from '../../src/components/ui';
+import { useTheme } from '../../src/hooks/useTheme';
+import skillService, { TalentSkill, CatalogCompetency } from '../../src/services/skillService';
 import {
-  Plus,
-  Trash2,
-  X,
-  BookOpen,
-  Cog,
-  Gem,
-  Users,
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Radar,
-} from 'lucide-react-native';
-	import { RefreshControl } from 'react-native';
-	import { ArrowLeft } from 'lucide-react-native';
-	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors, COMPONENT, LAYOUT } from '../../src/constants/theme';
-	import { Button, Chip, EmptyState, IconButton, Input, FooterNav, LoadingShimmer } from '../../src/components/ui';
-	import { useTheme } from '../../src/hooks/useTheme';
-	import skillService, {
-	  TalentSkill,
-	  getProficiencyLabel,
-	  getSkillTypeLabel,
-  PROFICIENCY_LEVELS,
-} from '../../src/services/skillService';
+  CATALOG_TYPES,
+  LEVELS,
+  getSkillTypeConfig,
+  getLevelConfig,
+  getOriginConfig,
+  getDecayConfig,
+  skillDisplayName,
+  normalizeType,
+  type Level,
+} from '../../src/constants/skills';
 import { useAlert } from '../../src/contexts/AlertContext';
 import { useI18n } from '../../src/contexts/I18nContext';
-
-// Proficiency colors - Luxe Africain design system
-const getProficiencyColors = (colors: ThemeColors): Record<string, string> => ({
-  BEGINNER: colors.gray500,      // Neutral
-  INTERMEDIATE: colors.info,     // Warm taupe
-  EXPERT: colors.warning,        // Warm amber
-  MASTER: colors.success,        // Forest green
-});
-
-// ORIGIN_LABELS moved to i18n: settings.skills.origin.*
-
-// formatRelativeDate is now inside the component to access t()
-
-
-function getTypeIcon(type: string) {
-  switch (type) {
-    case 'KNOWLEDGE':
-      return BookOpen;
-    case 'HARD_SKILL':
-      return Cog;
-    case 'SOFT_SKILL':
-      return Users;
-    default:
-      return Gem;
-  }
-}
 
 export default function SkillsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const alerts = useAlert();
 
-  const ORIGIN_LABELS: Record<string, string> = {
-    declared: t('settings.skills.origin.declared'),
-    extracted: t('settings.skills.origin.extracted'),
-    inferred: t('settings.skills.origin.inferred'),
-  };
-
-  const formatRelativeDate = (dateStr: string | null): string | null => {
+  const formatRelativeDate = (dateStr?: string | null): string | null => {
     if (!dateStr) return null;
     const now = new Date();
     const date = new Date(dateStr);
@@ -89,7 +53,6 @@ export default function SkillsScreen() {
     const diffD = Math.floor(diffH / 24);
     const diffW = Math.floor(diffD / 7);
     const diffM = Math.floor(diffD / 30);
-
     if (diffMin < 1) return t('date.justNow');
     if (diffMin < 60) return t('date.minutesAgo', { minutes: diffMin });
     if (diffH < 24) return t('date.hoursAgo', { hours: diffH });
@@ -103,15 +66,18 @@ export default function SkillsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [skills, setSkills] = useState<TalentSkill[]>([]);
-
-  // Add skill modal
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedProficiency, setSelectedProficiency] = useState<string>('INTERMEDIATE');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [skillName, setSkillName] = useState('');
-  const [skillContext, setSkillContext] = useState('');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
+  // Add skill modal — catalog autocomplete
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<CatalogCompetency[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<CatalogCompetency | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<Level>('intermediate');
+  const [skillContext, setSkillContext] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadSkills = useCallback(async () => {
     try {
@@ -121,8 +87,7 @@ export default function SkillsScreen() {
       if (__DEV__) console.error('Error loading skills:', error);
       void alerts.alert(t('common.error'), t('settings.skills.loadError'));
     }
-  }, []);
-  const alerts = useAlert();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const load = async () => {
@@ -133,42 +98,79 @@ export default function SkillsScreen() {
     load();
   }, [loadSkills]);
 
+  // Debounced catalog search
+  useEffect(() => {
+    if (selected && query === skillDisplayName(selected, language)) return; // already chosen
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const res = await skillService.searchCatalog(q);
+        setResults(res);
+      } catch {
+        setResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [query, selected, language]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await loadSkills();
     setIsRefreshing(false);
   };
 
+  const closeModal = () => {
+    setShowAddModal(false);
+    setQuery('');
+    setResults([]);
+    setSelected(null);
+    setSelectedLevel('intermediate');
+    setSkillContext('');
+  };
+
+  const handlePickCatalog = (c: CatalogCompetency) => {
+    setSelected(c);
+    setQuery(skillDisplayName(c, language));
+    setResults([]);
+  };
+
   const handleAddSkill = async () => {
-    if (!skillName.trim()) return;
-    if (!selectedType) {
-      void alerts.alert(t('settings.skills.typeRequired'), t('settings.skills.typeRequiredMessage'));
-      return;
-    }
+    if (!selected) return;
+    setSubmitting(true);
     try {
       await skillService.addSkill({
-        skillName: skillName.trim(),
-        proficiencyLevel: selectedProficiency,
-        type: selectedType,
+        skillOrLabel: selected.slug,
+        level: selectedLevel,
         ...(skillContext.trim() ? { context: skillContext.trim() } : {}),
       });
       closeModal();
       await loadSkills();
     } catch (error: any) {
-      void alerts.alert(t('common.error'), error?.message || t('settings.skills.addError'));
+      const suggestions = error?.data?.suggestions || error?.response?.data?.suggestions;
+      const msg = suggestions?.length
+        ? t('settings.skills.notInCatalogSuggestions', { names: suggestions.map((s: any) => s.name_fr || s.name).join(', ') })
+        : error?.message || t('settings.skills.addError');
+      void alerts.alert(t('common.error'), msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const closeModal = () => {
-    setShowAddModal(false);
-    setSkillName('');
-    setSelectedType('');
-    setSelectedProficiency('INTERMEDIATE');
-    setSkillContext('');
-  };
-
   const handleDelete = (skill: TalentSkill) => {
-    void alerts.showAlert({ title: t('settings.skills.deleteTitle'), message: t('settings.skills.deleteConfirm', { name: skill.canonical_name }), buttons: [
+    void alerts.showAlert({
+      title: t('settings.skills.deleteTitle'),
+      message: t('settings.skills.deleteConfirm', { name: skillDisplayName(skill, language) }),
+      buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
@@ -182,10 +184,9 @@ export default function SkillsScreen() {
             }
           },
         },
-      ] });
+      ],
+    });
   };
-
-  const proficiencyColors = getProficiencyColors(colors);
 
   const handleToggleVisibility = async (skill: TalentSkill) => {
     try {
@@ -197,9 +198,12 @@ export default function SkillsScreen() {
   };
 
   const renderSkill = (skill: TalentSkill) => {
-    const profColor = proficiencyColors[skill.proficiency_level] || colors.textSecondary;
-    const originLabel = ORIGIN_LABELS[skill.origin] || skill.origin;
-    const contextText = skill.context;
+    const levelCfg = getLevelConfig(skill.level, colors);
+    const originCfg = getOriginConfig(skill.origin, colors);
+    const decayCfg = getDecayConfig(skill.decay_state, colors);
+    const typeCfg = getSkillTypeConfig(skill.type, colors);
+    const OriginIcon = originCfg.Icon;
+    const contextText = Array.isArray(skill.context) ? skill.context.join(' · ') : skill.context || '';
     const relativeDate = formatRelativeDate(skill.created_at);
     const VisibilityIcon = skill.is_visible ? Eye : EyeOff;
 
@@ -212,51 +216,50 @@ export default function SkillsScreen() {
           !skill.is_visible && { opacity: 0.5 },
         ]}
       >
-	        {/* Action buttons */}
-	        <View style={styles.cardActions}>
-	          <IconButton
-	            onPress={() => handleToggleVisibility(skill)}
-	            icon={<VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel={skill.is_visible ? t('settings.skills.hideSkill') : t('settings.skills.showSkill')}
-	            size="sm"
-	            variant="ghost"
-	            style={styles.actionButton}
-	          />
-	          <IconButton
-	            onPress={() => handleDelete(skill)}
-	            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel={t('settings.skills.deleteTitle')}
-	            size="sm"
-	            variant="ghost"
-	            style={styles.actionButton}
-	          />
-	        </View>
-
-        {/* Skill name */}
-        <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
-          {skill.canonical_name}
-        </Text>
-
-        {/* Tags row: proficiency + origin */}
-        <View style={styles.tagsRow}>
-          <View style={[styles.tag, { backgroundColor: withOpacity(profColor, OPACITY[20]), borderColor: profColor }]}>
-            <Text style={[styles.tagText, { color: profColor }]}>
-              {getProficiencyLabel(skill.proficiency_level)}
-            </Text>
-          </View>
-          <View style={[styles.tag, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[15]), borderColor: withOpacity(colors.textSecondary, OPACITY[30]) }]}>
-            <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-              {originLabel}
-            </Text>
-          </View>
-          {relativeDate && (
-            <Text style={[styles.dateText, { color: colors.textDisabled }]}>
-              {relativeDate}
-            </Text>
-          )}
+        <View style={styles.cardActions}>
+          <IconButton
+            onPress={() => handleToggleVisibility(skill)}
+            icon={<VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={skill.is_visible ? t('settings.skills.hideSkill') : t('settings.skills.showSkill')}
+            size="sm"
+            variant="ghost"
+            style={styles.actionButton}
+          />
+          <IconButton
+            onPress={() => handleDelete(skill)}
+            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('settings.skills.deleteTitle')}
+            size="sm"
+            variant="ghost"
+            style={styles.actionButton}
+          />
         </View>
 
-        {/* Context */}
+        {/* Skill name with type icon */}
+        <View style={styles.skillNameRow}>
+          <typeCfg.Icon size={16} color={typeCfg.color} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
+            {skillDisplayName(skill, language)}
+          </Text>
+        </View>
+
+        {/* Tags row: level + origin (+ decay) */}
+        <View style={styles.tagsRow}>
+          <View style={[styles.tag, { backgroundColor: levelCfg.bg, borderColor: levelCfg.color }]}>
+            <Text style={[styles.tagText, { color: levelCfg.color }]}>{t(levelCfg.labelKey)}</Text>
+          </View>
+          <View style={[styles.tag, styles.originTag, { backgroundColor: withOpacity(originCfg.color, OPACITY[15]), borderColor: withOpacity(originCfg.color, OPACITY[30]) }]}>
+            <OriginIcon size={11} color={originCfg.color} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.tagText, { color: originCfg.color }]}>{t(originCfg.labelKey)}</Text>
+          </View>
+          {decayCfg.show && (
+            <View style={[styles.tag, { backgroundColor: withOpacity(decayCfg.color, OPACITY[15]), borderColor: decayCfg.color }]}>
+              <Text style={[styles.tagText, { color: decayCfg.color }]}>{t(decayCfg.labelKey)}</Text>
+            </View>
+          )}
+          {relativeDate && <Text style={[styles.dateText, { color: colors.textDisabled }]}>{relativeDate}</Text>}
+        </View>
+
         {contextText ? (
           <Text style={[styles.contextText, { color: colors.textSecondary }]} numberOfLines={2}>
             {contextText}
@@ -266,30 +269,17 @@ export default function SkillsScreen() {
     );
   };
 
-  // Group skills by type
-  const sortByRecent = (a: TalentSkill, b: TalentSkill) =>
-    new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-
-  const groupedSkills = {
-    HARD_SKILL: skills.filter((s) => s.type === 'HARD_SKILL').sort(sortByRecent),
-    KNOWLEDGE: skills.filter((s) => s.type === 'KNOWLEDGE').sort(sortByRecent),
-    SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL').sort(sortByRecent),
-  };
+  const sortByScore = (a: TalentSkill, b: TalentSkill) => (b.score || 0) - (a.score || 0);
 
   const handleAutoDiagnostic = () => {
     router.push({
       pathname: '/(tabs)/assistant',
-      params: {
-        mode: 'study',
-        prompt: t('settings.skills.autoDiagnosticPrompt'),
-        focusInput: 'true',
-      },
+      params: { mode: 'study', prompt: t('settings.skills.autoDiagnosticPrompt'), focusInput: 'true' },
     });
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
       <View style={styles.header}>
         <IconButton
           onPress={() => router.back()}
@@ -309,9 +299,7 @@ export default function SkillsScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
         >
           {skills.length === 0 ? (
             <EmptyState
@@ -335,7 +323,6 @@ export default function SkillsScreen() {
             />
           ) : (
             <>
-              {/* Add Button */}
               <View style={styles.addSection}>
                 <Button
                   title={t('settings.skills.addSkill')}
@@ -346,138 +333,149 @@ export default function SkillsScreen() {
                 />
               </View>
 
-              {/* Skills grouped by type */}
-              {Object.entries(groupedSkills).map(([type, typeSkills]) => {
+              {CATALOG_TYPES.map((type) => {
+                const typeSkills = skills.filter((s) => normalizeType(s.type) === type).sort(sortByScore);
                 if (typeSkills.length === 0) return null;
-	                const TypeIcon = getTypeIcon(type);
-	                const isCollapsed = collapsedSections[type] ?? false;
-	                return (
-	                  <View key={type} style={styles.section}>
-	                    <Pressable
-	                      style={styles.sectionHeader}
-	                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
-	                      accessibilityRole="button"
-	                      accessibilityLabel={t('settings.skills.toggleSection', { section: getSkillTypeLabel(type) || type })}
-	                    >
-	                      <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-	                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
-	                        {getSkillTypeLabel(type) || type} ({typeSkills.length})
-	                      </Text>
+                const typeCfg = getSkillTypeConfig(type, colors);
+                const isCollapsed = collapsedSections[type] ?? false;
+                return (
+                  <View key={type} style={styles.section}>
+                    <Pressable
+                      style={styles.sectionHeader}
+                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('settings.skills.toggleSection', { section: t(typeCfg.labelKey) })}
+                    >
+                      <typeCfg.Icon size={14} color={typeCfg.color} strokeWidth={ICON.strokeWidth} />
+                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
+                        {t(typeCfg.labelKey)} ({typeSkills.length})
+                      </Text>
                       <ChevronDown
                         size={16}
                         color={colors.textSecondary}
                         strokeWidth={ICON.strokeWidth}
-	                        style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
-	                      />
-	                    </Pressable>
-	                    {!isCollapsed && typeSkills.map(renderSkill)}
-	                  </View>
-	                );
-	              })}
+                        style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
+                      />
+                    </Pressable>
+                    {!isCollapsed && typeSkills.map(renderSkill)}
+                  </View>
+                );
+              })}
             </>
           )}
         </ScrollView>
       )}
 
-	      {/* Auto-diagnostic Button — hidden when no skills */}
-	      {skills.length > 0 && (
-	        <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
-	          <Button
-	            title={t('settings.skills.autoDiagnostic')}
-	            onPress={handleAutoDiagnostic}
-	            fullWidth
-	            icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-	            iconPosition="left"
-	            style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
-	            textStyle={styles.diagnosticButtonText}
-	          />
-	        </View>
-	      )}
+      {skills.length > 0 && (
+        <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
+          <Button
+            title={t('settings.skills.autoDiagnostic')}
+            onPress={handleAutoDiagnostic}
+            fullWidth
+            icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            iconPosition="left"
+            style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
+            textStyle={styles.diagnosticButtonText}
+          />
+        </View>
+      )}
 
       <FooterNav activeTab="home" />
 
-	      {/* Add Skill Modal */}
-	      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
-	        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-	          {/* Modal Header */}
-	          <View style={styles.modalHeader}>
-	            <IconButton
-	              onPress={closeModal}
-	              icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	              accessibilityLabel={t('common.close')}
-	              size="sm"
-	              variant="ghost"
-	            />
-	            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.skills.modalTitle')}</Text>
-	            <View style={{ width: 24 }} />
-	          </View>
+      {/* Add Skill Modal — catalog autocomplete */}
+      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+          <View style={styles.modalHeader}>
+            <IconButton
+              onPress={closeModal}
+              icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel={t('common.close')}
+              size="sm"
+              variant="ghost"
+            />
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.skills.modalTitle')}</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
           <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
-            {/* Skill Name */}
+            {/* Catalog search */}
             <View style={styles.modalSection}>
               <Input
                 label={t('settings.skills.skillName')}
-                placeholder={t('settings.skills.skillNamePlaceholder')}
-                value={skillName}
-                onChangeText={setSkillName}
+                placeholder={t('settings.skills.catalogSearchPlaceholder')}
+                value={query}
+                onChangeText={(text) => {
+                  setQuery(text);
+                  if (selected) setSelected(null);
+                }}
                 autoFocus
+                leftIcon={<Search size={ICON.size.sm} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
+                rightIcon={searching ? <ActivityIndicator size="small" color={colors.textDisabled} /> : undefined}
               />
+
+              {/* Results dropdown */}
+              {results.length > 0 && !selected && (
+                <View style={[styles.results, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+                  {results.map((c) => {
+                    const cfg = getSkillTypeConfig(c.type, colors);
+                    return (
+                      <Pressable
+                        key={c.slug}
+                        style={[styles.resultRow, { borderBottomColor: colors.borderColor }]}
+                        onPress={() => handlePickCatalog(c)}
+                      >
+                        <cfg.Icon size={16} color={cfg.color} strokeWidth={ICON.strokeWidth} />
+                        <Text style={[styles.resultName, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {skillDisplayName(c, language)}
+                        </Text>
+                        <Text style={[styles.resultType, { color: cfg.color }]}>{t(cfg.labelKey)}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+
+              {query.trim().length >= 2 && !searching && results.length === 0 && !selected && (
+                <Text style={[styles.noResults, { color: colors.textDisabled }]}>
+                  {t('settings.skills.noCatalogMatch')}
+                </Text>
+              )}
+
+              {selected && (
+                <View style={[styles.selectedHint, { backgroundColor: withOpacity(getSkillTypeConfig(selected.type, colors).color, OPACITY[15]) }]}>
+                  <Text style={[styles.selectedHintText, { color: colors.textSecondary }]}>
+                    {t('settings.skills.selectedCatalog', { type: t(getSkillTypeConfig(selected.type, colors).labelKey) })}
+                  </Text>
+                </View>
+              )}
             </View>
 
-	            {/* Type Selector */}
-	            <View style={styles.modalSection}>
-	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>{t('settings.skills.skillType')}</Text>
-	              <View style={styles.chipRow}>
-	                {(['KNOWLEDGE', 'SOFT_SKILL', 'HARD_SKILL'] as const).map((key) => {
-	                  const isActive = selectedType === key;
-	                  const TypeIcon = getTypeIcon(key);
-	                  return (
-	                    <Chip
-	                      key={key}
-	                      onPress={() => setSelectedType(key)}
-	                      label={getSkillTypeLabel(key)}
-	                      selected={isActive}
-	                      leftIcon={<TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
-	                      style={[
-	                        styles.chip,
-	                        {
-	                          backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
-	                          borderColor: isActive ? colors.primary : 'transparent',
-	                        },
-	                      ]}
-	                      textStyle={[styles.chipText, { color: isActive ? colors.primary : colors.textDisabled }]}
-	                    />
-	                  );
-	                })}
-	              </View>
-	            </View>
-
-            {/* Proficiency Selector */}
-	            <View style={styles.modalSection}>
-	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>{t('settings.skills.proficiency')}</Text>
-	              <View style={styles.chipRow}>
-	                {PROFICIENCY_LEVELS.map((level) => {
-	                  const isActive = selectedProficiency === level;
-	                  const levelColor = proficiencyColors[level];
-	                  return (
-	                    <Chip
-	                      key={level}
-	                      onPress={() => setSelectedProficiency(level)}
-	                      label={getProficiencyLabel(level)}
-	                      selected={isActive}
-	                      style={[
-	                        styles.chip,
-	                        {
-	                          backgroundColor: isActive ? withOpacity(levelColor, OPACITY[20]) : colors.gray100,
-	                          borderColor: isActive ? levelColor : 'transparent',
-	                        },
-	                      ]}
-	                      textStyle={[styles.chipText, { color: isActive ? levelColor : colors.textDisabled }]}
-	                    />
-	                  );
-	                })}
-	              </View>
-	            </View>
+            {/* Level Selector */}
+            <View style={styles.modalSection}>
+              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>{t('settings.skills.proficiency')}</Text>
+              <View style={styles.chipRow}>
+                {LEVELS.map((level) => {
+                  const isActive = selectedLevel === level;
+                  const cfg = getLevelConfig(level, colors);
+                  return (
+                    <Chip
+                      key={level}
+                      onPress={() => setSelectedLevel(level)}
+                      label={t(cfg.labelKey)}
+                      selected={isActive}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: isActive ? withOpacity(cfg.color, OPACITY[20]) : colors.gray100,
+                          borderColor: isActive ? cfg.color : 'transparent',
+                        },
+                      ]}
+                      textStyle={[styles.chipText, { color: isActive ? cfg.color : colors.textDisabled }]}
+                    />
+                  );
+                })}
+              </View>
+            </View>
 
             {/* Context field */}
             <View style={styles.modalSection}>
@@ -489,19 +487,11 @@ export default function SkillsScreen() {
                 multiline
                 numberOfLines={3}
               />
-              <Text style={[styles.charCounter, { color: colors.textDisabled }]}>
-                {skillContext.length}/200
-              </Text>
+              <Text style={[styles.charCounter, { color: colors.textDisabled }]}>{skillContext.length}/200</Text>
             </View>
 
-            {/* Add Button */}
             <View style={styles.modalSection}>
-              <Button
-                title={t('common.add')}
-                onPress={handleAddSkill}
-                fullWidth
-                disabled={!skillName.trim() || !selectedType}
-              />
+              <Button title={t('common.add')} onPress={handleAddSkill} fullWidth disabled={!selected || submitting} loading={submitting} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -519,7 +509,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  backButton: { width: LAYOUT.inputHeightSm, height: LAYOUT.inputHeightSm, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   headerSpacer: { width: LAYOUT.inputHeightSm },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -528,94 +517,49 @@ const styles = StyleSheet.create({
   addSection: { marginBottom: SPACING.lg },
 
   section: { marginBottom: SPACING.lg },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.sm,
-  },
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginBottom: SPACING.sm },
+  sectionTitle: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  // Skill Card
-  skillCard: {
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.sm,
-  },
-  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, paddingRight: 72 },
-  skillType: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
+  skillCard: { padding: SPACING.md, borderWidth: BORDER.width.thin, borderRadius: BORDER.radius.md, marginBottom: SPACING.sm },
+  skillNameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingRight: 72 },
+  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, flexShrink: 1 },
 
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginTop: SPACING.sm,
-  },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.sm },
   tag: {
     paddingVertical: COMPONENT.pill.paddingVertical,
     paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderRadius: COMPONENT.pill.borderRadius,
     borderWidth: BORDER.width.thin,
   },
-  tagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
+  originTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  tagText: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
 
-  contextText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: SPACING.xs,
-    lineHeight: 16,
-  },
-  dateText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginLeft: 'auto' as any,
-  },
+  contextText: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: SPACING.xs, lineHeight: 16 },
+  dateText: { fontSize: TYPOGRAPHY.fontSize.xs, marginLeft: 'auto' as any },
 
-  cardActions: {
-    position: 'absolute',
-    top: SPACING.xs,
-    right: SPACING.xs,
-    flexDirection: 'row',
-    gap: 0,
-    zIndex: 1,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cardActions: { position: 'absolute', top: SPACING.xs, right: SPACING.xs, flexDirection: 'row', gap: 0, zIndex: 1 },
+  actionButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+
+  // Catalog search results
+  results: { marginTop: SPACING.xs, borderWidth: BORDER.width.thin, borderRadius: BORDER.radius.md, overflow: 'hidden' },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, padding: SPACING.md, borderBottomWidth: BORDER.width.thin },
+  resultName: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  resultType: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  noResults: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: SPACING.sm, fontStyle: 'italic' },
+  selectedHint: { marginTop: SPACING.sm, padding: SPACING.sm, borderRadius: BORDER.radius.sm },
+  selectedHintText: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   // Chips (modal)
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-  },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs },
   chip: {
     paddingVertical: COMPONENT.pill.paddingVertical,
     paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderRadius: COMPONENT.pill.borderRadius,
     borderWidth: BORDER.width.thin,
   },
-  chipText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
+  chipText: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
 
-  charCounter: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    textAlign: 'right',
-    marginTop: 4,
-  },
+  charCounter: { fontSize: TYPOGRAPHY.fontSize.xs, textAlign: 'right', marginTop: 4 },
 
   // Modal
   modalContainer: { flex: 1 },
@@ -629,23 +573,9 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   modalContent: { flex: 1, paddingHorizontal: SPACING.lg },
   modalSection: { marginBottom: SPACING.lg },
-  modalSectionLabel: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    marginBottom: SPACING.xs,
-  },
+  modalSectionLabel: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium, marginBottom: SPACING.xs },
 
-  // Auto-diagnostic (fixed bottom)
-  diagnosticContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xs,
-    paddingBottom: SPACING.xs,
-  },
-  diagnosticButton: {
-    borderRadius: BORDER.radius.md,
-  },
-  diagnosticButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
+  diagnosticContainer: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.xs, paddingBottom: SPACING.xs },
+  diagnosticButton: { borderRadius: BORDER.radius.md },
+  diagnosticButtonText: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.semibold },
 });

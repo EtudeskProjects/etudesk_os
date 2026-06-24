@@ -105,6 +105,19 @@ const customQuestionSchema = z.object({
   max_length: z.number().int().min(50).max(5000).optional()
 });
 
+// Catalog skill tag inputs (resolved to competency slugs server-side).
+// `skill` accepts a catalog slug OR a label that resolves to one.
+export const opportunitySkillTagSchema = z.object({
+  skill: z.string().min(1).max(120),
+  requirement: z.enum(['required', 'nice_to_have']).optional(),
+  weight: z.number().min(0).max(1).optional(),
+  min_level: z.enum(['beginner', 'intermediate', 'advanced', 'master']).optional(),
+});
+export const entitySkillTagSchema = z.object({
+  skill: z.string().min(1).max(120),
+  role: z.string().max(20).optional(),
+});
+
 // Base opportunity schema (without refinements for .partial() compatibility in Zod v4)
 const baseOpportunitySchema = z.object({
   title: z.string()
@@ -139,6 +152,8 @@ const baseOpportunitySchema = z.object({
     type: z.string().max(100).optional(),
     size: z.number().int().min(0).optional(),
   })).max(20).optional(),
+  // Catalog skill tags (required / nice_to_have)
+  skills: z.array(opportunitySkillTagSchema).max(30).optional(),
 });
 
 // Compensation refinement function
@@ -323,6 +338,8 @@ export const createCommunitySchema = z.object({
     can_create_poll: z.boolean().optional(),
   }).optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).optional(),
+  // Catalog skill tags the community validates / is about
+  skills: z.array(entitySkillTagSchema).max(20).optional(),
 });
 
 export const updateCommunitySchema = createCommunitySchema.partial();

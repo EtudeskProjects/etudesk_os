@@ -14,7 +14,6 @@ import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
-import { SKILL_TYPES } from '../../constants/skills';
 import {
   DocumentType,
   DocumentStatus,
@@ -267,20 +266,21 @@ export async function processDocumentExtraction(
         data.skills && data.skills.length > 0
           ? data.skills
           : fallbackSkills;
-      // Normalize skills: handle both object format and pipe-delimited string format
+      // Normalize skills: handle both object format and pipe-delimited string format.
+      // `type` is only a coarse hint — the authoritative type comes from the catalog
+      // once the label is resolved to a competency slug (skill-extraction.service).
       const normalizedSkills = rawSkills.map((s: any) => {
         if (typeof s === 'string') {
-          // Parse "name | TYPE | LEVEL | context" format
+          // Parse "name | type | level | context" format
           const parts = s.split('|').map((p: string) => p.trim());
           return {
             name: parts[0] || '',
-            type: (parts[1] || 'HARD_SKILL').toUpperCase(),
-            proficiency_hint: parts[2] || 'INTERMEDIATE',
+            type: (parts[1] || 'hard_skill').toLowerCase(),
+            proficiency_hint: (parts[2] || 'intermediate').toLowerCase(),
             context: parts[3] || undefined,
           };
         }
-        // Ensure type is uppercase for object format
-        return { ...s, type: s.type ? s.type.toUpperCase() : 'HARD_SKILL' };
+        return { ...s, type: s.type ? String(s.type).toLowerCase() : 'hard_skill' };
       });
       const skillsInDocument = normalizedSkills.length;
       let skillsAdded = 0;
@@ -419,11 +419,11 @@ export async function processDocumentExtraction(
 
 function buildFallbackSkills(data: {
   detected_type?: DocumentType;
-  skills?: Array<{ name: string; type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL'; proficiency_hint?: string; context?: string }>;
+  skills?: Array<{ name: string; type?: 'knowledge' | 'hard_skill' | 'soft_skill'; proficiency_hint?: string; context?: string }>;
   tags?: string[];
   languages?: string[];
   field_of_study?: string;
-}): Array<{ name: string; type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL'; proficiency_hint?: string; context?: string }> {
+}): Array<{ name: string; type?: 'knowledge' | 'hard_skill' | 'soft_skill'; proficiency_hint?: string; context?: string }> {
   if (data.detected_type !== DOCUMENT_TYPES.CV || (data.skills?.length ?? 0) > 0) {
     return [];
   }
@@ -465,9 +465,9 @@ function buildFallbackSkills(data: {
     .map((name) => ({
       name,
       type: name.toLowerCase().includes('leadership') || name.toLowerCase().includes('communication')
-        ? SKILL_TYPES.SOFT_SKILL
-        : SKILL_TYPES.KNOWLEDGE,
-      proficiency_hint: 'EXPERT',
+        ? 'soft_skill'
+        : 'knowledge',
+      proficiency_hint: 'advanced',
       context: 'Derived from CV content when explicit skills were not returned by extraction.',
     }));
 }
@@ -551,7 +551,7 @@ export async function listDocuments(options: DocumentListOptions): Promise<{
   params.push(limit, offset);
   const result = await pool.query(
     `SELECT td.*,
-       (SELECT COUNT(*) FROM talent_skills ts WHERE ts.document_id = td.id)::int AS skills_count
+       (SELECT COUNT(*) FROM talent_skills ts WHERE ('doc:' || td.id::text) = ANY(ts.source_ref))::int AS skills_count
      FROM talent_documents td
      WHERE ${whereClause}
      ORDER BY td.created_at DESC

@@ -1,154 +1,119 @@
 /**
- * Manage Skills Tool — Add/Update/Remove skills for the talent
- * Factory pattern with injected authenticatedTalentId for IDOR protection
+ * Manage Skills Tool — add/update a CATALOG skill for the talent.
+ *
+ * Skills are catalog-constrained: the agent passes a free-text label, which is
+ * resolved to a referential competency slug. Unresolved labels are rejected with
+ * suggestions so the agent can retry. All writes go through the evaluation
+ * service (framework guards apply); the agent can never write `master`.
  */
 
 import { defineTool } from './tool-helper';
 import { z } from 'zod';
-import { pool } from '../../database';
 import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
+import * as catalog from '../../skills/catalog.service';
+import { evaluateBatch, AxisReading } from '../../skills/evaluation.service';
+import { Level } from '../../../constants/skills';
 
-export function createManageSkillsTool(authenticatedTalentId: string, language?: string) {
+export function createManageSkillsTool(authenticatedTalentId: string, language?: string, sessionId?: string) {
   return defineTool({
     name: 'manage_skills',
     description:
-      'Add or update skills for the authenticated talent. Use after the user demonstrates mastery (passes quizzes, completes exercises) or when analyzing documents. Always ask for confirmation before modifying skills.',
+      'Add or update a skill for the authenticated talent. Skills MUST exist in the Etudesk competency catalog — pass the skill label (e.g. "React", "Analyse de donnees") and it is resolved to a catalog entry. If it cannot be resolved, you receive suggestions to retry with. Use after the user demonstrates mastery (passes quizzes, completes a project) or when analyzing documents. When you have assessed the learner, optionally pass the A/C/I/T axes (Autonomy, Complexity, Impact, Transmission, each 1-4) so the level is graded by the evaluation framework. You can never set "master" — that is reserved for verified evaluation. Always confirm with the user before calling.',
     parameters: z.object({
-      action: z.enum(['add', 'update']).describe('The action to perform: "add" or "update"'),
-      skillName: z.string().min(1).max(100).describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
-      proficiencyLevel: z
-        .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
-        .describe('Proficiency level: BEGINNER (knows basics), INTERMEDIATE (can apply independently), EXPERT (deep mastery), MASTER (can teach and innovate).'),
+      skillQuery: z
+        .string()
+        .min(1)
+        .max(120)
+        .describe('The skill label to resolve against the catalog (e.g. "React", "Prompt Engineering", "Gestion de projet").'),
+      level: z
+        .enum(['beginner', 'intermediate', 'advanced', 'master'])
+        .describe('Target level. "master" is not allowed for agent writes and will be capped to "advanced".'),
       origin: z
         .enum(['declared', 'inferred', 'extracted'])
         .default('inferred')
-        .describe('How the skill was identified: "declared" (user claims it), "inferred" (detected from conversation/quiz), "extracted" (from CV/certificates/documents).'),
-      type: z
-        .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
-        .default('HARD_SKILL')
-        .describe('Skill category: HARD_SKILL (technical/domain), SOFT_SKILL (interpersonal), KNOWLEDGE (theoretical).'),
+        .describe('"declared" (user claims it), "inferred" (from quiz/conversation), "extracted" (from a document).'),
+      axisA: z.number().int().min(1).max(4).optional().describe('Autonomy 1-4 (optional, improves grading).'),
+      axisC: z.number().int().min(1).max(4).optional().describe('Complexity 1-4 (optional).'),
+      axisI: z.number().int().min(1).max(4).optional().describe('Impact 1-4 (optional).'),
+      axisT: z.number().int().min(1).max(4).optional().describe('Transmission 1-4 (optional).'),
     }),
-    normalize: (raw) => {
-      // Handle nested format: {skills: [{action, name, ...}]} → flat
-      if (raw.skills && Array.isArray(raw.skills) && raw.skills.length > 0) {
-        const first = raw.skills[0];
-        return {
-          action: first.action || raw.action,
-          skillName: first.skillName || first.name || first.skill_name,
-          proficiencyLevel: first.proficiencyLevel || first.level || first.proficiency_level,
-          origin: first.origin || 'inferred',
-          type: first.type || 'HARD_SKILL',
-        };
-      }
-      // Handle alias: name → skillName, skill_name → skillName
+    normalize: (raw: any) => {
+      // Accept aliases / nested shapes from the model
+      const first = raw.skills && Array.isArray(raw.skills) && raw.skills.length > 0 ? raw.skills[0] : raw;
       return {
-        ...raw,
-        skillName: raw.skillName || raw.name || raw.skill_name,
-        proficiencyLevel: raw.proficiencyLevel || raw.level || raw.proficiency_level,
-        origin: raw.origin || 'inferred',
-        type: raw.type || 'HARD_SKILL',
+        skillQuery: first.skillQuery || first.skillName || first.name || first.skill_name || raw.skillQuery,
+        level: (first.level || first.proficiencyLevel || raw.level || 'inferred')?.toString().toLowerCase(),
+        origin: (first.origin || 'inferred')?.toString().toLowerCase(),
+        axisA: first.axisA ?? first.A,
+        axisC: first.axisC ?? first.C,
+        axisI: first.axisI ?? first.I,
+        axisT: first.axisT ?? first.T,
       };
     },
-    execute: async ({ action: rawAction, skillName, proficiencyLevel: rawLevel, origin: rawOrigin, type: rawType }) => {
+    execute: async ({ skillQuery, level, origin, axisA, axisC, axisI, axisT }) => {
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
-      // Normalize enum values (Claude native SDK may send mixed case)
-      const action = rawAction.toLowerCase() as 'add' | 'update';
-      const proficiencyLevel = rawLevel.toUpperCase() as 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
-      const origin = rawOrigin.toLowerCase() as 'declared' | 'inferred' | 'extracted';
-      const type = rawType.toUpperCase() as 'HARD_SKILL' | 'SOFT_SKILL' | 'KNOWLEDGE';
-      const is_visible = true; // Skills are visible by default; users toggle visibility from profile settings
       const talentId = authenticatedTalentId;
 
       try {
-        switch (action) {
-          case 'add': {
-            // Check if skill already exists (exact match)
-            const existing = await pool.query(
-              `SELECT id, proficiency_level FROM talent_skills WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)`,
-              [talentId, skillName]
-            );
-
-            if (existing.rows.length > 0) {
-              // Smart merge: if new level is higher, auto-upgrade instead of rejecting
-              const LEVEL_ORDER = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'];
-              const currentIdx = LEVEL_ORDER.indexOf(existing.rows[0].proficiency_level);
-              const newIdx = LEVEL_ORDER.indexOf(proficiencyLevel);
-              if (newIdx > currentIdx) {
-                await pool.query(
-                  `UPDATE talent_skills SET proficiency_level = $3, updated_at = NOW()
-                   WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)`,
-                  [talentId, skillName, proficiencyLevel]
-                );
-                logger.info(`[manage_skills] Auto-upgraded skill "${skillName}" from ${existing.rows[0].proficiency_level} to ${proficiencyLevel} for talent ${talentId}`);
-                return {
-                  success: true,
-                  message: tr('copilot:toolSkillAutoUpgraded', { name: skillName, from: existing.rows[0].proficiency_level, to: proficiencyLevel }),
-                  skill: { name: skillName, level: proficiencyLevel, origin, merged: true },
-                };
-              }
-              return {
-                success: false,
-                error: tr('copilot:toolSkillAlreadyExists', { name: skillName, level: existing.rows[0].proficiency_level }),
-              };
-            }
-
-            // Check max 100 skills limit
-            const countResult = await pool.query(
-              `SELECT COUNT(*)::int AS total FROM talent_skills WHERE talent_id = $1`,
-              [talentId]
-            );
-            if (countResult.rows[0].total >= 100) {
-              return {
-                success: false,
-                error: tr('copilot:toolMaxSkillsReached'),
-              };
-            }
-
-            await pool.query(
-              `INSERT INTO talent_skills (talent_id, canonical_name, proficiency_level, origin, type, is_visible)
-               VALUES ($1, $2, $3, $4, $5, $6)`,
-              [talentId, skillName, proficiencyLevel, origin, type, is_visible]
-            );
-
-            logger.info(`[manage_skills] Added skill "${skillName}" (${proficiencyLevel}) for talent ${talentId}`);
-            return {
-              success: true,
-              message: tr('copilot:toolSkillAdded', { name: skillName, level: proficiencyLevel }),
-              skill: { name: skillName, level: proficiencyLevel, origin },
-            };
-          }
-
-          case 'update': {
-            const updates = ['proficiency_level = $3', 'is_visible = $4', 'updated_at = NOW()'];
-            const params: any[] = [talentId, skillName, proficiencyLevel, is_visible];
-            const result = await pool.query(
-              `UPDATE talent_skills SET ${updates.join(', ')}
-               WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)
-               RETURNING id, canonical_name, proficiency_level, is_visible`,
-              params
-            );
-
-            if (result.rows.length === 0) {
-              return {
-                success: false,
-                error: tr('copilot:toolSkillNotFound', { name: skillName }),
-              };
-            }
-
-            logger.info(`[manage_skills] Updated skill "${skillName}" to ${proficiencyLevel} for talent ${talentId}`);
-            return {
-              success: true,
-              message: tr('copilot:toolSkillLevelUpdated', { name: skillName, level: proficiencyLevel }),
-              skill: result.rows[0],
-            };
-          }
-
-          default:
-            return { success: false, error: tr('copilot:toolActionUnsupported', { action }) };
+        const resolved = await catalog.resolveLabel(skillQuery);
+        if (!resolved) {
+          const suggestions = await catalog.suggestCompetencies(skillQuery, 3);
+          return {
+            success: false,
+            error: tr('copilot:toolSkillNotInCatalog', { name: skillQuery }) || `"${skillQuery}" is not in the skills catalog.`,
+            suggestions: suggestions.map((s) => ({ slug: s.slug, name: s.name, name_fr: s.name_fr })),
+          };
         }
+
+        const requestedLevel = (level as Level) || 'beginner';
+        const axes: AxisReading | undefined =
+          axisA && axisC && axisI && axisT ? { A: axisA, C: axisC, I: axisI, T: axisT } : undefined;
+
+        const [result] = await evaluateBatch({
+          talentId,
+          targets: [
+            {
+              slug: resolved.slug,
+              origin: origin as 'declared' | 'inferred' | 'extracted',
+              axes,
+              assertedLevel: axes ? undefined : requestedLevel,
+              // agent-driven evidence: a behavioral signal (quiz/conversation) unless declared
+              signals: [
+                {
+                  kind: origin === 'declared' ? 'declared' : 'behavioral',
+                  source_ref: sessionId ? `session:${sessionId}` : 'copilot:study',
+                  note: 'study agent assessment',
+                },
+              ],
+              evaluatedBy: 'study_agent',
+              // agent can never push past advanced
+              levelCap: 'advanced',
+            },
+          ],
+        });
+
+        if (!result || result.status !== 'written') {
+          return {
+            success: false,
+            error: tr('copilot:toolSkillInsufficientEvidence', { name: resolved.name }) || 'Not enough evidence to record this skill yet.',
+          };
+        }
+
+        logger.info(`[manage_skills] ${origin} "${resolved.slug}" -> ${result.level} (conf ${result.confidence.toFixed(2)}) for talent ${talentId}`);
+        return {
+          success: true,
+          message: tr('copilot:toolSkillAdded', { name: resolved.name_fr || resolved.name, level: result.level }),
+          skill: {
+            slug: resolved.slug,
+            name: resolved.name_fr || resolved.name,
+            level: result.level,
+            confidence: Number(result.confidence.toFixed(2)),
+            origin: result.origin,
+          },
+        };
       } catch (error: any) {
-        logger.error(`[manage_skills] Error (${action} ${skillName}): ${error.message}`);
+        logger.error(`[manage_skills] Error (${origin} ${skillQuery}): ${error.message}`);
         return { success: false, error: error.message };
       }
     },

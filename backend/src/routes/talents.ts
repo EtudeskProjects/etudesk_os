@@ -319,9 +319,9 @@ router.get('/:id', optionalAuthMiddleware, async (req: AuthRequest, res) => {
         t.remote_ready, t.willing_to_relocate,
         t.sectors, t.profile_tags, t.goals, t.created_at,
         COALESCE(
-          (SELECT json_agg(json_build_object('name', ts.canonical_name, 'type', ts.type, 'proficiency_level', ts.proficiency_level) ORDER BY ts.proficiency_level DESC, ts.canonical_name ASC)
-           FROM talent_skills ts
-           WHERE ts.talent_id = t.id ${skillFilter}), '[]'::json
+          (SELECT json_agg(json_build_object('slug', ts.competency_slug, 'name', c.name, 'name_fr', c.name_fr, 'type', c.type, 'family', c.family, 'level', ts.level, 'score', ts.score, 'confidence', ts.confidence, 'origin', ts.origin) ORDER BY ts.score DESC, c.name ASC)
+           FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+           WHERE ts.talent_id = t.id AND ts.decay_state <> 'archived' ${skillFilter}), '[]'::json
         ) as skills,
         COALESCE(
           (SELECT json_agg(json_build_object('language', tl.language, 'proficiency_level', tl.proficiency_level))

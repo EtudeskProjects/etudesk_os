@@ -33,18 +33,6 @@ function validateSkillFile(filePath: string): ValidationResult {
     );
   }
 
-  // Check for manage_skills without type parameter in instructions
-  if (content.includes('manage_skills') && content.includes('origin')) {
-    const hasTypeInManageSkills =
-      /(HARD_SKILL|SOFT_SKILL|KNOWLEDGE)/i.test(content) &&
-      /type\s*[=:"']?\s*(HARD_SKILL|SOFT_SKILL|KNOWLEDGE)/i.test(content);
-    if (!hasTypeInManageSkills) {
-      result.warnings.push(
-        'manage_skills calls should include type (HARD_SKILL, SOFT_SKILL, or KNOWLEDGE).'
-      );
-    }
-  }
-
   // Check frontmatter exists
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontmatterMatch) {

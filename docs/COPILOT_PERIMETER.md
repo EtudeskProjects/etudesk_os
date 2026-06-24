@@ -398,7 +398,7 @@ Le mode Study s'appuie sur 4 principes des sciences de l'education :
 | `generate_diagram` | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
 | `file_reader` | Lecture directe d'UN document (PDF/texte). Cache par session. |
 | `web_search` | Recherche web externe (OpenAI Responses API) |
-| `manage_skills` | Actions add/update competences (BEGINNER → MASTER) |
+| `manage_skills` | Add/update competences du catalogue (beginner → advanced ; master = evaluation) |
 | `execute_action` | create/update_agenda_trigger uniquement |
 
 **Tools NON disponibles en Study (3 bloques) :**
@@ -470,17 +470,17 @@ Score 0/3 → encouragement + demarrage session d'apprentissage
 
 | Action | Declencheur | Tool |
 |--------|-------------|------|
-| **Ajouter** | Assessment 3/3 ou 2/3 | `manage_skills` (add, BEGINNER ou INTERMEDIATE) |
-| **Monter niveau** | User montre maitrise au-dela du niveau actuel | `manage_skills` (update) |
-| **Extraire** | file_reader trouve skill dans CV/certificat | `manage_skills` (add, origin=extracted) |
-| **Inferer** | Quiz/performance ou indices conversationnels solides | `manage_skills` (add/update, origin=inferred) |
-| **Declare** | User dit "je connais X" | `manage_skills` (add/update, origin=declared) |
+| **Ajouter** | Assessment 3/3 ou 2/3 | `manage_skills` (beginner ou intermediate) |
+| **Monter niveau** | User montre maitrise au-dela du niveau actuel | `manage_skills` (niveau superieur) |
+| **Extraire** | file_reader trouve skill dans CV/certificat | `manage_skills` (origin=extracted) |
+| **Inferer** | Quiz/performance ou indices conversationnels solides | `manage_skills` (origin=inferred, + axes A/C/I/T si evalue) |
+| **Declare** | User dit "je connais X" | `manage_skills` (origin=declared) |
 
-**Niveaux (backend) :** BEGINNER -> INTERMEDIATE -> EXPERT -> MASTER
-**Origins (backend) :** declared | inferred | extracted
-**Types (backend) :** HARD_SKILL | SOFT_SKILL | KNOWLEDGE
-**Champs requis :** action, skillName, proficiencyLevel, origin, type (toujours demander confirmation avant l'appel).
-**INTERDIT :** Suppression de competence (pas d'action "remove" disponible)
+**Catalogue obligatoire :** `skillQuery` est resolu au referentiel Etudesk ; un label hors catalogue est rejete (suggestions renvoyees).
+**Niveaux (backend) :** beginner -> intermediate -> advanced -> master (l'agent est plafonne a `advanced`)
+**Origins (backend) :** declared | inferred | extracted (jamais `validated` cote agent)
+**Champs :** skillQuery, level, origin, axisA/C/I/T (optionnels) — toujours demander confirmation avant l'appel.
+**INTERDIT :** Suppression de competence (pas d'action "remove"), competence hors catalogue, ecrire `master`.
 
 ### Entites en Mode Study
 
@@ -625,7 +625,7 @@ Parfait ! 3/3 — tu maitrises les fondamentaux Python.
 Tu as demontre une bonne comprehension des structures de donnees et de la gestion memoire. J'ajoute **Python** a tes competences au niveau **intermediaire** ?
 ```
 
-**Si confirmation :** `manage_skills({action:"add", skillName:"Python", proficiencyLevel:"INTERMEDIATE", origin:"inferred", type:"HARD_SKILL"})`
+**Si confirmation :** `manage_skills({skillQuery:"Python", level:"intermediate", origin:"inferred"})`
 
 **Ensuite :** "Tu veux explorer les decorateurs Python ou passer a un autre sujet ?"
 
@@ -656,10 +656,10 @@ Tu veux que je mette a jour JavaScript a **intermediate** et que j'ajoute React,
 ```
 
 **Si confirmation :**
-1. `manage_skills({action:"update", skillName:"JavaScript", proficiencyLevel:"INTERMEDIATE", origin:"inferred", type:"HARD_SKILL"})`
-2. `manage_skills({action:"add", skillName:"React", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
-3. `manage_skills({action:"add", skillName:"Node.js", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
-4. `manage_skills({action:"add", skillName:"PostgreSQL", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
+1. `manage_skills({skillQuery:"JavaScript", level:"intermediate", origin:"inferred"})`
+2. `manage_skills({skillQuery:"React", level:"beginner", origin:"extracted"})`
+3. `manage_skills({skillQuery:"Node.js", level:"beginner", origin:"extracted"})`
+4. `manage_skills({skillQuery:"PostgreSQL", level:"beginner", origin:"extracted"})`
 
 **Message suivant :** "Ton profil est enrichi. Tu veux approfondir React ou Node.js ? Je peux te faire un assessment rapide."
 

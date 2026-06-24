@@ -26,7 +26,7 @@ Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
 {"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
-**Thinking flow** : Compter skills par proficiency_level. Exclure niveaux a 0. Labels : BEGINNER→"Debutant", INTERMEDIATE→"Intermediaire", EXPERT→"Expert", MASTER→"Master". Si un seul niveau → metric : `{"type":"metric","title":"Tes competences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`. Si > 60% BEGINNER → "Tu as beaucoup de bases — approfondis avec un cours !" Si beaucoup d'EXPERT → "Pret pour des certifications MASTER ?"
+**Thinking flow** : Compter skills par niveau. Exclure niveaux a 0. Labels : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si un seul niveau → metric : `{"type":"metric","title":"Tes competences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`. Si > 60% beginner → "Tu as beaucoup de bases — approfondis avec un cours !" Si beaucoup d'advanced → "Pret pour des certifications master ?"
 
 ### Chart B — Repartition par type (Catalog #3)
 5. Render un **donut** de repartition par type :
@@ -74,7 +74,7 @@ Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
 
 9. Identify patterns:
    - **Points forts** : Domains with the most skills or highest levels
-   - **Zones de croissance** : Areas where skills are at BEGINNER or where related skills are missing
+   - **Zones de croissance** : Areas where skills are at beginner or where related skills are missing
 
 ## Step 6: Recommendations
 

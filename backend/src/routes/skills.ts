@@ -1,13 +1,16 @@
 /**
  * Skills Routes
- * CRUD for talent skills management
+ * Catalog-constrained CRUD for talent skills. Every write resolves to a
+ * competency slug from the referential (datasets/etudesk_digital_skills);
+ * non-catalog labels are rejected.
  */
 
 import { Router, Response } from 'express';
 import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
-import { isValidSkillType, isValidProficiencyLevel } from '../constants/skills';
-import { mergeExtractedSkills } from '../services/skills/skill-merge.service';
+import { isValidLevel, Level } from '../constants/skills';
+import * as catalog from '../services/skills/catalog.service';
+import { evaluateBatch } from '../services/skills/evaluation.service';
 
 import { logger } from '../utils';
 import { cache } from '../utils/cache';
@@ -26,7 +29,7 @@ router.use((req: AuthRequest, _res, next) => {
 
 /**
  * GET /api/skills/my
- * Get current talent's skills
+ * Get current talent's skills (joined to the catalog; excludes archived).
  */
 router.get('/my', async (req: AuthRequest, res: Response) => {
   try {
@@ -36,11 +39,13 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
     }
 
     const result = await pool.query(
-      `SELECT id, canonical_name, type, proficiency_level,
-              context, origin, is_visible, created_at
-       FROM talent_skills
-       WHERE talent_id = $1
-       ORDER BY proficiency_level DESC, canonical_name ASC`,
+      `SELECT ts.id, ts.competency_slug, c.name, c.name_fr, c.family, c.type,
+              ts.level, ts.score, ts.confidence, ts.origin, ts.decay_state,
+              ts.is_visible, ts.created_at
+       FROM talent_skills ts
+       JOIN competencies c ON c.slug = ts.competency_slug
+       WHERE ts.talent_id = $1 AND ts.decay_state <> 'archived'
+       ORDER BY ts.score DESC, c.name ASC`,
       [talentId]
     );
 
@@ -53,7 +58,8 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
 
 /**
  * POST /api/skills/my
- * Add a skill to current talent
+ * Declare a catalog skill for the current talent.
+ * Body: { skillOrLabel: string, level: Level, context?: string, is_visible?: boolean }
  */
 router.post('/my', async (req: AuthRequest, res: Response) => {
   try {
@@ -62,59 +68,54 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
-    const { skillName, proficiencyLevel, type, context, is_visible } = req.body;
+    const { skillOrLabel, level, is_visible } = req.body;
+    const label = skillOrLabel || req.body.skillName; // accept legacy field name
 
-    if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
-      return res.status(400).json({ error: req.t('skills:invalidProficiencyLevel') });
-    }
-
-    if (!skillName) {
+    if (!label) {
       return res.status(400).json({ error: req.t('skills:skillNameRequired') });
     }
+    const requestedLevel: Level = level && isValidLevel(level) ? level : 'beginner';
 
-    if (!type || !isValidSkillType(type)) {
-      return res.status(400).json({ error: req.t('skills:skillTypeRequired') });
+    const resolved = await catalog.resolveLabel(label);
+    if (!resolved) {
+      const suggestions = await catalog.suggestCompetencies(label, 3);
+      return res.status(400).json({
+        error: req.t('skills:notInCatalog', { name: label }) || `"${label}" is not in the skills catalog`,
+        suggestions: suggestions.map((s) => ({ slug: s.slug, name: s.name, name_fr: s.name_fr })),
+      });
     }
 
-    const canonicalName = skillName.trim();
+    // Declared skills are anchored at the requested level; the evaluation service
+    // applies framework guards (self-declared never exceeds intermediate).
+    const [evalResult] = await evaluateBatch({
+      talentId,
+      targets: [
+        {
+          slug: resolved.slug,
+          origin: 'declared',
+          assertedLevel: requestedLevel,
+          signals: [{ kind: 'declared', source_ref: 'self:profile' }],
+          evaluatedBy: 'rest_api',
+        },
+      ],
+    });
 
-    // Check if already exists
-    const existing = await pool.query(
-      `SELECT id FROM talent_skills WHERE talent_id = $1 AND canonical_name = $2`,
-      [talentId, canonicalName]
-    );
-
-    if (existing.rows.length > 0) {
-      // Update proficiency and optionally context
+    // Optional visibility override
+    if (is_visible === false) {
       await pool.query(
-        `UPDATE talent_skills SET proficiency_level = $1${context ? ', context = $3' : ''} WHERE id = $2`,
-        context ? [proficiencyLevel, existing.rows[0].id, context] : [proficiencyLevel, existing.rows[0].id]
+        `UPDATE talent_skills SET is_visible = false WHERE talent_id = $1 AND competency_slug = $2`,
+        [talentId, resolved.slug]
       );
-      return res.json({ data: { id: existing.rows[0].id, updated: true } });
     }
 
-    // Check max 100 skills limit
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM talent_skills WHERE talent_id = $1`,
-      [talentId]
-    );
-    if (countResult.rows[0].total >= 100) {
-      return res.status(400).json({ error: req.t('skills:maxSkillsReached') });
-    }
-
-    const columns = ['talent_id', 'canonical_name', 'type', 'proficiency_level'];
-    const values: any[] = [talentId, canonicalName, type, proficiencyLevel];
-    if (context) { columns.push('context'); values.push(context); }
-    if (is_visible === false) { columns.push('is_visible'); values.push(false); }
-    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-
-    const result = await pool.query(
-      `INSERT INTO talent_skills (${columns.join(', ')})
-       VALUES (${placeholders}) RETURNING id`,
-      values
-    );
-
-    return res.status(201).json({ data: { id: result.rows[0].id } });
+    return res.status(201).json({
+      data: {
+        competency_slug: resolved.slug,
+        name: resolved.name,
+        level: evalResult?.level ?? requestedLevel,
+        confidence: evalResult?.confidence,
+      },
+    });
   } catch (error) {
     logger.error('Error adding skill:', error);
     return res.status(500).json({ error: req.t('skills:addError') });
@@ -123,7 +124,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
 
 /**
  * PUT /api/skills/my/:id
- * Update proficiency level
+ * Update declared level for an existing skill row.
  */
 router.put('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
@@ -132,16 +133,17 @@ router.put('/my/:id', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
-    const { proficiencyLevel } = req.body;
-    if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
+    const { level } = req.body;
+    if (!level || !isValidLevel(level)) {
       return res.status(400).json({ error: req.t('skills:invalidProficiencyLevel') });
     }
 
     const result = await pool.query(
-      `UPDATE talent_skills SET proficiency_level = $1
+      `UPDATE talent_skills SET level = $1, score = CASE $1
+          WHEN 'beginner' THEN 1 WHEN 'intermediate' THEN 2 WHEN 'advanced' THEN 3 WHEN 'master' THEN 4 ELSE 1 END
        WHERE id = $2 AND talent_id = $3
        RETURNING id`,
-      [proficiencyLevel, req.params.id, talentId]
+      [level, req.params.id, talentId]
     );
 
     if (result.rows.length === 0) {
@@ -157,7 +159,6 @@ router.put('/my/:id', async (req: AuthRequest, res: Response) => {
 
 /**
  * DELETE /api/skills/my/:id
- * Remove a skill from current talent
  */
 router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
@@ -184,7 +185,6 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
 
 /**
  * PATCH /api/skills/my/:id/visibility
- * Toggle skill visibility
  */
 router.patch('/my/:id/visibility', async (req: AuthRequest, res: Response) => {
   try {
@@ -217,21 +217,24 @@ router.patch('/my/:id/visibility', async (req: AuthRequest, res: Response) => {
 });
 
 /**
- * POST /api/skills/my/merge
- * Merge extracted skills with declared skills
+ * GET /api/skills/catalog/search?q=...
+ * Search the catalog (for catalog-constrained skill pickers / agents).
  */
-router.post('/my/merge', async (req: AuthRequest, res: Response) => {
+router.get('/catalog/search', async (req: AuthRequest, res: Response) => {
   try {
-    const talentId = req.talentId;
-    if (!talentId) {
-      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
-    }
-
-    const report = await mergeExtractedSkills(talentId);
-    return res.json({ data: report });
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json({ data: [] });
+    const resolved = await catalog.resolveLabel(q);
+    const suggestions = await catalog.suggestCompetencies(q, 8);
+    const seen = new Set<string>();
+    const data = [resolved, ...suggestions]
+      .filter((c): c is NonNullable<typeof c> => !!c)
+      .filter((c) => (seen.has(c.slug) ? false : (seen.add(c.slug), true)))
+      .map((c) => ({ slug: c.slug, name: c.name, name_fr: c.name_fr, family: c.family, type: c.type }));
+    return res.json({ data });
   } catch (error) {
-    logger.error('Error merging skills:', error);
-    return res.status(500).json({ error: req.t('skills:mergeError') });
+    logger.error('Error searching catalog:', error);
+    return res.status(500).json({ error: req.t('skills:fetchError') });
   }
 });
 

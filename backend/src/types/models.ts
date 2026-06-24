@@ -21,14 +21,11 @@ export interface ApplicationAnswer {
 
 // --- Constants / Enums ---
 
-export const SKILL_TYPES = {
-  KNOWLEDGE: "KNOWLEDGE",
-  SOFT_SKILL: "SOFT_SKILL",
-  HARD_SKILL: "HARD_SKILL"
-} as const;
-export type SkillType = typeof SKILL_TYPES[keyof typeof SKILL_TYPES];
-
-export type ProficiencyLevel = 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
+// Skill levels/types/origins — catalog-constrained model (EVALUATION_FRAMEWORK).
+export type Level = 'beginner' | 'intermediate' | 'advanced' | 'master';
+export type CatalogType = 'knowledge' | 'hard_skill' | 'soft_skill' | 'tool_platform' | 'language';
+export type SkillOrigin = 'declared' | 'inferred' | 'extracted' | 'validated';
+export type DecayState = 'active' | 'stale' | 'archived';
 
 export const OPPORTUNITY_TYPES = {
   EMPLOYMENT: "EMPLOYMENT",
@@ -519,17 +516,33 @@ export interface Opportunity {
 
 // --- Relation Interfaces ---
 
+// Catalog-constrained UserCompetency (migration 021). Authoritative type/family
+// come from the joined competencies row, keyed by competency_slug.
 export interface TalentSkill {
   id: UUID;
   talent_id: UUID;
-  canonical_name: string;
-  type: SkillType;
-
-  proficiency_level: ProficiencyLevel;
-  source?: string;
-  document_id?: UUID;
-  context?: string;
+  competency_slug: string;
+  level: Level;
+  score: number; // 1..4
+  confidence: number; // 0..1
+  axis_a?: number;
+  axis_c?: number;
+  axis_i?: number;
+  axis_t?: number;
+  origin: SkillOrigin;
+  context?: string[];
+  source_ref?: string[];
+  inferred_from?: string[];
+  evidence_hash?: string;
+  rationale?: string;
+  last_evidence_at?: ISOTimestamp;
+  decay_state: DecayState;
+  catalog_version: string;
+  framework_version: string;
+  evaluated_by?: string;
+  is_visible?: boolean;
   created_at?: ISOTimestamp;
+  updated_at?: ISOTimestamp;
 }
 
 export interface OpportunityApplication {

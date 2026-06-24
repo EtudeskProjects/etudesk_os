@@ -14,6 +14,7 @@ import {
 } from '../../services/community-generation.service';
 import { handleRouteError, createNotFoundError, createForbiddenError, logger } from '../../utils';
 import { upsertCommunityEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { setCommunitySkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 
 const router = Router();
@@ -140,7 +141,15 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
       VALUES ($1, $2, 'ADMIN', 'ACTIVE', true, CURRENT_DATE)
     `, [community.id, talentId]);
 
-    res.status(201).json({ data: community });
+    // Catalog skill tags (resolve to slugs; non-catalog dropped)
+    let skillTags = null;
+    try {
+      skillTags = await setCommunitySkills(community.id, req.body.skills);
+    } catch (err) {
+      logger.error('Failed to set community skills:', err);
+    }
+
+    res.status(201).json({ data: community, skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error creating community');
   }
@@ -213,7 +222,17 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       tags: updated.tags ? (typeof updated.tags === 'string' ? JSON.parse(updated.tags) : updated.tags) : [],
     }).catch(err => logger.error('[communities] Error updating Pinecone embedding:', err));
 
-    res.json({ data: updated });
+    // Update catalog skill tags only when provided
+    let skillTags = null;
+    if (req.body.skills !== undefined) {
+      try {
+        skillTags = await setCommunitySkills(id, req.body.skills);
+      } catch (err) {
+        logger.error('Failed to update community skills:', err);
+      }
+    }
+
+    res.json({ data: updated, skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error updating community');
   }

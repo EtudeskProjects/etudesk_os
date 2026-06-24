@@ -24,7 +24,7 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 ## Step 2: Analyze Strengths
 
 4. Identify 3–5 key strengths:
-   - **Declared skills** at INTERMEDIATE level or above — highlight the most advanced domains
+   - **Declared skills** at intermediate level or above — highlight the most advanced domains
    - **Profile/CV consistency** — skills mentioned in experiences, certifications
    - **Differentiators** — what sets this profile apart (e.g., bilingual, sector expertise, years of experience)
 
@@ -33,7 +33,7 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 ## Step 3: Identify Gaps
 
 5. Identify lacunes:
-   - **Skills to reinforce**: declared at BEGINNER level
+   - **Skills to reinforce**: declared at beginner level
    - **Implicit skills from CV**: technologies/tools in the CV that are NOT in the declared skills — suggest adding them
    - **Transversal gaps**: soft skills, languages, or common professional skills that appear missing
 
@@ -58,11 +58,11 @@ Render les charts suivants dans l'ordre. Chaque chart dans un message separe si 
 7. Render un **radar** du profil de competences.
 
 Calculate scores using context `<skills>`:
-- **Hard skills**: average proficiency of HARD_SKILL type (BEGINNER=2, INTERMEDIATE=3, EXPERT=4, MASTER=5). Default 1 if none.
+- **Hard skills**: average proficiency of HARD_SKILL type (beginner=2, intermediate=3, advanced=4, master=5). Default 1 if none.
 - **Soft skills**: average proficiency of SOFT_SKILL type. Default 1 if none.
 - **Knowledge**: average proficiency of KNOWLEDGE type. Default 1 if none.
 - **Profondeur**: overall average across all skills (capped at 5).
-- **Seniorite**: proportion of EXPERT+MASTER skills mapped to 1-5 scale (0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
+- **Seniorite**: proportion of advanced+master skills mapped to 1-5 scale (0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
 
 ```chart
 {"type":"radar","title":"Radar competences","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
@@ -88,7 +88,7 @@ Calculate scores using context `<skills>`:
 {"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
-**Thinking flow** : Compter par proficiency_level. Exclure niveaux a 0. Labels lisibles : BEGINNER→"Debutant", INTERMEDIATE→"Intermediaire", EXPERT→"Expert", MASTER→"Master". Si > 60% BEGINNER → suggerer deep-dive. Si beaucoup d'EXPERT → suggerer exam pour viser MASTER.
+**Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer exam pour viser master.
 
 ---
 

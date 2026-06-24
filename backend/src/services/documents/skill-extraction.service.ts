@@ -1,22 +1,25 @@
 /**
  * Skill Extraction Service
- * Saves extracted skills from documents into the talent's skill profile
+ * Maps skills extracted from a document (CV / diploma) to the digital skills
+ * catalog and records them on the talent through the evaluation service.
+ * Skills that cannot be resolved to a catalog competency are dropped (logged).
  */
 
-import { pool } from '../database';
 import { ExtractedSkill } from './extraction.service';
-import { isValidSkillType } from '../../constants/skills';
+import { logger } from '../../utils';
+import * as catalog from '../skills/catalog.service';
+import { evaluateBatch, EvalTarget } from '../skills/evaluation.service';
+import { Level, isValidLevel } from '../../constants/skills';
 
 export interface SkillExtractionResult {
   added: number;
   skipped: number;
-  skills: Array<{ name: string; type: string; action: 'added' | 'skipped' }>;
+  skills: Array<{ name: string; slug?: string; action: 'added' | 'skipped' }>;
 }
 
-
 /**
- * Save extracted skills from a document into the talent's profile.
- * Uses ON CONFLICT to handle concurrent extractions safely.
+ * Resolve extracted skills to catalog slugs and persist them as `extracted`
+ * UserCompetency rows (level capped at advanced; a document is an artifact).
  */
 export async function extractAndSaveSkills(
   talentId: string,
@@ -24,131 +27,61 @@ export async function extractAndSaveSkills(
   extractedSkills: ExtractedSkill[]
 ): Promise<SkillExtractionResult> {
   const result: SkillExtractionResult = { added: 0, skipped: 0, skills: [] };
-  const client = await pool.connect();
 
-  try {
-    await client.query('BEGIN');
+  const targets: EvalTarget[] = [];
+  const labelBySlug = new Map<string, string>();
 
-    for (const skill of extractedSkills) {
-      if (!skill.name || !skill.type || !isValidSkillType(skill.type)) continue;
-
-      const canonicalName = normalizeSkillName(skill.name);
-
-      // Check if talent already has this skill
-      const existing = await client.query(
-        `SELECT id, origin FROM talent_skills WHERE talent_id = $1 AND canonical_name = $2`,
-        [talentId, canonicalName]
-      );
-
-      if (existing.rows.length > 0) {
-        if (existing.rows[0].origin === 'declared') {
-          result.skipped++;
-          result.skills.push({ name: skill.name, type: skill.type, action: 'skipped' });
-          continue;
-        }
-        // Update existing extracted skill with new document context
-        await client.query(
-          `UPDATE talent_skills SET context = $1 WHERE id = $2`,
-          [skill.context || null, existing.rows[0].id]
-        );
-        result.skipped++;
-        result.skills.push({ name: skill.name, type: skill.type, action: 'skipped' });
-        continue;
-      }
-
-      // Map proficiency hint to level
-      const proficiency = mapProficiencyHint(skill.proficiency_hint);
-
-      // Insert talent_skill (race-safe)
-      const inserted = await client.query(
-        `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin, context)
-         VALUES ($1, $2, $3, $4, 'extracted', $5)
-         ON CONFLICT (talent_id, canonical_name) DO NOTHING
-         RETURNING id`,
-        [talentId, canonicalName, skill.type, proficiency, skill.context || null]
-      );
-
-      if (inserted.rows.length > 0) {
-        result.added++;
-        result.skills.push({ name: skill.name, type: skill.type, action: 'added' });
-      } else {
-        result.skipped++;
-        result.skills.push({ name: skill.name, type: skill.type, action: 'skipped' });
-      }
+  for (const skill of extractedSkills) {
+    if (!skill.name) continue;
+    const resolved = await catalog.resolveLabel(skill.name);
+    if (!resolved) {
+      logger.info(`[skill-extraction] dropped non-catalog skill "${skill.name}" (talent ${talentId})`);
+      result.skipped++;
+      result.skills.push({ name: skill.name, action: 'skipped' });
+      continue;
     }
+    const level = mapProficiencyHint(skill.proficiency_hint);
+    targets.push({
+      slug: resolved.slug,
+      origin: 'extracted',
+      assertedLevel: level,
+      // a CV / diploma is an artifact-strength signal
+      signals: [{ kind: 'artifact', source_ref: `doc:${documentId}`, note: skill.context }],
+      evaluatedBy: 'document_extraction',
+      levelCap: 'advanced', // extracted/document claims never auto-create master
+    });
+    labelBySlug.set(resolved.slug, resolved.name_fr || resolved.name);
+  }
 
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
+  if (targets.length === 0) return result;
+
+  const evals = await evaluateBatch({ talentId, targets });
+  for (const e of evals) {
+    if (e.status === 'written') {
+      result.added++;
+      result.skills.push({ name: labelBySlug.get(e.slug) || e.slug, slug: e.slug, action: 'added' });
+    } else {
+      result.skipped++;
+      result.skills.push({ name: labelBySlug.get(e.slug) || e.slug, slug: e.slug, action: 'skipped' });
+    }
   }
 
   return result;
 }
 
-const SMALL_WORDS = new Set([
-  'de', 'du', 'des', 'le', 'la', 'les', 'et', 'ou', 'en', 'à', 'au', 'aux', 'pour', 'par', 'sur', 'avec',
-  'd', 'l',
-]);
-
-const KNOWN_ACRONYMS = new Set([
-  'IA', 'AI', 'BI', 'ML', 'DL', 'NLP', 'SQL', 'ETL', 'API', 'REST', 'CRM', 'ERP', 'SAP',
-  'AWS', 'GCP', 'AZURE', 'UI', 'UX', 'SEO', 'SEM', 'KPI', 'OKR', 'R&D',
-  'C', 'C#', 'C++', 'R',
-]);
-
-/**
- * Normalize skill casing for display/search:
- * - avoid forced Title Case
- * - keep natural French casing
- * - preserve acronyms (IA, R&D, SQL, API...)
- */
-function normalizeSkillName(input: string): string {
-  const text = input.replace(/\s+/g, ' ').trim();
-  if (!text) return text;
-
-  const words = text.split(' ');
-  return words
-    .map((word, index) => normalizeWord(word, index))
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function normalizeWord(word: string, index: number): string {
-  const match = word.match(/^([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)([A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9&+.#/-]*)([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)$/);
-  if (!match) return word;
-
-  const [, prefix, core, suffix] = match;
-  const upperCore = core.toUpperCase();
-  const lowerCore = core.toLowerCase();
-
-  if (KNOWN_ACRONYMS.has(upperCore)) {
-    return `${prefix}${upperCore}${suffix}`;
-  }
-
-  if (/^[A-Z0-9&+.#/-]{2,}$/.test(core) && /[A-Z]/.test(core)) {
-    return `${prefix}${core}${suffix}`;
-  }
-
-  if (index > 0 && SMALL_WORDS.has(lowerCore)) {
-    return `${prefix}${lowerCore}${suffix}`;
-  }
-
-  if (index === 0) {
-    return `${prefix}${lowerCore.charAt(0).toUpperCase()}${lowerCore.slice(1)}${suffix}`;
-  }
-
-  return `${prefix}${lowerCore}${suffix}`;
-}
-
-function mapProficiencyHint(hint?: string): string {
-  if (!hint) return 'INTERMEDIATE';
-  const upper = hint.toUpperCase();
-  if (['MASTER', 'EXPERT', 'INTERMEDIATE', 'BEGINNER'].includes(upper)) return upper;
-  return 'INTERMEDIATE';
+function mapProficiencyHint(hint?: string): Level {
+  if (!hint) return 'intermediate';
+  const lower = hint.toLowerCase();
+  if (isValidLevel(lower)) return lower as Level;
+  // legacy uppercase hints
+  const legacy: Record<string, Level> = {
+    master: 'master',
+    expert: 'advanced',
+    advanced: 'advanced',
+    intermediate: 'intermediate',
+    beginner: 'beginner',
+  };
+  return legacy[lower] || 'intermediate';
 }
 
 export default { extractAndSaveSkills };

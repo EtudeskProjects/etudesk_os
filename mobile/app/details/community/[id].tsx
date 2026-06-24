@@ -26,6 +26,7 @@ import {
 	import { useSpace } from '../../../src/contexts/SpaceContext';
 	import { Button, IconButton, ImageSlider, FooterNav, FloatingActionMenu, ActionItem, TabBar, SelectCard, LoadingShimmer } from '../../../src/components/ui';
 import { ActivityFeed } from '../../../src/components/community/ActivityFeed';
+import { EntitySkillTags } from '../../../src/components/EntitySkillTags';
 import { formatRelativeTime, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
@@ -431,6 +432,9 @@ export default function CommunityDetailScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Catalog skill tags the community validates */}
+            <EntitySkillTags skills={community.skills} title={t('community.skills')} showRequirement={false} />
 
             {/* Members Preview */}
 	            {membersPreview.length > 0 && (

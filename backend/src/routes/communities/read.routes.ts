@@ -206,7 +206,16 @@ router.get('/:id', optionalAuthMiddleware, async (req: Request, res: Response) =
           'slug', o.slug,
           'logo_url', o.logo_url,
           'verification_status', o.verification_status
-        ) as organization
+        ) as organization,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'slug', cs.competency_slug, 'name', comp.name, 'name_fr', comp.name_fr,
+            'type', comp.type, 'family', comp.family, 'role', cs.role
+          ) ORDER BY comp.name)
+           FROM community_skills cs JOIN competencies comp ON comp.slug = cs.competency_slug
+           WHERE cs.community_id = c.id),
+          '[]'
+        ) as skills
       FROM communities c
       LEFT JOIN organizations o ON c.organization_id = o.id
       WHERE (c.id::text = $1 OR c.slug = $1) AND c.deleted_at IS NULL

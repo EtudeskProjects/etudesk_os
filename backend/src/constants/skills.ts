@@ -1,43 +1,72 @@
 /**
  * Skills Constants
- * Aligned with database schema (talent_skills table)
+ * Aligned with the digital skills referential (datasets/etudesk_digital_skills)
+ * and the EVALUATION_FRAMEWORK. The catalog (competencies table) is the single
+ * source of truth; talent_skills rows are catalog-constrained UserCompetency rows.
  */
 
-// --- Skill Types Talent_skills.Type ---
+// --- Catalog competency types (competencies.type — lowercase, 5 types) ---
 
-export const SKILL_TYPES = {
-  KNOWLEDGE: 'KNOWLEDGE',       // Savoir (theoretical knowledge)
-  SOFT_SKILL: 'SOFT_SKILL',     // Savoir-être (soft skills / behavioral)
-  HARD_SKILL: 'HARD_SKILL',     // Savoir-faire (practical skills)
+export const CATALOG_TYPES = {
+  KNOWLEDGE: 'knowledge',
+  HARD_SKILL: 'hard_skill',
+  SOFT_SKILL: 'soft_skill',
+  TOOL_PLATFORM: 'tool_platform',
+  LANGUAGE: 'language',
 } as const;
 
-export type SkillType = (typeof SKILL_TYPES)[keyof typeof SKILL_TYPES];
+export type CatalogType = (typeof CATALOG_TYPES)[keyof typeof CATALOG_TYPES];
 
-export function isValidSkillType(type: string): type is SkillType {
-  return Object.values(SKILL_TYPES).includes(type as SkillType);
+export function isValidCatalogType(type: string): type is CatalogType {
+  return Object.values(CATALOG_TYPES).includes(type as CatalogType);
 }
 
-// --- Proficiency Levels Talent_skills.Proficiency_level ---
+// --- Levels (talent_skills.level — aligned to EVALUATION_FRAMEWORK) ---
 
-export const PROFICIENCY_LEVELS = {
-  BEGINNER: 'BEGINNER',
-  INTERMEDIATE: 'INTERMEDIATE',
-  EXPERT: 'EXPERT',
-  MASTER: 'MASTER',
+export const LEVELS = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  MASTER: 'master',
 } as const;
 
-export type ProficiencyLevel = (typeof PROFICIENCY_LEVELS)[keyof typeof PROFICIENCY_LEVELS];
+export type Level = (typeof LEVELS)[keyof typeof LEVELS];
 
-export function isValidProficiencyLevel(level: string): level is ProficiencyLevel {
-  return Object.values(PROFICIENCY_LEVELS).includes(level as ProficiencyLevel);
+export const LEVEL_ORDER: Level[] = ['beginner', 'intermediate', 'advanced', 'master'];
+
+export const LEVEL_SCORE: Record<Level, number> = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+  master: 4,
+};
+
+export const SCORE_LEVEL: Record<number, Level> = {
+  1: 'beginner',
+  2: 'intermediate',
+  3: 'advanced',
+  4: 'master',
+};
+
+export function isValidLevel(level: string): level is Level {
+  return LEVEL_ORDER.includes(level as Level);
 }
 
-// --- Skill Origin Talent_skills.Origin ---
+export function levelToScore(level: Level): number {
+  return LEVEL_SCORE[level] ?? 1;
+}
+
+export function scoreToLevel(score: number): Level {
+  return SCORE_LEVEL[Math.max(1, Math.min(4, Math.round(score)))];
+}
+
+// --- Skill origin (talent_skills.origin) ---
 
 export const SKILL_ORIGINS = {
   DECLARED: 'declared',     // User manually declared the skill
-  INFERRED: 'inferred',     // AI inferred from profile/activity
-  EXTRACTED: 'extracted',   // Extracted from uploaded documents
+  INFERRED: 'inferred',     // AI inferred from quiz/conversation
+  EXTRACTED: 'extracted',   // Extracted from uploaded documents (CV/diploma)
+  VALIDATED: 'validated',   // System-validated via participation (opp/community/space)
 } as const;
 
 export type SkillOrigin = (typeof SKILL_ORIGINS)[keyof typeof SKILL_ORIGINS];
@@ -45,6 +74,22 @@ export type SkillOrigin = (typeof SKILL_ORIGINS)[keyof typeof SKILL_ORIGINS];
 export function isValidSkillOrigin(origin: string): origin is SkillOrigin {
   return Object.values(SKILL_ORIGINS).includes(origin as SkillOrigin);
 }
+
+// --- Decay state (talent_skills.decay_state) ---
+
+export const DECAY_STATES = {
+  ACTIVE: 'active',
+  STALE: 'stale',
+  ARCHIVED: 'archived',
+} as const;
+
+export type DecayState = (typeof DECAY_STATES)[keyof typeof DECAY_STATES];
+
+// --- Versions ---
+// CATALOG_VERSION is authoritative in the DB (competencies.catalog_version, set by
+// the seed from the manifest). This is the framework version used at write time.
+
+export const FRAMEWORK_VERSION = '2026-06-24';
 
 // --- Document Skill Extraction Limits ---
 

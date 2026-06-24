@@ -133,8 +133,8 @@ const PG_QUERIES: Record<string, string> = {
   talents: `
     SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
            t.bio, t.city, t.country,
-           (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-            FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+           (SELECT json_agg(json_build_object('name', ts.name, 'level', ts.level))
+            FROM (SELECT c.name AS name, sk.level AS level FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state = 'active' ORDER BY sk.score DESC LIMIT 5) ts) as top_skills
     FROM talents t
     WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL AND t.is_visible = TRUE`,
 };
@@ -215,13 +215,13 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
     let sql = `
       SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
              t.bio, t.city, t.country,
-             (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-              FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+             (SELECT json_agg(json_build_object('name', ts.name, 'level', ts.level))
+              FROM (SELECT c.name AS name, sk.level AS level FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state = 'active' ORDER BY sk.score DESC LIMIT 5) ts) as top_skills
       FROM talents t
       WHERE t.deleted_at IS NULL AND t.is_visible = TRUE`;
     if (query) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(query); idx++; }
     if (filters.skills && Array.isArray(filters.skills) && filters.skills.length > 0) {
-      sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts WHERE ts.talent_id = t.id AND LOWER(ts.canonical_name) = ANY($${idx}::text[]))`;
+      sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug WHERE ts.talent_id = t.id AND (LOWER(c.name) = ANY($${idx}::text[]) OR LOWER(c.name_fr) = ANY($${idx}::text[]) OR ts.competency_slug = ANY($${idx}::text[])))`;
       p.push((filters.skills as string[]).map((s: string) => s.toLowerCase()));
       idx++;
     }

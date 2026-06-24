@@ -66,6 +66,7 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, IconButton, ImageSlider, FooterNav, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { spaceService, Space, bookmarkService } from '../../../src/services';
+import { EntitySkillTags } from '../../../src/components/EntitySkillTags';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import {
@@ -608,6 +609,9 @@ export default function SpaceDetailScreen() {
               )}
             </View>
           )}
+
+          {/* Catalog skill tags the space validates (hard skills / tools) */}
+          <EntitySkillTags skills={space.skills} title={t('space.skills')} showRequirement={false} />
 
           {/* Equipment Section */}
           {space.equipment && space.equipment.length > 0 && (

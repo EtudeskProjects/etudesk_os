@@ -35,6 +35,7 @@ import { ShimmerPlaceholder } from '../ui';
 import { downloadAndOpenDocument, downloadAndShareDocument } from '../../utils/documentDownload';
 import { getCurrentLocale } from '../../i18n';
 import { getLabel } from '../../utils/labels';
+import { getSkillTypeConfig, getLevelConfig, getOriginConfig, normalizeLevel } from '../../constants/skills';
 import { getNotificationRoute } from '../../hooks/notifications/notificationNavigation';
 import { MapEntityCard } from './MapEntityCard';
 import { buildExternalMapUrl, getPrimaryMapPoint } from '../../utils/mapEntity';
@@ -185,14 +186,16 @@ function normalizeEntity(type: string, raw: Record<string, any>): Record<string,
         locationType: raw.locationType || raw.location_type || raw.metadata?.location_type,
         meetingUrl: raw.meetingUrl || raw.meeting_url || raw.metadata?.meeting_url,
       };
-    case 'skill':
+    case 'skill': {
+      const ctx = Array.isArray(raw.context) ? raw.context.join(' · ') : raw.context;
       return {
         ...raw,
-        title: raw.title || raw.canonical_name || raw.name,
-        subtitle: raw.subtitle || sanitizeText(raw.context),
-        proficiencyLevel: raw.proficiencyLevel || raw.proficiency_level,
-        skillType: raw.skillType || raw.type,
+        title: raw.title || raw.name_fr || raw.name,
+        subtitle: raw.subtitle || sanitizeText(ctx),
+        level: raw.level,
+        skillType: raw.type,
       };
+    }
     case 'notification':
       return {
         ...raw,
@@ -416,8 +419,8 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
   const rawTitle =
     data.title ||
     data.label ||
+    data.name_fr ||
     data.name ||
-    data.canonical_name ||
     data.original_filename ||
     data.filename ||
     '';
@@ -516,22 +519,31 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     }
   }
   if (type === 'skill') {
-    const proficiency = data.proficiencyLevel || data.proficiency_level;
+    const proficiency = normalizeLevel(data.level);
     const skillType = data.skillType || data.type;
-    if (proficiency) {
+    const levelCfg = getLevelConfig(proficiency, colors);
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { text: getLabel('proficiencyLevels', proficiency), color: levelCfg.color },
+    });
+    if (skillType) {
+      const typeCfg = getSkillTypeConfig(skillType, colors);
       pushUniqueMetaItem({
         items: metaItems,
         seen: seenMeta,
         blocked: blockedMeta,
-        item: { text: getLabel('proficiencyLevels', proficiency) },
+        item: { icon: typeCfg.Icon, text: getLabel('skillTypes', skillType), color: typeCfg.color },
       });
     }
-    if (skillType) {
+    if (data.origin) {
+      const originCfg = getOriginConfig(data.origin, colors);
       pushUniqueMetaItem({
         items: metaItems,
         seen: seenMeta,
         blocked: blockedMeta,
-        item: { text: getLabel('skillTypes', skillType) },
+        item: { icon: originCfg.Icon, text: t(originCfg.labelKey), color: originCfg.color },
       });
     }
     if (data.is_visible === false) {

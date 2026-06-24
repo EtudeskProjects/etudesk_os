@@ -1,8 +1,9 @@
 {
   "fetchError": "Erreur lors du chargement des compétences",
-  "invalidProficiencyLevel": "Niveau de compétence invalide",
-  "skillNameRequired": "skillName requis",
-  "skillTypeRequired": "Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "invalidProficiencyLevel": "Niveau invalide (beginner, intermediate, advanced, master)",
+  "skillNameRequired": "Une compétence est requise",
+  "notInCatalog": "\"{{name}}\" n'est pas dans le référentiel de compétences",
+  "skillTypeRequired": "Le type de compétence est requis",
   "addError": "Erreur lors de l'ajout de la compétence",
   "updateError": "Erreur lors de la mise à jour",
   "isVisibleMustBeBoolean": "is_visible doit être un booléen",

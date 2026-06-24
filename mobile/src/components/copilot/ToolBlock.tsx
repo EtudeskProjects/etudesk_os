@@ -153,10 +153,8 @@ function getToolTitle(t: (key: string, params?: Record<string, string>) => strin
     }
 
     case 'manage_skills': {
-      const action = args?.action as string | undefined;
-      const skill = args?.skillName as string | undefined;
-      if (action === 'add' && skill) return t('copilot.tool.addSkillPrefix', { skill });
-      if (action === 'update' && skill) return t('copilot.tool.updateSkillPrefix', { skill });
+      const skill = args?.skillQuery as string | undefined;
+      if (skill) return t('copilot.tool.addSkillPrefix', { skill });
       return t('copilot.tool.updateSkills');
     }
 

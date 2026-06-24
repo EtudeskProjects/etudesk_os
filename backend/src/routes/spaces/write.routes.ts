@@ -21,6 +21,7 @@ import {
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
 import { upsertSpaceEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { setSpaceSkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 
 const router = Router();
@@ -224,7 +225,15 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       }
     }
 
-    res.status(201).json({ data: space });
+    // Catalog skill tags (hard skills / tools the space validates)
+    let skillTags = null;
+    try {
+      skillTags = await setSpaceSkills(space.id, (input as any).skills);
+    } catch (err) {
+      logger.error('Failed to set space skills:', err);
+    }
+
+    res.status(201).json({ data: space, skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error creating space');
   }
@@ -372,7 +381,17 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       sectors: updated.sectors, address: updated.address,
     }).catch(err => logger.error('[spaces] Error updating Pinecone embedding:', err));
 
-    res.json({ data: updated });
+    // Update catalog skill tags only when provided
+    let skillTags = null;
+    if ((input as any).skills !== undefined) {
+      try {
+        skillTags = await setSpaceSkills(id, (input as any).skills);
+      } catch (err) {
+        logger.error('Failed to update space skills:', err);
+      }
+    }
+
+    res.json({ data: updated, skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error updating space');
   }

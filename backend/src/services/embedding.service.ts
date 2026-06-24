@@ -109,6 +109,7 @@ export function buildOpportunityEmbeddingText(opportunity: {
   location_type?: string;
   locations?: Array<{ city?: string; country?: string }>;
   sectors?: string[];
+  skills?: string[];
 }): string {
   const parts: string[] = [];
 
@@ -143,6 +144,10 @@ export function buildOpportunityEmbeddingText(opportunity: {
 
   if (opportunity.summary) {
     parts.push(opportunity.summary.slice(0, 300));
+  }
+
+  if (opportunity.skills && opportunity.skills.length > 0) {
+    parts.push(`Competences: ${opportunity.skills.slice(0, 12).join(', ')}`);
   }
 
   if (opportunity.requirements) {
@@ -539,7 +544,12 @@ export async function onOpportunityUpdate(opportunityId: string): Promise<void> 
       SELECT
         o.title, o.summary, o.requirements, o.nice_to_have,
         o.type, o.contract_type, o.work_rhythm, o.location_type, o.locations,
-        org.sectors
+        org.sectors,
+        ARRAY(
+          SELECT c.name FROM opportunity_skills os
+          JOIN competencies c ON c.slug = os.competency_slug
+          WHERE os.opportunity_id = o.id
+        ) AS skills
       FROM opportunities o
       LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
       LEFT JOIN organizations org ON op.poster_organization_id = org.id
@@ -573,8 +583,9 @@ export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<
            t.remote_ready,
            t.willing_to_relocate,
            ARRAY(
-             SELECT canonical_name FROM talent_skills
-             WHERE talent_id = t.id
+             SELECT c.name FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+             WHERE ts.talent_id = t.id AND ts.decay_state = 'active'
+             ORDER BY ts.score DESC
            ) as skills
            ,
            COALESCE(

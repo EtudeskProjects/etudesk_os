@@ -579,8 +579,12 @@
       "autoDiagnostic": "Self-assessment",
       "autoDiagnosticPrompt": "Do a self-assessment of my skills",
       "modalTitle": "Add a skill",
-      "skillName": "Skill name",
+      "skillName": "Skill",
       "skillNamePlaceholder": "E.g.: React, Project management, Communication...",
+      "catalogSearchPlaceholder": "Search the skills catalog…",
+      "noCatalogMatch": "No matching skill in the catalog. Try another wording.",
+      "selectedCatalog": "Catalog skill selected ({{type}})",
+      "notInCatalogSuggestions": "Not in the catalog. Did you mean: {{names}}?",
       "skillType": "Skill type *",
       "proficiency": "Level",
       "context": "Context",
@@ -588,7 +592,13 @@
       "origin": {
         "declared": "Declared",
         "extracted": "Extracted",
-        "inferred": "Inferred"
+        "inferred": "Inferred",
+        "validated": "Validated"
+      },
+      "decay": {
+        "active": "Active",
+        "stale": "To refresh",
+        "archived": "Archived"
       },
       "timeAgo": {
         "weeks": "{{count}} wk ago",
@@ -1052,6 +1062,7 @@
     "startDate": "Start date",
     "duration": "Duration",
     "niceToHave": "Nice to have",
+    "skillsRequired": "Required skills",
     "aboutOrg": "About {{name}}",
     "types": {
       "employment": "Employment",
@@ -1223,6 +1234,7 @@
   "space": {
     "book": "Book",
     "visit": "Visit",
+    "skills": "Skills practiced here",
     "about": "About",
     "amenities": "Amenities",
     "pricing": "Pricing",
@@ -1374,6 +1386,7 @@
     "joined": "Member",
     "leave": "Leave",
     "industries": "Industries",
+    "skills": "Skills developed here",
     "about": "About",
     "members": "Members",
     "events": "Events",
@@ -2925,16 +2938,23 @@
       "OTHER": "Other"
     },
     "proficiencyLevels": {
-      "BEGINNER": "Beginner",
-      "INTERMEDIATE": "Intermediate",
-      "EXPERT": "Expert",
-      "MASTER": "Master"
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "master": "Master"
     },
     "skillTypes": {
-      "KNOWLEDGE": "Knowledge",
-      "HARD_SKILL": "Hard skill",
-      "SOFT_SKILL": "Soft skill"
+      "knowledge": "Knowledge",
+      "hard_skill": "Hard skill",
+      "soft_skill": "Soft skill",
+      "tool_platform": "Tool / platform",
+      "language": "Language"
     },
+    "skillRequirement": {
+      "required": "Required",
+      "nice_to_have": "Nice to have"
+    },
+    "skillsSection": "Skills",
     "orgDocumentTypes": {
       "POLICY": "Internal policy",
       "CONTRACT": "Contract",

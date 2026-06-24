@@ -46,7 +46,7 @@ export interface DocumentMeta {
  * Returns null if talent not found.
  */
 export async function buildTalentObject(talentId: string, includeHidden: boolean = false): Promise<TalentObject | null> {
-  const skillVisibilityFilter = includeHidden ? '' : 'AND is_visible = true';
+  const skillVisibilityFilter = includeHidden ? '' : 'AND ts.is_visible = true';
   const result = await pool.query(
     `SELECT
        t.id,
@@ -68,10 +68,10 @@ export async function buildTalentObject(talentId: string, includeHidden: boolean
        t.willing_to_relocate,
        COALESCE(
          ARRAY(
-           SELECT canonical_name
-           FROM talent_skills
-           WHERE talent_id = t.id ${skillVisibilityFilter}
-           ORDER BY canonical_name ASC
+           SELECT c.name
+           FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+           WHERE ts.talent_id = t.id AND ts.decay_state = 'active' ${skillVisibilityFilter}
+           ORDER BY ts.score DESC, c.name ASC
            LIMIT 20
          ),
          '{}'

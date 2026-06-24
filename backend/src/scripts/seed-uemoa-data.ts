@@ -18,6 +18,8 @@ import {
   batchUpdateCommunityEmbeddings,
   batchUpdateSpaceEmbeddings,
 } from '../services/embedding.service';
+import { resolveLabel, getCatalogVersion } from '../services/skills/catalog.service';
+import { LEVEL_SCORE, FRAMEWORK_VERSION } from '../constants/skills';
 
 // --- Uemoa Data Constants ---
 
@@ -273,22 +275,23 @@ async function seedTalents(count: number): Promise<string[]> {
         [uuidv4(), email, id]
       );
 
-      // Insert skills
-      for (const skill of skills) {
+      // Insert skills (catalog-constrained: resolve each label to a slug, skip unmappable)
+      const catalogVersion = await getCatalogVersion();
+      const insertSkill = async (label: string, level: string) => {
+        const resolved = await resolveLabel(label);
+        if (!resolved) return;
         await pool.query(
-          `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (talent_id, canonical_name) DO NOTHING`,
-          [id, skill, 'TECHNICAL', randomPick(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER']), 'declared']
+          `INSERT INTO talent_skills (talent_id, competency_slug, level, score, origin, catalog_version, framework_version, last_evidence_at)
+           VALUES ($1, $2, $3, $4, 'declared', $5, $6, NOW())
+           ON CONFLICT (talent_id, competency_slug) DO NOTHING`,
+          [id, resolved.slug, level, LEVEL_SCORE[level as keyof typeof LEVEL_SCORE] || 1, catalogVersion, FRAMEWORK_VERSION]
         );
+      };
+      for (const skill of skills) {
+        await insertSkill(skill, randomPick(['beginner', 'intermediate', 'advanced', 'master']));
       }
       for (const skill of softSkills) {
-        await pool.query(
-          `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (talent_id, canonical_name) DO NOTHING`,
-          [id, skill, 'SOFT', 'INTERMEDIATE', 'declared']
-        );
+        await insertSkill(skill, 'intermediate');
       }
 
       talentIds.push(id);

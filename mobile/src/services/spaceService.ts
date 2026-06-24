@@ -6,6 +6,7 @@
 
 import { api, ApiResponse } from './api';
 import type { SpaceType as ModelSpaceType, Visibility } from '../types/models';
+import type { EntitySkillTag } from './skillService';
 
 
 export type SpaceType = ModelSpaceType;
@@ -35,6 +36,8 @@ export interface Space {
   type: SpaceType;
   surface_m2: number;
   capacity: number;
+  // Catalog skill tags the space validates (hard skills / tools)
+  skills?: EntitySkillTag[];
   // Location
   address?: string;
   city?: string;

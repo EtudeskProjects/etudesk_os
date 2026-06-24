@@ -14,6 +14,7 @@ import {
   GenerationInput,
 } from '../../services/opportunity-generation.service';
 import { onOpportunityUpdate, deletePineconeVector } from '../../services/embedding.service';
+import { setOpportunitySkills } from '../../services/skills/entity-skills.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 import {
@@ -216,10 +217,19 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       `, [id, talentId]);
     }
 
+    // Catalog skill tags (resolve to slugs; non-catalog dropped). Await so the
+    // embedding below includes the linked skill names.
+    let skillTags = null;
+    try {
+      skillTags = await setOpportunitySkills(id, req.body.skills);
+    } catch (err) {
+      logger.error('Failed to set opportunity skills:', err);
+    }
+
     // Generate embedding (async)
     onOpportunityUpdate(id).catch(err => logger.error('Failed to generate opportunity embedding:', err));
 
-    res.status(201).json({ success: true, data: result.rows[0] });
+    res.status(201).json({ success: true, data: result.rows[0], skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error creating opportunity');
   }
@@ -324,10 +334,20 @@ router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req
       finalSectors, finalImages, finalAttachments, visibility, id
     ]);
 
+    // Update catalog skill tags only when provided (await before embedding).
+    let skillTags = null;
+    if (req.body.skills !== undefined) {
+      try {
+        skillTags = await setOpportunitySkills(id, req.body.skills);
+      } catch (err) {
+        logger.error('Failed to update opportunity skills:', err);
+      }
+    }
+
     // Update embedding (async)
     onOpportunityUpdate(id).catch(err => logger.error('Failed to update opportunity embedding:', err));
 
-    res.json({ success: true, data: result.rows[0] });
+    res.json({ success: true, data: result.rows[0], skills: skillTags });
   } catch (error) {
     handleRouteError(res, error, 'Error updating opportunity');
   }

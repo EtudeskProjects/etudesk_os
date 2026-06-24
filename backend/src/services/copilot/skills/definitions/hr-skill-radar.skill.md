@@ -29,10 +29,10 @@ Toujours rendre un bloc:
 
 - `max = 5`
 - Mapping niveaux -> score:
-  - BEGINNER = 2
-  - INTERMEDIATE = 3
-  - EXPERT = 4
-  - MASTER = 5
+  - beginner = 2
+  - intermediate = 3
+  - advanced = 4
+  - master = 5
 
 ## Mode STUDY (Talent)
 
@@ -43,7 +43,7 @@ Toujours rendre un bloc:
    - Soft skills: moyenne des scores des skills type SOFT_SKILL (sinon 1)
    - Knowledge: moyenne des scores des skills type KNOWLEDGE (sinon 1)
    - Profondeur: moyenne globale des scores (cappee a 5)
-   - Seniorite: proportion de skills EXPERT+MASTER (0..1) mappee sur 1..5
+   - Seniorite: proportion de skills advanced+master (0..1) mappee sur 1..5
 4. Render le radar puis 3 puces max: forces, lacunes, prochaine action.
 
 ## Mode ORG (RH)
@@ -56,9 +56,9 @@ Cas A: si la requete mentionne un talent/candidat specifique (ID ou carte talent
 
 Cas B: si la requete est "radar global" (org)
 1. `sql_query` intent `org_skills_analytics` (params: organizationId) et construire un radar "maturite globale":
-   - Hard skills / Soft skills / Knowledge: score base sur la distribution des niveaux (plus de EXPERT/MASTER => score haut)
+   - Hard skills / Soft skills / Knowledge: score base sur la distribution des niveaux (plus de advanced/master => score haut)
    - Profondeur: moyenne approx.
-   - Seniorite: ratio EXPERT/MASTER
+   - Seniorite: ratio advanced/master
 2. Render radar + 2 recommandations.
 
 ## Regles
