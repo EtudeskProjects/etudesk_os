@@ -1,0 +1,1212 @@
+slug,family,type,name,name_fr
+agentic-workflow-automation,ai_ml,hard_skill,Agentic Workflow Automation,Automatisation de flux de travail agentiques
+agentic-loop-design,ai_ml,hard_skill,Agentic Loop Design,Conception de boucles agentiques
+ai-agent-orchestration,ai_ml,hard_skill,AI Agent Orchestration,Orchestration d'agents IA
+ai-image-generation,ai_ml,hard_skill,AI Image Generation,Génération d'images par IA
+ai-music,ai_ml,hard_skill,AI Music,Musique IA
+ai-tool-use,ai_ml,hard_skill,AI Tool Use,Utilisation d'outils par IA
+ai-workflow-integration,ai_ml,hard_skill,AI Workflow Integration,Intégration de flux de travail IA
+ai-assisted-content-authoring,ai_ml,hard_skill,AI-Assisted Content Authoring,Création de contenu assistée par IA
+ai-driven-drug-discovery,ai_ml,hard_skill,AI-Driven Drug Discovery,Découverte de médicaments pilotée par IA
+ai-powered-product-discovery,ai_ml,hard_skill,AI-Powered Product Discovery,Découverte produit pilotée par IA
+anomaly-detection,ai_ml,hard_skill,Anomaly Detection,Détection d'anomalies
+autonomous-driving-perception-systems,ai_ml,hard_skill,Autonomous Driving Perception Systems,Systèmes de perception pour conduite autonome
+business-process-automation-design,ai_ml,hard_skill,Business Process Automation Design,Conception d'automatisation des processus métier
+chatbot-and-assistant-design,ai_ml,hard_skill,Chatbot & Assistant Design,Conception de chatbots et assistants
+churn-prediction,ai_ml,hard_skill,Churn Prediction,Prédiction de churn
+clinical-ai,ai_ml,hard_skill,Clinical AI,IA clinique
+computer-vision-for-crop-monitoring,ai_ml,hard_skill,Computer Vision for Crop Monitoring,Vision par ordinateur pour le suivi des cultures
+content-recommendation,ai_ml,hard_skill,Content Recommendation,Recommandation de contenu
+context-engineering,ai_ml,hard_skill,Context Engineering,Ingénierie du contexte
+conversational-commerce,ai_ml,hard_skill,Conversational Commerce,Conversational commerce
+data-labeling-and-annotation,ai_ml,hard_skill,Data Labeling & Annotation,Labellisation de données et annotation
+deep-learning-model-training,ai_ml,hard_skill,Deep Learning Model Training,Entraînement de modèles de deep learning
+demand-sensing,ai_ml,hard_skill,Demand Sensing,Demande Sensing
+diagnostic-modeling,ai_ml,hard_skill,Diagnostic Modeling,Modélisation de diagnostic
+diffusion-model-operation,ai_ml,hard_skill,Diffusion Model Operation,Diffusion modèle Operation
+distributed-model-training,ai_ml,hard_skill,Distributed Model Training,Entraînement de distribué modèle
+document-intelligence,ai_ml,hard_skill,Document Intelligence,Document intelligence
+edge-ai-deployment,ai_ml,hard_skill,Edge AI Deployment,Déploiement d'edge IA
+feature-engineering,ai_ml,hard_skill,Feature Engineering,Ingénierie de feature
+function-calling-integration,ai_ml,hard_skill,Function Calling Integration,Intégration de function calling
+generative-ai-content-production,ai_ml,hard_skill,Generative AI Content Production,Génératif IA contenu production
+gpu-programming,ai_ml,hard_skill,GPU Programming,GPU programmation
+guardrails,ai_ml,hard_skill,Guardrails,Garde-fous
+harness-engineering,ai_ml,hard_skill,Harness Engineering,Harness Engineering
+image-segmentation,ai_ml,hard_skill,Image Segmentation,Segmentation d'image
+llm-evaluation-and-benchmarking,ai_ml,hard_skill,LLM Evaluation & Benchmarking,LLM évaluation et benchmarking
+low-rank-adaptation,ai_ml,hard_skill,Low-Rank Adaptation,Adaptation de faible rang
+ml-pipeline-orchestration,ai_ml,hard_skill,ML Pipeline Orchestration,Orchestration de pipelines ML
+mlops,ai_ml,hard_skill,MLOps,MLOps
+model-deployment,ai_ml,hard_skill,Model Deployment,Déploiement de modèle
+model-fine-tuning,ai_ml,hard_skill,Model Fine-tuning,Ajustement fin de modèles
+model-monitoring,ai_ml,hard_skill,Model Monitoring,Suivi de modèle
+model-quantization,ai_ml,hard_skill,Model Quantization,Quantification de modèles
+model-serving-and-apis,ai_ml,hard_skill,Model Serving & APIs,Mise en production de modèles et API
+multi-agent-system-design,ai_ml,hard_skill,Multi-Agent System Design,Conception de systèmes multi-agents
+named-entity-recognition,ai_ml,hard_skill,Named Entity Recognition,Reconnaissance d’entités nommées
+object-detection,ai_ml,hard_skill,Object Detection,Détection d’objets
+optical-character-recognition,ai_ml,hard_skill,Optical Character Recognition,Reconnaissance optique de caractères
+perception-systems,ai_ml,hard_skill,Perception Systems,Systèmes de perception
+predictive-modeling,ai_ml,hard_skill,Predictive Modeling,Modélisation prédictive
+prompt-engineering,ai_ml,hard_skill,Prompt Engineering,Ingénierie de prompts
+recommender-systems-engineering,ai_ml,hard_skill,Recommender Systems Engineering,Ingénierie des systèmes de recommandation
+reinforcement-learning,ai_ml,hard_skill,Reinforcement Learning,Apprentissage par renforcement
+reinforcement-learning-from-human-feedback,ai_ml,hard_skill,Reinforcement Learning from Human Feedback,Apprentissage par renforcement à partir de retours humains
+retrieval-augmented-generation,ai_ml,hard_skill,Retrieval-Augmented Generation,Génération augmentée par récupération
+rl-environment-design,ai_ml,hard_skill,RL Environment Design,Conception d’environnements RL
+sentiment-analysis,ai_ml,hard_skill,Sentiment Analysis,Analyse de sentiment
+speech-recognition-engineering,ai_ml,hard_skill,Speech Recognition Engineering,Ingénierie de la reconnaissance vocale
+synthetic-data-generation,ai_ml,hard_skill,Synthetic Data Generation,Génération de données synthétiques
+text-classification,ai_ml,hard_skill,Text Classification,Classification de texte
+time-series-forecasting,ai_ml,hard_skill,Time Series Forecasting,Prévision de séries temporelles
+vector-search-implementation,ai_ml,hard_skill,Vector Search Implementation,Implémentation de recherche vectorielle
+video-analytics,ai_ml,hard_skill,Video Analytics,Analyse vidéo
+voice-and-speech-ai-integration,ai_ml,hard_skill,Voice & Speech AI Integration,Intégration IA de la voix et de la parole
+ai-bias-and-fairness,ai_ml,knowledge,AI Bias & Fairness,Biais et équité de l'IA
+ai-governance,ai_ml,knowledge,AI Governance,Gouvernance de l'IA
+ai-red-teaming,ai_ml,hard_skill,AI Red Teaming,Red teaming IA
+ai-risk-management,ai_ml,knowledge,AI Risk Management,Gestion d'ia risque
+ai-safety,ai_ml,knowledge,AI Safety,Sécurité de l'IA
+alignment,ai_ml,knowledge,Alignment,Alignement
+embeddings,ai_ml,knowledge,Embeddings,Plongements vectoriels
+ethical-ai,ai_ml,knowledge,Ethical AI,IA éthique
+eu-ai-act-compliance,ai_ml,knowledge,EU AI Act Compliance,Conformité d'eu ia act
+federated-learning,ai_ml,knowledge,Federated Learning,Apprentissage fédéré
+foundation-models,ai_ml,knowledge,Foundation Models,Modèles de fondation
+knowledge-graphs,ai_ml,knowledge,Knowledge Graphs,Connaissance Graphs
+llm-architectures,ai_ml,knowledge,LLM Architectures,Architectures de LLM
+llmops,ai_ml,hard_skill,LLMOps,Opérations LLM
+machine-learning-fundamentals,ai_ml,knowledge,Machine Learning Fundamentals,Fondamentaux du machine learning
+model-risk-management,ai_ml,knowledge,Model Risk Management,Gestion de modèle risque
+model-interpretability,ai_ml,knowledge,Model Interpretability,Modèle Interpretability
+multimodal-ai,ai_ml,knowledge,Multimodal AI,Multimodal IA
+natural-language-processing,ai_ml,knowledge,Natural Language Processing,Natural langage Processing
+neural-network-architectures,ai_ml,knowledge,Neural Network Architectures,Neural réseau Architectures
+responsible-ai,ai_ml,knowledge,Responsible AI,IA responsable
+transformer,ai_ml,knowledge,Transformer,Transformeur
+vector-databases,ai_ml,knowledge,Vector Databases,Bases de données vectorielles
+mojo,ai_ml,language,Mojo,Mojo
+amazon-sagemaker,ai_ml,tool_platform,Amazon SageMaker,Amazon SageMaker
+anthropic-claude-api,ai_ml,tool_platform,Anthropic Claude API,Anthropic Claude API
+apache-iceberg,ai_ml,tool_platform,Apache Iceberg,Apache Iceberg
+apache-kafka,ai_ml,tool_platform,Apache Kafka,Apache Kafka
+aws-bedrock,ai_ml,tool_platform,AWS Bedrock,AWS Bedrock
+azure-ai-foundry,ai_ml,tool_platform,Azure AI Foundry,Azure IA Foundry
+chatgpt,ai_ml,tool_platform,ChatGPT,ChatGPT
+chroma,ai_ml,tool_platform,Chroma,Chroma
+claude,ai_ml,tool_platform,Claude,Claude
+claude-code,ai_ml,tool_platform,Claude Code,Claude Code
+codex,ai_ml,tool_platform,Codex,Codex
+cohere,ai_ml,tool_platform,Cohere,Cohere
+cudnn,ai_ml,tool_platform,cuDNN,CuDNN
+cursor,ai_ml,tool_platform,Cursor,Cursor
+deepseek,ai_ml,tool_platform,DeepSeek,DeepSeek
+dspy,ai_ml,tool_platform,DSPy,DSPy
+faiss,ai_ml,tool_platform,FAISS,FAISS
+github-copilot,ai_ml,tool_platform,GitHub Copilot,GitHub Copilot
+google-gemini,ai_ml,tool_platform,Google Gemini,Google Gemini
+grok,ai_ml,tool_platform,Grok,Grok
+groq,ai_ml,tool_platform,Groq,Groq
+gymnasium,ai_ml,tool_platform,Gymnasium,Gymnasium
+hugging-face,ai_ml,tool_platform,Hugging Face,Hugging Face
+jax,ai_ml,tool_platform,JAX,JAX
+keras,ai_ml,tool_platform,Keras,Keras
+kimi,ai_ml,tool_platform,Kimi,Kimi
+langchain,ai_ml,tool_platform,LangChain,LangChain
+langgraph,ai_ml,tool_platform,LangGraph,LangGraph
+llamaindex,ai_ml,tool_platform,LlamaIndex,LlamaIndex
+meta-llama,ai_ml,tool_platform,Meta Llama,Meta Llama
+milvus,ai_ml,tool_platform,Milvus,Milvus
+mistral-ai,ai_ml,tool_platform,Mistral AI,Mistral IA
+mlflow,ai_ml,tool_platform,MLflow,MLflow
+model-context-protocol,ai_ml,tool_platform,Model Context Protocol,Modèle Context Protocol
+mujoco,ai_ml,tool_platform,MuJoCo,MuJoCo
+notebooklm,ai_ml,tool_platform,NotebookLM,NotebookLM
+nvidia-cuda,ai_ml,tool_platform,NVIDIA CUDA,NVIDIA CUDA
+nvidia-nim,ai_ml,tool_platform,NVIDIA NIM,NVIDIA NIM
+ollama,ai_ml,tool_platform,Ollama,Ollama
+onnx,ai_ml,tool_platform,ONNX,ONNX
+openai-api,ai_ml,tool_platform,OpenAI API,OpenAI API
+opencv,ai_ml,tool_platform,OpenCV,OpenCV
+perplexity,ai_ml,tool_platform,Perplexity,Perplexity
+pettingzoo,ai_ml,tool_platform,PettingZoo,PettingZoo
+pinecone,ai_ml,tool_platform,Pinecone,Pinecone
+pytorch,ai_ml,tool_platform,PyTorch,PyTorch
+qdrant,ai_ml,tool_platform,Qdrant,Qdrant
+qwen,ai_ml,tool_platform,Qwen,Qwen
+ray,ai_ml,tool_platform,Ray,Ray
+ray-rllib,ai_ml,tool_platform,Ray RLlib,Ray RLlib
+replicate,ai_ml,tool_platform,Replicate,Replicate
+runway,ai_ml,tool_platform,Runway,Runway
+scikit-learn,ai_ml,tool_platform,scikit-learn,Scikit-learn
+spacy,ai_ml,tool_platform,spaCy,SpaCy
+stable-baselines3,ai_ml,tool_platform,Stable-Baselines3,Stable-Baselines3
+tensorflow,ai_ml,tool_platform,TensorFlow,TensorFlow
+tensorrt,ai_ml,tool_platform,TensorRT,TensorRT
+together-ai,ai_ml,tool_platform,Together AI,Together IA
+triton-inference-server,ai_ml,tool_platform,Triton Inference Server,Triton Inference Server
+unity-ml-agents,ai_ml,tool_platform,Unity ML-Agents,Unity ML-Agents
+vertex-ai,ai_ml,tool_platform,Vertex AI,Vertex IA
+vllm,ai_ml,tool_platform,vLLM,VLLM
+weaviate,ai_ml,tool_platform,Weaviate,Weaviate
+weights-and-biases,ai_ml,tool_platform,Weights & Biases,Weights et Biases
+whisper,ai_ml,tool_platform,Whisper,Whisper
+xgboost,ai_ml,tool_platform,XGBoost,XGBoost
+agile-project-management,business_management,hard_skill,Agile Project Management,Gestion de projet agile
+business-process-mapping,business_management,hard_skill,Business Process Mapping,Cartographie des processus métier
+business-development,business_management,hard_skill,Business Development,Développement commercial
+business-strategy,business_management,hard_skill,Business Strategy,Stratégie commerciale
+change-management,business_management,hard_skill,Change Management,Gestion du changement
+document-review,business_management,hard_skill,Document Review,Revue documentaire
+competitive-analysis,business_management,hard_skill,Competitive Analysis,Analyse concurrentielle
+digital-public-service-design,business_management,hard_skill,Digital Public Service Design,Conception de services publics numériques
+financial-modeling,business_management,hard_skill,Financial Modeling,Modélisation financière
+fundraising,business_management,hard_skill,Fundraising,Levée de fonds
+go-to-market-strategy,business_management,hard_skill,Go-to-Market Strategy,Stratégie de mise sur le marché
+government-data-interoperability,business_management,hard_skill,Government Data Interoperability,Interopérabilité des données publiques
+investor-relations,business_management,hard_skill,Investor Relations,Relations investisseurs
+knowledge-retrieval,business_management,hard_skill,Knowledge Retrieval,Recherche de connaissances
+legal-document-automation,business_management,hard_skill,Legal Document Automation,Automatisation de documents juridiques
+legal-research,business_management,hard_skill,Legal Research,Recherche juridique
+logistics-management,business_management,hard_skill,Logistics Management,Gestion logistique
+market-research,business_management,hard_skill,Market Research,Étude de marché
+operations-optimization,business_management,hard_skill,Operations Optimization,Optimisation des opérations
+participatory-data-analysis,business_management,hard_skill,Participatory Data Analysis,Analyse participative des données
+performance-management,business_management,hard_skill,Performance Management,Gestion de la performance
+pitch,business_management,hard_skill,Pitch,Présentation de projet
+process-improvement,business_management,hard_skill,Process Improvement,Amélioration des processus
+procurement-management,business_management,hard_skill,Procurement Management,Gestion des achats
+product-ownership,business_management,hard_skill,Product Ownership,Responsabilité produit
+recruitment-and-hiring,business_management,hard_skill,Recruitment & Hiring,Recrutement et embauche
+regulatory-compliance-engineering,business_management,hard_skill,Regulatory Compliance Engineering,Ingénierie de la conformité réglementaire
+requirements-gathering,business_management,hard_skill,Requirements Gathering,Recueil des besoins
+retail-operations-management,business_management,hard_skill,Retail Operations Management,Gestion des opérations de vente au détail
+remote-team-leadership,business_management,hard_skill,Remote Team Leadership,Leadership d’équipes à distance
+revenue-operations,business_management,hard_skill,Revenue Operations,Opérations de revenus
+roadmap-planning,business_management,hard_skill,Roadmap Planning,Planification de feuille de route
+scrum-mastery,business_management,hard_skill,Scrum Mastery,Maîtrise de Scrum
+supply-chain-optimization,business_management,hard_skill,Supply Chain Optimization,Optimisation de la chaîne d’approvisionnement
+talent-management,business_management,hard_skill,Talent Management,Gestion des talents
+vendor-management,business_management,hard_skill,Vendor Management,Gestion des fournisseurs
+workforce-planning,business_management,hard_skill,Workforce Planning,Planification des effectifs
+agile,business_management,knowledge,Agile,Agile
+business-analysis,business_management,knowledge,Business Analysis,Analyse métier
+business-models,business_management,knowledge,Business Models,Modèles économiques
+digital-inclusion,business_management,knowledge,Digital Inclusion,Inclusion numérique
+financial-literacy,business_management,knowledge,Financial Literacy,Culture financière
+fleet-operations,business_management,knowledge,Fleet Operations,Opérations de flotte
+gdpr,business_management,knowledge,GDPR,GDPR
+lean-principles,business_management,knowledge,Lean Principles,Principes Lean
+lean-startup,business_management,knowledge,Lean Startup,Lean Startup
+logistics-operations,business_management,knowledge,Logistics Operations,Opérations logistiques
+okr-frameworks,business_management,knowledge,OKR Frameworks,Cadres OKR
+organizational-design,business_management,knowledge,Organizational Design,Conception organisationnelle
+platform-governance,business_management,knowledge,Platform Governance,Gouvernance de plateforme
+pricing-strategy,business_management,knowledge,Pricing Strategy,Stratégie tarifaire
+project-management,business_management,knowledge,Project Management,Gestion de projet
+quality-management,business_management,knowledge,Quality Management,Gestion de qualité
+regulatory-compliance,business_management,knowledge,Regulatory Compliance,Conformité de réglementaire
+scrum,business_management,knowledge,Scrum,Scrum
+smart-city-governance,business_management,knowledge,Smart City Governance,Gouvernance de smart city
+supply-chain-management,business_management,knowledge,Supply Chain Management,Gestion de la chaîne d’approvisionnement
+unit-economics,business_management,knowledge,Unit Economics,Unit économie
+ai-act-implementation,business_management,knowledge,AI Act Implementation,Implémentation d'ia act
+airtable,business_management,tool_platform,Airtable,Airtable
+applicant-tracking-system,business_management,tool_platform,Applicant Tracking System,Système de suivi des candidatures
+asana,business_management,tool_platform,Asana,Asana
+clickup,business_management,tool_platform,ClickUp,ClickUp
+confluence,business_management,tool_platform,Confluence,Confluence
+hris,business_management,tool_platform,HRIS,HRIS
+linear,business_management,tool_platform,Linear,Linear
+make,business_management,tool_platform,Make,Make
+monday-com,business_management,tool_platform,Monday.com,Monday.com
+n8n,business_management,tool_platform,n8n,N8n
+talent-suite,business_management,tool_platform,Talent Suite,Suite de gestion des talents
+trello,business_management,tool_platform,Trello,Trello
+zapier,business_management,tool_platform,Zapier,Zapier
+ci-cd-pipeline-engineering,cloud_devops,hard_skill,CI/CD Pipeline Engineering,Ingénierie des pipelines CI/CD
+civic-engagement-platform-development,cloud_devops,hard_skill,Civic Engagement Platform Development,Développement de plateformes d’engagement citoyen
+cloud-cost-optimization,cloud_devops,hard_skill,Cloud Cost Optimization,Optimisation des coûts cloud
+ai-cost-optimization,cloud_devops,hard_skill,AI Cost Optimization,Optimisation des coûts IA
+cloud-migration,cloud_devops,hard_skill,Cloud Migration,Migration vers le cloud
+cloud-networking,cloud_devops,hard_skill,Cloud Networking,Réseaux cloud
+container-orchestration,cloud_devops,hard_skill,Container Orchestration,Orchestration de conteneurs
+distributed-systems-design,cloud_devops,hard_skill,Distributed Systems Design,Conception de systèmes distribués
+edge-computing,cloud_devops,hard_skill,Edge Computing,Informatique en périphérie
+finops,cloud_devops,hard_skill,FinOps,FinOps
+gitops,cloud_devops,hard_skill,GitOps,GitOps
+incident-management,cloud_devops,hard_skill,Incident Management,Gestion d'incident
+infrastructure-as-code,cloud_devops,hard_skill,Infrastructure as Code,Infrastructure sous forme de code
+kubernetes-operations,cloud_devops,hard_skill,Kubernetes Operations,Opérations Kubernetes
+linux-system-administration,cloud_devops,hard_skill,Linux System Administration,Administration système Linux
+load-balancing,cloud_devops,hard_skill,Load Balancing,Répartition de charge
+multi-cloud-architecture,cloud_devops,hard_skill,Multi-cloud Architecture,Architecture multicloud
+network-engineering,cloud_devops,hard_skill,Network Engineering,Ingénierie de réseau
+observability,cloud_devops,hard_skill,Observability,Observabilité
+platform-engineering,cloud_devops,hard_skill,Platform Engineering,Ingénierie de plateforme
+proptech-platform-engineering,cloud_devops,hard_skill,PropTech Platform Engineering,Ingénierie de plateformes PropTech
+release-management,cloud_devops,hard_skill,Release Management,Gestion des versions
+serverless-architecture,cloud_devops,hard_skill,Serverless Architecture,Architecture sans serveur
+site-reliability-engineering,cloud_devops,hard_skill,Site Reliability Engineering,Ingénierie de la fiabilité des sites
+cloud-computing-concepts,cloud_devops,knowledge,Cloud Computing Concepts,Concepts du cloud computing
+cloud-security-fundamentals,cloud_devops,knowledge,Cloud Security Fundamentals,Fondamentaux de la sécurité cloud
+cloud-native-architecture,cloud_devops,knowledge,Cloud-Native Architecture,Architecture cloud-native
+devops-culture,cloud_devops,knowledge,DevOps Culture,Culture DevOps
+infrastructure-monitoring,cloud_devops,knowledge,Infrastructure Monitoring,Suivi d'infrastructure
+networking-fundamentals,cloud_devops,knowledge,Networking Fundamentals,Fondamentaux des réseaux
+networking-protocols,cloud_devops,knowledge,Networking Protocols,Protocoles réseau
+amazon-web-services,cloud_devops,tool_platform,Amazon Web Services,Amazon web Services
+ansible,cloud_devops,tool_platform,Ansible,Ansible
+circleci,cloud_devops,tool_platform,CircleCI,CircleCI
+cloudflare,cloud_devops,tool_platform,Cloudflare,Cloudflare
+datadog,cloud_devops,tool_platform,Datadog,Datadog
+digitalocean,cloud_devops,tool_platform,DigitalOcean,DigitalOcean
+docker,cloud_devops,tool_platform,Docker,Docker
+git,cloud_devops,tool_platform,Git,Git
+github,cloud_devops,tool_platform,GitHub,GitHub
+github-actions,cloud_devops,tool_platform,GitHub Actions,GitHub Actions
+gitlab,cloud_devops,tool_platform,GitLab,GitLab
+google-cloud-platform,cloud_devops,tool_platform,Google Cloud Platform,Google cloud plateforme
+grafana,cloud_devops,tool_platform,Grafana,Grafana
+jenkins,cloud_devops,tool_platform,Jenkins,Jenkins
+kubernetes,cloud_devops,tool_platform,Kubernetes,Kubernetes
+microsoft-azure,cloud_devops,tool_platform,Microsoft Azure,Microsoft Azure
+netlify,cloud_devops,tool_platform,Netlify,Netlify
+prometheus,cloud_devops,tool_platform,Prometheus,Prometheus
+render,cloud_devops,tool_platform,Render,Render
+terraform,cloud_devops,tool_platform,Terraform,Terraform
+vercel,cloud_devops,tool_platform,Vercel,Vercel
+access-management-engineering,cybersecurity,hard_skill,Access Management Engineering,Ingénierie de la gestion des accès
+adversarial-defense,cybersecurity,hard_skill,Adversarial Defense,Défense contre les attaques adversariales
+adversary-emulation,cybersecurity,hard_skill,Adversary Emulation,Émulation d'adversaire
+ai-ml-security,cybersecurity,hard_skill,AI/ML Security,Sécurité d'ia/ml
+ai-agent-security,cybersecurity,hard_skill,AI Agent Security,Sécurité d'ia agent
+ai-security-testing,cybersecurity,hard_skill,AI Security Testing,Tests d'ia sécurité
+api-security,cybersecurity,hard_skill,API Security,Sécurité d'api
+application-security-testing,cybersecurity,hard_skill,Application Security Testing,Tests d'application sécurité
+bug-bounty-hunting,cybersecurity,hard_skill,Bug Bounty Hunting,Recherche de primes aux bogues
+cloud-security-architecture,cybersecurity,hard_skill,Cloud Security Architecture,Architecture de sécurité cloud
+cloud-security-posture-management,cybersecurity,hard_skill,Cloud Security Posture Management,Gestion de la posture de sécurité cloud
+container-security,cybersecurity,hard_skill,Container Security,Sécurité des conteneurs
+counter-uas,cybersecurity,hard_skill,Counter-UAS,Lutte anti-drones
+cyber-threat-intelligence-analysis,cybersecurity,hard_skill,Cyber Threat Intelligence Analysis,Analyse de cyber threat intelligence
+devsecops,cybersecurity,hard_skill,DevSecOps,DevSecOps
+digital-forensics,cybersecurity,hard_skill,Digital Forensics,Investigation numérique
+digital-identity,cybersecurity,hard_skill,Digital Identity,Identité numérique
+e-id-systems,cybersecurity,hard_skill,E-ID Systems,Systèmes d'identité électronique
+electronic-warfare,cybersecurity,hard_skill,Electronic Warfare,Guerre électronique
+endpoint-detection-and-response,cybersecurity,hard_skill,Endpoint Detection & Response,Endpoint détection et Response
+ethical-hacking,cybersecurity,hard_skill,Ethical Hacking,Piratage éthique
+ics-scada-security,cybersecurity,hard_skill,ICS/SCADA Security,Sécurité d'ics/scada
+identity-and-access-management,cybersecurity,hard_skill,Identity & Access Management,Gestion d'identité et accès
+incident-response,cybersecurity,hard_skill,Incident Response,Réponse aux incidents
+malware-analysis,cybersecurity,hard_skill,Malware Analysis,Analyse de malware
+network-segmentation,cybersecurity,hard_skill,Network Segmentation,Segmentation de réseau
+ot-security,cybersecurity,hard_skill,OT Security,Sécurité d'ot
+penetration-testing,cybersecurity,hard_skill,Penetration Testing,Tests de penetration
+prompt-injection-defense,cybersecurity,hard_skill,Prompt Injection Defense,Défense contre les injections de prompts
+post-quantum-cryptography-migration,cybersecurity,hard_skill,Post-Quantum Cryptography Migration,Post-quantique cryptographie Migration
+privacy-by-design,cybersecurity,hard_skill,Privacy by Design,Conception de confidentialité by
+privacy-engineering,cybersecurity,hard_skill,Privacy Engineering,Ingénierie de confidentialité
+privacy-enhancing-technologies,cybersecurity,hard_skill,Privacy-Enhancing Technologies,Confidentialité-Enhancing Technologies
+proactive-threat-hunting,cybersecurity,hard_skill,Proactive Threat Hunting,Proactive menace Hunting
+red-teaming,cybersecurity,hard_skill,Red Teaming,Tests offensifs en équipe rouge
+risk-mitigation,cybersecurity,hard_skill,Risk Mitigation,Risque Mitigation
+secure-autonomous-systems,cybersecurity,hard_skill,Secure Autonomous Systems,Systèmes autonomes sécurisés
+secure-code-review,cybersecurity,hard_skill,Secure Code Review,Revue de code sécurisé
+secure-pipeline-automation,cybersecurity,hard_skill,Secure Pipeline Automation,Automatisation de pipelines sécurisés
+security-awareness-training,cybersecurity,hard_skill,Security Awareness Training,Entraînement de sécurité awareness
+security-information-and-event-management,cybersecurity,hard_skill,Security Information & Event Management,Gestion de sécurité information et event
+security-operations,cybersecurity,hard_skill,Security Operations,Sécurité opérations
+security-orchestration-and-automation,cybersecurity,hard_skill,Security Orchestration & Automation,Automatisation de sécurité orchestration &
+single-sign-on-implementation,cybersecurity,hard_skill,Single Sign-On Implementation,Implémentation de single sign-on
+social-engineering-testing,cybersecurity,hard_skill,Social Engineering Testing,Tests d’ingénierie sociale
+threat-containment,cybersecurity,hard_skill,Threat Containment,Menace Containment
+threat-detection,cybersecurity,hard_skill,Threat Detection,Détection de menace
+vulnerability-management,cybersecurity,hard_skill,Vulnerability Management,Gestion de vulnerability
+non-human-identity-management,cybersecurity,hard_skill,Non-Human Identity Management,Gestion de non-human identité
+zero-trust-architecture-design,cybersecurity,hard_skill,Zero Trust Architecture Design,Conception d’architecture Zero Trust
+chain-of-custody,cybersecurity,knowledge,Chain of Custody,Chaîne de Custody
+critical-infrastructure-protection,cybersecurity,knowledge,Critical Infrastructure Protection,Protection des infrastructures critiques
+cryptography,cybersecurity,knowledge,Cryptography,Cryptographie
+cyber-law,cybersecurity,knowledge,Cyber Law,Droit de la cybersécurité
+cybersecurity-fundamentals,cybersecurity,knowledge,Cybersecurity Fundamentals,Fondamentaux de la cybersécurité
+data-protection-regulation,cybersecurity,knowledge,Data Protection Regulation,Réglementation sur la protection des données
+data-privacy,cybersecurity,knowledge,Data Privacy,Confidentialité des données
+encryption-fundamentals,cybersecurity,knowledge,Encryption Fundamentals,Fondamentaux du chiffrement
+information-security-management,cybersecurity,knowledge,Information Security Management,Gestion d'information sécurité
+iso-27001,cybersecurity,knowledge,ISO 27001,ISO 27001
+dora-compliance,cybersecurity,knowledge,DORA Compliance,Conformité de dora
+mitre-att-and-ck-framework,cybersecurity,knowledge,MITRE ATT&CK Framework,Cadre MITRE ATT&CK
+national-security,cybersecurity,knowledge,National Security,Sécurité de national
+nist-cybersecurity-framework,cybersecurity,knowledge,NIST Cybersecurity Framework,Cadre de cybersécurité NIST
+nis2-compliance,cybersecurity,knowledge,NIS2 Compliance,Conformité de nis2
+operating-system-internals,cybersecurity,knowledge,Operating System Internals,Fonctionnement interne des systèmes d'exploitation
+owasp-top-10,cybersecurity,knowledge,OWASP Top 10,OWASP Top 10
+public-key-infrastructure,cybersecurity,knowledge,Public Key Infrastructure,Infrastructure à clés publiques
+oauth-2-0,cybersecurity,knowledge,OAuth 2.0,OAuth 2.0
+oidc,cybersecurity,knowledge,OIDC,OIDC
+passkeys-and-webauthn,cybersecurity,knowledge,Passkeys & WebAuthn,Passkeys et WebAuthn
+saml,cybersecurity,knowledge,SAML,SAML
+sbom-management,cybersecurity,knowledge,SBOM Management,Gestion de sbom
+slsa-framework,cybersecurity,knowledge,SLSA Framework,Cadre SLSA
+security-frameworks,cybersecurity,knowledge,Security Frameworks,Sécurité Frameworks
+soc-2-compliance,cybersecurity,knowledge,SOC 2 Compliance,Conformité de soc 2
+security-operations-center,cybersecurity,knowledge,Security Operations Center,Sécurité opérations Center
+security-standards,cybersecurity,knowledge,Security Standards,Sécurité Standards
+threat-modeling,cybersecurity,knowledge,Threat Modeling,Modélisation de menace
+zero-trust-principles,cybersecurity,knowledge,Zero Trust Principles,Principes Zero Trust
+autopsy,cybersecurity,tool_platform,Autopsy,Autopsy
+burp-suite,cybersecurity,tool_platform,Burp Suite,Burp Suite
+cobalt-strike,cybersecurity,tool_platform,Cobalt Strike,Cobalt Strike
+crowdstrike,cybersecurity,tool_platform,CrowdStrike,CrowdStrike
+cspm-tools,cybersecurity,tool_platform,CSPM Tools,CSPM outils
+entra-id,cybersecurity,tool_platform,Entra ID,Entra ID
+ghidra,cybersecurity,tool_platform,Ghidra,Ghidra
+ida-pro,cybersecurity,tool_platform,IDA Pro,IDA Pro
+kali-linux,cybersecurity,tool_platform,Kali Linux,Kali Linux
+metasploit,cybersecurity,tool_platform,Metasploit,Metasploit
+microsoft-sentinel,cybersecurity,tool_platform,Microsoft Sentinel,Microsoft Sentinel
+misp,cybersecurity,tool_platform,MISP,MISP
+nessus,cybersecurity,tool_platform,Nessus,Nessus
+okta,cybersecurity,tool_platform,Okta,Okta
+sast-dast,cybersecurity,tool_platform,SAST/DAST,SAST/DAST
+sca-scanners,cybersecurity,tool_platform,SCA Scanners,SCA Scanners
+soar-platforms,cybersecurity,tool_platform,SOAR Platforms,Plateformes SOAR
+splunk,cybersecurity,tool_platform,Splunk,Splunk
+virustotal,cybersecurity,tool_platform,VirusTotal,VirusTotal
+volatility,cybersecurity,tool_platform,Volatility,Volatility
+wireshark,cybersecurity,tool_platform,Wireshark,Wireshark
+wiz,cybersecurity,tool_platform,Wiz,Wiz
+xdr-platforms,cybersecurity,tool_platform,XDR Platforms,Plateformes XDR
+a-b-testing,data,hard_skill,A/B Testing,Tests A/B
+batch-and-stream-etl,data,hard_skill,Batch & Stream ETL,Batch et Stream ETL
+bayesian-analysis,data,hard_skill,Bayesian Analysis,Analyse de bayesian
+biostatistics,data,hard_skill,Biostatistics,Biostatistique
+business-intelligence,data,hard_skill,Business Intelligence,Informatique décisionnelle
+causal-inference,data,hard_skill,Causal Inference,Inférence causale
+cohort-analysis,data,hard_skill,Cohort Analysis,Analyse de cohort
+customer-segmentation,data,hard_skill,Customer Segmentation,Segmentation client
+customer-data-platform-management,data,hard_skill,Customer Data Platform Management,Gestion de plateformes de données clients
+dashboard-design,data,hard_skill,Dashboard Design,Conception de tableaux de bord
+data-analytics,data,hard_skill,Data Analytics,Analyse de données
+data-catalog-management,data,hard_skill,Data Catalog Management,Gestion de catalogues de données
+data-cleaning-and-wrangling,data,hard_skill,Data Cleaning & Wrangling,Nettoyage et préparation des données
+data-contract-design,data,hard_skill,Data Contract Design,Conception de contrats de données
+data-governance,data,hard_skill,Data Governance,Gouvernance des données
+data-lake-management,data,hard_skill,Data Lake Management,Gestion de lacs de données
+data-lakehouse-architecture,data,hard_skill,Data Lakehouse Architecture,Architecture lakehouse de données
+data-pipeline-engineering,data,hard_skill,Data Pipeline Engineering,Ingénierie des pipelines de données
+data-quality-engineering,data,hard_skill,Data Quality Engineering,Ingénierie de la qualité des données
+data-storytelling,data,hard_skill,Data Storytelling,Narration par les données
+data-visualization,data,hard_skill,Data Visualization,Visualisation de données
+demand-forecasting,data,hard_skill,Demand Forecasting,Prévision de la demande
+earth-observation,data,hard_skill,Earth Observation,Observation de la Terre
+e-commerce-analytics,data,hard_skill,E-commerce Analytics,Analyse e-commerce
+energy-demand-forecasting,data,hard_skill,Energy Demand Forecasting,Prévision de la demande énergétique
+engagement-analytics,data,hard_skill,Engagement Analytics,Analyse de l’engagement
+experimentation,data,hard_skill,Experimentation,Expérimentation
+fleet-data-analytics,data,hard_skill,Fleet Data Analytics,Analyse des données de flotte
+funnel-analytics,data,hard_skill,Funnel Analytics,Analyse des entonnoirs de conversion
+geographic-information-systems,data,knowledge,Geographic Information Systems,Systèmes d'information géographique
+geospatial-analysis,data,hard_skill,Geospatial Analysis,Analyse géospatiale
+geospatial-mapping,data,hard_skill,Geospatial Mapping,Cartographie géospatiale
+geospatial-processing,data,hard_skill,Geospatial Processing,Traitement géospatial
+ghg-measurement,data,hard_skill,GHG Measurement,Mesure des gaz à effet de serre
+grid-analytics,data,hard_skill,Grid Analytics,Analyse des réseaux électriques
+hr-data-modeling,data,hard_skill,HR Data Modeling,Modélisation des données RH
+inventory-analytics,data,hard_skill,Inventory Analytics,Analyse des stocks
+learning-analytics,data,hard_skill,Learning Analytics,Analyse de l’apprentissage
+logistics-analytics,data,hard_skill,Logistics Analytics,Analyse logistique
+marine-data-acquisition,data,hard_skill,Marine Data Acquisition,Acquisition de données marines
+marketing-measurement,data,hard_skill,Marketing Measurement,Mesure marketing
+marketing-mix-modeling,data,hard_skill,Marketing Mix Modeling,Modélisation du mix marketing
+master-data-management,data,hard_skill,Master Data Management,Gestion des données de référence
+people-analytics,data,hard_skill,People Analytics,Analyse RH
+predictive-maintenance-analytics,data,hard_skill,Predictive Maintenance Analytics,Analyse de maintenance prédictive
+product-analytics,data,hard_skill,Product Analytics,Analyse produit
+real-estate-data-valuation-modeling,data,hard_skill,Real Estate Data Valuation Modeling,Modélisation de la valorisation des données immobilières
+real-time-stream-processing,data,hard_skill,Real-time Stream Processing,Traitement de flux en temps réel
+remote-sensing,data,hard_skill,Remote Sensing,Télédétection
+reverse-etl,data,hard_skill,Reverse ETL,Reverse ETL
+satellite-imagery-processing,data,hard_skill,Satellite Imagery Processing,Traitement d'images satellites
+skills-forecasting,data,hard_skill,Skills Forecasting,Prévision des compétences
+skills-mapping,data,hard_skill,Skills Mapping,Cartographie des compétences
+spatial-data-analysis,data,hard_skill,Spatial Data Analysis,Analyse de données spatiales
+sql-query-optimization,data,hard_skill,SQL Query Optimization,Optimisation de requêtes SQL
+streaming-pipeline,data,hard_skill,Streaming Pipeline,Pipeline de données en streaming
+supply-chain-analytics,data,hard_skill,Supply Chain Analytics,Analyse de la chaîne d’approvisionnement
+warehouse-automation,data,hard_skill,Warehouse Automation,Automatisation des entrepôts
+wearable-data-analytics,data,hard_skill,Wearable Data Analytics,Analyse des données issues des technologies portables
+web-analytics,data,hard_skill,Web Analytics,Analyse web
+big-data-architectures,data,knowledge,Big Data Architectures,Architectures Big Data
+data-lineage,data,knowledge,Data Lineage,Traçabilité des données
+data-mesh-architecture,data,knowledge,Data Mesh Architecture,Architecture Data Mesh
+data-modeling,data,knowledge,Data Modeling,Modélisation de données
+data-warehousing,data,knowledge,Data Warehousing,Entrepôts de données
+dimensional-modeling,data,knowledge,Dimensional Modeling,Modélisation de dimensional
+e-commerce-logistics,data,knowledge,E-commerce Logistics,Logistique e-commerce
+experiment-design,data,knowledge,Experiment Design,Conception d'experiment
+linear-algebra,data,knowledge,Linear Algebra,Algèbre linéaire
+logistics-economics,data,knowledge,Logistics Economics,Économie de la logistique
+metrics-frameworks,data,knowledge,Metrics Frameworks,Cadres de mesure
+probability-theory,data,knowledge,Probability Theory,Théorie des probabilités
+statistics,data,knowledge,Statistics,Statistiques
+kusto-query-language,data,language,Kusto Query Language,Kusto Query langage
+postgis-spatial-sql,data,language,PostGIS Spatial SQL,PostGIS spatial SQL
+sparql,data,language,SPARQL,SPARQL
+sql,data,language,SQL,SQL
+apache-airflow,data,tool_platform,Apache Airflow,Apache Airflow
+apache-flink,data,tool_platform,Apache Flink,Apache Flink
+apache-spark,data,tool_platform,Apache Spark,Apache Spark
+arcgis,data,tool_platform,ArcGIS,ArcGIS
+databricks,data,tool_platform,Databricks,Databricks
+dbt,data,tool_platform,dbt,Dbt
+duckdb,data,tool_platform,DuckDB,DuckDB
+fivetran,data,tool_platform,Fivetran,Fivetran
+google-analytics,data,tool_platform,Google Analytics,Google Analytics
+google-bigquery,data,tool_platform,Google BigQuery,Google BigQuery
+google-earth-engine,data,tool_platform,Google Earth Engine,Google Earth Engine
+google-maps-platform,data,tool_platform,Google Maps Platform,Google Maps plateforme
+jupyter,data,tool_platform,Jupyter,Jupyter
+looker,data,tool_platform,Looker,Looker
+looker-studio,data,tool_platform,Looker Studio,Looker Studio
+mapbox,data,tool_platform,Mapbox,Mapbox
+metabase,data,tool_platform,Metabase,Metabase
+mongodb,data,tool_platform,MongoDB,MongoDB
+mysql,data,tool_platform,MySQL,MySQL
+pandas,data,tool_platform,Pandas,Pandas
+postgresql,data,tool_platform,PostgreSQL,PostgreSQL
+polars,data,tool_platform,Polars,Polars
+power-bi,data,tool_platform,Power BI,Power BI
+qgis,data,tool_platform,QGIS,QGIS
+redis,data,tool_platform,Redis,Redis
+segment,data,tool_platform,Segment,Segment
+snowflake,data,tool_platform,Snowflake,Snowflake
+tableau,data,tool_platform,Tableau,Tableau
+advanced-spreadsheets,digital_literacy,hard_skill,Advanced Spreadsheets,Avancé Spreadsheets
+ai-tools-for-productivity,digital_literacy,hard_skill,AI Tools for Productivity,IA outils pour Productivity
+digital-collaboration-tools,digital_literacy,hard_skill,Digital Collaboration Tools,Outils de collaboration numérique
+digital-file-management,digital_literacy,hard_skill,Digital File Management,Gestion des fichiers numériques
+note-taking-and-documentation,digital_literacy,hard_skill,Note-taking & Documentation,Note-taking et documentation
+office-productivity-suites,digital_literacy,hard_skill,Office Productivity Suites,Suites bureautiques
+online-research,digital_literacy,hard_skill,Online Research,Online recherche
+personal-knowledge-management,digital_literacy,hard_skill,Personal Knowledge Management,Gestion de personal connaissance
+prompting-for-everyday-tasks,digital_literacy,hard_skill,Prompting for Everyday Tasks,Prompting pour Everyday Tasks
+workflow-automation,digital_literacy,hard_skill,Workflow Automation,Automatisation des flux de travail
+ai-literacy,digital_literacy,knowledge,AI Literacy,Culture de l’IA
+cyber-hygiene,digital_literacy,knowledge,Cyber Hygiene,Hygiène numérique
+data-literacy,digital_literacy,knowledge,Data Literacy,Culture des données
+digital-literacy,digital_literacy,knowledge,Digital Literacy,Culture numérique
+information-literacy,digital_literacy,knowledge,Information Literacy,Culture de l'information
+media-literacy,digital_literacy,knowledge,Media Literacy,Culture médiatique
+online-safety-and-netiquette,digital_literacy,knowledge,Online Safety & Netiquette,Online sécurité et Netiquette
+google-workspace,digital_literacy,tool_platform,Google Workspace,Google Workspace
+jira,digital_literacy,tool_platform,Jira,Jira
+microsoft-365,digital_literacy,tool_platform,Microsoft 365,Microsoft 365
+microsoft-excel,digital_literacy,tool_platform,Microsoft Excel,Microsoft Excel
+miro,digital_literacy,tool_platform,Miro,Miro
+notion,digital_literacy,tool_platform,Notion,Notion
+slack,digital_literacy,tool_platform,Slack,Slack
+additive-manufacturing,emerging_tech,hard_skill,Additive Manufacturing,Additive manufacturing
+agricultural-drone-operations,emerging_tech,hard_skill,Agricultural Drone Operations,Agricole Drone opérations
+agri-iot-deployment,emerging_tech,hard_skill,Agri-IoT Deployment,Déploiement d'agri-iot
+ar-application-development,emerging_tech,hard_skill,AR Application Development,Développement d'ar application
+autonomous-navigation,emerging_tech,hard_skill,Autonomous Navigation,Autonome Navigation
+autonomous-underwater-vehicle-engineering,emerging_tech,hard_skill,Autonomous Underwater Vehicle Engineering,Ingénierie d'autonome underwater vehicle
+bioinformatics-analysis,emerging_tech,hard_skill,Bioinformatics Analysis,Analyse de bioinformatics
+bioinformatics-pipelines,emerging_tech,hard_skill,Bioinformatics Pipelines,Pipelines de bioinformatique
+biosensor-engineering,emerging_tech,hard_skill,Biosensor Engineering,Ingénierie de biosensor
+cad-modeling,emerging_tech,hard_skill,CAD Modeling,Modélisation de cad
+charging-network-optimization,emerging_tech,hard_skill,Charging Network Optimization,Optimisation de charging réseau
+charging-systems-engineering,emerging_tech,hard_skill,Charging Systems Engineering,Ingénierie des systèmes de recharge
+connected-medical-device-engineering,emerging_tech,hard_skill,Connected Medical Device Engineering,Ingénierie de connected médical device
+design-for-manufacturing,emerging_tech,hard_skill,Design for Manufacturing,Conception pour la fabrication
+digital-twin-development,emerging_tech,hard_skill,Digital Twin Development,Développement de jumeaux numériques
+drone-flight-operations,emerging_tech,hard_skill,Drone Flight Operations,Drone Flight opérations
+drone-mapping,emerging_tech,hard_skill,Drone Mapping,Cartographie par drone
+dual-use-systems-engineering,emerging_tech,hard_skill,Dual-Use Systems Engineering,Ingénierie des systèmes à double usage
+dynamic-pricing,emerging_tech,hard_skill,Dynamic Pricing,Tarification dynamique
+embedded-firmware-development,emerging_tech,hard_skill,Embedded Firmware Development,Développement d'embarqué firmware
+energy-systems-engineering,emerging_tech,hard_skill,Energy Systems Engineering,Ingénierie des systèmes énergétiques
+ev-battery-management,emerging_tech,hard_skill,EV Battery Management,Gestion d'ev battery
+extended-reality,emerging_tech,hard_skill,Extended Reality,Réalité étendue
+fleet-optimization,emerging_tech,hard_skill,Fleet Optimization,Optimisation de flotte
+generative-manufacturing-design,emerging_tech,hard_skill,Generative Manufacturing Design,Conception de génératif manufacturing
+ground-station-operations,emerging_tech,hard_skill,Ground Station Operations,Ground Station opérations
+industrial-iot,emerging_tech,hard_skill,Industrial IoT,Industriel IoT
+inventory-optimization,emerging_tech,hard_skill,Inventory Optimization,Optimisation des stocks
+iot-platform-engineering,emerging_tech,hard_skill,IoT Platform Engineering,Ingénierie d'iot plateforme
+iot-sensor-network-engineering,emerging_tech,hard_skill,IoT Sensor Network Engineering,Ingénierie d'iot sensor réseau
+last-mile-delivery,emerging_tech,hard_skill,Last-Mile Delivery,Last-Mile delivery
+livestock-monitoring-systems,emerging_tech,hard_skill,Livestock Monitoring Systems,Systèmes de suivi de l'élevage
+mission-analysis,emerging_tech,hard_skill,Mission Analysis,Analyse de mission
+mission-planning,emerging_tech,hard_skill,Mission Planning,Planification de mission
+mobility-simulation,emerging_tech,hard_skill,Mobility Simulation,Mobility simulation
+multimodal-mobility-service-design,emerging_tech,hard_skill,Multimodal Mobility Service Design,Conception de services de mobilité multimodale
+ocean-sensing,emerging_tech,hard_skill,Ocean Sensing,Détection océanique
+orbital-mechanics,emerging_tech,hard_skill,Orbital Mechanics,Mécanique orbitale
+pest-detection,emerging_tech,hard_skill,Pest Detection,Détection de pest
+post-harvest-engineering,emerging_tech,hard_skill,Post-Harvest Engineering,Ingénierie de post-harvest
+precision-irrigation,emerging_tech,hard_skill,Precision Irrigation,Irrigation de précision
+predictive-maintenance-modeling,emerging_tech,hard_skill,Predictive Maintenance Modeling,Modélisation de maintenance prédictive
+quantum-algorithm-design,emerging_tech,hard_skill,Quantum Algorithm Design,Conception de quantique algorithm
+quantum-circuit-programming,emerging_tech,hard_skill,Quantum Circuit Programming,Quantique Circuit programmation
+quantum-error-correction,emerging_tech,hard_skill,Quantum Error Correction,Quantique Error Correction
+rapid-prototyping,emerging_tech,hard_skill,Rapid Prototyping,Prototypage rapide
+robotics-integration,emerging_tech,hard_skill,Robotics Integration,Intégration de robotique
+robotic-process-automation,emerging_tech,hard_skill,Robotic Process Automation,Automatisation de robotic processus
+route-optimization,emerging_tech,hard_skill,Route Optimization,Optimisation de route
+routing-algorithms,emerging_tech,hard_skill,Routing Algorithms,Routing algorithmes
+satellite-communications,emerging_tech,hard_skill,Satellite Communications,Communications par satellite
+satellite-systems-engineering,emerging_tech,hard_skill,Satellite Systems Engineering,Ingénierie des systèmes satellitaires
+sensor-data-engineering,emerging_tech,hard_skill,Sensor Data Engineering,Ingénierie des données de capteurs
+sensor-fusion,emerging_tech,hard_skill,Sensor Fusion,Fusion de capteurs
+simultaneous-localization-and-mapping,emerging_tech,hard_skill,Simultaneous Localization and Mapping,Localisation et cartographie simultanées
+telematics,emerging_tech,hard_skill,Telematics,Télématique
+traceability-systems,emerging_tech,hard_skill,Traceability Systems,Systèmes de traçabilité
+urban-traffic-management,emerging_tech,hard_skill,Urban Traffic Management,Gestion d'urban traffic
+vr-experience-design,emerging_tech,hard_skill,VR Experience Design,Conception de vr expérience
+yield-prediction,emerging_tech,hard_skill,Yield Prediction,Prédiction de yield
+advanced-manufacturing,emerging_tech,knowledge,Advanced Manufacturing,Avancé manufacturing
+aerospace,emerging_tech,knowledge,Aerospace,Aérospatial
+autonomous-vehicle-safety,emerging_tech,knowledge,Autonomous Vehicle Safety,Sécurité d'autonome vehicle
+ev-charging-standards,emerging_tech,knowledge,EV Charging Standards,Normes de recharge des véhicules électriques
+genomics,emerging_tech,knowledge,Genomics,Génomique
+internet-of-things,emerging_tech,knowledge,Internet of Things,Internet de Things
+lean-manufacturing,emerging_tech,knowledge,Lean Manufacturing,Lean manufacturing
+marine-environment,emerging_tech,knowledge,Marine Environment,Marine environnement
+market-dynamics,emerging_tech,knowledge,Market Dynamics,Marché Dynamics
+materials-science,emerging_tech,knowledge,Materials Science,Materials science
+mobility-as-a-service-models,emerging_tech,knowledge,Mobility-as-a-Service Models,Modèles de mobilité en tant que service
+oceanography,emerging_tech,knowledge,Oceanography,Océanographie
+quantum-computing-fundamentals,emerging_tech,knowledge,Quantum Computing Fundamentals,Fondamentaux de l’informatique quantique
+quantum-mechanics-fundamentals,emerging_tech,knowledge,Quantum Mechanics Fundamentals,Fondamentaux de la mécanique quantique
+robotics-and-automation,emerging_tech,knowledge,Robotics & Automation,Automatisation de robotique &
+robotics-safety,emerging_tech,knowledge,Robotics Safety,Sécurité de robotique
+space-systems,emerging_tech,knowledge,Space Systems,Systèmes spatiaux
+spatial-computing,emerging_tech,knowledge,Spatial Computing,Spatial computing
+synthetic-biology,emerging_tech,knowledge,Synthetic Biology,Biologie synthétique
+systems-engineering,emerging_tech,knowledge,Systems Engineering,Ingénierie des systèmes
+q-sharp,emerging_tech,language,Q#,Q#
+verilog,emerging_tech,language,Verilog,Verilog
+vhdl,emerging_tech,language,VHDL,VHDL
+arduino,emerging_tech,tool_platform,Arduino,Arduino
+ardupilot,emerging_tech,tool_platform,ArduPilot,ArduPilot
+aws-iot-core,emerging_tech,tool_platform,AWS IoT Core,AWS IoT Core
+biosensor-sdks,emerging_tech,tool_platform,Biosensor SDKs,Biosensor SDKs
+blender,emerging_tech,tool_platform,Blender,Blender
+cad-cam-suites,emerging_tech,tool_platform,CAD/CAM Suites,CAD/CAM Suites
+carla-av-simulator,emerging_tech,tool_platform,CARLA AV Simulator,CARLA AV Simulator
+cirq,emerging_tech,tool_platform,Cirq,Cirq
+farm-management-information-systems,emerging_tech,tool_platform,Farm Management Information Systems,Systèmes d'information de gestion agricole
+fleet-management-systems,emerging_tech,tool_platform,Fleet Management Systems,Systèmes de gestion de flotte
+gazebo,emerging_tech,tool_platform,Gazebo,Gazebo
+geotab,emerging_tech,tool_platform,Geotab,Geotab
+gmat,emerging_tech,tool_platform,GMAT,GMAT
+industrial-iot-platforms,emerging_tech,tool_platform,Industrial IoT Platforms,Plateformes IoT industrielles
+isaac-sim,emerging_tech,tool_platform,Isaac Sim,Isaac Sim
+marine-robotics-platforms,emerging_tech,tool_platform,Marine Robotics Platforms,Plateformes de robotique marine
+meta-quest,emerging_tech,tool_platform,Meta Quest,Meta Quest
+openxr,emerging_tech,tool_platform,OpenXR,OpenXR
+pennylane,emerging_tech,tool_platform,PennyLane,PennyLane
+px4,emerging_tech,tool_platform,PX4,PX4
+qiskit,emerging_tech,tool_platform,Qiskit,Qiskit
+raspberry-pi,emerging_tech,tool_platform,Raspberry Pi,Raspberry Pi
+ros,emerging_tech,tool_platform,ROS,ROS
+ros2,emerging_tech,tool_platform,ROS2,ROS2
+route-optimization-software,emerging_tech,tool_platform,Route Optimization Software,Route optimisation software
+samsara-fleet-telematics,emerging_tech,tool_platform,Samsara Fleet Telematics,Samsara Fleet Telematics
+scada-systems,emerging_tech,tool_platform,SCADA Systems,Systèmes SCADA
+siemens-mindsphere,emerging_tech,tool_platform,Siemens MindSphere,Siemens MindSphere
+sigint-platforms,emerging_tech,tool_platform,SIGINT Platforms,Plateformes SIGINT
+stk,emerging_tech,tool_platform,STK,STK
+sumo-traffic-simulator,emerging_tech,tool_platform,SUMO Traffic Simulator,SUMO Traffic Simulator
+transportation-management-systems,emerging_tech,tool_platform,Transportation Management Systems,Systèmes de gestion du transport
+warehouse-management-systems,emerging_tech,tool_platform,Warehouse Management Systems,Systèmes de gestion d'entrepôt
+wearable,emerging_tech,tool_platform,Wearable,Technologies portables
+actuarial-modeling,fintech_finance,hard_skill,Actuarial Modeling,Modélisation d'actuarial
+aml-kyc-automation,fintech_finance,hard_skill,AML/KYC Automation,Automatisation d'aml/kyc
+anti-fraud-modeling,fintech_finance,hard_skill,Anti-Fraud Modeling,Modélisation d'anti-fraud
+banking-as-a-service-integration,fintech_finance,hard_skill,Banking-as-a-Service Integration,Intégration de services bancaires en tant que service
+accounting-process-automation,fintech_finance,hard_skill,Accounting Process Automation,Automatisation de comptabilité processus
+core-banking-engineering,fintech_finance,hard_skill,Core Banking Engineering,Ingénierie de core banque
+credit-scoring,fintech_finance,hard_skill,Credit Scoring,Crédit Scoring
+cross-border-payments,fintech_finance,hard_skill,Cross-border Payments,Paiements transfrontaliers
+digital-lending,fintech_finance,hard_skill,Digital Lending,Prêt numérique
+finance-operations-automation,fintech_finance,hard_skill,Finance Operations Automation,Automatisation de finance opérations
+financial-planning-and-analysis,fintech_finance,hard_skill,Financial Planning & Analysis,Analyse de financier planning &
+financial-reporting,fintech_finance,hard_skill,Financial Reporting,Reporting de financier
+fraud-detection,fintech_finance,hard_skill,Fraud Detection,Détection de fraud
+insurance-pricing,fintech_finance,hard_skill,Insurance Pricing,Tarification de l'assurance
+kyc-aml-workflow-design,fintech_finance,hard_skill,KYC/AML Workflow Design,Conception de flux de travail KYC/AML
+mobile-money,fintech_finance,hard_skill,Mobile Money,Argent mobile
+open-banking,fintech_finance,hard_skill,Open Banking,Open banque
+payment-gateway-integration,fintech_finance,hard_skill,Payment Gateway Integration,Intégration de passerelles de paiement
+qr-code-payment-systems,fintech_finance,hard_skill,QR Code Payment Systems,Systèmes de paiement par QR code
+regulatory-reporting-engineering,fintech_finance,hard_skill,Regulatory Reporting Engineering,Ingénierie de réglementaire reporting
+risk-modeling,fintech_finance,hard_skill,Risk Modeling,Modélisation de risque
+spreadsheet-financial-modeling,fintech_finance,hard_skill,Spreadsheet Financial Modeling,Modélisation de spreadsheet financier
+transaction-monitoring,fintech_finance,hard_skill,Transaction Monitoring,Suivi de transaction
+underwriting,fintech_finance,hard_skill,Underwriting,Souscription
+ussd-engineering,fintech_finance,hard_skill,USSD Engineering,Ingénierie d'ussd
+accounting-principles,fintech_finance,knowledge,Accounting Principles,Comptabilité Principles
+audit-and-internal-controls,fintech_finance,knowledge,Audit & Internal Controls,Audit et Internal Controls
+embedded-finance,fintech_finance,knowledge,Embedded Finance,Embarqué finance
+financial-compliance,fintech_finance,knowledge,Financial Compliance,Conformité de financier
+digital-operational-resilience-act,fintech_finance,knowledge,Digital Operational Resilience Act,Loi sur la résilience opérationnelle numérique
+financial-inclusion,fintech_finance,knowledge,Financial Inclusion,Financier Inclusion
+financial-regulation,fintech_finance,knowledge,Financial Regulation,Financier réglementation
+insurance-principles,fintech_finance,knowledge,Insurance Principles,Assurance Principles
+mobile-money-ecosystems,fintech_finance,knowledge,Mobile Money Ecosystems,Écosystèmes d'argent mobile
+open-finance,fintech_finance,knowledge,Open Finance,Open finance
+payment-rails-and-interoperability,fintech_finance,knowledge,Payment Rails & Interoperability,Rails de paiement et interopérabilité
+payments,fintech_finance,knowledge,Payments,Paiements
+risk-pooling,fintech_finance,knowledge,Risk Pooling,Risque Pooling
+tax-compliance,fintech_finance,knowledge,Tax Compliance,Conformité de tax
+chainalysis,fintech_finance,tool_platform,Chainalysis,Chainalysis
+core-banking-platforms,fintech_finance,tool_platform,Core Banking Platforms,Plateformes bancaires centrales
+erp-systems,fintech_finance,tool_platform,ERP Systems,Systèmes ERP
+flutterwave,fintech_finance,tool_platform,Flutterwave,Flutterwave
+insurance-core-platforms,fintech_finance,tool_platform,Insurance Core Platforms,Plateformes coeur d'assurance
+kyc-aml-platforms,fintech_finance,tool_platform,KYC/AML Platforms,Plateformes KYC/AML
+mobile-money-apis,fintech_finance,tool_platform,Mobile Money APIs,Mobile Money API
+odoo,fintech_finance,tool_platform,Odoo,Odoo
+oracle-netsuite,fintech_finance,tool_platform,Oracle NetSuite,Oracle NetSuite
+quickbooks,fintech_finance,tool_platform,QuickBooks,QuickBooks
+sap-fi-co,fintech_finance,tool_platform,SAP FI/CO,SAP FI/CO
+stripe,fintech_finance,tool_platform,Stripe,Stripe
+account-management,growth_marketing,hard_skill,Account Management,Gestion d'account
+ai-powered-marketing,growth_marketing,hard_skill,AI-Powered Marketing,IA-Powered marketing
+audience-growth,growth_marketing,hard_skill,Audience Growth,Audience growth
+brand-strategy,growth_marketing,hard_skill,Brand Strategy,Stratégie de marque
+campaign-automation,growth_marketing,hard_skill,Campaign Automation,Automatisation de campaign
+chatbot-design,growth_marketing,hard_skill,Chatbot Design,Conception de chatbot
+community-management,growth_marketing,hard_skill,Community Management,Gestion de communauté
+content-calendar-management,growth_marketing,hard_skill,Content Calendar Management,Gestion de contenu calendar
+content-marketing,growth_marketing,hard_skill,Content Marketing,Contenu marketing
+conversion-rate-optimization,growth_marketing,hard_skill,Conversion Rate Optimization,Optimisation de conversion rate
+conversion-tracking,growth_marketing,hard_skill,Conversion Tracking,Suivi des conversions
+copywriting,growth_marketing,hard_skill,Copywriting,Rédaction publicitaire
+crm-management,growth_marketing,hard_skill,CRM Management,Gestion de crm
+customer-success,growth_marketing,hard_skill,Customer Success,Client Success
+e-commerce-operations,growth_marketing,hard_skill,E-commerce Operations,E-commerce opérations
+e-commerce-merchandising,growth_marketing,hard_skill,E-commerce Merchandising,Merchandising e-commerce
+email-marketing,growth_marketing,hard_skill,Email Marketing,Email marketing
+funnel-optimization,growth_marketing,hard_skill,Funnel Optimization,Optimisation des entonnoirs de conversion
+growth-hacking,growth_marketing,hard_skill,Growth Hacking,Growth hacking
+influencer-marketing,growth_marketing,hard_skill,Influencer Marketing,Influenceur marketing
+landing-page-optimization,growth_marketing,hard_skill,Landing Page Optimization,Optimisation de landing page
+marketing-attribution,growth_marketing,hard_skill,Marketing Attribution,Attribution marketing
+marketing-automation,growth_marketing,hard_skill,Marketing Automation,Automatisation de marketing
+marketplace-growth,growth_marketing,hard_skill,Marketplace Growth,Marketplace growth
+marketplace-management,growth_marketing,hard_skill,Marketplace Management,Gestion de marketplace
+multi-platform-content-monetization,growth_marketing,hard_skill,Multi-platform Content Monetization,Monétisation de contenu multiplateforme
+omnichannel-retail-orchestration,growth_marketing,hard_skill,Omnichannel Retail Orchestration,Orchestration de la vente au détail omnicanale
+order-fulfillment,growth_marketing,hard_skill,Order Fulfillment,Exécution des commandes
+paid-search-advertising,growth_marketing,hard_skill,Paid Search Advertising,Paid search publicité
+paid-social-advertising,growth_marketing,hard_skill,Paid Social Advertising,Paid social publicité
+performance-marketing,growth_marketing,hard_skill,Performance Marketing,Performance marketing
+product-catalog-management,growth_marketing,hard_skill,Product Catalog Management,Gestion de produit catalog
+product-marketing,growth_marketing,hard_skill,Product Marketing,Produit marketing
+referral-and-viral-loops,growth_marketing,hard_skill,Referral & Viral Loops,Referral et Viral Loops
+retention-and-lifecycle-marketing,growth_marketing,hard_skill,Retention & Lifecycle Marketing,Rétention et cycle de vie marketing
+sales-development,growth_marketing,hard_skill,Sales Development,Développement des ventes
+search-engine-optimization,growth_marketing,hard_skill,Search Engine Optimization,Optimisation de search engine
+seller-operations,growth_marketing,hard_skill,Seller Operations,Seller opérations
+social-media-management,growth_marketing,hard_skill,Social Media Management,Gestion de social média
+technical-seo,growth_marketing,hard_skill,Technical SEO,SEO technique
+video-marketing,growth_marketing,hard_skill,Video Marketing,Vidéo marketing
+attribution-modeling,growth_marketing,knowledge,Attribution Modeling,Modélisation d'attribution
+community-monetization,growth_marketing,knowledge,Community Monetization,Monétisation de communauté
+content-distribution,growth_marketing,knowledge,Content Distribution,Distribution de contenu
+customer-acquisition-cost,growth_marketing,knowledge,Customer Acquisition Cost,Coût d’acquisition client
+digital-marketing-fundamentals,growth_marketing,knowledge,Digital Marketing Fundamentals,Fondamentaux du marketing numérique
+growth-marketing,growth_marketing,knowledge,Growth Marketing,Growth marketing
+positioning-and-messaging,growth_marketing,knowledge,Positioning & Messaging,Positionnement et messages
+product-and-growth-metrics,growth_marketing,knowledge,Product & Growth Metrics,Indicateurs produit et croissance
+programmatic-advertising,growth_marketing,knowledge,Programmatic Advertising,Publicité programmatique
+retail-media,growth_marketing,knowledge,Retail Media,Média retail
+sales-funnel-strategy,growth_marketing,knowledge,Sales Funnel Strategy,Stratégie d’entonnoir de vente
+ahrefs,growth_marketing,tool_platform,Ahrefs,Ahrefs
+brevo,growth_marketing,tool_platform,Brevo,Brevo
+buffer,growth_marketing,tool_platform,Buffer,Buffer
+bigcommerce,growth_marketing,tool_platform,BigCommerce,BigCommerce
+customer-data-platforms,growth_marketing,tool_platform,Customer Data Platforms,Plateformes de données clients
+demand-side-platforms,growth_marketing,tool_platform,Demand-Side Platforms,Plateformes côté demande
+google-ads,growth_marketing,tool_platform,Google Ads,Google Ads
+google-merchant-center,growth_marketing,tool_platform,Google Merchant Center,Google Merchant Center
+google-search-console,growth_marketing,tool_platform,Google Search Console,Google search Console
+hubspot,growth_marketing,tool_platform,HubSpot,HubSpot
+klaviyo,growth_marketing,tool_platform,Klaviyo,Klaviyo
+linkedin,growth_marketing,tool_platform,LinkedIn,LinkedIn
+linkedin-ads,growth_marketing,tool_platform,LinkedIn Ads,LinkedIn Ads
+mailchimp,growth_marketing,tool_platform,Mailchimp,Mailchimp
+magento,growth_marketing,tool_platform,Magento,Magento
+marketplace-seller-central,growth_marketing,tool_platform,Marketplace Seller Central,Marketplace Seller Central
+meta,growth_marketing,tool_platform,Meta,Meta
+meta-ads-manager,growth_marketing,tool_platform,Meta Ads Manager,Meta Ads Manager
+point-of-sale-platforms,growth_marketing,tool_platform,Point of Sale Platforms,Plateformes de point de vente
+product-information-management-systems,growth_marketing,tool_platform,Product Information Management Systems,Systèmes de gestion de l'information produit
+order-management-systems,growth_marketing,tool_platform,Order Management Systems,Systèmes de gestion des commandes
+salesforce,growth_marketing,tool_platform,Salesforce,Salesforce
+semrush,growth_marketing,tool_platform,Semrush,Semrush
+shopify,growth_marketing,tool_platform,Shopify,Shopify
+tiktok,growth_marketing,tool_platform,TikTok,TikTok
+tiktok-ads,growth_marketing,tool_platform,TikTok Ads,TikTok Ads
+woocommerce,growth_marketing,tool_platform,WooCommerce,WooCommerce
+wordpress,growth_marketing,tool_platform,WordPress,WordPress
+x,growth_marketing,tool_platform,X,X
+youtube,growth_marketing,tool_platform,YouTube,YouTube
+zoho-crm,growth_marketing,tool_platform,Zoho CRM,Zoho CRM
+arabic,human_skills,language,Arabic,Arabe
+civic-writing,human_skills,language,Civic Writing,Rédaction citoyenne
+english,human_skills,language,English,Anglais
+french,human_skills,language,French,Français
+mandarin,human_skills,language,Mandarin,Mandarin
+plain-language,human_skills,language,Plain Language,Langage clair
+portuguese,human_skills,language,Portuguese,Portugais
+spanish,human_skills,language,Spanish,Espagnol
+accountability,human_skills,soft_skill,Accountability,Responsabilisation
+active-listening,human_skills,soft_skill,Active Listening,Écoute active
+adaptability,human_skills,soft_skill,Adaptability,Adaptabilité
+analytical-thinking,human_skills,soft_skill,Analytical Thinking,Pensée analytique
+attention-to-detail,human_skills,soft_skill,Attention to Detail,Attention aux détails
+change-facilitation,human_skills,soft_skill,Change Facilitation,Facilitation du changement
+coaching,human_skills,soft_skill,Coaching,Coaching
+collaboration,human_skills,soft_skill,Collaboration,Collaboration
+communication,human_skills,soft_skill,Communication,Communication
+community-facilitation,human_skills,soft_skill,Community Facilitation,Facilitation communautaire
+computational-thinking,human_skills,soft_skill,Computational Thinking,Pensée computationnelle
+conflict-resolution,human_skills,soft_skill,Conflict Resolution,Résolution de conflits
+creativity,human_skills,soft_skill,Creativity,Créativité
+critical-evaluation-of-ai-output,human_skills,soft_skill,Critical Evaluation of AI Output,Évaluation critique des résultats de l’IA
+critical-thinking,human_skills,soft_skill,Critical Thinking,Esprit critique
+cross-cultural-communication,human_skills,soft_skill,Cross-cultural Communication,Communication interculturelle
+cross-functional-collaboration,human_skills,soft_skill,Cross-functional Collaboration,Collaboration interfonctionnelle
+curiosity,human_skills,soft_skill,Curiosity,Curiosité
+customer-centricity,human_skills,soft_skill,Customer Centricity,Orientation client
+customer-empathy,human_skills,soft_skill,Customer Empathy,Empathie client
+data-driven-decision-making,human_skills,soft_skill,Data-driven Decision Making,Prise de décision fondée sur les données
+decision-making,human_skills,soft_skill,Decision Making,Prise de décision
+delegation,human_skills,soft_skill,Delegation,Délégation
+design-mindset,human_skills,soft_skill,Design Mindset,Culture du design
+digital-accessibility-mindset,human_skills,soft_skill,Digital Accessibility Mindset,Culture de l'accessibilité numérique
+digital-wellbeing,human_skills,soft_skill,Digital Wellbeing,Bien-être numérique
+emotional-intelligence,human_skills,soft_skill,Emotional Intelligence,Intelligence émotionnelle
+entrepreneurial-mindset,human_skills,soft_skill,Entrepreneurial Mindset,Esprit entrepreneurial
+ethical-judgment,human_skills,soft_skill,Ethical Judgment,Jugement éthique
+facilitation,human_skills,soft_skill,Facilitation,Facilitation
+feedback-and-coaching,human_skills,soft_skill,Feedback & Coaching,Retours et coaching
+focus-and-deep-work,human_skills,soft_skill,Focus & Deep Work,Concentration et travail en profondeur
+foresight-and-futures-thinking,human_skills,soft_skill,Foresight & Futures Thinking,Prospective et pensée du futur
+growth-mindset,human_skills,soft_skill,Growth Mindset,Esprit de progression
+human-ai-collaboration,human_skills,soft_skill,Human-AI Collaboration,Collaboration humain-IA
+inclusive-collaboration,human_skills,soft_skill,Inclusive Collaboration,Collaboration inclusive
+influence-and-persuasion,human_skills,soft_skill,Influence & Persuasion,Influence et persuasion
+initiative,human_skills,soft_skill,Initiative,Initiative
+innovation,human_skills,soft_skill,Innovation,Innovation
+intrapreneurship,human_skills,soft_skill,Intrapreneurship,Intrapreneuriat
+leadership,human_skills,soft_skill,Leadership,Leadership
+learning-agility,human_skills,soft_skill,Learning Agility,Agilité d'apprentissage
+mentoring,human_skills,soft_skill,Mentoring,Mentorat
+negotiation,human_skills,soft_skill,Negotiation,Négociation
+networking,human_skills,soft_skill,Networking,Réseautage
+presentation-skills,human_skills,soft_skill,Presentation Skills,Compétences en présentation
+prioritization,human_skills,soft_skill,Prioritization,Priorisation
+problem-solving,human_skills,soft_skill,Problem Solving,Résolution de problèmes
+public-speaking,human_skills,soft_skill,Public Speaking,Prise de parole en public
+resilience,human_skills,soft_skill,Resilience,Résilience
+responsible-innovation,human_skills,soft_skill,Responsible Innovation,Innovation responsable
+self-awareness,human_skills,soft_skill,Self-awareness,Conscience de soi
+self-directed-learning,human_skills,soft_skill,Self-directed Learning,Apprentissage autonome
+sense-making,human_skills,soft_skill,Sense-making,Construction de sens
+stakeholder-management,human_skills,soft_skill,Stakeholder Management,Gestion des parties prenantes
+storytelling,human_skills,soft_skill,Storytelling,Narration
+strategic-foresight,human_skills,soft_skill,Strategic Foresight,Prospective stratégique
+strategic-thinking,human_skills,soft_skill,Strategic Thinking,Pensée stratégique
+stress-management,human_skills,soft_skill,Stress Management,Gestion du stress
+sustainability-mindset,human_skills,soft_skill,Sustainability Mindset,Culture de la durabilité
+systems-thinking,human_skills,soft_skill,Systems Thinking,Pensée systémique
+team-building,human_skills,soft_skill,Team Building,Construction d’équipe
+teamwork,human_skills,soft_skill,Teamwork,Travail en équipe
+time-management,human_skills,soft_skill,Time Management,Gestion du temps
+vision-setting,human_skills,soft_skill,Vision Setting,Définition de vision
+work-life-balance,human_skills,soft_skill,Work-Life Balance,Équilibre entre vie professionnelle et vie personnelle
+written-communication,human_skills,soft_skill,Written Communication,Communication écrite
+clinical-trial-design,industry_knowledge,hard_skill,Clinical Trial Design,Conception d'essais cliniques
+clinical-workflow-digitization,industry_knowledge,hard_skill,Clinical Workflow Digitization,Numérisation des flux de travail cliniques
+health-data-interoperability,industry_knowledge,hard_skill,Health Data Interoperability,Interopérabilité des données de santé
+medical-device-regulatory-submission,industry_knowledge,hard_skill,Medical Device Regulatory Submission,Soumission réglementaire de dispositifs médicaux
+agri-business-economics,industry_knowledge,knowledge,Agri-business Economics,Économie de l’agrobusiness
+autonomous-vehicle-liability,industry_knowledge,knowledge,Autonomous Vehicle Liability,Autonome Vehicle Liability
+behavioral-science,industry_knowledge,knowledge,Behavioral Science,Comportemental science
+civic-participation,industry_knowledge,knowledge,Civic Participation,Participation citoyenne
+commercial-law,industry_knowledge,knowledge,Commercial Law,Droit commercial
+consumer-behavior,industry_knowledge,knowledge,Consumer Behavior,Comportement des consommateurs
+contract-law,industry_knowledge,knowledge,Contract Law,Droit des contrats
+control-theory,industry_knowledge,knowledge,Control Theory,Contrôle Theory
+cross-border-trade,industry_knowledge,knowledge,Cross-border Trade,Commerce transfrontalier
+data-ethics,industry_knowledge,knowledge,Data Ethics,Éthique des données
+data-protection-law,industry_knowledge,knowledge,Data Protection Law,Droit de la protection des données
+digital-economy,industry_knowledge,knowledge,Digital Economy,Économie numérique
+digital-public-policy,industry_knowledge,knowledge,Digital Public Policy,Politiques publiques numériques
+digital-transformation,industry_knowledge,knowledge,Digital Transformation,Transformation numérique
+e-government,industry_knowledge,knowledge,E-Government,Administration en ligne
+ecology,industry_knowledge,knowledge,Ecology,Écologie
+emerging-markets,industry_knowledge,knowledge,Emerging Markets,Marchés émergents
+emerging-markets-dynamics,industry_knowledge,knowledge,Emerging Markets Dynamics,Dynamiques des marchés émergents
+emerging-markets-tech-ecosystems,industry_knowledge,knowledge,Emerging Markets Tech Ecosystems,Écosystèmes technologiques des marchés émergents
+employment-regulation,industry_knowledge,knowledge,Employment Regulation,Employment réglementation
+engineering-fundamentals,industry_knowledge,knowledge,Engineering Fundamentals,Fondamentaux de l'ingénierie
+food-systems,industry_knowledge,knowledge,Food Systems,Systèmes alimentaires
+future-of-work,industry_knowledge,knowledge,Future of Work,Future de Work
+geopolitics,industry_knowledge,knowledge,Geopolitics,Géopolitique
+health-informatics,industry_knowledge,knowledge,Health Informatics,Santé Informatics
+health-regulation,industry_knowledge,knowledge,Health Regulation,Santé réglementation
+human-anatomy,industry_knowledge,knowledge,Human Anatomy,Anatomie humaine
+industry-4-0,industry_knowledge,knowledge,Industry 4.0,Industrie 4.0
+intellectual-property-law,industry_knowledge,knowledge,Intellectual Property Law,Droit de la propriété intellectuelle
+labor-law,industry_knowledge,knowledge,Labor Law,Droit du travail
+learning-sciences,industry_knowledge,knowledge,Learning Sciences,Sciences de l'apprentissage
+medical-ethics,industry_knowledge,knowledge,Medical Ethics,Médical Ethics
+mental-health-science,industry_knowledge,knowledge,Mental Health Science,Mental santé science
+molecular-biology,industry_knowledge,knowledge,Molecular Biology,Biologie moléculaire
+open-government,industry_knowledge,knowledge,Open Government,Gouvernement ouvert
+patient-safety,industry_knowledge,knowledge,Patient Safety,Sécurité de patient
+pedagogy,industry_knowledge,knowledge,Pedagogy,Pédagogie
+pharmacology,industry_knowledge,knowledge,Pharmacology,Pharmacologie
+physiology,industry_knowledge,knowledge,Physiology,Physiologie
+platform-economics,industry_knowledge,knowledge,Platform Economics,Plateforme économie
+power-systems,industry_knowledge,knowledge,Power Systems,Systèmes électriques
+property-law,industry_knowledge,knowledge,Property Law,Droit immobilier
+public-administration,industry_knowledge,knowledge,Public Administration,Administration publique
+public-transit-operations,industry_knowledge,knowledge,Public Transit Operations,Opérations de transport public
+real-estate-markets,industry_knowledge,knowledge,Real Estate Markets,Marchés immobiliers
+retail-economics,industry_knowledge,knowledge,Retail Economics,Économie du commerce de détail
+retail-operations,industry_knowledge,knowledge,Retail Operations,Opérations de vente au détail
+skills-economy,industry_knowledge,knowledge,Skills Economy,Économie des compétences
+smart-city-concepts,industry_knowledge,knowledge,Smart City Concepts,Smart City concepts
+systems-thinking-for-tech,industry_knowledge,knowledge,Systems Thinking for Tech,Systèmes Thinking pour Tech
+technical-standards,industry_knowledge,knowledge,Technical Standards,Normes techniques
+technology-law,industry_knowledge,knowledge,Technology Law,Droit des technologies
+telemedicine-standards,industry_knowledge,knowledge,Telemedicine Standards,Normes de télémédecine
+transportation-planning,industry_knowledge,knowledge,Transportation Planning,Planification de transportation
+transport-regulation,industry_knowledge,knowledge,Transport Regulation,Transport réglementation
+urban-planning,industry_knowledge,knowledge,Urban Planning,Planification d'urban
+urban-policy,industry_knowledge,knowledge,Urban Policy,Urban politique
+bioinformatics-platforms,industry_knowledge,tool_platform,Bioinformatics Platforms,Plateformes de bioinformatique
+cheminformatics-toolkits,industry_knowledge,tool_platform,Cheminformatics Toolkits,Boîtes à outils de chémoinformatique
+civic-participation-platforms,industry_knowledge,tool_platform,Civic Participation Platforms,Plateformes de participation citoyenne
+clinical-trial-management-systems,industry_knowledge,tool_platform,Clinical Trial Management Systems,Systèmes de gestion des essais cliniques
+contract-lifecycle-management,industry_knowledge,tool_platform,Contract Lifecycle Management,Gestion de contract cycle de vie
+digital-public-service-platforms,industry_knowledge,tool_platform,Digital Public Service Platforms,Plateformes de services publics numériques
+e-discovery-platforms,industry_knowledge,tool_platform,E-Discovery Platforms,Plateformes de découverte électronique
+edc-platforms,industry_knowledge,tool_platform,EDC Platforms,Plateformes EDC
+electronic-health-record-systems,industry_knowledge,tool_platform,Electronic Health Record Systems,Systèmes de dossiers médicaux électroniques
+fhir,industry_knowledge,tool_platform,FHIR,FHIR
+hl7-interoperability-platforms,industry_knowledge,tool_platform,HL7 Interoperability Platforms,Plateformes d'interopérabilité HL7
+interoperability-platforms,industry_knowledge,tool_platform,Interoperability Platforms,Plateformes d'interopérabilité
+medical-imaging-platforms,industry_knowledge,tool_platform,Medical Imaging Platforms,Plateformes d'imagerie médicale
+open-data-platforms,industry_knowledge,tool_platform,Open Data Platforms,Plateformes de données ouvertes
+pacs-tools,industry_knowledge,tool_platform,PACS Tools,PACS outils
+property-management-systems,industry_knowledge,tool_platform,Property Management Systems,Systèmes de gestion immobilière
+remote-monitoring-platforms,industry_knowledge,tool_platform,Remote Monitoring Platforms,Plateformes de surveillance à distance
+sentiment-analysis-tools,industry_knowledge,tool_platform,Sentiment Analysis Tools,Sentiment analyse outils
+social-listening-platforms,industry_knowledge,tool_platform,Social Listening Platforms,Plateformes d'écoute sociale
+student-information-systems,industry_knowledge,tool_platform,Student Information Systems,Systèmes d'information étudiants
+telemedicine-platforms,industry_knowledge,tool_platform,Telemedicine Platforms,Plateformes de télémédecine
+3d-asset-creation,media_content,hard_skill,3D Asset Creation,3D asset Creation
+3d-modeling,media_content,hard_skill,3D Modeling,Modélisation de 3d
+adaptive-bitrate-engineering,media_content,hard_skill,Adaptive Bitrate Engineering,Ingénierie d'adaptatif bitrate
+ar-filter-creation,media_content,hard_skill,AR Filter Creation,Création de filtres AR
+audience-development,media_content,hard_skill,Audience Development,Développement d'audience
+audio-generation,media_content,hard_skill,Audio Generation,Génération d'audio
+community-building,media_content,hard_skill,Community Building,Communauté bâtiment
+content-integrity,media_content,hard_skill,Content Integrity,Contenu Integrity
+content-production,media_content,hard_skill,Content Production,Contenu production
+content-protection,media_content,hard_skill,Content Protection,Protection du contenu
+content-strategy,media_content,hard_skill,Content Strategy,Stratégie de contenu
+creator-monetization,media_content,hard_skill,Creator Monetization,Monétisation des créateurs
+digital-audio-workstation-engineering,media_content,hard_skill,Digital Audio Workstation Engineering,Ingénierie des stations de travail audio numériques
+digital-rights-management,media_content,hard_skill,Digital Rights Management,Gestion des droits numériques
+e-sports-broadcast,media_content,hard_skill,E-sports Broadcast,Diffusion e-sport
+environment-modeling,media_content,hard_skill,Environment Modeling,Modélisation d'environnement
+game-design,media_content,hard_skill,Game Design,Conception de jeu
+live-operations,media_content,hard_skill,Live Operations,Live opérations
+live-streaming-production,media_content,hard_skill,Live Streaming Production,Live streaming production
+misinformation-detection,media_content,hard_skill,Misinformation Detection,Détection de misinformation
+motion-graphics,media_content,hard_skill,Motion Graphics,Animation graphique
+music-distribution,media_content,hard_skill,Music Distribution,Musique Distribution
+music-production,media_content,hard_skill,Music Production,Musique production
+newsletter-publishing,media_content,hard_skill,Newsletter Publishing,Publication de newsletters
+personalization-engineering,media_content,hard_skill,Personalization Engineering,Ingénierie de personalization
+podcast-production,media_content,hard_skill,Podcast Production,Podcast production
+real-time-3d-rendering,media_content,hard_skill,Real-time 3D Rendering,Temps réel 3D Rendering
+royalty-operations,media_content,hard_skill,Royalty Operations,Royalty opérations
+short-form-video-production,media_content,hard_skill,Short-form Video Production,Short-form vidéo production
+sound-design,media_content,hard_skill,Sound Design,Conception de sound
+video-editing,media_content,hard_skill,Video Editing,Vidéo édition
+content-moderation,media_content,knowledge,Content Moderation,Modération de contenu
+creator-economy,media_content,knowledge,Creator Economy,Économie des créateurs
+digital-storytelling,media_content,knowledge,Digital Storytelling,Narration numérique
+distribution-dynamics,media_content,knowledge,Distribution Dynamics,Dynamiques de distribution
+media-copyright,media_content,knowledge,Media Copyright,Média Copyright
+music-rights-licensing,media_content,knowledge,"Music Rights, Licensing","Musique Rights, Licensing"
+personal-branding,media_content,knowledge,Personal Branding,Marque personnelle
+platform-algorithms,media_content,knowledge,Platform Algorithms,Plateforme algorithmes
+player-psychology,media_content,knowledge,Player Psychology,Psychologie des joueurs
+royalties,media_content,knowledge,Royalties,Droits d’auteur
+ableton-live,media_content,tool_platform,Ableton Live,Ableton Live
+adobe-premiere-pro,media_content,tool_platform,Adobe Premiere Pro,Adobe Premiere Pro
+capcut,media_content,tool_platform,CapCut,CapCut
+davinci-resolve,media_content,tool_platform,DaVinci Resolve,DaVinci Resolve
+elevenlabs,media_content,tool_platform,ElevenLabs,ElevenLabs
+ffmpeg,media_content,tool_platform,FFmpeg,FFmpeg
+flux,media_content,tool_platform,Flux,Flux
+gemini-banana,media_content,tool_platform,Gemini Banana,Gemini Banana
+gpt-image,media_content,tool_platform,GPT Image,GPT image
+kling,media_content,tool_platform,Kling,Kling
+luma-ai,media_content,tool_platform,Luma AI,Luma IA
+midjourney,media_content,tool_platform,Midjourney,Midjourney
+obs-studio,media_content,tool_platform,OBS Studio,OBS Studio
+spotify-for-artists,media_content,tool_platform,Spotify for Artists,Spotify pour Artists
+stable-diffusion,media_content,tool_platform,Stable Diffusion,Stable Diffusion
+suno,media_content,tool_platform,Suno,Suno
+twitch,media_content,tool_platform,Twitch,Twitch
+unity,media_content,tool_platform,Unity,Unity
+unreal-engine,media_content,tool_platform,Unreal Engine,Unreal Engine
+adaptive-learning-personalization,product_design,hard_skill,Adaptive Learning Personalization,Personnalisation de l’apprentissage adaptatif
+ai-product-management,product_design,hard_skill,AI Product Management,Gestion d'ia produit
+backlog-prioritization,product_design,hard_skill,Backlog Prioritization,Priorisation du backlog
+brand-identity-design,product_design,hard_skill,Brand Identity Design,Conception de marque identité
+building-information-modeling,product_design,hard_skill,Building Information Modeling,Modélisation de bâtiment information
+curriculum-design,product_design,hard_skill,Curriculum Design,Conception de curriculum
+design-systems,product_design,hard_skill,Design Systems,Systèmes de design
+digital-therapeutics-design,product_design,hard_skill,Digital Therapeutics Design,Conception de thérapies numériques
+feature-specification,product_design,hard_skill,Feature Specification,Spécification de fonctionnalités
+graphic-design,product_design,hard_skill,Graphic Design,Conception de graphic
+information-architecture,product_design,hard_skill,Information Architecture,Architecture de l’information
+instructional-design,product_design,hard_skill,Instructional Design,Ingénierie pédagogique
+interaction-design,product_design,hard_skill,Interaction Design,Conception d'interaction
+journey-mapping,product_design,hard_skill,Journey Mapping,Cartographie des parcours
+learning-engineering,product_design,hard_skill,Learning Engineering,Ingénierie de l’apprentissage
+motion-design,product_design,hard_skill,Motion Design,Conception de motion
+player-economy-design,product_design,hard_skill,Player Economy Design,Conception de player economy
+product-discovery,product_design,hard_skill,Product Discovery,Découverte de produit
+product-roadmapping,product_design,hard_skill,Product Roadmapping,Produit roadmapping
+product-led-growth,product_design,hard_skill,Product-Led Growth,Produit-Led growth
+prototyping,product_design,hard_skill,Prototyping,Prototypage
+service-design,product_design,hard_skill,Service Design,Conception de services
+survey-design,product_design,hard_skill,Survey Design,Conception de survey
+talent-acquisition-automation,product_design,hard_skill,Talent Acquisition Automation,Automatisation de l’acquisition de talents
+usability-testing,product_design,hard_skill,Usability Testing,Tests d'usability
+user-interviews,product_design,hard_skill,User Interviews,Utilisateur Interviews
+ux-writing,product_design,hard_skill,UX Writing,UX writing
+visual-design,product_design,hard_skill,Visual Design,Conception de visual
+wireframing,product_design,hard_skill,Wireframing,Maquettage filaire
+behavioral-design,product_design,knowledge,Behavioral Design,Conception de comportemental
+customer-acquisition,product_design,knowledge,Customer Acquisition,Client acquisition
+design-research-methods,product_design,knowledge,Design Research Methods,Méthodes de recherche en design
+design-thinking,product_design,knowledge,Design Thinking,Pensée design
+digital-accessibility,product_design,knowledge,Digital Accessibility,Accessibilité numérique
+game-design-theory,product_design,knowledge,Game Design Theory,Théorie du game design
+human-centered-design,product_design,knowledge,Human-Centered Design,Conception d'human-centered
+immersive-experience,product_design,knowledge,Immersive Experience,Immersive expérience
+inclusive-design,product_design,knowledge,Inclusive Design,Conception inclusive
+jobs-to-be-done,product_design,knowledge,Jobs-to-be-Done,Jobs-vers-be-Done
+product-management-fundamentals,product_design,knowledge,Product Management Fundamentals,Fondamentaux de la gestion de produit
+product-strategy,product_design,knowledge,Product Strategy,Stratégie de produit
+spatial-ux-design,product_design,knowledge,Spatial UX Design,Conception de spatial ux
+ux-ui-principles,product_design,knowledge,UX/UI Principles,Principes UX/UI
+wcag-accessibility-standards,product_design,knowledge,WCAG Accessibility Standards,Normes d'accessibilité WCAG
+adobe-creative-cloud,product_design,tool_platform,Adobe Creative Cloud,Adobe créatif cloud
+adobe-xd,product_design,tool_platform,Adobe XD,Adobe XD
+amplitude,product_design,tool_platform,Amplitude,Amplitude
+assessment-platforms,product_design,tool_platform,Assessment Platforms,Plateformes d'évaluation
+authoring-tools,product_design,tool_platform,Authoring Tools,Authoring outils
+autodesk-revit,product_design,tool_platform,Autodesk Revit,Autodesk Revit
+canva,product_design,tool_platform,Canva,Canva
+figma,product_design,tool_platform,Figma,Figma
+framer,product_design,tool_platform,Framer,Framer
+hotjar,product_design,tool_platform,Hotjar,Hotjar
+learning-management-system,product_design,tool_platform,Learning Management System,Learning management System
+mixpanel,product_design,tool_platform,Mixpanel,Mixpanel
+protopie,product_design,tool_platform,ProtoPie,ProtoPie
+sketch,product_design,tool_platform,Sketch,Sketch
+webflow,product_design,tool_platform,Webflow,Webflow
+ai-assisted-coding,software_dev,hard_skill,AI-Assisted Coding,IA-assisté coding
+api-gateway-management,software_dev,hard_skill,API Gateway Management,Gestion de passerelles API
+api-integration,software_dev,hard_skill,API Integration,Intégration d’API
+backend-engineering,software_dev,hard_skill,Backend Engineering,Ingénierie backend
+browser-extension-development,software_dev,hard_skill,Browser Extension Development,Développement d’extensions de navigateur
+caching-strategies,software_dev,hard_skill,Caching Strategies,Stratégies de mise en cache
+code-review,software_dev,hard_skill,Code Review,Revue de code
+database-design,software_dev,hard_skill,Database Design,Conception de base de données
+desktop-app-development,software_dev,hard_skill,Desktop App Development,Développement d’applications de bureau
+domain-driven-design,software_dev,hard_skill,Domain-Driven Design,Conception pilotée par le domaine
+embedded-systems,software_dev,hard_skill,Embedded Systems,Systèmes embarqués
+event-driven-architecture,software_dev,hard_skill,Event-Driven Architecture,Architecture événementielle
+frontend-engineering,software_dev,hard_skill,Frontend Engineering,Ingénierie frontend
+functional-safety-engineering,software_dev,hard_skill,Functional Safety Engineering,Ingénierie de la sécurité fonctionnelle
+game-engine-development,software_dev,hard_skill,Game Engine Development,Développement de moteurs de jeu
+graphql-api-development,software_dev,hard_skill,GraphQL API Development,Développement d’API GraphQL
+low-code-development,software_dev,hard_skill,Low-code Development,Développement low-code
+microservices-architecture,software_dev,hard_skill,Microservices Architecture,Architecture de microservices
+mobile-app-development,software_dev,hard_skill,Mobile App Development,Développement d’applications mobiles
+netcode-engineering,software_dev,hard_skill,Netcode Engineering,Ingénierie netcode
+no-code-development,software_dev,hard_skill,No-code Development,Développement no-code
+performance-optimization,software_dev,hard_skill,Performance Optimization,Optimisation des performances
+progressive-web-apps,software_dev,hard_skill,Progressive Web Apps,Applications web progressives
+real-time-control,software_dev,hard_skill,Real-Time Control,Contrôle temps réel
+real-time-multiplayer,software_dev,hard_skill,Real-time Multiplayer,Multijoueur temps réel
+real-time-systems,software_dev,hard_skill,Real-time Systems,Systèmes temps réel
+rest-api-development,software_dev,hard_skill,REST API Development,Développement d’API REST
+robot-operating-system-development,software_dev,hard_skill,Robot Operating System Development,Développement avec ROS
+software-testing-and-qa,software_dev,hard_skill,Software Testing & QA,Tests logiciels et QA
+spatial-interaction-development,software_dev,hard_skill,Spatial Interaction Development,Développement d’interactions spatiales
+technical-debt-management,software_dev,hard_skill,Technical Debt Management,Gestion de la dette technique
+test-automation,software_dev,hard_skill,Test Automation,Automatisation des tests
+third-party-api-integration,software_dev,hard_skill,Third-party API Integration,Intégration d’API tierces
+web-application-development,software_dev,hard_skill,Web Application Development,Développement d’applications web
+webhook-and-integration-engineering,software_dev,hard_skill,Webhook & Integration Engineering,Ingénierie des webhooks et intégrations
+api-design,software_dev,knowledge,API Design,Conception d’API
+clean-code-principles,software_dev,knowledge,Clean Code Principles,Principes de code propre
+concurrency,software_dev,knowledge,Concurrency,Concurrence
+design-patterns,software_dev,knowledge,Design Patterns,Patrons de conception
+parallelism,software_dev,knowledge,Parallelism,Parallélisme
+software-architecture,software_dev,knowledge,Software Architecture,Architecture logicielle
+software-documentation,software_dev,knowledge,Software Documentation,Documentation logicielle
+test-driven-development,software_dev,knowledge,Test-Driven Development,Développement piloté par les tests
+version-control-workflows,software_dev,knowledge,Version Control Workflows,Flux de travail de contrôle de version
+bash,software_dev,language,Bash,Bash
+c,software_dev,language,C,C
+c-sharp,software_dev,language,C#,C#
+c-plus-plus,software_dev,language,C++,C++
+css,software_dev,language,CSS,CSS
+dart,software_dev,language,Dart,Dart
+elixir,software_dev,language,Elixir,Elixir
+go,software_dev,language,Go,Go
+graphql,software_dev,language,GraphQL,GraphQL
+google-earth-engine-javascript-api,software_dev,language,Google Earth Engine JavaScript API,Google Earth Engine JavaScript API
+html,software_dev,language,HTML,HTML
+java,software_dev,language,Java,Java
+javascript,software_dev,language,JavaScript,JavaScript
+julia,software_dev,language,Julia,Julia
+kotlin,software_dev,language,Kotlin,Kotlin
+matlab,software_dev,language,MATLAB,MATLAB
+php,software_dev,language,PHP,PHP
+python,software_dev,language,Python,Python
+r,software_dev,language,R,R
+ruby,software_dev,language,Ruby,Ruby
+rust,software_dev,language,Rust,Rust
+scala,software_dev,language,Scala,Scala
+shell,software_dev,language,Shell,Shell
+swift,software_dev,language,Swift,Swift
+typescript,software_dev,language,TypeScript,TypeScript
+zig,software_dev,language,Zig,Zig
+angular,software_dev,tool_platform,Angular,Angular
+appwrite,software_dev,tool_platform,Appwrite,Appwrite
+bubble,software_dev,tool_platform,Bubble,Bubble
+django,software_dev,tool_platform,Django,Django
+express-js,software_dev,tool_platform,Express.js,Express.js
+fastapi,software_dev,tool_platform,FastAPI,FastAPI
+firebase,software_dev,tool_platform,Firebase,Firebase
+flutter,software_dev,tool_platform,Flutter,Flutter
+laravel,software_dev,tool_platform,Laravel,Laravel
+lovable,software_dev,tool_platform,Lovable,Lovable
+next-js,software_dev,tool_platform,Next.js,Next.js
+node-js,software_dev,tool_platform,Node.js,Node.js
+react,software_dev,tool_platform,React,React
+react-native,software_dev,tool_platform,React Native,React Native
+replit,software_dev,tool_platform,Replit,Replit
+retool,software_dev,tool_platform,Retool,Retool
+spring-boot,software_dev,tool_platform,Spring Boot,Spring Boot
+supabase,software_dev,tool_platform,Supabase,Supabase
+svelte,software_dev,tool_platform,Svelte,Svelte
+visual-studio-code,software_dev,tool_platform,Visual Studio Code,Visual Studio Code
+vue-js,software_dev,tool_platform,Vue.js,Vue.js
+biodiversity-monitoring,sustainability_climate,hard_skill,Biodiversity Monitoring,Suivi de biodiversité
+carbon-accounting,sustainability_climate,hard_skill,Carbon Accounting,Carbone comptabilité
+circular-design,sustainability_climate,hard_skill,Circular Design,Conception de circular
+cold-chain-engineering,sustainability_climate,hard_skill,Cold Chain Engineering,Ingénierie de cold chaîne
+crop-modeling,sustainability_climate,hard_skill,Crop Modeling,Modélisation de crop
+crop-yield-monitoring,sustainability_climate,hard_skill,Crop Yield Monitoring,Suivi de crop yield
+ecosystem-monitoring,sustainability_climate,hard_skill,Ecosystem Monitoring,Suivi de écosystème
+energy-efficiency-optimization,sustainability_climate,hard_skill,Energy Efficiency Optimization,Optimisation de énergie efficacité
+esg-reporting,sustainability_climate,hard_skill,ESG Reporting,Reporting d'esg
+csrd-reporting,sustainability_climate,hard_skill,CSRD Reporting,Reporting de csrd
+food-process-development,sustainability_climate,hard_skill,Food Process Development,Développement de food processus
+food-product-development,sustainability_climate,hard_skill,Food Product Development,Développement de food produit
+food-safety,sustainability_climate,hard_skill,Food Safety,Sécurité de food
+life-cycle-assessment,sustainability_climate,hard_skill,Life Cycle Assessment,Life Cycle évaluation
+material-recovery,sustainability_climate,hard_skill,Material Recovery,Récupération des matériaux
+precision-agriculture-data-analysis,sustainability_climate,hard_skill,Precision Agriculture Data Analysis,Analyse des données d’agriculture de précision
+soil-fertility-management,sustainability_climate,hard_skill,Soil Fertility Management,Gestion de soil fertility
+water-resource-management,sustainability_climate,hard_skill,Water Resource Management,Gestion de water ressource
+renewable-energy-system-design,sustainability_climate,hard_skill,Renewable Energy System Design,Conception de systèmes d’énergie renouvelable
+solar-energy-system-design,sustainability_climate,hard_skill,Solar Energy System Design,Conception de systèmes d’énergie solaire
+sustainable-agriculture-practices,sustainability_climate,hard_skill,Sustainable Agriculture Practices,Durable agriculture Practices
+supplier-emissions-tracking,sustainability_climate,hard_skill,Supplier Emissions Tracking,Supplier émissions Tracking
+waste-valorization,sustainability_climate,hard_skill,Waste Valorization,Valorisation des déchets
+agronomy,sustainability_climate,knowledge,Agronomy,Agronomie
+agroecology,sustainability_climate,knowledge,Agroecology,Agroécologie
+biodiversity-conservation,sustainability_climate,knowledge,Biodiversity Conservation,Biodiversité conservation
+building-energy-efficiency,sustainability_climate,knowledge,Building Energy Efficiency,Bâtiment énergie efficacité
+carbon-markets,sustainability_climate,knowledge,Carbon Markets,Carbone Markets
+circular-economy,sustainability_climate,knowledge,Circular Economy,Économie circulaire
+climate-adaptation,sustainability_climate,knowledge,Climate Adaptation,Climat Adaptation
+climate-risk-assessment,sustainability_climate,knowledge,Climate Risk Assessment,Climat risque évaluation
+climate-science,sustainability_climate,knowledge,Climate Science,Climat science
+environmental-policy,sustainability_climate,knowledge,Environmental Policy,Environmental politique
+esg,sustainability_climate,knowledge,ESG,ESG
+green-software-engineering,sustainability_climate,knowledge,Green Software Engineering,Ingénierie logicielle verte
+green-standards,sustainability_climate,knowledge,Green Standards,Normes environnementales
+grid-integration,sustainability_climate,knowledge,Grid Integration,Intégration de grid
+renewable-energy,sustainability_climate,knowledge,Renewable Energy,Renewable énergie
+soil-science,sustainability_climate,knowledge,Soil Science,Soil science
+sustainability,sustainability_climate,knowledge,Sustainability,Durabilité
+sustainability-strategy,sustainability_climate,knowledge,Sustainability Strategy,Stratégie de durabilité
+agricultural-decision-support-systems,sustainability_climate,tool_platform,Agricultural Decision Support Systems,Systèmes d'aide à la décision agricole
+energy-management-systems,sustainability_climate,tool_platform,Energy Management Systems,Systèmes de gestion de l'énergie
+homer-energy,sustainability_climate,tool_platform,HOMER Energy,HOMER énergie
+john-deere-operations-center,sustainability_climate,tool_platform,John Deere Operations Center,John Deere opérations Center
+openlca,sustainability_climate,tool_platform,openLCA,OpenLCA
+persefoni,sustainability_climate,tool_platform,Persefoni,Persefoni
+pvsyst,sustainability_climate,tool_platform,PVsyst,PVsyst
+simapro,sustainability_climate,tool_platform,SimaPro,SimaPro
+watershed,sustainability_climate,tool_platform,Watershed,Watershed
+blockchain-protocol-engineering,web3_blockchain,hard_skill,Blockchain Protocol Engineering,Ingénierie de blockchain protocol
+cross-chain-bridges,web3_blockchain,hard_skill,Cross-chain Bridges,Ponts inter-chaînes
+crypto-wallet-integration,web3_blockchain,hard_skill,Crypto Wallet Integration,Intégration de crypto wallet
+dapp-development,web3_blockchain,hard_skill,DApp Development,Développement de dapp
+defi-protocol-design,web3_blockchain,hard_skill,DeFi Protocol Design,Conception de defi protocol
+layer-2-scaling,web3_blockchain,hard_skill,Layer 2 Scaling,Passage à l’échelle de couche 2
+nft-engineering,web3_blockchain,hard_skill,NFT Engineering,Ingénierie de nft
+on-chain-analytics,web3_blockchain,hard_skill,On-chain Analytics,Analyse on-chain
+smart-contract-auditing,web3_blockchain,hard_skill,Smart Contract Auditing,Audit de smart contract
+smart-contract-development,web3_blockchain,hard_skill,Smart Contract Development,Développement de smart contract
+token-design,web3_blockchain,hard_skill,Token Design,Conception de token
+token-standard-implementation,web3_blockchain,hard_skill,Token Standard Implementation,Implémentation de token standard
+tokenomics,web3_blockchain,hard_skill,Tokenomics,Économie des jetons
+blockchain,web3_blockchain,knowledge,Blockchain,Chaîne de blocs
+consensus-mechanisms,web3_blockchain,knowledge,Consensus Mechanisms,Mécanismes de consensus
+crypto-economics,web3_blockchain,knowledge,Crypto Economics,Crypto économie
+decentralized-identity,web3_blockchain,knowledge,Decentralized Identity,Decentralized identité
+defi,web3_blockchain,knowledge,DeFi,Finance décentralisée
+distributed-ledger-concepts,web3_blockchain,knowledge,Distributed Ledger Concepts,Distribué Ledger concepts
+settlement-systems,web3_blockchain,knowledge,Settlement Systems,Systèmes de règlement
+stablecoin-economics,web3_blockchain,knowledge,Stablecoin Economics,Stablecoin économie
+tokenomics-design,web3_blockchain,knowledge,Tokenomics Design,Conception de Tokenomics
+web3-security,web3_blockchain,knowledge,Web3 Security,Sécurité Web3
+cairo,web3_blockchain,language,Cairo,Cairo
+move,web3_blockchain,language,Move,Move
+solidity,web3_blockchain,language,Solidity,Solidity
+ethereum,web3_blockchain,tool_platform,Ethereum,Ethereum
+evm,web3_blockchain,tool_platform,EVM,EVM
+foundry,web3_blockchain,tool_platform,Foundry,Foundry
+hardhat,web3_blockchain,tool_platform,Hardhat,Hardhat
+metamask,web3_blockchain,tool_platform,MetaMask,MetaMask
+polygon,web3_blockchain,tool_platform,Polygon,Polygon
+solana,web3_blockchain,tool_platform,Solana,Solana

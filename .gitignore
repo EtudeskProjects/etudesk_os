@@ -37,3 +37,6 @@ backend/generated-images/
 # Android debug keystore (generated locally)
 *.keystore
 !release.keystore
+
+# External skills referentials (large source data, ~170 MB: ONET, ESCO, etc.)
+datasets/existing_digital_skills_referentials/
