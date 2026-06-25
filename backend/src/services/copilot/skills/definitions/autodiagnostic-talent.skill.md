@@ -57,15 +57,11 @@ Render les charts suivants dans l'ordre. Chaque chart dans un message separe si 
 
 7. Render un **radar** du profil de competences.
 
-Calculate scores using context `<skills>`:
-- **Hard skills**: average proficiency of HARD_SKILL type (beginner=2, intermediate=3, advanced=4, master=5). Default 1 if none.
-- **Soft skills**: average proficiency of SOFT_SKILL type. Default 1 if none.
-- **Knowledge**: average proficiency of KNOWLEDGE type. Default 1 if none.
-- **Profondeur**: overall average across all skills (capped at 5).
-- **Seniorite**: proportion of advanced+master skills mapped to 1-5 scale (0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
+Calculate scores using context `<skills>` — un axe par **type du référentiel** (beginner=2, intermediate=3, advanced=4, master=5 ; défaut 1 si aucun) :
+- **Savoir** = `knowledge` · **Savoir-faire** = `hard_skill` · **Savoir-être** = `soft_skill` · **Outils** = `tool_platform` · **Langues** = `language`
 
 ```chart
-{"type":"radar","title":"Radar competences","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
+{"type":"radar","title":"Radar competences","axes":["Savoir","Savoir-faire","Savoir-être","Outils","Langues"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
 ```
 
 **Thinking flow** : Si < 3 skills total → remplacer le radar par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
@@ -75,17 +71,17 @@ Calculate scores using context `<skills>`:
 8. Render un **donut** de repartition par type de skill :
 
 ```chart
-{"type":"donut","title":"Repartition de mes competences","data":[{"label":"Hard Skills","value":8},{"label":"Soft Skills","value":4},{"label":"Connaissances","value":3}],"total_label":"15 competences"}
+{"type":"donut","title":"Repartition de mes competences","data":[{"label":"Savoir-faire","value":8},{"label":"Savoir-être","value":4},{"label":"Savoir","value":3},{"label":"Outils","value":2},{"label":"Langues","value":1}],"total_label":"18 competences"}
 ```
 
-**Thinking flow** : Compter les skills par type (HARD_SKILL, SOFT_SKILL, KNOWLEDGE). Exclure les types avec 0 skills. Si un seul type present → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun soft skill declare — c'est un axe a travailler."
+**Thinking flow** : Compter les skills par type catalogue (`knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`). Exclure les types a 0. Si un seul type present → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun savoir-être (soft skill) declare — c'est un axe a travailler."
 
 ### Chart C — Distribution par niveau (Catalog #13)
 
 9. Render un **donut** de distribution par niveau de maitrise :
 
 ```chart
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
 **Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer exam pour viser master.
@@ -103,7 +99,7 @@ Calculate scores using context `<skills>`:
 
 10. If skills were inferred from the CV: offer to add them via `manage_skills`:
     - "J'ai détecté [Skill 1], [Skill 2] dans ton CV. Tu veux que je les ajoute à ton profil ?"
-    - Call `manage_skills` with action "add", origin "extracted", type "HARD_SKILL" (or SOFT_SKILL/KNOWLEDGE based on skill nature) after confirmation.
+    - Call `manage_skills` with `skillQuery` = le LIBELLÉ de la compétence (résolu au référentiel côté serveur) + `level` (lowercase) après confirmation. Le type et la famille viennent du catalogue — ne les passe pas. Si le libellé n'est pas au catalogue, tu reçois des suggestions : reformule avec l'une d'elles, n'invente rien.
 
 ---
 
