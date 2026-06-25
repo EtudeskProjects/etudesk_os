@@ -1195,8 +1195,10 @@ CREATE INDEX idx_copilot_sessions_org ON copilot_sessions(organization_id, talen
 CREATE TABLE copilot_messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     session_id UUID NOT NULL REFERENCES copilot_sessions(id) ON DELETE CASCADE,
+    talent_id UUID REFERENCES talents(id) ON DELETE SET NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system', 'tool')),
     content TEXT NOT NULL,
+    attachments JSONB,
     tool_calls JSONB,
     tool_results JSONB,
     output_type VARCHAR(50),
