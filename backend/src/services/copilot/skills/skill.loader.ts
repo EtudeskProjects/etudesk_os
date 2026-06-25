@@ -30,6 +30,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'file_reader',
     'web_search',
     'manage_skills',
+    'find_competency',
     'execute_action',
   ],
   org: [

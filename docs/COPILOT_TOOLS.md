@@ -18,8 +18,11 @@
 | 7 | `file_reader` | explore, study, org | oui (talentId ou orgId) | aucun (pdf-parse) |
 | 8 | `web_search` | explore, study, org | non (singleton) | OpenAI gpt-4.1-mini |
 | 9 | `manage_skills` | study | oui (talentId) | PostgreSQL |
-| 10 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
-| 11 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
+| 10 | `find_competency` | study | non | PostgreSQL (catalogue, lecture seule) |
+| 11 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
+| 12 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
+
+`find_competency` : recherche un sujet d'apprentissage dans le référentiel (catalogue) et renvoie `in_catalog`, la compétence (avec `family` + `type`) et des suggestions proches. Le tuteur l'utilise pour ne former QUE sur le référentiel et recadrer en douceur les demandes hors-catalogue (jamais d'invention de compétence).
 
 ### Allocation par mode
 
