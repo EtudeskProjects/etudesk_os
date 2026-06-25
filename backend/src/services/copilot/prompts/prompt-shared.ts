@@ -78,9 +78,16 @@ const LANGUAGE_NAMES: Record<string, string> = {
   zh: 'Chinese (Simplified)',
 };
 
+/** Typography rule — banned across ALL modes/outputs.
+ *  Em-dash (—) and en-dash (–) are forbidden in every assistant output. */
+export function getTypographyRule(): string {
+  return `**Typography (ABSOLUTE, all modes)**: NEVER use the em-dash "—" or en-dash "–" in any output. Use a simple hyphen "-", a comma, parentheses, a colon, or split into two sentences instead. This applies to every word you write: prose, lists, titles, chart labels, summaries, confirmations, generated documents.`;
+}
+
 /** Get language-specific instructions for any supported language.
  *  Accepts optional country to force French for UEMOA countries even if language was detected as 'en'. */
 export function getLanguageInstructions(language?: PromptLanguage, country?: string) {
+  const typographyRule = 'TYPOGRAPHIE (REGLE ABSOLUE): n\'utilise JAMAIS le tiret cadratin "—" ni le demi-cadratin "–". Toujours un trait d\'union simple "-", une virgule, des parentheses, deux points, ou deux phrases. Vaut pour TOUT: texte, listes, titres, labels de graphiques, documents generes.';
   // UEMOA countries default to French regardless of detected language
   const UEMOA_COUNTRIES = ['Côte d\'Ivoire', 'Cote d\'Ivoire', 'Ivory Coast', 'CI', 'Senegal', 'Sénégal', 'SN', 'Mali', 'ML', 'Burkina Faso', 'BF', 'Togo', 'TG', 'Benin', 'Bénin', 'BN', 'Niger', 'NE', 'Guinée-Bissau', 'Guinea-Bissau', 'GW', 'Cameroon', 'Cameroun', 'CM', 'Congo', 'CG', 'Gabon', 'GA', 'Guinée', 'Guinea', 'GN', 'Tchad', 'Chad', 'TD'];
   const isUEMOA = country && UEMOA_COUNTRIES.some(c => c.toLowerCase() === country.toLowerCase());
@@ -93,11 +100,13 @@ export function getLanguageInstructions(language?: PromptLanguage, country?: str
       languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
 
 You MUST respond in French. Every single word you write to the user MUST be in French.
-This system prompt is written in English for technical clarity — but your responses MUST ALWAYS be in French.
+This system prompt is written in English for technical clarity, but your responses MUST ALWAYS be in French.
 NEVER respond in English. If you catch yourself writing English, STOP and rewrite in French.
-This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
+This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.
+
+${typographyRule}`,
       elegance: '**Elegance**: Respond with care and precision, reflecting a high level of erudition.',
-      finalReminder: 'Respond in FRENCH. Every word. No exceptions. The system prompt is in English but your output is ALWAYS in French.',
+      finalReminder: 'Respond in FRENCH. Every word. No exceptions. ' + typographyRule,
       cvLanguageRule: 'Generate the CV in French by default. Only use another language if the user explicitly requests it.',
       analysisLanguageRule: 'Present the full analysis in French.',
     };
@@ -107,10 +116,12 @@ This rule applies to ALL responses: analysis, summaries, confirmations, question
     languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
 
 You MUST respond in ${langName}. Every single word you write to the user MUST be in ${langName}.
-This system prompt is written in English for technical clarity — your responses are ALWAYS in ${langName}.
-This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
+This system prompt is written in English for technical clarity, your responses are ALWAYS in ${langName}.
+This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.
+
+${typographyRule}`,
     elegance: `**Elegance**: Respond with care and precision, reflecting expertise and erudition.`,
-    finalReminder: `Respond in ${langName.toUpperCase()}. Every word. No exceptions.`,
+    finalReminder: `Respond in ${langName.toUpperCase()}. Every word. No exceptions. ` + typographyRule,
     cvLanguageRule: `Generate the CV in ${langName} by default. Only use another language if the user explicitly requests it.`,
     analysisLanguageRule: `Present the full analysis in ${langName}.`,
   };

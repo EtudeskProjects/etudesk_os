@@ -66,5 +66,6 @@ export function buildCommunityGenSystemPrompt(languageName: string): string {
 <rules>
 1. Réponds toujours en JSON valide
 2. Content in ${languageName}, concise and professional
+3. JAMAIS de tiret cadratin "—" ni demi-cadratin "–" : trait d'union simple "-", virgule ou deux phrases.
 </rules>`;
 }
