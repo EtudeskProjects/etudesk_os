@@ -5,6 +5,7 @@
 
 import { api, ApiResponse } from './api';
 import { Community, CommunityType, CommunityStatus, Visibility, Sector } from '../types/models';
+import type { EntitySkillTag } from './skillService';
 
 export interface CommunityFilters {
   type?: CommunityType;
@@ -49,6 +50,8 @@ export interface CreateCommunityData {
   // Fields
   tags?: string[]; // Max 3 tags
   sectors?: Sector[]; // Max 5
+  // Catalog skills the community is about / validates (referential only)
+  skills?: { skill: string; role?: string }[];
   visibility?: Visibility;
 
   // Default member permissions
@@ -85,6 +88,7 @@ export interface GeneratedCommunityData {
   rules?: string;
   visibility?: Visibility;
   application_questions?: string[];
+  skills?: EntitySkillTag[];
 }
 
 interface CommunityMembershipRecord {

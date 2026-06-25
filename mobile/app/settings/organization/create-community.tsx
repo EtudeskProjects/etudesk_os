@@ -61,6 +61,8 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { communityService, CreateCommunityData, imageService, organizationService, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../src/services';
+import { SkillPicker } from '../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../src/services/skillService';
 
 type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 
@@ -128,6 +130,7 @@ export default function CreateCommunityScreen() {
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
   const mainScrollRef = useRef<ScrollView>(null);
@@ -340,6 +343,9 @@ export default function CreateCommunityScreen() {
         }
 
         form.setValues(updates);
+
+        // Catalog-resolved skills the community is about / validates (referential only)
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
@@ -428,6 +434,7 @@ export default function CreateCommunityScreen() {
     application_questions: applicationQuestions.filter(q => q.question.trim().length > 0).map(q => q.question),
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
+    skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, role: s.role || 'validates' })) : undefined,
     visibility: visibility || undefined,
     default_member_permissions: defaultPermissions,
     city: communityType === 'HYBRID' ? city || undefined : undefined,
@@ -616,6 +623,9 @@ export default function CreateCommunityScreen() {
           rows={4}
           maxLength={1000}
         />
+
+        {/* Compétences du catalogue (référentiel) */}
+        <SkillPicker label={t('labels.skillsSection')} value={skills} onChange={setSkills} />
       </View>
     </View>
   );

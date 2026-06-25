@@ -34,6 +34,8 @@ export interface CreateOpportunityData {
   summary?: string;
   requirements?: string;
   nice_to_have?: string;
+  // Catalog skill tags (slug + required|nice_to_have)
+  skills?: Array<{ skill: string; requirement?: 'required' | 'nice_to_have'; min_level?: string }>;
   // Sectors
   sectors?: string[];
   // Compensation (min/max/frequency/currency only)
@@ -105,6 +107,8 @@ export interface GeneratedOpportunityData {
   application_questions: ApplicationQuestion[];
   target_profiles: string[];
   ideal_candidate_summary: string;
+  // Catalog-resolved skill suggestions (referential only)
+  skills?: import('./skillService').EntitySkillTag[];
 }
 
 class OpportunityService {

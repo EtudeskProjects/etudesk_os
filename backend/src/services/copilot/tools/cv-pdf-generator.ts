@@ -1,31 +1,48 @@
 /**
- * CV PDF Generator — Ultra-elegant, minimal CV with Etudesk Light Theme
- * Professional two-column layout inspired by luxury African minimalism
- * Color palette: Etudesk warm brown (#3B2416) + neutral grays
+ * CV PDF Generator — Minimaliste, noir & blanc, grand public
+ * Mise en page deux colonnes, encre noire sur fond blanc.
+ * La SEULE couleur = les barres de competences, colorees par TYPE de
+ * competence (aligne sur le design system de l'app Etudesk).
+ * Palette : echelle zinc neutre (aucun ton brun).
  */
 
 import PDFDocument from 'pdfkit';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
-// --- Etudesk Design Tokens — Light Theme ---
+// --- Etudesk Design Tokens — Monochrome ---
 
 const C = {
-  primary: '#3B2416',
-  primaryLight: '#5C3D2E',
-  primaryMuted: '#8B7355',
-  accent: '#A67C52',
-  textPrimary: '#1F1C18',
-  textSecondary: '#6E675C',
-  textTertiary: '#918A7E',
+  ink: '#18181B',          // Encre principale (quasi noir)
+  inkSoft: '#3F3F46',      // Titres / emphase secondaire
+  textPrimary: '#18181B',
+  textSecondary: '#52525B',
+  textTertiary: '#71717A',
   background: '#FFFFFF',
-  surface: '#FAF9F7',
-  surfaceAlt: '#F5F3F0',
-  border: '#E8E4DF',
-  borderLight: '#EBE8E4',
+  sidebar: '#FAFAFA',      // Barre laterale neutre tres claire
+  surface: '#FAFAFA',
+  surfaceAlt: '#F4F4F5',
+  border: '#E4E4E7',
+  borderLight: '#F4F4F5',
+  track: '#E4E4E7',        // Fond des barres de competences
   white: '#FFFFFF',
-  success: '#4A6741',
+  accent: '#18181B',       // Accent par defaut = encre (monochrome)
 };
+
+// Palette par TYPE de competence — seule touche de couleur du document.
+const SKILL_TYPE_COLOR: Record<string, string> = {
+  knowledge: '#1D4ED8',       // Connaissance — bleu
+  hard_skill: '#0E7490',      // Competence technique — cyan
+  soft_skill: '#BE185D',      // Competence comportementale — rose
+  tool_platform: '#6D28D9',   // Outil / plateforme — violet
+  language: '#047857',        // Langue — emeraude
+};
+
+/** Couleur d'une competence selon son type (defaut: encre). */
+function skillColor(type?: string): string {
+  const t = (type || '').toLowerCase().trim();
+  return SKILL_TYPE_COLOR[t] || C.ink;
+}
 
 const F = {
   regular: 'Helvetica',
@@ -138,8 +155,8 @@ function sectionTitle(
   maxWidth: number,
   options?: { color?: string; lineColor?: string }
 ): number {
-  const color = options?.color || C.primary;
-  const lineColor = options?.lineColor || C.accent;
+  const color = options?.color || C.ink;
+  const lineColor = options?.lineColor || C.ink;
 
   doc.fontSize(9.5).font(F.bold).fillColor(color);
   doc.text(title.toUpperCase(), x, y, { width: maxWidth, characterSpacing: 1.5 });
@@ -150,11 +167,11 @@ function sectionTitle(
   return lineY + 10;
 }
 
-/** Draw sidebar section title — white text, amber underline */
+/** Draw sidebar section title — dark ink text, ink underline */
 function sidebarSectionTitle(doc: PDFKit.PDFDocument, title: string, y: number): number {
   return sectionTitle(doc, title, SIDEBAR_CONTENT_X, y, SIDEBAR_CONTENT_WIDTH, {
-    color: C.white,
-    lineColor: C.accent,
+    color: C.ink,
+    lineColor: C.ink,
   });
 }
 
@@ -163,11 +180,17 @@ function needsNewPage(_doc: PDFKit.PDFDocument, neededHeight: number, currentY: 
   return currentY + neededHeight > PAGE.height - FOOTER_HEIGHT - 20;
 }
 
+/** Draw the neutral sidebar background + hairline divider */
+function drawSidebar(doc: PDFKit.PDFDocument): void {
+  doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.sidebar).fill();
+  doc.moveTo(SIDEBAR_WIDTH, 0).lineTo(SIDEBAR_WIDTH, PAGE.height)
+    .lineWidth(0.5).strokeColor(C.border).stroke();
+}
+
 /** Add a new page and draw the sidebar background */
 function addPageWithSidebar(doc: PDFKit.PDFDocument): void {
   doc.addPage({ size: 'A4', margin: 0 });
-  // Sidebar background on new page
-  doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.primary).fill();
+  drawSidebar(doc);
 }
 
 // --- Main Cv Generator ---
@@ -207,8 +230,8 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
 
     try {
 
-      // SIDEBAR BACKGROUND (full page height, left column)
-      doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.primary).fill();
+      // SIDEBAR BACKGROUND (full page height, left column) + hairline divider
+      drawSidebar(doc);
 
       // HEADER AREA — Avatar + Name + Contact
       // Subtle header background on main area
@@ -243,7 +266,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       if (!avatarLoaded) {
         const cx = avatarX + avatarSize / 2;
         const cy = avatarY + avatarSize / 2;
-        doc.circle(cx, cy, avatarSize / 2).fillColor(C.primaryLight).fill();
+        doc.circle(cx, cy, avatarSize / 2).fillColor(C.ink).fill();
         const initials = `${(cvData.firstName?.[0] || '').toUpperCase()}${(cvData.lastName?.[0] || '').toUpperCase()}`;
         doc.fontSize(28).font(F.bold).fillColor(C.white);
         const initialsWidth = doc.widthOfString(initials);
@@ -253,10 +276,10 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       // Name in main header area
       const nameX = MAIN_X;
       const nameY = 32;
-      doc.fontSize(24).font(F.bold).fillColor(C.primary);
+      doc.fontSize(24).font(F.bold).fillColor(C.ink);
       doc.text(cvData.firstName.toUpperCase(), nameX, nameY, { width: MAIN_WIDTH, continued: false });
       const firstNameH = doc.heightOfString(cvData.firstName.toUpperCase(), { width: MAIN_WIDTH });
-      doc.fontSize(24).font(F.regular).fillColor(C.primaryLight);
+      doc.fontSize(24).font(F.regular).fillColor(C.textSecondary);
       doc.text(cvData.lastName.toUpperCase(), nameX, nameY + firstNameH + 2, {
         width: MAIN_WIDTH,
         characterSpacing: 2,
@@ -280,10 +303,10 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       if (loc) contactItems.push({ label: 'Lieu', value: loc });
 
       for (const item of contactItems) {
-        doc.fontSize(7).font(F.bold).fillColor(C.accent);
+        doc.fontSize(7).font(F.bold).fillColor(C.textTertiary);
         doc.text(item.label.toUpperCase(), SIDEBAR_CONTENT_X, sideY, { width: SIDEBAR_CONTENT_WIDTH });
         sideY += 10;
-        doc.fontSize(8).font(F.regular).fillColor(C.white);
+        doc.fontSize(8).font(F.regular).fillColor(C.textPrimary);
         doc.text(item.value, SIDEBAR_CONTENT_X, sideY, { width: SIDEBAR_CONTENT_WIDTH });
         sideY += doc.heightOfString(item.value, { width: SIDEBAR_CONTENT_WIDTH }) + 8;
       }
@@ -296,7 +319,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
 
         for (const skill of topSkills) {
           // Skill name
-          doc.fontSize(7.5).font(F.regular).fillColor(C.white);
+          doc.fontSize(7.5).font(F.regular).fillColor(C.textPrimary);
           doc.text(skill.name, SIDEBAR_CONTENT_X, sideY, { width: SIDEBAR_CONTENT_WIDTH });
           const nameH = doc.heightOfString(skill.name, { width: SIDEBAR_CONTENT_WIDTH });
 
@@ -305,20 +328,21 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
           const barWidth = SIDEBAR_CONTENT_WIDTH;
           const barHeight = 3;
           const fillPercent = skillLevelToPercent(skill.level);
+          const barColor = skillColor(skill.type); // couleur = type de competence
 
           // Background track
           doc.roundedRect(SIDEBAR_CONTENT_X, barY, barWidth, barHeight, 1.5)
-            .fillColor(C.primaryLight).fill();
-          // Filled portion
+            .fillColor(C.track).fill();
+          // Filled portion — coloree selon le type de competence
           if (fillPercent > 0) {
             doc.roundedRect(SIDEBAR_CONTENT_X, barY, barWidth * fillPercent, barHeight, 1.5)
-              .fillColor(C.accent).fill();
+              .fillColor(barColor).fill();
           }
 
           // Level label (right-aligned, subtle)
           const levelStr = formatLevel(skill.level);
           if (levelStr) {
-            doc.fontSize(6).font(F.oblique).fillColor(C.primaryMuted);
+            doc.fontSize(6).font(F.oblique).fillColor(C.textTertiary);
             const labelW = doc.widthOfString(levelStr);
             doc.text(levelStr, SIDEBAR_CONTENT_X + barWidth - labelW, barY + barHeight + 2, {
               width: labelW + 2,
@@ -336,13 +360,13 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
         sideY = sidebarSectionTitle(doc, 'Langues', sideY);
 
         for (const lang of cvData.languages) {
-          doc.fontSize(8).font(F.regular).fillColor(C.white);
+          doc.fontSize(8).font(F.regular).fillColor(C.textPrimary);
           doc.text(lang.language, SIDEBAR_CONTENT_X, sideY, { width: SIDEBAR_CONTENT_WIDTH });
           const langH = doc.heightOfString(lang.language, { width: SIDEBAR_CONTENT_WIDTH });
 
           const levelText = langLevel(lang.level);
           if (levelText) {
-            doc.fontSize(7).font(F.oblique).fillColor(C.primaryMuted);
+            doc.fontSize(7).font(F.oblique).fillColor(C.textTertiary);
             doc.text(levelText, SIDEBAR_CONTENT_X, sideY + langH + 1, { width: SIDEBAR_CONTENT_WIDTH });
             sideY += langH + 14;
           } else {
@@ -356,10 +380,10 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       if (cvData.interests && cvData.interests.length > 0) {
         sideY = sidebarSectionTitle(doc, 'Interets', sideY);
         for (const interest of cvData.interests) {
-          doc.fontSize(7.5).font(F.regular).fillColor(C.white);
+          doc.fontSize(7.5).font(F.regular).fillColor(C.textPrimary);
           const text = `  ${interest}`;
           // Small dot
-          doc.circle(SIDEBAR_CONTENT_X + 3, sideY + 4, 1.5).fillColor(C.accent).fill();
+          doc.circle(SIDEBAR_CONTENT_X + 3, sideY + 4, 1.5).fillColor(C.ink).fill();
           doc.text(text, SIDEBAR_CONTENT_X + 8, sideY, { width: SIDEBAR_CONTENT_WIDTH - 8 });
           sideY += doc.heightOfString(text, { width: SIDEBAR_CONTENT_WIDTH - 8 }) + 4;
         }
@@ -370,8 +394,8 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       if (cvData.goals && cvData.goals.length > 0) {
         sideY = sidebarSectionTitle(doc, 'Objectifs', sideY);
         for (const goal of cvData.goals) {
-          doc.fontSize(7.5).font(F.regular).fillColor(C.white);
-          doc.circle(SIDEBAR_CONTENT_X + 3, sideY + 4, 1.5).fillColor(C.accent).fill();
+          doc.fontSize(7.5).font(F.regular).fillColor(C.textPrimary);
+          doc.circle(SIDEBAR_CONTENT_X + 3, sideY + 4, 1.5).fillColor(C.ink).fill();
           doc.text(goal, SIDEBAR_CONTENT_X + 8, sideY, { width: SIDEBAR_CONTENT_WIDTH - 8 });
           sideY += doc.heightOfString(goal, { width: SIDEBAR_CONTENT_WIDTH - 8 }) + 4;
         }
@@ -407,8 +431,8 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
           // Timeline dot
           const dotX = MAIN_X - 14;
           const dotY = mainY + 5;
-          doc.circle(dotX, dotY, 3).fillColor(C.accent).fill();
-          doc.circle(dotX, dotY, 3).lineWidth(1).strokeColor(C.primary).stroke();
+          doc.circle(dotX, dotY, 3).fillColor(C.ink).fill();
+          doc.circle(dotX, dotY, 3).lineWidth(1).strokeColor(C.white).stroke();
 
           // Timeline line (connecting dots, except for last item)
           if (i < cvData.experiences.length - 1) {
@@ -423,7 +447,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
 
           // Company + location
           const companyLine = [exp.company, exp.location].filter(Boolean).join(' - ');
-          doc.fontSize(8.5).font(F.bold).fillColor(C.accent);
+          doc.fontSize(8.5).font(F.bold).fillColor(C.inkSoft);
           doc.text(companyLine, MAIN_X, mainY, { width: MAIN_WIDTH });
           mainY += doc.heightOfString(companyLine, { width: MAIN_WIDTH }) + 2;
 
@@ -462,8 +486,8 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
           // Timeline dot
           const dotX = MAIN_X - 14;
           const dotY = mainY + 5;
-          doc.circle(dotX, dotY, 3).fillColor(C.success).fill();
-          doc.circle(dotX, dotY, 3).lineWidth(1).strokeColor(C.primary).stroke();
+          doc.circle(dotX, dotY, 3).fillColor(C.ink).fill();
+          doc.circle(dotX, dotY, 3).lineWidth(1).strokeColor(C.white).stroke();
 
           if (i < cvData.education.length - 1) {
             doc.moveTo(dotX, dotY + 4).lineTo(dotX, dotY + estimatedH - 5)
@@ -477,7 +501,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
 
           // Institution + location
           const instLine = [edu.institution, edu.location].filter(Boolean).join(' - ');
-          doc.fontSize(8.5).font(F.bold).fillColor(C.accent);
+          doc.fontSize(8.5).font(F.bold).fillColor(C.inkSoft);
           doc.text(instLine, MAIN_X, mainY, { width: MAIN_WIDTH });
           mainY += doc.heightOfString(instLine, { width: MAIN_WIDTH }) + 2;
 

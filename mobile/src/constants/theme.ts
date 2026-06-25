@@ -1,128 +1,139 @@
 /**
  * ETUDESK DESIGN SYSTEM
  *
- * Philosophy: Ultra-moderne, minimaliste, luxe africain
- * - NO shadows
- * - NO gradients
- * - NO violet/purple colors
- * - NO obvious/popular colors
+ * Philosophy: Noir & blanc, grand public, accessible, minimaliste, aéré.
+ * - Canvas strictement monochrome (échelle de gris neutre + noir + blanc)
+ * - La COULEUR ne sert qu'à porter du SENS :
+ *     1. Les états sémantiques (succès / erreur / alerte / info)
+ *     2. Les 5 TYPES de compétences (la signature visuelle de l'app)
+ * - PLUS de marron / luxe africain / tons chauds nulle part
+ * - NO shadows, NO gradients
  *
- * Typography: Montserrat (primary brand font, shared with web)
+ * Règle de lecture : la couleur dit QUOI (type de compétence / état),
+ * l'intensité (niveau de gris) dit COMBIEN (niveau de maîtrise).
+ *
+ * Typography: Montserrat (police de marque, partagée avec le web)
  * Icons: Lucide React Native only
- *
- * Brand: Warm luxury, African elegance, clarity, engagement, community
  */
 
-// --- Color Palette - Luxe Africain ---
+// --- Color Palette - Monochrome + sens ---
 
 /**
- * Primary: Rich Brown (#3B2416) - Luxe African warmth
- * Success: Forest Pale Green - Natural, understated
- * Warning: Warm Amber - Earth tones
- * Error: Terracotta - Warm red, not aggressive
- * Info: Warm Taupe - Neutral information
+ * Primary: Noir encre (#18181B) - autorité, neutralité, contraste max
+ * Neutrals: échelle "zinc" froide et neutre (zéro sous-ton brun)
+ * Sémantiques: vert / rouge / ambre / bleu modernes, lisibles (AA)
+ * Compétences: 5 teintes joyau distinctes, une par TYPE de compétence
  */
 
 export const LIGHT_COLORS = {
-  // PRIMARY - Marron Luxe
-  primary: '#3B2416',           // Main brand color - Rich brown
-  primaryLight: '#5C3D2E',      // Lighter variant
-  primaryDark: '#2A1A10',       // Darker variant
-  primaryMuted: '#8B7355',      // Muted/soft variant
+  // PRIMARY - Noir encre (remplace le marron)
+  primary: '#18181B',           // Couleur de marque - noir encre
+  primaryLight: '#3F3F46',      // Variante claire (graphite)
+  primaryDark: '#09090B',       // Variante foncée (quasi noir)
+  primaryMuted: '#71717A',      // Variante douce (gris moyen)
 
-  // NEUTRALS - Warm Gray Scale
+  // NEUTRALS - échelle zinc neutre
   white: '#FFFFFF',
-  black: '#1A1A1A',
+  black: '#09090B',
 
-  // Warm grays (slight brown undertone for harmony)
-  gray50: '#FAF9F7',            // Lightest - backgrounds
-  gray100: '#F5F3F0',           // Cards, surfaces
-  gray200: '#EBE8E4',           // Borders, dividers
-  gray300: '#D9D5CF',           // Disabled backgrounds
-  gray400: '#B8B2A8',           // Placeholders
-  gray500: '#918A7E',           // Secondary text
-  gray600: '#6E675C',           // Icons inactive
-  gray700: '#4D4840',           // Body text secondary
-  gray800: '#332F2A',           // Body text primary
-  gray900: '#1F1C18',           // Headings
+  gray50: '#FAFAFA',            // Le plus clair - fonds
+  gray100: '#F4F4F5',           // Cartes, surfaces
+  gray200: '#E4E4E7',           // Bordures, séparateurs
+  gray300: '#D4D4D8',           // Fonds désactivés
+  gray400: '#A1A1AA',           // Placeholders
+  gray500: '#71717A',           // Texte secondaire
+  gray600: '#52525B',           // Icônes inactives
+  gray700: '#3F3F46',           // Texte de corps secondaire
+  gray800: '#27272A',           // Texte de corps principal
+  gray900: '#18181B',           // Titres
 
-  // SEMANTIC - Earth Tones
-  success: '#4A6741',           // Forest pale green
-  successLight: '#E8EFE6',      // Success background
-  successDark: '#3A5233',       // Success pressed
+  // SEMANTIC - couleurs d'état, propres et modernes
+  success: '#16A34A',           // Vert
+  successLight: '#DCFCE7',      // Fond succès
+  successDark: '#15803D',       // Succès pressé
 
-  error: '#8B4A3C',             // Terracotta
-  errorLight: '#F5EBE8',        // Error background
-  errorDark: '#6B3A2E',         // Error pressed
+  error: '#DC2626',             // Rouge
+  errorLight: '#FEE2E2',        // Fond erreur
+  errorDark: '#B91C1C',         // Erreur pressée
 
-  warning: '#A67C52',           // Warm amber
-  warningLight: '#F7F0E8',      // Warning background
-  warningDark: '#866340',       // Warning pressed
+  warning: '#D97706',           // Ambre
+  warningLight: '#FEF3C7',      // Fond alerte
+  warningDark: '#B45309',       // Alerte pressée
 
-  info: '#6B5E52',              // Warm taupe
-  infoLight: '#F2EFEC',         // Info background
-  infoDark: '#524940',          // Info pressed
+  info: '#2563EB',              // Bleu
+  infoLight: '#DBEAFE',         // Fond info
+  infoDark: '#1D4ED8',          // Info pressée
 
   // BACKGROUNDS & SURFACES
-  background: '#FFFFFF',        // Main app background
-  backgroundSecondary: '#FAF9F7', // Secondary surfaces
-  backgroundTertiary: '#F5F3F0', // Cards on secondary bg
-  surface: '#FFFFFF',           // Card surfaces
-  surfaceElevated: '#FAF9F7',   // Elevated cards
+  background: '#FFFFFF',        // Fond principal de l'app
+  backgroundSecondary: '#FAFAFA', // Surfaces secondaires
+  backgroundTertiary: '#F4F4F5', // Cartes sur fond secondaire
+  surface: '#FFFFFF',           // Surface de carte
+  surfaceElevated: '#FAFAFA',   // Carte surélevée
 
   // TEXT
-  textPrimary: '#1F1C18',       // Main text
-  textSecondary: '#6E675C',     // Secondary text
-  textTertiary: '#918A7E',      // Tertiary/hint text
-  textDisabled: '#B8B2A8',      // Disabled text
-  textInverse: '#FFFFFF',       // Text on dark backgrounds
-  textOnPrimary: '#FFFFFF',     // Text on primary color
+  textPrimary: '#18181B',       // Texte principal
+  textSecondary: '#52525B',     // Texte secondaire (contraste renforcé)
+  textTertiary: '#71717A',      // Texte tertiaire / indice
+  textDisabled: '#A1A1AA',      // Texte désactivé
+  textInverse: '#FFFFFF',       // Texte sur fond foncé
+  textOnPrimary: '#FFFFFF',     // Texte sur la couleur primaire
 
   // BORDERS & DIVIDERS
-  borderColor: '#EBE8E4',       // Default border
-  borderColorStrong: '#D9D5CF', // Emphasized border
-  divider: '#EBE8E4',           // Horizontal dividers
+  borderColor: '#E4E4E7',       // Bordure par défaut
+  borderColorStrong: '#D4D4D8', // Bordure accentuée
+  divider: '#E4E4E7',           // Séparateurs horizontaux
 
-  // QUICK ACCESS CARDS - Harmonized Palette
-  // Each card type has a cohesive color set
-  // Talent Cards - Warm beige/cream
-  cardTalent: '#F7F4F0',
-  cardTalentAccent: '#D4C4B0',
-  cardTalentText: '#5C4D3D',
+  // ---- COMPÉTENCES : 5 TYPES = 5 teintes (la couleur "métier") ----
+  // Une couleur stable par TYPE de compétence, lisible sur blanc (AA).
+  // knowledge → bleu | hard_skill → cyan | soft_skill → rose
+  // tool_platform → violet | language → émeraude
+  skillKnowledge: '#1D4ED8',       // Connaissance
+  skillKnowledgeBg: '#EAF1FE',
+  skillHardSkill: '#0E7490',       // Compétence technique
+  skillHardSkillBg: '#E4F5F9',
+  skillSoftSkill: '#BE185D',       // Compétence comportementale
+  skillSoftSkillBg: '#FCE9F1',
+  skillToolPlatform: '#6D28D9',    // Outil / plateforme
+  skillToolPlatformBg: '#F1EAFD',
+  skillLanguage: '#047857',        // Langue
+  skillLanguageBg: '#E3F4ED',
 
-  // Organization Cards - Soft terracotta
-  cardOrg: '#F5EFEA',
-  cardOrgAccent: '#C9B8A8',
-  cardOrgText: '#5A4A3A',
+  // QUICK ACCESS CARDS - neutres (la couleur est réservée aux compétences)
+  // On différencie les types d'entité par l'icône, pas par la couleur.
+  cardTalent: '#FAFAFA',
+  cardTalentAccent: '#18181B',
+  cardTalentText: '#18181B',
 
-  // Opportunity Cards - Warm sand
-  cardOpportunity: '#F8F5F0',
-  cardOpportunityAccent: '#D6CBBC',
-  cardOpportunityText: '#5D5040',
+  cardOrg: '#FAFAFA',
+  cardOrgAccent: '#18181B',
+  cardOrgText: '#18181B',
 
-  // Community Cards - Sage green
-  cardCommunity: '#F2F5F0',
-  cardCommunityAccent: '#C4D4B8',
-  cardCommunityText: '#4A5A40',
+  cardOpportunity: '#FAFAFA',
+  cardOpportunityAccent: '#18181B',
+  cardOpportunityText: '#18181B',
 
-  // Space Cards - Warm gray (used for bookable spaces)
-  cardSpace: '#F5F4F2',
-  cardSpaceAccent: '#D0CCC4',
-  cardSpaceText: '#4D4840',
+  cardCommunity: '#FAFAFA',
+  cardCommunityAccent: '#18181B',
+  cardCommunityText: '#18181B',
 
-  // INTERACTIVE STATES
-  overlay: 'rgba(26, 26, 26, 0.5)',      // Modal overlay
-  overlayLight: 'rgba(26, 26, 26, 0.3)', // Light overlay
-  pressed: 'rgba(59, 36, 22, 0.08)',     // Pressed state
-  focused: 'rgba(59, 36, 22, 0.12)',     // Focus ring
-  hover: 'rgba(59, 36, 22, 0.04)',       // Hover state
+  cardSpace: '#FAFAFA',
+  cardSpaceAccent: '#18181B',
+  cardSpaceText: '#18181B',
 
-  // STATUS COLORS
-  statusPending: '#A67C52',     // Warm amber
-  statusActive: '#4A6741',      // Forest green
-  statusRejected: '#8B4A3C',    // Terracotta
-  statusSuspended: '#6B5E52',   // Taupe
-  statusArchived: '#918A7E',    // Muted gray
+  // INTERACTIVE STATES (base noire)
+  overlay: 'rgba(9, 9, 11, 0.5)',       // Overlay de modale
+  overlayLight: 'rgba(9, 9, 11, 0.3)',  // Overlay léger
+  pressed: 'rgba(9, 9, 11, 0.06)',      // État pressé
+  focused: 'rgba(9, 9, 11, 0.10)',      // Anneau de focus
+  hover: 'rgba(9, 9, 11, 0.04)',        // État survol
+
+  // STATUS COLORS (alignées sur les sémantiques)
+  statusPending: '#D97706',     // Ambre
+  statusActive: '#16A34A',      // Vert
+  statusRejected: '#DC2626',    // Rouge
+  statusSuspended: '#2563EB',   // Bleu
+  statusArchived: '#71717A',    // Gris
 } as const;
 
 // Brand / partner colors (used for third-party identity, payments, etc.)
@@ -138,14 +149,15 @@ export const BRAND_COLORS = {
 } as const;
 
 // UI palettes that should remain stable (not derived from theme mode).
+// Categorical palette (graphes, tags génériques) — aligné sur la palette compétences.
 export const TAG_COLOR_PALETTE = [
-  '#6B5E52', // taupe
-  '#4A6741', // forest green
-  '#8B4A3C', // terracotta
-  '#A67C52', // warm amber
-  '#5E6B52', // olive
-  '#6B525E', // mauve-brown
-  '#52656B', // blue-gray
+  '#1D4ED8', // bleu
+  '#0E7490', // cyan
+  '#BE185D', // rose
+  '#6D28D9', // violet
+  '#047857', // émeraude
+  '#D97706', // ambre
+  '#52525B', // graphite
 ] as const;
 
 // "Pure" colors for embedded WebViews / external content where theme inversion isn't desired.
@@ -155,100 +167,112 @@ export const STATIC_COLORS = {
 } as const;
 
 // DARK THEME
-// Optimized for contrast and visibility
+// Même logique : canvas monochrome (zinc inversé), couleur = sens.
 export const DARK_COLORS = {
-  // Primary - LIGHTER for dark mode visibility (not the same dark brown)
-  primary: '#C9A070',           // Warm gold-brown - visible on dark
-  primaryLight: '#DDB88A',      // Lighter variant
-  primaryDark: '#A68050',       // Darker variant
-  primaryMuted: '#8B7355',      // Muted variant
+  // Primary - clair sur fond sombre (le "noir" devient blanc en dark)
+  primary: '#FAFAFA',
+  primaryLight: '#FFFFFF',
+  primaryDark: '#D4D4D8',
+  primaryMuted: '#A1A1AA',
 
-  // Neutrals - Inverted warm scale with better contrast
-  white: '#0D0B0A',             // Very dark for "white" elements
-  black: '#F5F3F0',             // Light for "black" elements
+  // Neutrals - échelle zinc inversée
+  white: '#09090B',             // "blanc" = surface très sombre
+  black: '#FAFAFA',             // "noir" = quasi blanc
 
-  gray50: '#0D0B0A',            // Darkest - main background
-  gray100: '#161412',           // Slightly lighter
-  gray200: '#1E1C1A',           // Card backgrounds
-  gray300: '#2A2826',           // Elevated surfaces
-  gray400: '#3D3A36',           // Borders, dividers
-  gray500: '#5C5850',           // Disabled elements
-  gray600: '#8A847A',           // Tertiary text
-  gray700: '#A8A29A',           // Secondary text
-  gray800: '#D4D0CA',           // Primary text
-  gray900: '#F5F3F0',           // Headings, emphasis
+  gray50: '#09090B',            // Fond principal
+  gray100: '#18181B',           // Légèrement plus clair
+  gray200: '#27272A',           // Fonds de cartes
+  gray300: '#3F3F46',           // Surfaces surélevées
+  gray400: '#52525B',           // Bordures, séparateurs
+  gray500: '#71717A',           // Éléments désactivés
+  gray600: '#A1A1AA',           // Texte tertiaire
+  gray700: '#D4D4D8',           // Texte secondaire
+  gray800: '#E4E4E7',           // Texte principal
+  gray900: '#FAFAFA',           // Titres, emphase
 
-  // Semantic - MUCH lighter for dark mode visibility
-  success: '#7CB870',           // Bright green
-  successLight: '#1A2418',      // Dark green background
-  successDark: '#5CA050',       // Pressed state
+  // Semantic - variantes plus claires pour le mode sombre
+  success: '#4ADE80',
+  successLight: '#14271B',
+  successDark: '#22C55E',
 
-  error: '#E08070',             // Bright terracotta
-  errorLight: '#2A1816',        // Dark red background
-  errorDark: '#C86050',         // Pressed state
+  error: '#F87171',
+  errorLight: '#2A1515',
+  errorDark: '#EF4444',
 
-  warning: '#E8B870',           // Bright amber
-  warningLight: '#2A2418',      // Dark amber background
-  warningDark: '#C8A050',       // Pressed state
+  warning: '#FBBF24',
+  warningLight: '#271E0E',
+  warningDark: '#F59E0B',
 
-  info: '#A89888',              // Lighter taupe
-  infoLight: '#1E1C1A',         // Dark taupe background
-  infoDark: '#8A7868',          // Pressed state
+  info: '#60A5FA',
+  infoLight: '#0F2038',
+  infoDark: '#3B82F6',
 
   // Backgrounds & Surfaces
-  background: '#0D0B0A',        // Very dark background
-  backgroundSecondary: '#121110', // Slightly lighter
-  backgroundTertiary: '#1A1816',  // Card background level
-  surface: '#1E1C1A',           // Cards on dark bg
-  surfaceElevated: '#2A2826',   // Elevated cards, modals
+  background: '#09090B',
+  backgroundSecondary: '#0F0F11',
+  backgroundTertiary: '#18181B',
+  surface: '#18181B',
+  surfaceElevated: '#27272A',
 
-  // Text - High contrast on dark backgrounds
-  textPrimary: '#F5F3F0',       // Primary text - very light
-  textSecondary: '#B8B2A8',     // Secondary text - still readable
-  textTertiary: '#8A847A',      // Tertiary/hint text
-  textDisabled: '#5C5850',      // Disabled text
-  textInverse: '#0D0B0A',       // Text on light backgrounds
-  textOnPrimary: '#0D0B0A',     // Dark text on primary (now light primary)
+  // Text - haut contraste sur fond sombre
+  textPrimary: '#FAFAFA',
+  textSecondary: '#A1A1AA',
+  textTertiary: '#71717A',
+  textDisabled: '#52525B',
+  textInverse: '#09090B',
+  textOnPrimary: '#09090B',     // texte sombre sur primaire clair
 
-  // Borders & Dividers - Subtle but visible
-  borderColor: '#2A2826',       // Default border
-  borderColorStrong: '#3D3A36', // Emphasized border
-  divider: '#2A2826',           // Horizontal dividers
+  // Borders & Dividers
+  borderColor: '#27272A',
+  borderColorStrong: '#3F3F46',
+  divider: '#27272A',
 
-  // Quick Access Cards - Dark variants with BRIGHT accents for badges
-  cardTalent: '#1E1C1A',
-  cardTalentAccent: '#C9A070',    // Bright warm gold (same as primary)
-  cardTalentText: '#E8DED0',
+  // Compétences - 5 teintes plus claires (lisibles sur fond sombre)
+  skillKnowledge: '#60A5FA',
+  skillKnowledgeBg: '#11233F',
+  skillHardSkill: '#22D3EE',
+  skillHardSkillBg: '#0C2A30',
+  skillSoftSkill: '#F472B6',
+  skillSoftSkillBg: '#311321',
+  skillToolPlatform: '#A78BFA',
+  skillToolPlatformBg: '#221A38',
+  skillLanguage: '#34D399',
+  skillLanguageBg: '#0E2A20',
 
-  cardOrg: '#1E1C1A',
-  cardOrgAccent: '#B89878',       // Bright warm brown
-  cardOrgText: '#E0D0C0',
+  // Quick Access Cards - neutres
+  cardTalent: '#18181B',
+  cardTalentAccent: '#FAFAFA',
+  cardTalentText: '#FAFAFA',
 
-  cardOpportunity: '#1E1C1A',
-  cardOpportunityAccent: '#D4B896', // Bright sand
-  cardOpportunityText: '#E8E0D0',
+  cardOrg: '#18181B',
+  cardOrgAccent: '#FAFAFA',
+  cardOrgText: '#FAFAFA',
 
-  cardCommunity: '#1A1C18',
-  cardCommunityAccent: '#7CB870',  // Bright green (same as success)
-  cardCommunityText: '#D8E8C8',
+  cardOpportunity: '#18181B',
+  cardOpportunityAccent: '#FAFAFA',
+  cardOpportunityText: '#FAFAFA',
 
-  cardSpace: '#1C1A18',
-  cardSpaceAccent: '#A89888',      // Bright warm gray
-  cardSpaceText: '#E0DCD8',
+  cardCommunity: '#18181B',
+  cardCommunityAccent: '#FAFAFA',
+  cardCommunityText: '#FAFAFA',
 
-  // Interactive States - Using lighter primary for visibility
-  overlay: 'rgba(0, 0, 0, 0.85)',
-  overlayLight: 'rgba(0, 0, 0, 0.6)',
-  pressed: 'rgba(201, 160, 112, 0.20)',   // Light primary with opacity
-  focused: 'rgba(201, 160, 112, 0.30)',
-  hover: 'rgba(201, 160, 112, 0.12)',
+  cardSpace: '#18181B',
+  cardSpaceAccent: '#FAFAFA',
+  cardSpaceText: '#FAFAFA',
 
-  // Status Colors - Bright for dark mode
-  statusPending: '#E8B870',     // Bright amber
-  statusActive: '#7CB870',      // Bright green
-  statusRejected: '#E08070',    // Bright terracotta
-  statusSuspended: '#A89888',   // Lighter taupe
-  statusArchived: '#5C5850',    // Muted gray
+  // Interactive States (base claire)
+  overlay: 'rgba(0, 0, 0, 0.7)',
+  overlayLight: 'rgba(0, 0, 0, 0.5)',
+  pressed: 'rgba(250, 250, 250, 0.08)',
+  focused: 'rgba(250, 250, 250, 0.12)',
+  hover: 'rgba(250, 250, 250, 0.05)',
+
+  // Status Colors - variantes claires
+  statusPending: '#FBBF24',
+  statusActive: '#4ADE80',
+  statusRejected: '#F87171',
+  statusSuspended: '#60A5FA',
+  statusArchived: '#71717A',
 } as const;
 
 // Default export for backwards compatibility
@@ -262,17 +286,18 @@ export type ThemeColors = { readonly [K in keyof LightColorsShape]: string };
 export type ThemeMode = 'light' | 'dark';
 
 // SPACING SYSTEM
-// Consistent 4px grid for all spacing
+// Grille 4px. Les micro-tokens (xxs/xs/sm/md) restent stables car ils
+// pilotent l'intérieur des composants (gaps icône-texte, paddings).
+// Les tokens de SECTION (lg+) sont élargis pour un rendu plus aéré.
 export const SPACING = {
-  // Base unit: 4px
-  xxs: 2,       // 2px - Micro spacing (icon gaps)
-  xs: 4,        // 4px - Tight spacing
-  sm: 8,        // 8px - Compact spacing
-  md: 16,       // 16px - Default spacing
-  lg: 24,       // 24px - Comfortable spacing
-  xl: 32,       // 32px - Generous spacing
-  xxl: 40,      // 40px - Section spacing
-  xxxl: 48,     // 48px - Large section spacing
+  xxs: 2,       // 2px - Micro (gaps d'icônes)
+  xs: 4,        // 4px - Très serré
+  sm: 8,        // 8px - Compact
+  md: 16,       // 16px - Défaut
+  lg: 28,       // 28px - Confortable (aéré)
+  xl: 36,       // 36px - Généreux
+  xxl: 48,      // 48px - Espacement de section
+  xxxl: 64,     // 64px - Grande section
 } as const;
 
 // TYPOGRAPHY
@@ -300,28 +325,28 @@ export const TYPOGRAPHY = {
     displayBold: 'Montserrat_700Bold',
   },
 
-  // Font Sizes - Harmonic scale
+  // Font Sizes - échelle agrandie pour la lisibilité grand public (+1 à +4px)
   fontSize: {
-    xxs: 10,      // Micro text, badges
-    xs: 12,       // Captions, metadata
-    sm: 14,       // Secondary text, labels
-    md: 16,       // Body text (base)
-    lg: 18,       // Emphasized body
-    xl: 20,       // Subheadings
-    xxl: 24,      // Section titles
-    xxxl: 32,     // Page titles
-    display: 40,  // Hero text
-    displayLg: 48, // Splash screens
+    xxs: 11,      // Micro text, badges
+    xs: 13,       // Captions, metadata
+    sm: 15,       // Secondary text, labels
+    md: 17,       // Body text (base)
+    lg: 19,       // Emphasized body
+    xl: 22,       // Subheadings
+    xxl: 26,      // Section titles
+    xxxl: 34,     // Page titles
+    display: 44,  // Hero text
+    displayLg: 52, // Splash screens
   },
 
-  // Line Heights - Multipliers
+  // Line Heights - Multipliers (un peu plus aérés)
   lineHeight: {
     none: 1,        // Single line (icons, badges)
     tight: 1.2,     // Headings
     snug: 1.35,     // Subheadings
-    normal: 1.5,    // Body text
-    relaxed: 1.65,  // Long-form text
-    loose: 1.8,     // Spacious text
+    normal: 1.55,   // Body text
+    relaxed: 1.7,   // Long-form text
+    loose: 1.85,    // Spacious text
   },
 
   // Letter Spacing
@@ -394,7 +419,7 @@ export const BORDER = {
 // Consistent dimensions
 export const LAYOUT = {
   // Screen padding
-  screenPadding: SPACING.lg,    // 24px
+  screenPadding: SPACING.lg,    // 28px
   screenPaddingHorizontal: SPACING.lg,
   screenPaddingVertical: SPACING.md,
 
@@ -403,14 +428,14 @@ export const LAYOUT = {
   footerHeight: 64,
   tabBarHeight: 56,
 
-  // Input & Button heights
-  inputHeightSm: 40,
-  inputHeight: 48,
-  inputHeightLg: 56,
+  // Input & Button heights (un peu plus hauts = touch + lisibilité)
+  inputHeightSm: 44,
+  inputHeight: 52,
+  inputHeightLg: 58,
 
-  buttonHeightSm: 36,
-  buttonHeight: 44,
-  buttonHeightLg: 52,
+  buttonHeightSm: 40,
+  buttonHeight: 48,
+  buttonHeightLg: 56,
 
   // Card dimensions
   cardImageHeight: 160,
@@ -570,14 +595,14 @@ export const COMPONENT = {
 
   // Pill/Tag/Chip/Badge — single source of truth
   pill: {
-    paddingVertical: SPACING.xs,              // 4px
-    paddingHorizontal: 10,                    // 10px
+    paddingVertical: 6,                       // 6px (un peu plus aéré)
+    paddingHorizontal: 12,                    // 12px
     borderRadius: BORDER.radius.full,         // 9999 (pill shape)
     gap: SPACING.xs,                          // 4px (icon-to-text)
-    fontSize: TYPOGRAPHY.fontSize.xs,         // 12px
+    fontSize: TYPOGRAPHY.fontSize.xs,         // 13px
     fontWeight: TYPOGRAPHY.fontWeight.medium,  // '500'
-    iconSize: ICON.size.xxs,                  // 12px
-    iconStrokeWidth: 2,                       // slightly thicker for 12px
+    iconSize: ICON.size.xs,                   // 14px
+    iconStrokeWidth: 2,                       // slightly thicker for small sizes
   },
 
   // Toggle configurations
@@ -633,22 +658,22 @@ export const COMPONENT = {
 } as const;
 
 // MATCH CATEGORY COLORS (for application matching scores)
-// Uses Luxe Africain semantic colors
+// Sémantiques monochromes + couleur (vert → bleu → ambre → rouge)
 export const MATCH_COLORS = {
   excellent: {
-    color: LIGHT_COLORS.success,           // #4A6741 - Forest green
-    bgColor: LIGHT_COLORS.successLight,    // #E8EFE6
+    color: LIGHT_COLORS.success,           // #16A34A - Vert
+    bgColor: LIGHT_COLORS.successLight,    // #DCFCE7
   },
   good: {
-    color: LIGHT_COLORS.primaryMuted,      // #8B7355 - Muted brown
-    bgColor: 'rgba(139, 115, 85, 0.08)',
+    color: LIGHT_COLORS.info,              // #2563EB - Bleu
+    bgColor: LIGHT_COLORS.infoLight,       // #DBEAFE
   },
   average: {
-    color: LIGHT_COLORS.warning,           // #A67C52 - Warm amber
-    bgColor: LIGHT_COLORS.warningLight,    // #F7F0E8
+    color: LIGHT_COLORS.warning,           // #D97706 - Ambre
+    bgColor: LIGHT_COLORS.warningLight,    // #FEF3C7
   },
   low: {
-    color: LIGHT_COLORS.error,             // #8B4A3C - Terracotta
-    bgColor: LIGHT_COLORS.errorLight,      // #F5EBE8
+    color: LIGHT_COLORS.error,             // #DC2626 - Rouge
+    bgColor: LIGHT_COLORS.errorLight,      // #FEE2E2
   },
 } as const;

@@ -151,6 +151,15 @@ export function generateToolSummary(
         return name ? `Lu · ${String(name).slice(0, 60)}` : 'Document lu';
       }
 
+      case 'find_competency': {
+        const q = args?.query as string | undefined;
+        const inCat = outputObj?.in_catalog as boolean | undefined;
+        const name = outputObj?.competency?.name as string | undefined;
+        if (inCat && name) return `Référentiel · ${name}`;
+        if (q) return `Référentiel · "${q}"`;
+        return 'Recherche référentiel';
+      }
+
       case 'manage_skills': {
         // Prefer the resolved catalog skill name from the result; fall back to the query label.
         const resolvedName = outputObj?.skill?.name as string | undefined;

@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     },
     actionDot: {
         marginHorizontal: SPACING.sm,
-        fontSize: 10,
+        fontSize: 12,
     },
     replyText: {
         fontSize: TYPOGRAPHY.fontSize.xs,

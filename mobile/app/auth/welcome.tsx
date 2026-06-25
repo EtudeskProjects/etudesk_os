@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    backgroundColor: 'rgba(9, 9, 11, 0.5)',
     padding: SPACING.lg,
   },
 

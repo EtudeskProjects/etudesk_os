@@ -38,7 +38,8 @@ ${ctx.schemaJson}
 2. summary : Description COURTE (150-300 caractères MAX)
 3. requirements : 3-5 points COURTS avec "• " (max 250 caractères)
 4. nice_to_have : 2-3 points COURTS avec "• " (max 150 caractères)
-5. sectors : 2-5 secteurs pertinents (OBLIGATOIRE)
+5. skills : 4-8 compétences CONCRÈTES et STANDARDS (noms réels mappables à un référentiel, ex: "React", "Node.js", "Gestion de projet", "SQL", "Communication"), chacune avec requirement "required" ou "nice_to_have". Des NOMS de compétences, pas des phrases.
+6. sectors : 2-5 secteurs pertinents (OBLIGATOIRE)
 6. deadline_days : Stage 14-21j, Emploi 30-45j, Consultation 21-30j
 7. Questions de candidature : 2-3 questions courtes et pertinentes
 8. Content in ${ctx.languageName}, concise and professional

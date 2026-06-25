@@ -520,6 +520,7 @@ CREATE TABLE community_activities (
     attachments JSONB DEFAULT '[]'::jsonb,
     is_pinned BOOLEAN DEFAULT FALSE,
     status VARCHAR(20) DEFAULT 'PUBLISHED' CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')),
+    is_draft BOOLEAN NOT NULL DEFAULT false,
     moderation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (moderation_status IN ('APPROVED', 'FLAGGED', 'PENDING', 'REJECTED')),
     moderation_reason TEXT,
     reactions_count INTEGER DEFAULT 0,

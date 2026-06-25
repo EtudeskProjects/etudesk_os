@@ -179,6 +179,46 @@ export async function suggestCompetencies(label: string, limit = 3): Promise<Com
   }
 }
 
+export interface ResolvedSkillSuggestion {
+  slug: string;
+  name: string;
+  name_fr: string;
+  type: CatalogType;
+  family: string;
+  requirement?: 'required' | 'nice_to_have';
+  role?: string;
+}
+
+/**
+ * Resolve a list of free-text skill suggestions (from an LLM generator) to
+ * catalog competencies. Robust: drops anything not in the referential and
+ * de-duplicates by slug. Preserves the per-item requirement/role tag.
+ */
+export async function resolveSkillSuggestions(
+  items: Array<{ name?: string; label?: string; skill?: string; requirement?: string; role?: string }> | undefined | null
+): Promise<ResolvedSkillSuggestion[]> {
+  if (!Array.isArray(items)) return [];
+  const out: ResolvedSkillSuggestion[] = [];
+  const seen = new Set<string>();
+  for (const it of items) {
+    const label = it?.name || it?.label || it?.skill;
+    if (!label) continue;
+    const r = await resolveLabel(label);
+    if (!r || seen.has(r.slug)) continue;
+    seen.add(r.slug);
+    out.push({
+      slug: r.slug,
+      name: r.name,
+      name_fr: r.name_fr,
+      type: r.type,
+      family: r.family,
+      requirement: it.requirement === 'nice_to_have' ? 'nice_to_have' : it.requirement === 'required' ? 'required' : undefined,
+      role: it.role,
+    });
+  }
+  return out;
+}
+
 /**
  * Graph neighbors of a competency from competency_edges.
  * The edge is directed: an evidenced neighbor (to_slug) helps estimate the

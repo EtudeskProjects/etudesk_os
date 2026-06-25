@@ -69,6 +69,8 @@ import { opportunityService, UpdateOpportunityData, imageService } from '../../.
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { useI18n } from '../../../../src/contexts/I18nContext';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
+import { SkillPicker } from '../../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../../src/services/skillService';
 import { uploadFile } from '../../../../src/services/fileService';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../../src/utils/number';
@@ -143,6 +145,7 @@ export default function EditOpportunityScreen() {
   const [summary, setSummary] = useState('');
   const [requirements, setRequirements] = useState('');
   const [niceToHave, setNiceToHave] = useState('');
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
 
   // Form state - Lieu
@@ -219,6 +222,7 @@ export default function EditOpportunityScreen() {
       setSummary(opp.summary || '');
       setRequirements(opp.requirements || '');
       setNiceToHave(opp.nice_to_have || '');
+      setSkills(((opp as any).skills as EntitySkillTag[]) || []);
       setSelectedSectors(opp.sectors || []);
       setLocationType(opp.location_type || null);
       setContractType(opp.contract_type || null);
@@ -405,6 +409,7 @@ export default function EditOpportunityScreen() {
         if (data.summary) setSummary(data.summary);
         if (data.requirements) setRequirements(data.requirements);
         if (data.nice_to_have) setNiceToHave(data.nice_to_have);
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
         if (data.contract_type) setContractType(data.contract_type as ContractType);
         if (data.work_rhythm) setWorkRhythm(data.work_rhythm as WorkRhythm);
 
@@ -521,6 +526,7 @@ export default function EditOpportunityScreen() {
         summary: summary || undefined,
         requirements: requirements || undefined,
         nice_to_have: niceToHave || undefined,
+        skills: skills.map((s) => ({ skill: s.slug, requirement: s.requirement || 'required' })),
         sectors: selectedSectors,
         compensation_min: compensationMin ? parseInt(compensationMin, 10) : undefined,
         compensation_max: compensationMax ? parseInt(compensationMax, 10) : undefined,
@@ -746,6 +752,8 @@ export default function EditOpportunityScreen() {
           rows={2}
           maxLength={300}
         />
+
+        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement />
       </View>
     </View>
   );

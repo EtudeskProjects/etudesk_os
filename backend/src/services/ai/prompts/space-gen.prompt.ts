@@ -8,6 +8,7 @@ const SPACE_OUTPUT_CONTRACT = {
   suggested_name: 'Nom amélioré (max 60 caractères)',
   description: 'Description 300-500 caractères, caractéristiques et usage',
   sectors: ['1-5 secteurs parmi la liste'],
+  skills: [{ name: 'Compétence technique/outil concret activé par le lieu (ex: "Impression 3D", "Montage vidéo")', role: 'validates' }],
   equipment: ['Équipements pertinents'],
   amenities: ['Services/commodités'],
   surface_m2: 0,

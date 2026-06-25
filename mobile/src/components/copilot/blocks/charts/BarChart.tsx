@@ -20,23 +20,23 @@ interface BarChartProps {
 }
 
 const CHART_PALETTE = [
-  '#3B2416', // rich brown (primary)
-  '#4A6741', // forest green
-  '#A67C52', // warm amber
-  '#8B4A3C', // terracotta
-  '#5E6B52', // olive
-  '#6B525E', // mauve-brown
-  '#52656B', // blue-gray
+  '#1D4ED8', // bleu
+  '#0E7490', // cyan
+  '#BE185D', // rose
+  '#6D28D9', // violet
+  '#047857', // émeraude
+  '#D97706', // ambre
+  '#52525B', // graphite
 ] as const;
 
 const CHART_PALETTE_DARK = [
-  '#C9A070', // warm gold
-  '#7CB870', // bright green
-  '#E8B870', // bright amber
-  '#E08070', // bright terracotta
-  '#A8C898', // light olive
-  '#C8A0B0', // light mauve
-  '#90B8C0', // light blue-gray
+  '#60A5FA', // bleu clair
+  '#22D3EE', // cyan clair
+  '#F472B6', // rose clair
+  '#A78BFA', // violet clair
+  '#34D399', // émeraude clair
+  '#FBBF24', // ambre clair
+  '#A1A1AA', // graphite clair
 ] as const;
 
 export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {

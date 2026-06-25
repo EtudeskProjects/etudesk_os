@@ -15,6 +15,7 @@ import {
   SECTORS,
 } from '../types/models';
 import { buildCommunityGenPrompt, buildCommunityGenSystemPrompt } from './ai/prompts/community-gen.prompt';
+import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
@@ -36,6 +37,8 @@ export interface GeneratedCommunity {
   rules?: string;
   visibility?: Visibility;
   application_questions?: string[];
+  // Catalog-resolved skills the community is about / validates (role: topic|validates)
+  skills?: ResolvedSkillSuggestion[];
 }
 
 interface OrganizationContext {
@@ -146,6 +149,9 @@ export async function generateCommunitySuggestion(
         .filter(s => Object.values(SECTORS).includes(s as Sector))
         .slice(0, 5) as Sector[];
     }
+
+    // Resolve suggested skills to the referential (catalog = single source of truth).
+    generatedData.skills = await resolveSkillSuggestions(generatedData.skills as any);
 
     return { success: true, data: generatedData };
   } catch (error) {

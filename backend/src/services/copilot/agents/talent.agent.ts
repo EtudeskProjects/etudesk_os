@@ -16,7 +16,8 @@ import { generateDiagramTool } from '../tools/generate-diagram.tool';
 import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
-import { createExecuteActionTool } from '../tools/execute-action.tool'; 
+import { createFindCompetencyTool } from '../tools/find-competency.tool';
+import { createExecuteActionTool } from '../tools/execute-action.tool';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
 
@@ -53,6 +54,7 @@ export function createTalentAgent(
       generateDiagramTool,
       fileReaderTool,
       webSearchAsTool,
+      createFindCompetencyTool(),
       createManageSkillsTool(context.profile.id, context.language),
       createExecuteActionTool(context.profile.id, context.language),
     ];

@@ -8,6 +8,7 @@ const COMMUNITY_OUTPUT_CONTRACT = {
   suggested_name: 'Nom amélioré (max 60 caractères)',
   description: '500-800 caractères, objectifs et mission',
   tags: ['1-3 tags'],
+  skills: [{ name: 'Nom de compétence concret (ex: "Machine Learning", "Communication")', role: 'topic ou validates' }],
   sectors: ['OBLIGATOIRE, 1-5 valeurs EXACTES parmi la liste de secteurs ci-dessous'],
   rules: "3-5 règles avec '• ' comme puce, séparées par \\n",
   visibility: 'PUBLIC ou PRIVATE',

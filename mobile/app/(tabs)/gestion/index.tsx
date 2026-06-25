@@ -1062,7 +1062,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   notificationBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

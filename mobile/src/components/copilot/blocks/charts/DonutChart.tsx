@@ -22,11 +22,11 @@ interface DonutChartProps {
 }
 
 const CHART_PALETTE = [
-  '#3B2416', '#4A6741', '#A67C52', '#8B4A3C', '#5E6B52', '#6B525E', '#52656B',
+  '#1D4ED8', '#0E7490', '#BE185D', '#6D28D9', '#047857', '#D97706', '#52525B',
 ] as const;
 
 const CHART_PALETTE_DARK = [
-  '#C9A070', '#7CB870', '#E8B870', '#E08070', '#A8C898', '#C8A0B0', '#90B8C0',
+  '#60A5FA', '#22D3EE', '#F472B6', '#A78BFA', '#34D399', '#FBBF24', '#A1A1AA',
 ] as const;
 
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {

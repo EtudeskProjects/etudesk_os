@@ -69,6 +69,8 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
+import { SkillPicker } from '../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../src/services/skillService';
 import { opportunityService, CreateOpportunityData, imageService , organizationService } from '../../../src/services';
 import { uploadFile } from '../../../src/services/fileService';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
@@ -168,6 +170,7 @@ export default function CreateOpportunityScreen() {
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -495,6 +498,9 @@ export default function CreateOpportunityScreen() {
           updates.applicationQuestions = data.application_questions.slice(0, MAX_QUESTIONS);
         }
 
+        // Catalog-resolved skill suggestions (referential only)
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
+
         form.setValues(updates);
       }
     } catch (error: any) {
@@ -537,6 +543,7 @@ export default function CreateOpportunityScreen() {
     summary: summary || undefined,
     requirements: requirements || undefined,
     nice_to_have: niceToHave || undefined,
+    skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, requirement: s.requirement || 'required' })) : undefined,
     sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
     compensation_min: compensationMin ? parseInt(compensationMin, 10) : undefined,
     compensation_max: compensationMax ? parseInt(compensationMax, 10) : undefined,
@@ -772,6 +779,8 @@ export default function CreateOpportunityScreen() {
           rows={2}
           maxLength={300}
         />
+
+        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement />
       </View>
     </View>
   );

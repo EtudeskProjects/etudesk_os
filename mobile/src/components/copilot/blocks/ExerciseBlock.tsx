@@ -264,8 +264,8 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
 
 // --- Matching Exercise ---
 
-// Pair colors for matching visual indicators
-const PAIR_COLORS = ['#E07A5F', '#3D85C6', '#81B29A', '#F2CC8F', '#9B72AA', '#E8A87C', '#5B8C5A', '#D4A5A5'];
+// Pair colors for matching visual indicators (palette catégorielle, aucun ton brun)
+const PAIR_COLORS = ['#1D4ED8', '#0E7490', '#BE185D', '#6D28D9', '#047857', '#D97706', '#9333EA', '#0891B2'];
 
 const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: string) => void }> = ({
   data,

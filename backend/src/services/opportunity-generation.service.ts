@@ -24,6 +24,7 @@ import {
   OpportunityLocation,
 } from '../types/models';
 import { buildOpportunityGenPrompt, buildOpportunityGenSystemPrompt } from './ai/prompts/opportunity-gen.prompt';
+import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { toTOON } from './ai/toon';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -66,6 +67,8 @@ export interface GeneratedOpportunity {
   application_questions: ApplicationQuestion[];
   target_profiles: ProfileTag[];
   ideal_candidate_summary: string;
+  // Catalog-resolved skills (only referential competencies; required/nice_to_have)
+  skills?: ResolvedSkillSuggestion[];
 }
 
 interface OrganizationContext {
@@ -159,6 +162,19 @@ const OPPORTUNITY_SCHEMA = {
       type: 'array',
       items: { type: 'string', enum: Object.values(PROFILE_TAG) },
       maxItems: 4,
+    },
+    skills: {
+      type: 'array',
+      description: 'Compétences clés concrètes et standards (noms réels, ex: "React", "Gestion de projet", "SQL"). 4-8 items, mappées au référentiel Etudesk.',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          requirement: { type: 'string', enum: ['required', 'nice_to_have'] },
+        },
+        required: ['name', 'requirement'],
+      },
+      maxItems: 8,
     },
     ideal_candidate_summary: { type: 'string' },
   },
@@ -285,6 +301,10 @@ export async function generateOpportunitySuggestion(
     if (!generatedData.currency) {
       generatedData.currency = 'XOF';
     }
+
+    // Resolve suggested skills to the catalog (referential = single source of truth).
+    // Anything not in the catalog is dropped — suggestions are always catalog-valid.
+    generatedData.skills = await resolveSkillSuggestions(generatedData.skills as any);
 
     return { success: true, data: generatedData };
   } catch (error) {

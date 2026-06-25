@@ -59,6 +59,8 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { spaceService, CreateSpaceData, imageService, organizationService } from '../../../src/services';
+import { SkillPicker } from '../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../src/services/skillService';
 
 type Step = 'info' | 'location' | 'capacity' | 'conditions' | 'media' | 'preview';
 
@@ -172,6 +174,7 @@ export default function CreateSpaceScreen() {
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
   const mainScrollRef = useRef<ScrollView>(null);
@@ -246,6 +249,7 @@ export default function CreateSpaceScreen() {
     equipment: values.selectedEquipment,
     amenities: values.selectedAmenities,
     sectors: values.selectedSectors.length > 0 ? values.selectedSectors : undefined,
+    skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, role: s.role || 'validates' })) : undefined,
     is_accessible: values.isAccessible,
     accessibility_features: values.isAccessible ? values.selectedAccessibility : [],
     hourly_rate: values.hourlyRate ? parseFloat(values.hourlyRate) : undefined,
@@ -451,6 +455,9 @@ export default function CreateSpaceScreen() {
         if (data.sectors && data.sectors.length > 0) {
           form.setValue('selectedSectors', data.sectors.slice(0, MAX_SECTORS) as Sector[]);
         }
+
+        // Catalog-resolved skills the space validates (referential only)
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
 
         // Equipment
         if (data.equipment && data.equipment.length > 0) {
@@ -804,6 +811,9 @@ export default function CreateSpaceScreen() {
           rows={4}
           maxLength={500}
         />
+
+        {/* Compétences du catalogue (référentiel) */}
+        <SkillPicker label={t('labels.skillsSection')} value={skills} onChange={setSkills} />
       </View>
     </View>
   );

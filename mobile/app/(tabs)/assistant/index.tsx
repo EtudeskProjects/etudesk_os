@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
   },
 
   userAttachmentText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     flexShrink: 1,
   },
@@ -985,7 +985,7 @@ const styles = StyleSheet.create({
 
   renameModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    backgroundColor: 'rgba(9, 9, 11, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
@@ -1161,7 +1161,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   attachmentPreviewText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   removeAttachmentButton: {

@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   orgLogoText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   orgName: {

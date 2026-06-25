@@ -170,6 +170,8 @@ export interface CreateSpaceData {
   equipment?: string[];
   amenities?: string[];
   sectors?: string[];
+  // Catalog skills the space validates (referential only)
+  skills?: { skill: string; role?: string }[];
   is_accessible?: boolean;
   accessibility_features?: string[];
   accessibility_notes?: string;
@@ -215,6 +217,7 @@ export interface GeneratedSpaceData {
   suggested_name?: string;
   description?: string;
   sectors?: string[];
+  skills?: EntitySkillTag[];
   equipment?: string[];
   amenities?: string[];
   surface_m2?: number;

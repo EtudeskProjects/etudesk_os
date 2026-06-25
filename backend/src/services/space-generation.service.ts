@@ -12,6 +12,7 @@ import {
 } from '../types/models';
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
 import { buildSpaceGenPrompt, buildSpaceGenSystemPrompt } from './ai/prompts/space-gen.prompt';
+import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
@@ -40,6 +41,8 @@ export interface GeneratedSpace {
   weekly_rate?: number;
   monthly_rate?: number;
   questions?: string[];
+  // Catalog-resolved hard skills / tools the space enables (role: validates)
+  skills?: ResolvedSkillSuggestion[];
 }
 
 interface OrganizationContext {
@@ -149,6 +152,9 @@ export async function generateSpaceSuggestion(
         .filter(s => Object.values(SECTORS).includes(s as Sector))
         .slice(0, 5) as Sector[];
     }
+
+    // Resolve suggested skills to the referential (catalog = single source of truth).
+    generatedData.skills = await resolveSkillSuggestions(generatedData.skills as any);
 
     return { success: true, data: generatedData };
   } catch (error) {

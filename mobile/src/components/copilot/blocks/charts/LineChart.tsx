@@ -21,7 +21,7 @@ interface LineChartProps {
 }
 
 export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const locale = getCurrentLocale();
   const safeData = Array.isArray(data)
@@ -39,7 +39,7 @@ export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
     );
   }
 
-  const lineColor = mode === 'dark' ? '#C9A070' : '#3B2416';
+  const lineColor = colors.textPrimary;
   const dotColor = lineColor;
   const areaColor = withOpacity(lineColor, OPACITY[10]);
   const gridColor = withOpacity(colors.textPrimary, OPACITY[8]);

@@ -43,13 +43,30 @@ interface TypeConfig {
   labelKey: string; // i18n key under labels.skillTypes
 }
 
+// Palette dédiée : une teinte joyau par TYPE de compétence (voir theme.ts).
+// C'est la seule "couleur métier" de l'app — distincte des sémantiques d'état.
 const TYPE_CONFIG: Record<CatalogType, TypeConfig> = {
-  knowledge: { Icon: BookOpen, color: (c) => c.warning, labelKey: 'labels.skillTypes.knowledge' },
-  hard_skill: { Icon: Wrench, color: (c) => c.info, labelKey: 'labels.skillTypes.hard_skill' },
-  soft_skill: { Icon: Users, color: (c) => c.success, labelKey: 'labels.skillTypes.soft_skill' },
-  tool_platform: { Icon: Boxes, color: (c) => c.primary, labelKey: 'labels.skillTypes.tool_platform' },
-  language: { Icon: Languages, color: (c) => c.primaryLight, labelKey: 'labels.skillTypes.language' },
+  knowledge: { Icon: BookOpen, color: (c) => c.skillKnowledge, labelKey: 'labels.skillTypes.knowledge' },
+  hard_skill: { Icon: Wrench, color: (c) => c.skillHardSkill, labelKey: 'labels.skillTypes.hard_skill' },
+  soft_skill: { Icon: Users, color: (c) => c.skillSoftSkill, labelKey: 'labels.skillTypes.soft_skill' },
+  tool_platform: { Icon: Boxes, color: (c) => c.skillToolPlatform, labelKey: 'labels.skillTypes.tool_platform' },
+  language: { Icon: Languages, color: (c) => c.skillLanguage, labelKey: 'labels.skillTypes.language' },
 };
+
+/** Background tint (chip) assorti au TYPE — surface douce, lisible. */
+const TYPE_BG: Record<CatalogType, (c: ThemeColors) => string> = {
+  knowledge: (c) => c.skillKnowledgeBg,
+  hard_skill: (c) => c.skillHardSkillBg,
+  soft_skill: (c) => c.skillSoftSkillBg,
+  tool_platform: (c) => c.skillToolPlatformBg,
+  language: (c) => c.skillLanguageBg,
+};
+
+/** Couleur + fond assorti pour un type de compétence. */
+export function getSkillTypeBg(type: string | null | undefined, colors: ThemeColors): string {
+  const t = normalizeType(type);
+  return (TYPE_BG[t] || ((c: ThemeColors) => c.gray100))(colors);
+}
 
 export function getSkillTypeConfig(type: string | null | undefined, colors: ThemeColors) {
   const t = normalizeType(type);
@@ -72,11 +89,13 @@ export function normalizeLevel(value?: string | null): Level {
   return 'beginner';
 }
 
+// Niveaux = rampe graphite (intensité), pas une couleur :
+// la couleur dit le TYPE, l'intensité dit la MAÎTRISE (débutant → maître).
 const LEVEL_COLOR: Record<Level, (c: ThemeColors) => string> = {
-  beginner: (c) => c.gray500,
-  intermediate: (c) => c.info,
-  advanced: (c) => c.warning,
-  master: (c) => c.success,
+  beginner: (c) => c.gray400,
+  intermediate: (c) => c.gray600,
+  advanced: (c) => c.gray800,
+  master: (c) => c.gray900,
 };
 
 const LEVEL_OPACITY: Record<Level, number> = {

@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Compass,
   Wrench,
+  BookOpen,
   Zap,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
@@ -46,6 +47,7 @@ const TOOL_ICONS: Record<string, any> = {
   file_read: FileText,
   file_reader: FileText,
   manage_skills: Wrench,
+  find_competency: BookOpen,
   execute_action: Zap,
 };
 
@@ -156,6 +158,11 @@ function getToolTitle(t: (key: string, params?: Record<string, string>) => strin
       const skill = args?.skillQuery as string | undefined;
       if (skill) return t('copilot.tool.addSkillPrefix', { skill });
       return t('copilot.tool.updateSkills');
+    }
+
+    case 'find_competency': {
+      const query = args?.query as string | undefined;
+      return query ? t('copilot.tool.findCompetencyPrefix', { query: truncate(query, 40) }) : t('copilot.tool.findCompetency');
     }
 
     case 'execute_action': {
@@ -384,7 +391,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   durationText: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   detailText: {

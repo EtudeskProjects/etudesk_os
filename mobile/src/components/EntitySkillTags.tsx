@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
   req: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     textTransform: 'uppercase',
     marginLeft: 2,

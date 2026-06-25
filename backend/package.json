@@ -15,6 +15,7 @@
     "db:reset:seed": "npm run db:reset && npm run db:seed",
     "seed:competencies": "tsx src/scripts/seed-competencies.ts",
     "seed:minimal": "tsx src/scripts/seed-minimal.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts",
     "seed:pinecone": "tsx src/scripts/seed-pinecone.ts",
     "pinecone:reset:seed": "tsx src/scripts/pinecone-reset-and-seed.ts",
     "validate:skills": "tsx scripts/validate-skills.ts",

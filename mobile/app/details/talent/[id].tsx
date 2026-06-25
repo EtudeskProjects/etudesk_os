@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionBarLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     textAlign: 'center',
   },
