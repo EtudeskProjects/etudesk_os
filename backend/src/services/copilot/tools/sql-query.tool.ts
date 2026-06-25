@@ -659,7 +659,7 @@ export function createSqlQueryTool(
               JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL
               UNION SELECT DISTINCT om.talent_id FROM organization_members om WHERE om.organization_id = $1
             )
-            SELECT c.name as skill_name, ts.level AS proficiency_level, COUNT(*) as talent_count
+            SELECT c.name as skill_name, ts.level AS level, COUNT(*) as talent_count
             FROM talent_skills ts
             JOIN competencies c ON c.slug = ts.competency_slug
             JOIN org_talent_ids oti ON ts.talent_id = oti.talent_id

@@ -135,16 +135,16 @@
   "docColumnContent": "Contenu",
   "docLabelData": "Données",
   "suggestionsStudyFallback": [
-    "Prépare-moi pour un entretien",
-    "Analyse mes compétences",
-    "Crée un quiz sur un sujet",
-    "Résume mon CV et conseille-moi"
+    "Forme-moi sur une compétence du numérique",
+    "Évalue mon niveau sur une compétence",
+    "Crée-moi un exercice de code pratique",
+    "Quelles compétences d'avenir apprendre ?"
   ],
   "suggestionsExploreFallback": [
-    "Opportunités qui correspondent à mon profil",
-    "Génère mon CV en PDF",
-    "Communautés dans mon secteur",
-    "Ajoute une compétence"
+    "Quelles offres correspondent à mes compétences ?",
+    "Analyse mes compétences pour un poste qui m'intéresse",
+    "Quelles compétences me manquent pour mon objectif ?",
+    "Génère mon CV en PDF"
   ],
   "memoryRoleAssistant": "Assistant",
   "memoryRoleUser": "Utilisateur",

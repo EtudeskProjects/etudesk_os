@@ -135,16 +135,16 @@
   "docColumnContent": "Content",
   "docLabelData": "Data",
   "suggestionsStudyFallback": [
-    "Prepare me for an interview",
-    "Analyze my skills",
-    "Create a quiz on a topic",
-    "Summarize my CV and advise me"
+    "Train me on a digital skill",
+    "Assess my level on a skill",
+    "Create a hands-on coding exercise",
+    "Which future-ready skills should I learn?"
   ],
   "suggestionsExploreFallback": [
-    "Opportunities that match my profile",
-    "Generate my CV as PDF",
-    "Communities in my sector",
-    "Add a skill"
+    "Which opportunities match my skills?",
+    "Analyze my skills for a job I want",
+    "What skills am I missing for my goal?",
+    "Generate my CV as PDF"
   ],
   "memoryRoleAssistant": "Assistant",
   "memoryRoleUser": "User",

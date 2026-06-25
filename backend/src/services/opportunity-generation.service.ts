@@ -24,7 +24,33 @@ import {
   OpportunityLocation,
 } from '../types/models';
 import { buildOpportunityGenPrompt, buildOpportunityGenSystemPrompt } from './ai/prompts/opportunity-gen.prompt';
-import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
+import { resolveSkillSuggestions, getNeighbors, getCompetency, type ResolvedSkillSuggestion } from './skills/catalog.service';
+
+const MIN_SUGGESTED_SKILLS = 10;
+
+/**
+ * Guarantee at least `min` catalog skill suggestions. Backfills from the
+ * competency graph (co-occurrence / sibling / prerequisite neighbors of the
+ * already-resolved skills) as nice_to_have, so the form's "suggest" button
+ * always proposes a rich list. Referential only — never fabricated.
+ */
+async function ensureMinSkills(skills: ResolvedSkillSuggestion[], min = MIN_SUGGESTED_SKILLS): Promise<ResolvedSkillSuggestion[]> {
+  const out = [...skills];
+  const seen = new Set(out.map((s) => s.slug));
+  for (const base of skills) {
+    if (out.length >= min) break;
+    const neighbors = await getNeighbors(base.slug, { relations: ['co_occurrence', 'sibling', 'prerequisite'], limit: 8 });
+    for (const n of neighbors) {
+      if (out.length >= min) break;
+      if (seen.has(n.slug)) continue;
+      const c = await getCompetency(n.slug);
+      if (!c) continue;
+      seen.add(n.slug);
+      out.push({ slug: c.slug, name: c.name, name_fr: c.name_fr, type: c.type, family: c.family, requirement: 'nice_to_have' });
+    }
+  }
+  return out;
+}
 import { toTOON } from './ai/toon';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -165,7 +191,7 @@ const OPPORTUNITY_SCHEMA = {
     },
     skills: {
       type: 'array',
-      description: 'Compétences clés concrètes et standards (noms réels, ex: "React", "Gestion de projet", "SQL"). 4-8 items, mappées au référentiel Etudesk.',
+      description: 'Compétences clés concrètes et standards (noms réels, ex: "React", "Gestion de projet", "SQL"). 12-16 items (au moins 12), mappées au référentiel Etudesk.',
       items: {
         type: 'object',
         properties: {
@@ -174,7 +200,8 @@ const OPPORTUNITY_SCHEMA = {
         },
         required: ['name', 'requirement'],
       },
-      maxItems: 8,
+      minItems: 12,
+      maxItems: 16,
     },
     ideal_candidate_summary: { type: 'string' },
   },
@@ -304,7 +331,9 @@ export async function generateOpportunitySuggestion(
 
     // Resolve suggested skills to the catalog (referential = single source of truth).
     // Anything not in the catalog is dropped — suggestions are always catalog-valid.
-    generatedData.skills = await resolveSkillSuggestions(generatedData.skills as any);
+    const resolvedSkills = await resolveSkillSuggestions(generatedData.skills as any);
+    // Always propose at least 10 skills: backfill from the competency graph if needed.
+    generatedData.skills = await ensureMinSkills(resolvedSkills, MIN_SUGGESTED_SKILLS);
 
     return { success: true, data: generatedData };
   } catch (error) {

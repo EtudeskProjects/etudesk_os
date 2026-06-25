@@ -69,7 +69,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
     }
 
     const { skillOrLabel, level, is_visible } = req.body;
-    const label = skillOrLabel || req.body.skillName; // accept legacy field name
+    const label = skillOrLabel;
 
     if (!label) {
       return res.status(400).json({ error: req.t('skills:skillNameRequired') });
@@ -223,14 +223,10 @@ router.patch('/my/:id/visibility', async (req: AuthRequest, res: Response) => {
 router.get('/catalog/search', async (req: AuthRequest, res: Response) => {
   try {
     const q = String(req.query.q || '').trim();
-    if (!q) return res.json({ data: [] });
-    const resolved = await catalog.resolveLabel(q);
-    const suggestions = await catalog.suggestCompetencies(q, 8);
-    const seen = new Set<string>();
-    const data = [resolved, ...suggestions]
-      .filter((c): c is NonNullable<typeof c> => !!c)
-      .filter((c) => (seen.has(c.slug) ? false : (seen.add(c.slug), true)))
-      .map((c) => ({ slug: c.slug, name: c.name, name_fr: c.name_fr, family: c.family, type: c.type }));
+    if (q.length < 2) return res.json({ data: [] });
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '5'), 10) || 5, 1), 20);
+    const results = await catalog.searchCompetencies(q, limit);
+    const data = results.map((c) => ({ slug: c.slug, name: c.name, name_fr: c.name_fr, family: c.family, type: c.type }));
     return res.json({ data });
   } catch (error) {
     logger.error('Error searching catalog:', error);

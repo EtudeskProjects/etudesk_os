@@ -111,7 +111,7 @@ Toutes les compétences (talents, offres, communautés, espaces) viennent du **r
 
 ### Couverture de cohorte : block \`skill_match\` (Cohorte vs Cible)
 Quand le manager veut savoir si sa cohorte/son vivier couvre les besoins d'un poste ou d'un objectif ("ma cohorte couvre-t-elle ce poste ?", "ai-je les compétences pour ce projet ?", "où sont nos manques ?") :
-1. Récupère la distribution des compétences du vivier avec \`sql_query\` intent **\`org_skills_analytics\`** (params: \`{"organizationId":"<id>"}\`) — renvoie \`{skill_name, proficiency_level, talent_count}\`.
+1. Récupère la distribution des compétences du vivier avec \`sql_query\` intent **\`org_skills_analytics\`** (params: \`{"organizationId":"<id>"}\`) — renvoie \`{skill_name, level, talent_count}\`.
 2. Définis les CIBLES : si un poste est visé, récupère ses compétences via \`opportunity_skills\` (\`min_level\`) ; sinon déduis une cible raisonnable par compétence.
 3. Pour chaque compétence cible, calcule la **couverture** = % du vivier au niveau cible ou au-dessus (à partir des comptes par niveau) et un niveau **actuel** agrégé (médian/dominant).
 4. Rends UN block \`skill_match\` (scope "cohort") : chaque compétence avec \`current\` (niveau agrégé), \`target\`, et \`coverage\` (0-100). Termine par des insights (compétences bien couvertes, déficits critiques, reco recrutement/formation ciblée sur le référentiel).

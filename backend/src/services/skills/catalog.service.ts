@@ -51,6 +51,16 @@ function normalize(label: string): string {
     .trim();
 }
 
+/** Case + accent insensitive fold for fuzzy substring search. */
+function fold(s: string): string {
+  return (s || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // strip diacritics
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 async function ensureCache(): Promise<void> {
   if (cacheLoaded) return;
   const { rows } = await pool.query(
@@ -177,6 +187,34 @@ export async function suggestCompetencies(label: string, limit = 3): Promise<Com
   } catch {
     return [];
   }
+}
+
+/**
+ * Fluid catalog search for pickers/autocomplete. Case + accent insensitive,
+ * substring-aware, ranked (exact > prefix > word-start > substring), top N.
+ * Runs in-memory over the full cached catalog — no SQL, no trigram threshold,
+ * so it returns results from the 2nd typed character and refines as you type.
+ */
+export async function searchCompetencies(query: string, limit = 5): Promise<Competency[]> {
+  await ensureCache();
+  const q = fold(query);
+  if (q.length < 1) return [];
+  const scored: Array<{ c: Competency; score: number }> = [];
+  for (const c of bySlug.values()) {
+    const en = fold(c.name);
+    const fr = fold(c.name_fr);
+    let score = 0;
+    if (en === q || fr === q) score = 100;
+    else if (en.startsWith(q) || fr.startsWith(q)) score = 80;
+    else if (en.includes(' ' + q) || fr.includes(' ' + q)) score = 70; // word-start
+    else if (en.includes(q) || fr.includes(q)) score = 60; // substring
+    else continue;
+    // Shorter names rank slightly higher (more specific match).
+    score += Math.max(0, 20 - c.name.length / 4);
+    scored.push({ c, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.c.name.length - b.c.name.length || a.c.name.localeCompare(b.c.name));
+  return scored.slice(0, limit).map((s) => s.c);
 }
 
 export interface ResolvedSkillSuggestion {

@@ -83,23 +83,18 @@ export function buildIntentSuggestionsPrompt(
 
   // Platform capabilities per mode
   const capabilities = mode === 'study'
-    ? `- Expliquer un sujet ou concept en detail
-- Creer un quiz ou des flashcards sur un sujet
-- Creer un plan de revision personnalise
-- Resumer ou analyser un document uploade (CV, cours, memo)
-- Preparer un entretien (questions types, simulation)
-- Generer un CV PDF personnalise
-- Evaluer mes competences et identifier les lacunes
-- Rechercher des infos sur le web (tendances, salaires, metiers)`
-    : `- Chercher des opportunites qui matchent mon profil (emploi, stage, freelance)
-- Decouvrir des communautes par secteur ou interet
-- Trouver et reserver des espaces de coworking
+    ? `- Me former sur une competence du referentiel (numerique & metiers d'avenir) — uniquement des competences du catalogue
+- Evaluer mon niveau sur une competence (quiz, exercice pratique)
+- Creer un exercice de code / projet guide / des flashcards sur une competence
+- Identifier les competences d'avenir a acquerir pour ma trajectoire
+- Resumer ou analyser un document/CV pour en extraire des competences du referentiel
+- Preparer un entretien`
+    : `- Trouver des opportunites qui matchent mes competences du referentiel (emploi, stage, freelance)
+- Analyser mes competences face a un poste qui m'interesse (Actuel vs Cible)
+- Identifier les competences qui me manquent pour mon objectif de carriere
 - Generer un CV PDF a partir de mon profil
-- Ajouter ou mettre a jour mes competences
-- Analyser mon profil et suggerer des ameliorations
-- Postuler a une offre ou rejoindre une communaute
-- Rechercher des organisations ou entreprises
-- Preparer un entretien pour une offre specifique`;
+- Decouvrir des communautes et espaces pertinents
+- Postuler a une offre ou rejoindre une communaute`;
 
   return `You MUST return all suggestions in ${languageName}.
 Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme de carriere et formation en Afrique.
