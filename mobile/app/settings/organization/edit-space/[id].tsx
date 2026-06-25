@@ -56,6 +56,8 @@ import { useI18n } from '../../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { spaceService, UpdateSpaceData, Space, imageService } from '../../../../src/services';
+import { SkillPicker } from '../../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../../src/services/skillService';
 import { getFullImageUrl } from '../../../../src/utils/image';
 
 type Step = 'info' | 'location' | 'capacity' | 'conditions' | 'media' | 'preview';
@@ -130,6 +132,7 @@ export default function EditSpaceScreen() {
   const [spaceType, setSpaceType] = useState<SpaceType | null>(null);
   const [description, setDescription] = useState('');
   const [selectedSectors, setSelectedSectors] = useState<Sector[]>([]);
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
 
   // Form state - Location
   const [address, setAddress] = useState('');
@@ -208,6 +211,7 @@ export default function EditSpaceScreen() {
           setSpaceType(space.type as SpaceType || null);
           setDescription(space.description || '');
           setSelectedSectors((space.sectors as Sector[]) || []);
+          setSkills(((space as any).skills as EntitySkillTag[]) || []);
           setAddress(space.address || '');
           setCountry(space.country || 'CI');
           setRegion(space.region || '');
@@ -344,6 +348,9 @@ export default function EditSpaceScreen() {
         if (data.sectors && data.sectors.length > 0) {
           setSelectedSectors(data.sectors.slice(0, MAX_SECTORS) as Sector[]);
         }
+
+        // Catalog-resolved skills the space validates (referential only)
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
 
         // Equipment
         if (data.equipment && data.equipment.length > 0) {
@@ -593,6 +600,7 @@ export default function EditSpaceScreen() {
     type: spaceType!,
     description: description || undefined,
     sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
+    skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, role: s.role || 'validates' })) : undefined,
     address: address || undefined,
     city: city || undefined,
     region: region || undefined,
@@ -792,6 +800,9 @@ export default function EditSpaceScreen() {
           rows={4}
           maxLength={500}
         />
+
+        {/* Compétences du catalogue (référentiel) */}
+        <SkillPicker label={t('labels.skillsSection')} value={skills} onChange={setSkills} />
       </View>
     </View>
   );

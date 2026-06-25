@@ -54,6 +54,8 @@ import {
   getCommunityStatusLabel,
 } from '../../../../src/types/models';
 import { communityService, UpdateCommunityData, CreateCommunityData, imageService } from '../../../../src/services';
+import { SkillPicker } from '../../../../src/components/SkillPicker';
+import type { EntitySkillTag } from '../../../../src/services/skillService';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { useI18n } from '../../../../src/contexts/I18nContext';
@@ -113,6 +115,7 @@ export default function EditCommunityScreen() {
   const [description, setDescription] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedSectors, setSelectedSectors] = useState<Sector[]>([]);
+  const [skills, setSkills] = useState<EntitySkillTag[]>([]);
 
   // Form state - Lieu
   const [country, setCountry] = useState('');
@@ -180,6 +183,7 @@ export default function EditCommunityScreen() {
       setVisibility(comm.visibility || (comm.access_type === 'PUBLIC' ? 'PUBLIC' : comm.access_type === 'MEMBERSHIP' ? 'PRIVATE' : 'PUBLIC'));
       setSelectedTags(comm.tags || []);
       setSelectedSectors(comm.sectors || []);
+      setSkills(((comm as any).skills as EntitySkillTag[]) || []);
       
       // Legacy fields for backward compatibility
       if (comm.application_questions) {
@@ -308,6 +312,9 @@ export default function EditCommunityScreen() {
           setSelectedSectors(data.sectors.slice(0, MAX_SECTORS));
         }
 
+        // Catalog-resolved skills the community is about / validates (referential only)
+        if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
+
         if (data.rules) setRules(data.rules);
         if (data.visibility) setVisibility(data.visibility);
 
@@ -412,6 +419,7 @@ export default function EditCommunityScreen() {
         application_questions: applicationQuestions.filter(q => q.question.trim().length > 0).map(q => q.question),
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
+        skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, role: s.role || 'validates' })) : undefined,
         visibility: visibility || undefined,
         city: communityType === 'HYBRID' ? city || undefined : undefined,
         region: communityType === 'HYBRID' ? region || undefined : undefined,
@@ -609,6 +617,9 @@ export default function EditCommunityScreen() {
           rows={4}
           maxLength={1000}
         />
+
+        {/* Compétences du catalogue (référentiel) */}
+        <SkillPicker label={t('labels.skillsSection')} value={skills} onChange={setSkills} />
       </View>
     </View>
   );
