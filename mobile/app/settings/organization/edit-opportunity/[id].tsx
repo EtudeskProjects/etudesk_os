@@ -39,7 +39,6 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from 
 import { Input, Button, IconButton, Toggle, Chip, KeyboardAwareScrollView, SelectCard, useToast, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
-import { SECTOR_DATA } from '../../../../src/constants/talent';
 import {
   getOpportunityTypeData,
   getContractTypeData,
@@ -88,7 +87,6 @@ const STEP_TITLE_KEYS: Record<Step, string> = {
 };
 
 // Constants for limits
-const MAX_SECTORS = 5;
 const MAX_IMAGES = 5;
 const MAX_ATTACHMENTS = 3;
 const MAX_QUESTIONS = 5;
@@ -146,7 +144,6 @@ export default function EditOpportunityScreen() {
   const [requirements, setRequirements] = useState('');
   const [niceToHave, setNiceToHave] = useState('');
   const [skills, setSkills] = useState<EntitySkillTag[]>([]);
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
 
   // Form state - Lieu
   const [locationType, setLocationType] = useState<LocationType | null>(null);
@@ -223,7 +220,6 @@ export default function EditOpportunityScreen() {
       setRequirements(opp.requirements || '');
       setNiceToHave(opp.nice_to_have || '');
       setSkills(((opp as any).skills as EntitySkillTag[]) || []);
-      setSelectedSectors(opp.sectors || []);
       setLocationType(opp.location_type || null);
       setContractType(opp.contract_type || null);
       setWorkRhythm(opp.work_rhythm || null);
@@ -375,17 +371,6 @@ export default function EditOpportunityScreen() {
     setAttachments(attachments.filter((a) => a.id !== attId));
   };
 
-  // Handle sector selection (multi-select with max 5)
-  const toggleSector = (sectorId: string) => {
-    if (selectedSectors.includes(sectorId)) {
-      setSelectedSectors(selectedSectors.filter((s) => s !== sectorId));
-    } else if (selectedSectors.length < MAX_SECTORS) {
-      setSelectedSectors([...selectedSectors, sectorId]);
-    } else {
-      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxSectors', { count: MAX_SECTORS }) });
-    }
-  };
-
   // Check if AI generation is possible
   const canGenerate = title.trim().length >= 3 && opportunityType !== null && organizationId !== null;
 
@@ -412,11 +397,6 @@ export default function EditOpportunityScreen() {
         if (data.skills && data.skills.length > 0) setSkills(data.skills as EntitySkillTag[]);
         if (data.contract_type) setContractType(data.contract_type as ContractType);
         if (data.work_rhythm) setWorkRhythm(data.work_rhythm as WorkRhythm);
-
-        // Sectors - apply 2-5 sectors
-        if (data.sectors && data.sectors.length > 0) {
-          setSelectedSectors(data.sectors.slice(0, MAX_SECTORS));
-        }
 
         if (data.compensation_min) setCompensationMin(Math.floor(data.compensation_min).toString());
         if (data.compensation_max) setCompensationMax(Math.floor(data.compensation_max).toString());
@@ -527,7 +507,6 @@ export default function EditOpportunityScreen() {
         requirements: requirements || undefined,
         nice_to_have: niceToHave || undefined,
         skills: skills.map((s) => ({ skill: s.slug, requirement: s.requirement || 'required' })),
-        sectors: selectedSectors,
         compensation_min: compensationMin ? parseInt(compensationMin, 10) : undefined,
         compensation_max: compensationMax ? parseInt(compensationMax, 10) : undefined,
         currency: currency || undefined,
@@ -703,28 +682,7 @@ export default function EditOpportunityScreen() {
           </View>
         )}
 
-        {/* Secteurs d'activité - Multi-selection (5 max) */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
-          </Text>
-          <View style={styles.tagsContainer}>
-            {SECTOR_DATA.slice(0, 15).map((sector) => {
-              const isSelected = selectedSectors.includes(sector.id);
-              return (
-                <Chip
-                  key={sector.id}
-                  label={t(sector.labelKey)}
-                  selected={isSelected}
-                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
-                  onPress={() => toggleSector(sector.id)}
-                  style={styles.selectableTag}
-                  textStyle={styles.selectableTagText}
-                />
-              );
-            })}
-          </View>
-        </View>
+        {/* Secteurs retirés des offres : portés par l'organisation. */}
 
         <FormTextArea
           label={t('opportunity.description')}
@@ -753,7 +711,7 @@ export default function EditOpportunityScreen() {
           maxLength={300}
         />
 
-        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement />
+        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement max={20} />
       </View>
     </View>
   );
@@ -1379,25 +1337,6 @@ export default function EditOpportunityScreen() {
               </View>
             )}
           </View>
-        </View>
-
-        {/* Secteurs */}
-        <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.industries')}</Text>
-          {selectedSectors.length > 0 ? (
-            <View style={styles.previewTags}>
-              {selectedSectors.map((sectorId) => {
-                const sector = SECTOR_DATA.find((s) => s.id === sectorId);
-                return (
-                  <View key={sectorId} style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                    <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{sector ? t(sector.labelKey) : sectorId}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noSectorSelected')}</Text>
-          )}
         </View>
 
         {/* Info Grid */}

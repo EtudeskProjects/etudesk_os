@@ -40,7 +40,6 @@ import { Input, Button, Toggle, StepIndicator, Chip, KeyboardAwareScrollView, Ic
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
-import { SECTOR_DATA } from '../../../src/constants/talent';
 import {
   getOpportunityTypeData,
   getContractTypeData,
@@ -88,7 +87,6 @@ const STEP_TITLE_KEYS: Record<Step, string> = {
 };
 
 // Constants for limits
-const MAX_SECTORS = 5;
 const MAX_IMAGES = 5;
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_SIZE_MB = 20;
@@ -117,7 +115,6 @@ interface OpportunityFormValues {
   summary: string;
   requirements: string;
   niceToHave: string;
-  selectedSectors: string[];
   // Lieu
   locationType: LocationType | null;
   country: string;
@@ -184,7 +181,6 @@ export default function CreateOpportunityScreen() {
       summary: { initialValue: '' },
       requirements: { initialValue: '' },
       niceToHave: { initialValue: '' },
-      selectedSectors: { initialValue: [] },
       // Lieu
       locationType: { initialValue: null },
       country: { initialValue: '' },
@@ -219,7 +215,6 @@ export default function CreateOpportunityScreen() {
   const summary = form.getValue('summary');
   const requirements = form.getValue('requirements');
   const niceToHave = form.getValue('niceToHave');
-  const selectedSectors = form.getValue('selectedSectors');
   const locationType = form.getValue('locationType');
   const country = form.getValue('country');
   const region = form.getValue('region');
@@ -434,17 +429,6 @@ export default function CreateOpportunityScreen() {
     form.setValue('applicationQuestions', applicationQuestions.filter((q) => q.id !== id));
   };
 
-  // Handle sector selection (multi-select with max 5)
-  const toggleSector = (sectorId: string) => {
-    if (selectedSectors.includes(sectorId)) {
-      form.setValue('selectedSectors', selectedSectors.filter((s) => s !== sectorId));
-    } else if (selectedSectors.length < MAX_SECTORS) {
-      form.setValue('selectedSectors', [...selectedSectors, sectorId]);
-    } else {
-      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxSectors', { count: MAX_SECTORS }) });
-    }
-  };
-
   // Check if generation is possible (title >= 3 chars and type selected)
   const canGenerate = title.trim().length >= 3 && opportunityType !== null && selectedOrgId !== null;
 
@@ -473,11 +457,6 @@ export default function CreateOpportunityScreen() {
         if (data.nice_to_have) updates.niceToHave = data.nice_to_have;
         if (data.contract_type) updates.contractType = data.contract_type as ContractType;
         if (data.work_rhythm) updates.workRhythm = data.work_rhythm as WorkRhythm;
-
-        // Sectors - apply 2-5 sectors
-        if (data.sectors && data.sectors.length > 0) {
-          updates.selectedSectors = data.sectors.slice(0, MAX_SECTORS);
-        }
 
         if (data.compensation_min) updates.compensationMin = Math.floor(data.compensation_min).toString();
         if (data.compensation_max) updates.compensationMax = Math.floor(data.compensation_max).toString();
@@ -544,7 +523,6 @@ export default function CreateOpportunityScreen() {
     requirements: requirements || undefined,
     nice_to_have: niceToHave || undefined,
     skills: skills.length > 0 ? skills.map((s) => ({ skill: s.slug, requirement: s.requirement || 'required' })) : undefined,
-    sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
     compensation_min: compensationMin ? parseInt(compensationMin, 10) : undefined,
     compensation_max: compensationMax ? parseInt(compensationMax, 10) : undefined,
     currency: currency || undefined,
@@ -656,16 +634,6 @@ export default function CreateOpportunityScreen() {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
-  const getSectorsLabel = (ids: string[]) => {
-    if (ids.length === 0) return t('community.form.notDefined');
-    return ids
-      .map((id) => {
-        const sector = SECTOR_DATA.find((s) => s.id === id);
-        return sector ? t(sector.labelKey) : id;
-      })
-      .join(', ');
-  };
-
   const renderStepIndicator = () => {
     const stepsData = STEPS.map(step => ({
       id: step,
@@ -730,28 +698,7 @@ export default function CreateOpportunityScreen() {
           </View>
         )}
 
-        {/* Secteurs d'activité - Multi-selection (5 max) */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
-          </Text>
-          <View style={styles.tagsContainer}>
-            {SECTOR_DATA.slice(0, 15).map((sector) => {
-              const isSelected = selectedSectors.includes(sector.id);
-              return (
-                <Chip
-                  key={sector.id}
-                  label={t(sector.labelKey)}
-                  selected={isSelected}
-                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
-                  onPress={() => toggleSector(sector.id)}
-                  style={styles.selectableTag}
-                  textStyle={styles.selectableTagText}
-                />
-              );
-            })}
-          </View>
-        </View>
+        {/* Secteurs retirés des offres : portés par l'organisation. */}
 
         <FormTextArea
           label={t('opportunity.description')}
@@ -780,7 +727,7 @@ export default function CreateOpportunityScreen() {
           maxLength={300}
         />
 
-        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement />
+        <SkillPicker label={t('opportunity.skillsRequired')} value={skills} onChange={setSkills} withRequirement max={20} />
       </View>
     </View>
   );
@@ -1499,27 +1446,6 @@ export default function CreateOpportunityScreen() {
               </View>
             )}
           </View>
-        </View>
-
-        {/* Secteurs */}
-        <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.industries')}</Text>
-          {selectedSectors.length > 0 ? (
-            <View style={styles.previewTags}>
-              {selectedSectors.map((sectorId) => {
-                const sector = SECTOR_DATA.find((s) => s.id === sectorId);
-                return (
-                  <View key={sectorId} style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                    <Text style={[styles.previewTagText, { color: colors.gray700 }]}>
-                      {sector ? t(sector.labelKey) : sectorId}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noSectorSelected')}</Text>
-          )}
         </View>
 
         {/* Info Grid */}
