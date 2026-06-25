@@ -35,6 +35,7 @@ const ORG_ALLOWED_INTENTS = [
   'org_geo_distribution',
   'org_community_engagement',
   'org_opportunity_performance',
+  'opportunity_skills',
 ] as const;
 
 export function createOrgAgent(context: OrgContext): AgentConfig {

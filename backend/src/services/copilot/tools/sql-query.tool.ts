@@ -24,6 +24,8 @@ const SQL_INTENTS = [
   'my_documents',
   'my_skills',
   'my_triggers',
+  // Public reads
+  'opportunity_skills',
   // Org
   'org_members',
   'org_applications',
@@ -669,6 +671,22 @@ export function createSqlQueryTool(
             queryParams.push(limit);
             const res = await pool.query(query, queryParams);
             return { skills: res.rows, chart_hint: 'bar' };
+          }
+
+          case 'opportunity_skills': {
+            // Public read: the catalog skills required by an opportunity (targets for "Actuel vs Target").
+            const oppId = (params?.opportunityId || params?.id) as string;
+            if (!oppId) return { error: 'opportunityId is required' };
+            const res = await pool.query(
+              `SELECT os.competency_slug AS slug, c.name, c.name_fr, c.type, c.family,
+                      os.requirement, os.min_level, os.weight
+               FROM opportunity_skills os
+               JOIN competencies c ON c.slug = os.competency_slug
+               WHERE os.opportunity_id = $1
+               ORDER BY (os.requirement = 'required') DESC, os.weight DESC`,
+              [oppId]
+            );
+            return { opportunity_id: oppId, skills: res.rows };
           }
 
           case 'org_application_funnel': {

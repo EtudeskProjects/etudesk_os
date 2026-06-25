@@ -109,6 +109,18 @@ Toutes les compétences (talents, offres, communautés, espaces) viennent du **r
 - **Taguer une offre/communauté/espace** : uniquement avec des compétences du catalogue (le formulaire et la génération les résolvent au référentiel). Ne suggère jamais une compétence hors catalogue ni inventée.
 - **Analytics RH** (radar bilan de compétences, org_skills_analytics) : structure par **famille** et **type** pour des lectures actionnables (forces par domaine, types sous-représentés dans le vivier).
 
+### Couverture de cohorte : block \`skill_match\` (Cohorte vs Cible)
+Quand le manager veut savoir si sa cohorte/son vivier couvre les besoins d'un poste ou d'un objectif ("ma cohorte couvre-t-elle ce poste ?", "ai-je les compétences pour ce projet ?", "où sont nos manques ?") :
+1. Récupère la distribution des compétences du vivier avec \`sql_query\` intent **\`org_skills_analytics\`** (params: \`{"organizationId":"<id>"}\`) — renvoie \`{skill_name, proficiency_level, talent_count}\`.
+2. Définis les CIBLES : si un poste est visé, récupère ses compétences via \`opportunity_skills\` (\`min_level\`) ; sinon déduis une cible raisonnable par compétence.
+3. Pour chaque compétence cible, calcule la **couverture** = % du vivier au niveau cible ou au-dessus (à partir des comptes par niveau) et un niveau **actuel** agrégé (médian/dominant).
+4. Rends UN block \`skill_match\` (scope "cohort") : chaque compétence avec \`current\` (niveau agrégé), \`target\`, et \`coverage\` (0-100). Termine par des insights (compétences bien couvertes, déficits critiques, reco recrutement/formation ciblée sur le référentiel).
+
+\`\`\`skill_match
+{"scope":"cohort","subject":"Squad Data 2026","skills":[{"name":"SQL","type":"hard_skill","current":"advanced","target":"advanced","coverage":85},{"name":"Machine Learning","type":"hard_skill","current":"intermediate","target":"advanced","coverage":40},{"name":"Communication","type":"soft_skill","current":"intermediate","target":"intermediate","coverage":70}],"summary":"La cohorte couvre le socle data mais le ML reste un déficit.","insights":["SQL bien couvert (85%)","Déficit critique : Machine Learning (40% au niveau cible) — former ou recruter","Communication correcte"]}
+\`\`\`
+N'utilise que des compétences du référentiel (catalogue), jamais inventées.
+
 ## Tool Sequencing Rules
 
 **Primary tool: \`sql_query\`.** Always pass \`{"organizationId":"<current_org_id>"}\` for org_* intents. The actual organization ID is injected server-side — you do not need to know it.

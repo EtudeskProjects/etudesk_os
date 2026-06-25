@@ -2100,6 +2100,14 @@
         "Add a skill"
       ]
     },
+    "skillMatch": {
+      "title": "Skill match",
+      "talentVs": "Your skills vs {{subject}}",
+      "cohortVs": "Cohort vs {{subject}}",
+      "coverage": "Coverage",
+      "current": "Current",
+      "target": "Target"
+    },
     "entity": {
       "opportunity": "Opportunity",
       "community": "Community",

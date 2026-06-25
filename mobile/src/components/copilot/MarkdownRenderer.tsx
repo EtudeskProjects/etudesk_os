@@ -23,6 +23,7 @@ import { CodeBlock } from './blocks/CodeBlock';
 import { ConfirmationBlock } from './blocks/ConfirmationBlock';
 import { MathBlock } from './blocks/MathBlock';
 import { StepSolverBlock } from './blocks/StepSolverBlock';
+import { SkillMatchBlock } from './blocks/SkillMatchBlock';
 import { ExerciseBlock } from './blocks/ExerciseBlock';
 import { CodePlaygroundBlock } from './blocks/CodePlaygroundBlock';
 import { CanvasBlock } from './blocks/CanvasBlock';
@@ -46,7 +47,7 @@ interface MarkdownRendererProps {
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'audio' | 'loading';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'audio' | 'skill_match' | 'loading';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -153,6 +154,13 @@ function parseBlocks(content: string): Block[] {
     else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'radar', 'metric'].includes(tag)) {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
+    }
+    // Skill Match block — "Actuel vs Target" coverage (talent vs job / cohort vs target)
+    else if (tag === 'skill_match') {
+      const data = tryParseJSON(body);
+      if (data && Array.isArray(data.skills) && data.skills.length > 0) {
+        blocks.push({ type: 'skill_match', content: body, data });
+      }
     }
     // Math block
     else if (tag === 'math') {
@@ -610,6 +618,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
             return <CodePlaygroundBlock key={index} data={block.data} />;
           case 'canvas':
             return <CanvasBlock key={index} data={block.data} />;
+          case 'skill_match':
+            return <SkillMatchBlock key={index} data={block.data} />;
           case 'audio':
             return <AudioBlock key={index} url={block.data.url} duration={block.data.duration} autoPlay={block.data.autoPlay} />;
           case 'code':

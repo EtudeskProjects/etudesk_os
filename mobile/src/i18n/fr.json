@@ -2123,6 +2123,14 @@
         "Ajoute une compétence"
       ]
     },
+    "skillMatch": {
+      "title": "Adéquation des compétences",
+      "talentVs": "Tes compétences vs {{subject}}",
+      "cohortVs": "Cohorte vs {{subject}}",
+      "coverage": "Couverture",
+      "current": "Actuel",
+      "target": "Cible"
+    },
     "entity": {
       "opportunity": "Opportunité",
       "community": "Communauté",
