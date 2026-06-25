@@ -20,8 +20,7 @@ export { generateDiagramTool } from './tools/generate-diagram.tool';
 export { createFileReaderTool } from './tools/file-read.tool';
 export { webSearchAgent, webSearchAsTool } from './tools/web-search.tool';
 export { createManageSkillsTool } from './tools/manage-skills.tool';
-export { createExecuteActionTool } from './tools/execute-action.tool'; 
-export { createCvGenerationTool } from './tools/cv-generation.tool';
+export { createExecuteActionTool } from './tools/execute-action.tool';
 
 // Guardrails
 export { inputSafetyGuardrail, runInputGuardrail } from './guardrails/input.guardrail';

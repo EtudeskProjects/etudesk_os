@@ -118,7 +118,7 @@ export interface CVData {
 
 function skillLevelToPercent(level?: string): number {
   const map: Record<string, number> = {
-    expert: 0.95, master: 0.95,
+    master: 0.95,
     advanced: 0.80, avance: 0.80,
     intermediate: 0.60, intermediaire: 0.60,
     beginner: 0.35, debutant: 0.35,
@@ -128,7 +128,7 @@ function skillLevelToPercent(level?: string): number {
 
 function formatLevel(level?: string): string {
   const map: Record<string, string> = {
-    expert: 'Expert', master: 'Expert',
+    master: 'Master',
     advanced: 'Avance', avance: 'Avance',
     intermediate: 'Intermediaire', intermediaire: 'Intermediaire',
     beginner: 'Debutant', debutant: 'Debutant',

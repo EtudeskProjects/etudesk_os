@@ -23,7 +23,7 @@ Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
 4. Render un **donut** de repartition par niveau de maitrise :
 
 ```chart
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
 **Thinking flow** : Compter skills par niveau. Exclure niveaux a 0. Labels : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si un seul niveau → metric : `{"type":"metric","title":"Tes competences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`. Si > 60% beginner → "Tu as beaucoup de bases — approfondis avec un cours !" Si beaucoup d'advanced → "Pret pour des certifications master ?"

@@ -39,7 +39,7 @@ const CV_CONTENT_CONTRACT = {
   city: 'Dakar',
   country: 'Senegal',
   bio: 'Profile summary...',
-  skills: [{ name: 'Python', type: 'hard', level: 'expert' }],
+  skills: [{ name: 'Python', type: 'hard_skill', level: 'advanced' }],
   languages: [{ language: 'Francais', level: 'native' }],
   interests: ['AI', 'Fintech'],
   goals: ['Lead developer'],

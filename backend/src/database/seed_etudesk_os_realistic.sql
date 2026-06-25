@@ -378,7 +378,7 @@ WHERE t.id::text LIKE '90000000-0000-4000-8000-%';
 -- ---------------------------------------------------------------------
 
 -- Talent skills are catalog-constrained (migration 021). Seed them via
--- scripts/seed-minimal.ts or seed-uemoa-data.ts (labels resolved to catalog slugs).
+-- scripts/seed-minimal.ts or scripts/seed-demo.ts (labels resolved to catalog slugs).
 
 -- ---------------------------------------------------------------------
 -- 2b) Talent Documents (CV PDFs + attestations)

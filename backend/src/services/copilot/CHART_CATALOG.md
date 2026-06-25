@@ -148,7 +148,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Si trop de BEGINNER (>60%) → suggerer deep-dive. Si beaucoup d'EXPERT → suggerer exam pour MASTER.
 - **Format** :
 ```json
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
 ---

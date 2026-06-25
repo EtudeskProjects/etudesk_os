@@ -24,7 +24,7 @@ Detecte le scope :
 
 ## Scope COHORT (mode Gérer)
 
-1. DISTRIBUTION : `sql_query` intent `org_skills_analytics` (params `{"organizationId":"<id>"}`) → `{skill_name, proficiency_level, talent_count}`.
+1. DISTRIBUTION : `sql_query` intent `org_skills_analytics` (params `{"organizationId":"<id>"}`) → `{skill_name, level, talent_count}`.
 2. CIBLES : si un poste est visé, `opportunity_skills` (`min_level`) ; sinon cible raisonnable par compétence.
 3. Par compétence cible : `coverage` = % du vivier au niveau cible ou au-dessus ; `current` = niveau agrégé (dominant/médian).
 4. Rends UN block `skill_match` scope "cohort" avec `coverage` (0-100) par compétence + `summary` + `insights` (bien couvert / déficit critique / reco recrutement ou formation ciblée).
