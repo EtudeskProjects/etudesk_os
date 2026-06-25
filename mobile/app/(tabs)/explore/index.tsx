@@ -28,7 +28,7 @@ import {
   SignalHigh,
   Tag,
 } from 'lucide-react-native';
-	import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY, COMPONENT } from '../../../src/constants/theme';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY, COMPONENT, STATIC_COLORS } from '../../../src/constants/theme';
 	import { useTheme } from '../../../src/hooks/useTheme';
 	import { useI18n } from '../../../src/contexts/I18nContext';
 	import { Button, Header, FooterNav, IconButton, Input, RadioRow, LoadingShimmer } from '../../../src/components/ui';
@@ -444,15 +444,16 @@ export default function ExploreScreen() {
             >
               <View style={[
                 styles.categoryTabOverlay,
-                { backgroundColor: withOpacity(colors.black, OPACITY[50]) },
+                // Dark scrim + light text, theme-independent (media card): readable on any photo.
+                { backgroundColor: withOpacity(STATIC_COLORS.black, OPACITY[50]) },
                 isActive && { backgroundColor: withOpacity(colors.primary, OPACITY[80]) }
               ]}>
                 <IconComponent
                   size={ICON.size.md}
-                  color={colors.textOnPrimary}
+                  color={STATIC_COLORS.white}
                   strokeWidth={ICON.strokeWidth}
                 />
-                <Text style={[styles.categoryLabel, { color: colors.textOnPrimary }]}>
+                <Text style={[styles.categoryLabel, { color: STATIC_COLORS.white }]}>
                   {category.label}
                 </Text>
               </View>

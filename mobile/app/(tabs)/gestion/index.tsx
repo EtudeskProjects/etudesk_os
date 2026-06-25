@@ -546,7 +546,7 @@ export default function GestionScreen() {
                   return (
                     <SelectCard
                       key={action.id}
-                      style={[styles.quickActionCard, { backgroundColor: action.theme.bg, borderWidth: 0, borderColor: 'transparent' }]}
+                      style={[styles.quickActionCard, { backgroundColor: colors.gray100, borderWidth: BORDER.width.thin, borderColor: colors.gray300 }]}
                       onPress={() => router.push(action.route as any)}
                       selected={false}
                       accessibilityLabel={action.label}

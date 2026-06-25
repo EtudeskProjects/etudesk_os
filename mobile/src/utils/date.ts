@@ -125,22 +125,6 @@ export function formatDate(date: string | Date, locale?: Language): string {
   });
 }
 
-/**
- * Formats a short date
- * @param date - Date string or Date object
- * @param locale - Optional locale override
- * @returns Formatted date string like "15 jan." or "Jan 15"
- */
-export function formatShortDate(date: string | Date, locale?: Language): string {
-  const currentLocale = locale || getLocale();
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
-  const localeCode = currentLocale === 'en' ? 'en-US' : 'fr-FR';
-
-  return targetDate.toLocaleDateString(localeCode, {
-    day: 'numeric',
-    month: 'short',
-  });
-}
 
 /**
  * Formats a time

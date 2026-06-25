@@ -118,7 +118,7 @@ export default function SkillsScreen() {
       } finally {
         setSearching(false);
       }
-    }, 300);
+    }, 180);
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
@@ -337,29 +337,32 @@ export default function SkillsScreen() {
 
               {CATALOG_TYPES.map((type) => {
                 const typeSkills = skills.filter((s) => normalizeType(s.type) === type).sort(sortByScore);
-                if (typeSkills.length === 0) return null;
+                const isEmpty = typeSkills.length === 0;
                 const typeCfg = getSkillTypeConfig(type, colors);
-                const isCollapsed = collapsedSections[type] ?? false;
+                // Empty type sections default to collapsed so the 5 categories stay visible without clutter.
+                const isCollapsed = collapsedSections[type] ?? isEmpty;
                 return (
                   <View key={type} style={styles.section}>
                     <Pressable
                       style={styles.sectionHeader}
-                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
+                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !(prev[type] ?? isEmpty) }))}
                       accessibilityRole="button"
                       accessibilityLabel={t('settings.skills.toggleSection', { section: t(typeCfg.labelKey) })}
                     >
-                      <typeCfg.Icon size={14} color={typeCfg.color} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
+                      <typeCfg.Icon size={14} color={isEmpty ? colors.textDisabled : typeCfg.color} strokeWidth={ICON.strokeWidth} />
+                      <Text style={[styles.sectionTitle, { color: isEmpty ? colors.textDisabled : colors.textSecondary, flex: 1 }]}>
                         {t(typeCfg.labelKey)} ({typeSkills.length})
                       </Text>
                       <ChevronDown
                         size={16}
-                        color={colors.textSecondary}
+                        color={colors.textDisabled}
                         strokeWidth={ICON.strokeWidth}
                         style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
                       />
                     </Pressable>
-                    {!isCollapsed && typeSkills.map(renderSkill)}
+                    {!isCollapsed && (isEmpty
+                      ? <Text style={[styles.emptyType, { color: colors.textDisabled }]}>{t('settings.skills.emptyType')}</Text>
+                      : typeSkills.map(renderSkill))}
                   </View>
                 );
               })}
@@ -519,6 +522,7 @@ const styles = StyleSheet.create({
   addSection: { marginBottom: SPACING.lg },
 
   section: { marginBottom: SPACING.lg },
+  emptyType: { fontSize: TYPOGRAPHY.fontSize.sm, fontStyle: 'italic', paddingVertical: SPACING.sm },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginBottom: SPACING.sm },
   sectionTitle: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold, textTransform: 'uppercase', letterSpacing: 0.5 },
 

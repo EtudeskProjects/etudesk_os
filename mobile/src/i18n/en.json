@@ -576,6 +576,7 @@
       "tipDocumentsLink": "extract skills from your documents",
       "tipSuffix": "automatically.",
       "toggleSection": "Show/hide {{section}}",
+      "emptyType": "No skill in this category yet. Add one to cover it.",
       "autoDiagnostic": "Self-assessment",
       "autoDiagnosticPrompt": "Do a self-assessment of my skills",
       "modalTitle": "Add a skill",
@@ -2076,28 +2077,28 @@
     },
     "suggestions": {
       "orgExplore": [
-        "This month's applications",
-        "Find developer profiles",
-        "My opportunity stats",
+        "Rank candidates for an opportunity",
+        "Does my talent pool cover this role?",
+        "Find profiles by skill",
         "Generate a job description"
       ],
       "orgStudy": [
-        "Evaluate received candidates",
-        "How to write an opportunity post?",
-        "Summarize this document",
-        "Industry employment trends"
+        "Which skills are missing in my talent pool?",
+        "Evaluate the candidates I received",
+        "Digital skills trends in my sector",
+        "Summarize this document"
       ],
       "talentStudy": [
-        "Prepare me for an interview",
-        "Analyze my skills",
-        "Create a quiz on a topic",
-        "Summarize my resume and advise me"
+        "Train me on a digital skill",
+        "Assess my level on a skill",
+        "Create a hands-on coding exercise",
+        "Which future-ready skills should I learn?"
       ],
       "talentExplore": [
-        "Opportunities matching my profile",
-        "Generate my CV as PDF",
-        "Communities in my sector",
-        "Add a skill"
+        "Which opportunities match my skills?",
+        "Analyze my skills for a job I want",
+        "What skills am I missing for my goal?",
+        "Generate my CV as PDF"
       ]
     },
     "skillMatch": {
@@ -2672,15 +2673,15 @@
       "stopGeneration": "Stop generation",
       "send": "Send",
       "voiceNote": "Voice note",
-      "orgSuggestion1": "Find available talents in my city.",
-      "orgSuggestion2": "Summarize applications from the last 7 days.",
-      "orgSuggestion3": "Help me write a job description for [title].",
-      "studySuggestion1": "Test me on one of my weak areas.",
-      "studySuggestion2": "Explain the water cycle with a diagram.",
-      "studySuggestion3": "Create a practical exercise on linear functions.",
-      "exploreSuggestion1": "Find 3 opportunities matching my profile this week.",
-      "exploreSuggestion2": "Show communities relevant to my goal.",
-      "exploreSuggestion3": "Analyze my resume.",
+      "orgSuggestion1": "Rank the candidates for my latest opportunity.",
+      "orgSuggestion2": "Does my talent pool cover a Data role?",
+      "orgSuggestion3": "Find talents skilled in a specific competency.",
+      "studySuggestion1": "Train me on a digital skill of my choice.",
+      "studySuggestion2": "Assess my level on a skill with a quick quiz.",
+      "studySuggestion3": "Create a hands-on exercise on a skill.",
+      "exploreSuggestion1": "Analyze my skills against an opportunity.",
+      "exploreSuggestion2": "Which opportunities match my skills?",
+      "exploreSuggestion3": "What am I missing to become a Data Analyst?",
       "followUp": {
         "adjustDraft": "Adjust this draft before confirmation",
         "makeConcise": "Make the proposal more concise",

@@ -52,18 +52,6 @@ export const formatNumberNoTrailingZeros = (
 };
 
 /**
- * Formats a number as an integer (no decimals), with locale formatting.
- * Removes .00 and any decimal places from numbers.
- *
- * @param value The number to format
- * @returns A formatted string without decimals
- */
-export const formatInteger = (value: number | undefined | null): string => {
-    if (value === undefined || value === null) return '0';
-    return Math.round(value).toLocaleString('fr-FR');
-};
-
-/**
  * Formats a price in XOF (CFA Francs) with locale formatting.
  *
  * @param value The price to format

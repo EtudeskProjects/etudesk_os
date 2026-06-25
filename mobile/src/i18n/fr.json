@@ -599,6 +599,7 @@
       "tipDocumentsLink": "extraire des compétences depuis tes documents",
       "tipSuffix": "automatiquement.",
       "toggleSection": "Afficher/masquer {{section}}",
+      "emptyType": "Aucune compétence dans cette catégorie. Ajoutes-en une pour la couvrir.",
       "autoDiagnostic": "Auto-diagnostic",
       "autoDiagnosticPrompt": "Fais un auto-diagnostic de mes compétences",
       "modalTitle": "Ajouter une compétence",
@@ -2099,28 +2100,28 @@
     },
     "suggestions": {
       "orgExplore": [
-        "Candidatures de ce mois",
-        "Trouve des profils développeurs",
-        "Stats de mes offres",
+        "Classe les candidats d'une offre",
+        "Mon vivier couvre-t-il ce poste ?",
+        "Trouve des profils par compétence",
         "Génère une fiche de poste"
       ],
       "orgStudy": [
-        "Évalue les candidats reçus",
-        "Comment rédiger une offre ?",
-        "Résume ce document",
-        "Tendances emploi du secteur"
+        "Quelles compétences manquent dans mon vivier ?",
+        "Évalue les candidats que j'ai reçus",
+        "Tendances des compétences du numérique dans mon secteur",
+        "Résume ce document"
       ],
       "talentStudy": [
-        "Prépare-moi pour un entretien",
-        "Analyse mes compétences",
-        "Crée un quiz sur un sujet",
-        "Résume mon CV et conseille-moi"
+        "Forme-moi sur une compétence du numérique",
+        "Évalue mon niveau sur une compétence",
+        "Crée-moi un exercice de code pratique",
+        "Quelles compétences d'avenir apprendre ?"
       ],
       "talentExplore": [
-        "Offres qui matchent mon profil",
-        "Génère mon CV en PDF",
-        "Communautés dans mon secteur",
-        "Ajoute une compétence"
+        "Quelles offres correspondent à mes compétences ?",
+        "Analyse mes compétences pour un poste qui m'intéresse",
+        "Quelles compétences me manquent pour mon objectif ?",
+        "Génère mon CV en PDF"
       ]
     },
     "skillMatch": {
@@ -2695,15 +2696,15 @@
       "stopGeneration": "Arrêter la génération",
       "send": "Envoyer",
       "voiceNote": "Note vocale",
-      "orgSuggestion1": "Trouve-moi des talents disponibles dans ma ville.",
-      "orgSuggestion2": "Fais un résumé des candidatures des 7 derniers jours.",
-      "orgSuggestion3": "Aide-moi à rédiger une fiche de poste sur [intitulé].",
-      "studySuggestion1": "Évalue-moi sur l'une de mes lacunes.",
-      "studySuggestion2": "Explique-moi le cycle de l'eau en diagramme.",
-      "studySuggestion3": "Crée un exercice pratique sur les fonctions affines.",
-      "exploreSuggestion1": "Trouve 3 offres adaptées à mon profil cette semaine.",
-      "exploreSuggestion2": "Montre les communautés utiles pour mon objectif.",
-      "exploreSuggestion3": "Analyse mon CV.",
+      "orgSuggestion1": "Classe les candidats de ma dernière offre.",
+      "orgSuggestion2": "Mon vivier couvre-t-il un poste Data ?",
+      "orgSuggestion3": "Trouve des talents maîtrisant une compétence précise.",
+      "studySuggestion1": "Forme-moi sur une compétence du numérique de mon choix.",
+      "studySuggestion2": "Évalue mon niveau sur une compétence avec un quiz.",
+      "studySuggestion3": "Crée-moi un exercice pratique sur une compétence.",
+      "exploreSuggestion1": "Analyse mes compétences face à une offre.",
+      "exploreSuggestion2": "Quelles offres correspondent à mes compétences ?",
+      "exploreSuggestion3": "Qu'est-ce qui me manque pour devenir Data Analyst ?",
       "followUp": {
         "adjustDraft": "Ajuste ce draft avant confirmation",
         "makeConcise": "Rends la proposition plus concise",

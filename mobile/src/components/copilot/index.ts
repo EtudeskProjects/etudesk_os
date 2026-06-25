@@ -11,7 +11,6 @@ export { FeedbackButtons } from './FeedbackButtons';
 export { ThinkingIndicator } from './ThinkingIndicator';
 export { ToolBlock } from './ToolBlock';
 export { PulsingOrb } from './PulsingOrb';
-export { SuggestionsTooltip } from './SuggestionsTooltip';
 
 // Block components
 export { QuizBlock } from './blocks/QuizBlock';

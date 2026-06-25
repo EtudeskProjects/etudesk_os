@@ -51,7 +51,7 @@ export function SkillPicker({ value, onChange, withRequirement = false, label, m
       } finally {
         setSearching(false);
       }
-    }, 300);
+    }, 180);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -73,13 +73,6 @@ export function SkillPicker({ value, onChange, withRequirement = false, label, m
   };
 
   const remove = (slug: string) => onChange(value.filter((v) => v.slug !== slug));
-
-  const toggleReq = (slug: string) =>
-    onChange(
-      value.map((v) =>
-        v.slug === slug ? { ...v, requirement: v.requirement === 'nice_to_have' ? 'required' : 'nice_to_have' } : v
-      )
-    );
 
   return (
     <View style={styles.wrap}>
@@ -114,18 +107,10 @@ export function SkillPicker({ value, onChange, withRequirement = false, label, m
         <View style={styles.chips}>
           {value.map((s) => {
             const cfg = getSkillTypeConfig(s.type, colors);
-            const nice = s.requirement === 'nice_to_have';
             return (
               <View key={s.slug} style={[styles.chip, { backgroundColor: withOpacity(cfg.color, OPACITY[15]), borderColor: withOpacity(cfg.color, OPACITY[40]) }]}>
                 <cfg.Icon size={13} color={cfg.color} strokeWidth={2} />
                 <Text style={[styles.chipText, { color: cfg.color }]} numberOfLines={1}>{skillDisplayName(s, language)}</Text>
-                {withRequirement && (
-                  <Pressable onPress={() => toggleReq(s.slug)} hitSlop={6}>
-                    <Text style={[styles.req, { color: nice ? colors.textDisabled : colors.primary }]}>
-                      {nice ? t('labels.skillRequirement.nice_to_have') : t('labels.skillRequirement.required')}
-                    </Text>
-                  </Pressable>
-                )}
                 <Pressable onPress={() => remove(s.slug)} hitSlop={6}>
                   <X size={13} color={cfg.color} strokeWidth={2.5} />
                 </Pressable>
@@ -133,10 +118,6 @@ export function SkillPicker({ value, onChange, withRequirement = false, label, m
             );
           })}
         </View>
-      )}
-
-      {withRequirement && value.length > 0 && (
-        <Text style={[styles.hint, { color: colors.textDisabled }]}>{t('opportunity.form.skillsHint')}</Text>
       )}
     </View>
   );

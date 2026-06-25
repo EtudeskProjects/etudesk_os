@@ -296,7 +296,7 @@ export default function CommunityDetailScreen() {
                 <Image source={{ uri: getFullImageUrl(community.organization.logo_url) || '' }} style={styles.orgLogo} />
               ) : (
                 <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.orgLogoText}>
+                  <Text style={[styles.orgLogoText, { color: colors.textOnPrimary }]}>
                     {getInitials(community.organization.name || '')}
                   </Text>
                 </View>

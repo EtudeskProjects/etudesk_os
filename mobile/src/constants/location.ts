@@ -232,11 +232,6 @@ export const getCommuneLabel = (countryCode: string, regionId: string, communeId
   return commune?.label || communeId;
 };
 
-/** Get default currency for a country */
-export const getCurrencyForCountry = (countryCode: string): 'XOF' | 'USD' => {
-  return UEMOA_CODES.has(countryCode) ? 'XOF' : 'USD';
-};
-
 // Types de codes pays
 export type CountryCode = string;
 

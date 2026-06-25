@@ -9,7 +9,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SPACING, TYPOGRAPHY, BORDER, COMPONENT, withOpacity, OPACITY } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { useI18n } from '../contexts/I18nContext';
-import { getSkillTypeConfig, getRequirementConfig, skillDisplayName } from '../constants/skills';
+import { getSkillTypeConfig, skillDisplayName } from '../constants/skills';
 import { SkillLevelSteps } from './SkillLevelSteps';
 import type { EntitySkillTag } from '../services/skillService';
 
@@ -26,7 +26,7 @@ interface Props {
   currentLevels?: Record<string, string | null> | null;
 }
 
-export function EntitySkillTags({ skills, title, showRequirement = true, currentLevels }: Props) {
+export function EntitySkillTags({ skills, title, currentLevels }: Props) {
   const { colors } = useTheme();
   const { t, language } = useI18n();
   const showSteps = !!currentLevels;
@@ -69,11 +69,6 @@ export function EntitySkillTags({ skills, title, showRequirement = true, current
                 <Text style={[styles.chipText, { color: typeCfg.color }]} numberOfLines={1}>
                   {skillDisplayName(s, language)}
                 </Text>
-                {showRequirement && s.requirement && (
-                  <Text style={[styles.req, { color: getRequirementConfig(s.requirement, colors).color }]}>
-                    {isNice ? t('labels.skillRequirement.nice_to_have') : t('labels.skillRequirement.required')}
-                  </Text>
-                )}
               </View>
               {showSteps && (
                 <SkillLevelSteps
