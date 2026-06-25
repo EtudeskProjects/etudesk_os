@@ -10,6 +10,7 @@ import { SPACING, TYPOGRAPHY, BORDER, COMPONENT, withOpacity, OPACITY } from '..
 import { useTheme } from '../hooks/useTheme';
 import { useI18n } from '../contexts/I18nContext';
 import { getSkillTypeConfig, getRequirementConfig, skillDisplayName } from '../constants/skills';
+import { SkillLevelSteps } from './SkillLevelSteps';
 import type { EntitySkillTag } from '../services/skillService';
 
 interface Props {
@@ -18,11 +19,17 @@ interface Props {
   title?: string;
   /** Show the required/nice_to_have badge (opportunities). */
   showRequirement?: boolean;
+  /**
+   * Viewer's current level per competency slug. When provided, each chip shows
+   * the "Actuel vs Target" 4-step loader (current fill vs the skill's target).
+   */
+  currentLevels?: Record<string, string | null> | null;
 }
 
-export function EntitySkillTags({ skills, title, showRequirement = true }: Props) {
+export function EntitySkillTags({ skills, title, showRequirement = true, currentLevels }: Props) {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const showSteps = !!currentLevels;
 
   if (!skills || skills.length === 0) return null;
 
@@ -43,11 +50,13 @@ export function EntitySkillTags({ skills, title, showRequirement = true }: Props
           const typeCfg = getSkillTypeConfig(s.type, colors);
           const Icon = typeCfg.Icon;
           const isNice = s.requirement === 'nice_to_have';
+          const target = s.min_level || (isNice ? 'intermediate' : 'advanced');
           return (
             <View
               key={s.slug}
               style={[
                 styles.chip,
+                showSteps && styles.chipColumn,
                 {
                   backgroundColor: withOpacity(typeCfg.color, OPACITY[15]),
                   borderColor: withOpacity(typeCfg.color, isNice ? OPACITY[20] : OPACITY[40]),
@@ -55,14 +64,24 @@ export function EntitySkillTags({ skills, title, showRequirement = true }: Props
                 },
               ]}
             >
-              <Icon size={COMPONENT.pill.iconSize} color={typeCfg.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
-              <Text style={[styles.chipText, { color: typeCfg.color }]} numberOfLines={1}>
-                {skillDisplayName(s, language)}
-              </Text>
-              {showRequirement && s.requirement && (
-                <Text style={[styles.req, { color: getRequirementConfig(s.requirement, colors).color }]}>
-                  {isNice ? t('labels.skillRequirement.nice_to_have') : t('labels.skillRequirement.required')}
+              <View style={styles.chipMain}>
+                <Icon size={COMPONENT.pill.iconSize} color={typeCfg.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
+                <Text style={[styles.chipText, { color: typeCfg.color }]} numberOfLines={1}>
+                  {skillDisplayName(s, language)}
                 </Text>
+                {showRequirement && s.requirement && (
+                  <Text style={[styles.req, { color: getRequirementConfig(s.requirement, colors).color }]}>
+                    {isNice ? t('labels.skillRequirement.nice_to_have') : t('labels.skillRequirement.required')}
+                  </Text>
+                )}
+              </View>
+              {showSteps && (
+                <SkillLevelSteps
+                  level={currentLevels?.[s.slug] ?? null}
+                  type={s.type}
+                  target={target}
+                  size="xs"
+                />
               )}
             </View>
           );
@@ -91,6 +110,8 @@ const styles = StyleSheet.create({
     borderRadius: COMPONENT.pill.borderRadius,
     borderWidth: BORDER.width.thin,
   },
+  chipColumn: { flexDirection: 'column', alignItems: 'flex-start', gap: 5 },
+  chipMain: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chipText: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
   req: {
     fontSize: 11,

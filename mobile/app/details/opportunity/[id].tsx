@@ -36,6 +36,7 @@ import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import { getFileType, getFullFileUrl } from '../../../src/utils/file';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { EntitySkillTags } from '../../../src/components/EntitySkillTags';
+import skillService from '../../../src/services/skillService';
 import type { Opportunity, OpportunityAttachment } from '../../../src/types/models';
 import {
   getOpportunityTypeLabel,
@@ -128,6 +129,7 @@ export default function OpportunityDetailScreen() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<OpportunityAttachment | null>(null);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [myLevels, setMyLevels] = useState<Record<string, string> | null>(null);
   const alerts = useAlert();
 
   // Only show manage button if owner AND connected as organization
@@ -138,6 +140,24 @@ export default function OpportunityDetailScreen() {
     checkApplication();
     checkBookmark();
   }, [id]);
+
+  // Talent view only: load my catalog levels to show "Actuel vs Target" on required skills.
+  useEffect(() => {
+    if (currentSpace === 'organization') {
+      setMyLevels(null);
+      return;
+    }
+    (async () => {
+      try {
+        const mine = await skillService.getMySkills();
+        const map: Record<string, string> = {};
+        for (const s of mine) map[s.competency_slug] = s.level;
+        setMyLevels(map);
+      } catch {
+        setMyLevels(null);
+      }
+    })();
+  }, [currentSpace]);
 
   const checkBookmark = async () => {
     try {
@@ -519,7 +539,7 @@ export default function OpportunityDetailScreen() {
           )}
 
           {/* Catalog skill tags (required / nice_to_have) */}
-          <EntitySkillTags skills={opportunity.skills} title={t('opportunity.skillsRequired')} />
+          <EntitySkillTags skills={opportunity.skills} title={t('opportunity.skillsRequired')} currentLevels={myLevels} />
 
           {/* Attachments */}
           {(() => {

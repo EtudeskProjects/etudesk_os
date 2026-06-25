@@ -35,7 +35,8 @@ import { ShimmerPlaceholder } from '../ui';
 import { downloadAndOpenDocument, downloadAndShareDocument } from '../../utils/documentDownload';
 import { getCurrentLocale } from '../../i18n';
 import { getLabel } from '../../utils/labels';
-import { getSkillTypeConfig, getLevelConfig, getOriginConfig, normalizeLevel } from '../../constants/skills';
+import { getSkillTypeConfig, getOriginConfig } from '../../constants/skills';
+import { SkillLevelSteps } from '../SkillLevelSteps';
 import { getNotificationRoute } from '../../hooks/notifications/notificationNavigation';
 import { MapEntityCard } from './MapEntityCard';
 import { buildExternalMapUrl, getPrimaryMapPoint } from '../../utils/mapEntity';
@@ -519,15 +520,8 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     }
   }
   if (type === 'skill') {
-    const proficiency = normalizeLevel(data.level);
+    // Level is shown via the 4-step SkillLevelSteps loader in the card body.
     const skillType = data.skillType || data.type;
-    const levelCfg = getLevelConfig(proficiency, colors);
-    pushUniqueMetaItem({
-      items: metaItems,
-      seen: seenMeta,
-      blocked: blockedMeta,
-      item: { text: getLabel('proficiencyLevels', proficiency), color: levelCfg.color },
-    });
     if (skillType) {
       const typeCfg = getSkillTypeConfig(skillType, colors);
       pushUniqueMetaItem({
@@ -715,6 +709,12 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
           </Text>
         ) : null}
 
+        {type === 'skill' && data.level ? (
+          <View style={styles.skillSteps}>
+            <SkillLevelSteps level={data.level} type={data.skillType || data.type} size="sm" showLabel />
+          </View>
+        ) : null}
+
         {metaItems.length > 0 && (
           <View style={styles.cardMeta}>
             {metaItems.map((item, idx) => {
@@ -838,6 +838,10 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginBottom: 2,
+  },
+  skillSteps: {
+    marginTop: 6,
     marginBottom: 2,
   },
   cardMeta: {

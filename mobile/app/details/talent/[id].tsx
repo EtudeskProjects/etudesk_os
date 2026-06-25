@@ -34,6 +34,7 @@ import {
 	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 	import { useTheme } from '../../../src/hooks/useTheme';
 import { getSkillTypeConfig, getLevelConfig, skillDisplayName } from '../../../src/constants/skills';
+import { SkillLevelSteps } from '../../../src/components/SkillLevelSteps';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { useI18n } from '../../../src/contexts/I18nContext';
@@ -534,6 +535,7 @@ export default function TalentDetailScreen() {
                       <Text style={[styles.skillPillText, { color: baseColor }]}>
                         {skillDisplayName(skill, language)}
                       </Text>
+                      {skill.level ? <SkillLevelSteps level={skill.level} type={skill.type} size="xs" /> : null}
                     </View>
                   );
                 })}

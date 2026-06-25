@@ -34,6 +34,7 @@ import {
   normalizeType,
   type Level,
 } from '../../src/constants/skills';
+import { SkillLevelSteps } from '../../src/components/SkillLevelSteps';
 import { useAlert } from '../../src/contexts/AlertContext';
 import { useI18n } from '../../src/contexts/I18nContext';
 
@@ -198,7 +199,6 @@ export default function SkillsScreen() {
   };
 
   const renderSkill = (skill: TalentSkill) => {
-    const levelCfg = getLevelConfig(skill.level, colors);
     const originCfg = getOriginConfig(skill.origin, colors);
     const decayCfg = getDecayConfig(skill.decay_state, colors);
     const typeCfg = getSkillTypeConfig(skill.type, colors);
@@ -243,11 +243,13 @@ export default function SkillsScreen() {
           </Text>
         </View>
 
-        {/* Tags row: level + origin (+ decay) */}
+        {/* Level: 4-step loader (beginner -> master) with label */}
+        <View style={styles.levelRow}>
+          <SkillLevelSteps level={skill.level} type={skill.type} size="md" showLabel />
+        </View>
+
+        {/* Tags row: origin (+ decay) */}
         <View style={styles.tagsRow}>
-          <View style={[styles.tag, { backgroundColor: levelCfg.bg, borderColor: levelCfg.color }]}>
-            <Text style={[styles.tagText, { color: levelCfg.color }]}>{t(levelCfg.labelKey)}</Text>
-          </View>
           <View style={[styles.tag, styles.originTag, { backgroundColor: withOpacity(originCfg.color, OPACITY[15]), borderColor: withOpacity(originCfg.color, OPACITY[30]) }]}>
             <OriginIcon size={11} color={originCfg.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.tagText, { color: originCfg.color }]}>{t(originCfg.labelKey)}</Text>
@@ -524,6 +526,7 @@ const styles = StyleSheet.create({
   skillNameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingRight: 72 },
   skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, flexShrink: 1 },
 
+  levelRow: { marginTop: SPACING.sm },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.sm },
   tag: {
     paddingVertical: COMPONENT.pill.paddingVertical,
