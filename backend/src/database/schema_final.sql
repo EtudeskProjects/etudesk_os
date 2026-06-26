@@ -1809,6 +1809,50 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- SHORT LINKS (URL shortener — migration 019)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS short_links (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  slug VARCHAR(64) NOT NULL UNIQUE,
+  target_url TEXT NOT NULL,
+  label VARCHAR(255),
+  clicks INTEGER NOT NULL DEFAULT 0,
+  created_by VARCHAR(255) DEFAULT 'system',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  is_active BOOLEAN NOT NULL DEFAULT true
+);
+CREATE INDEX IF NOT EXISTS idx_short_links_slug ON short_links (slug) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_short_links_created_at ON short_links (created_at DESC);
+
+CREATE TABLE IF NOT EXISTS short_link_clicks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  link_id UUID NOT NULL REFERENCES short_links(id) ON DELETE CASCADE,
+  clicked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address INET,
+  user_agent TEXT,
+  referer TEXT,
+  country VARCHAR(100)
+);
+CREATE INDEX IF NOT EXISTS idx_short_link_clicks_link_id ON short_link_clicks (link_id);
+CREATE INDEX IF NOT EXISTS idx_short_link_clicks_clicked_at ON short_link_clicks (clicked_at DESC);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- SCHEMA DRIFT RECONCILIATION (columns added by later migrations / patches)
+-- ═══════════════════════════════════════════════════════════════════════════════
+ALTER TABLE billing_invoices      ADD COLUMN IF NOT EXISTS amount NUMERIC;
+ALTER TABLE billing_payments      ADD COLUMN IF NOT EXISTS amount NUMERIC;
+ALTER TABLE credit_ledger         ADD COLUMN IF NOT EXISTS amount NUMERIC;
+ALTER TABLE billing_invoice_items ADD COLUMN IF NOT EXISTS unit_price NUMERIC;
+ALTER TABLE billing_invoice_items ADD COLUMN IF NOT EXISTS line_total NUMERIC;
+ALTER TABLE community_activities  ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE talents               ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(5) DEFAULT 'fr';
+ALTER TABLE users                 ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(5) DEFAULT 'en';
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- END OF SCHEMA
 -- ═══════════════════════════════════════════════════════════════════════════════
