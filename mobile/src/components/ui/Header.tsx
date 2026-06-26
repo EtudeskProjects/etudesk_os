@@ -1,5 +1,5 @@
-import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
-import { SPACING, TYPOGRAPHY, LAYOUT, ICON } from '../../constants/theme';
+import { View, Text, StyleSheet } from 'react-native';
+import { SPACING, TYPOGRAPHY, LAYOUT, ICON, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface HeaderProps {
@@ -13,10 +13,10 @@ export function Header({ title, rightContent }: HeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
-        <Image
-          source={require('../../../assets/etudesk_squared_icon.png')}
-          style={styles.headerLogo}
-        />
+        {/* Monogramme monochrome (charte noir & blanc) — remplace l'ancien icone marron */}
+        <View style={[styles.headerLogo, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.headerLogoText, { color: colors.textOnPrimary }]}>lk</Text>
+        </View>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       <View style={styles.headerRight}>
@@ -45,7 +45,16 @@ const styles = StyleSheet.create({
   headerLogo: {
     width: ICON.size.xl,
     height: ICON.size.xl,
-    resizeMode: 'contain',
+    borderRadius: BORDER.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  headerLogoText: {
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    letterSpacing: -0.5,
   },
 
   headerTitle: {

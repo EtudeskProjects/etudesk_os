@@ -82,8 +82,11 @@ export function useNotifications() {
       }
 
       return token.data;
-    } catch (error) {
-      if (__DEV__) console.error('Error getting push token:', error);
+    } catch {
+      // Push tokens require the APNs "aps-environment" entitlement, only present in
+      // distribution builds (TestFlight / App Store), not in local dev builds.
+      // Non-critical: skip quietly instead of surfacing a red error overlay.
+      if (__DEV__) console.warn('Push token unavailable in this build (no APNs entitlement) — skipping.');
       return null;
     }
   }, []);

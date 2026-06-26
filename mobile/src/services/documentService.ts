@@ -401,23 +401,23 @@ export function isAllowedFileType(mimeType: string): boolean {
 /**
  * Get status color
  */
-// Document status colors - Luxe Africain design system
+// Document status colors — semantic tokens (theme noir & blanc)
 export function getStatusColor(status: DocumentStatus): string {
   switch (status) {
     case 'PENDING':
-      return LIGHT_COLORS.warning;        // #A67C52 - Warm amber
+      return LIGHT_COLORS.warning;
     case 'PROCESSING':
-      return LIGHT_COLORS.info;           // #6B5E52 - Warm taupe
+      return LIGHT_COLORS.info;
     case 'PROCESSED':
-      return LIGHT_COLORS.success;        // #4A6741 - Forest green
+      return LIGHT_COLORS.success;
     case 'FAILED':
-      return LIGHT_COLORS.error;          // #8B4A3C - Terracotta
+      return LIGHT_COLORS.error;
     case 'VERIFIED':
-      return LIGHT_COLORS.successDark;    // #3A5233 - Dark green
+      return LIGHT_COLORS.successDark;
     case 'REJECTED':
-      return LIGHT_COLORS.errorDark;      // #6B3A2E - Dark terracotta
+      return LIGHT_COLORS.errorDark;
     default:
-      return LIGHT_COLORS.gray500;        // #918A7E - Neutral gray
+      return LIGHT_COLORS.gray500;
   }
 }
 

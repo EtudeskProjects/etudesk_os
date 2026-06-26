@@ -56,26 +56,26 @@ logger.info(`📧 Email provider: ${EMAIL_PROVIDER.toUpperCase()}${EMAIL_PROVIDE
 
 // --- Helpers ---
 
-// --- Brand Design System - Luxe Africain ---
+// --- Brand Design System - Noir & Blanc (aligne sur le theme mobile) ---
 
-// Primary - Marron Luxe (Rich Brown)
-const BRAND_PRIMARY = '#3B2416';
-const BRAND_PRIMARY_LIGHT = '#5C3D2E';
-const BRAND_PRIMARY_DARK = '#2A1A10';
+// Primary - Noir encre
+const BRAND_PRIMARY = '#18181B';
+const BRAND_PRIMARY_LIGHT = '#27272A';
+const BRAND_PRIMARY_DARK = '#09090B';
 
-// Neutrals - Warm Gray Scale
-const BRAND_BLACK = '#1F1C18';
-const BRAND_GRAY = '#4D4840';
-const BRAND_GRAY_LIGHT = '#918A7E';
+// Neutrals - Gray Scale (zinc)
+const BRAND_BLACK = '#18181B';
+const BRAND_GRAY = '#52525B';
+const BRAND_GRAY_LIGHT = '#A1A1AA';
 
 // Semantic
-const BRAND_SUCCESS = '#4A6741';
-const BRAND_ERROR = '#8B4A3C';
-const BRAND_WARNING = '#A67C52';
+const BRAND_SUCCESS = '#16A34A';
+const BRAND_ERROR = '#DC2626';
+const BRAND_WARNING = '#D97706';
 
 // Backgrounds
-const BRAND_BG_LIGHT = '#FAF9F7';
-const BRAND_BG_SECONDARY = '#F5F3F0';
+const BRAND_BG_LIGHT = '#FAFAFA';
+const BRAND_BG_SECONDARY = '#F4F4F5';
 
 // Logo URL (web assets)
 const LOGO_URL = EMAIL_LOGO_URL;
@@ -528,7 +528,7 @@ export async function sendCommunityInviteEmail(
               </div>
 
               ${message ? `
-              <div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
+              <div style="background-color: #F4F4F5; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
                 <p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">
                   "${message}"
                 </p>
@@ -629,7 +629,7 @@ export async function sendSpaceInviteEmail(
             <div style="background-color: ${BRAND_BG_SECONDARY}; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
               <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">${spaceName}</p>
             </div>
-            ${message ? `<div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
+            ${message ? `<div style="background-color: #F4F4F5; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
               <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:spaceInvite.viewInvitation')}</a>
             </div>
@@ -692,7 +692,7 @@ export async function sendOpportunityInviteEmail(
               <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">${opportunityTitle}</p>
               <p style="margin: 8px 0 0; font-size: 14px; color: #6b7280;">${organizationName}</p>
             </div>
-            ${message ? `<div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
+            ${message ? `<div style="background-color: #F4F4F5; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
               <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:opportunityInvite.viewOpportunity')}</a>
             </div>
