@@ -5,12 +5,16 @@
  * Each constant targets the best provider for its use case:
  * - Anthropic Claude: agents + guardrails/summaries (best reasoning)
  * - OpenAI: form suggestions, images, web search, embeddings, STT, matching, vision
+ *
+ * Updated 2026-06 to the current OpenAI lineup (GPT-5.4 family + gpt-image-2).
+ * Note: GPT-5 chat models reject a custom `temperature` and require
+ * `max_completion_tokens` (not `max_tokens`) — call sites are aligned accordingly.
  */
 
-// --- OpenAI (form suggestions — gpt-4.1-nano) ---
+// --- OpenAI (form suggestions — gpt-5.4-nano: fast/cheap) ---
 
 /** Form generation: spaces, communities, opportunities, bios, daily objectives, WhatsApp */
-export const MODEL_SUGGESTION = 'gpt-4.1-nano';
+export const MODEL_SUGGESTION = 'gpt-5.4-nano';
 
 // --- Anthropic Claude (agents — best reasoning + tool use) ---
 
@@ -24,14 +28,14 @@ export const MODEL_FAST = 'claude-haiku-4-5';
 
 // --- OpenAI (specialized capabilities) ---
 
-/** Image generation (DALL-E / gpt-image) */
-export const MODEL_IMAGE = 'gpt-image-1';
+/** Image generation — gpt-image-2 (current SOTA, used by the study tutor for illustrations) */
+export const MODEL_IMAGE = 'gpt-image-2';
 
-/** Web search synthesis + document vision/extraction */
-export const MODEL_SEARCH = 'gpt-4.1-mini';
+/** Document vision/extraction + KYC (gpt-5.4-mini: vision-capable, low latency) */
+export const MODEL_SEARCH = 'gpt-5.4-mini';
 
-/** Recommendations matching (cost-effective) */
-export const MODEL_MATCH = 'gpt-4.1-nano';
+/** Recommendations matching (cost-effective — gpt-5.4-nano) */
+export const MODEL_MATCH = 'gpt-5.4-nano';
 
 /** Speech-to-text (OpenAI — gpt-4o-mini-transcribe: lower WER, better French recognition than whisper-1) */
 export const MODEL_STT = 'gpt-4o-mini-transcribe';

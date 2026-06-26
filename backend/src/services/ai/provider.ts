@@ -71,15 +71,15 @@ if (!process.env.OPENAI_API_KEY) {
 /** Anthropic client — for main agents, guardrails, titles */
 export function getAnthropicClient(): Anthropic { return anthropicClient; }
 
-/** Suggestion client — OpenAI (gpt-4.1-nano for form/field suggestions) */
+/** Suggestion client — OpenAI (gpt-5.4-nano for form/field suggestions) */
 export function getSuggestionClient(): OpenAI {
   return openaiClient;
 }
 
-/** OpenAI client — STT (whisper), moderation, vision, files API */
+/** OpenAI client — STT, moderation, vision, files API */
 export function getOpenAIClient(): OpenAI { return openaiClient; }
 
-/** Image generation — always OpenAI (gpt-image-1) */
+/** Image generation — always OpenAI (gpt-image-2) */
 export function getImageClient(): OpenAI { return openaiClient; }
 
 /** Embeddings — always OpenAI (Pinecone 1536d compat) */

@@ -101,8 +101,7 @@ export async function analyzeAudio(
       { role: 'system', content: prompt },
       { role: 'user', content: transcribedText },
     ],
-    max_tokens: 1024,
-    temperature: 0.3,
+    max_completion_tokens: 1024, // GPT-5: max_completion_tokens (not max_tokens), default temperature only
   });
 
   const text = completion.choices?.[0]?.message?.content?.trim();

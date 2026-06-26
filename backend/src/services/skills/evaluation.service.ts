@@ -177,7 +177,7 @@ Output STRICT JSON: {"items":[{"competency_id","A","C","I","T","lens_level","rat
     try {
       const resp = await openai.chat.completions.create({
         model: MODEL_SEARCH,
-        temperature: 0,
+        // GPT-5 models only accept default temperature; JSON mode + confidence guards keep output stable.
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: system },
