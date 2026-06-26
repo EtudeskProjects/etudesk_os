@@ -21,6 +21,8 @@ const pinecone = new Pinecone({
 const PINECONE_INDEX = process.env.PINECONE_INDEX || 'etudesk';
 const SEMANTIC_THRESHOLD = 0.35;
 const KEYWORD_FALLBACK_THRESHOLD = 3; // trigger keyword fallback if < 3 Pinecone results
+// Hosted reranking model (Pinecone Inference v8). Override via env if needed.
+const RERANK_MODEL = process.env.PINECONE_RERANK_MODEL || 'pinecone-rerank-v0';
 
 const ENTITY_TO_TYPE: Record<string, string> = {
   opportunities: 'opportunity',
@@ -443,12 +445,36 @@ export const smartSearchTool = defineTool({
       // Sort: semantic score DESC, then keyword results at end
       allResults.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
-      const finalResults = allResults.slice(0, topK);
+      // --- Phase 3b: semantic reranking (Pinecone Inference) — sharpens relevance ---
+      // Reorders the candidate pool by true query relevance; best-effort (skips on failure).
+      let reranked = allResults;
+      let didRerank = false;
+      if (allResults.length > 1) {
+        try {
+          const documents = allResults.map(
+            (r: any) => `${r.name || r.title || ''}. ${r.description || r.summary || ''}`.trim().slice(0, 512)
+          );
+          const rr = await pinecone.inference.rerank({
+            model: RERANK_MODEL,
+            query,
+            documents,
+            topN: Math.min(allResults.length, Math.max(topK, 12)),
+            returnDocuments: false,
+          });
+          reranked = rr.data.map((d) => ({ ...allResults[d.index], rerankScore: d.score }));
+          didRerank = true;
+        } catch (e: any) {
+          logger.warn(`[smart_search] rerank skipped: ${e.message}`);
+        }
+      }
+
+      const finalResults = reranked.slice(0, topK);
 
       const result = {
         results: finalResults,
         totalFound: finalResults.length,
         source,
+        reranked: didRerank,
       };
 
       // Cache for anti-loop (with TTL)

@@ -305,7 +305,7 @@ export async function upsertTalentEmbedding(
     const embedding = await generateEmbedding(text);
 
     const index = getPineconeIndex();
-    await index.upsert([
+    await index.upsert({ records: [
       {
         id: `talent:${talentId}`,
         values: embedding,
@@ -322,7 +322,7 @@ export async function upsertTalentEmbedding(
           skills: talent.skills || [],
         },
       },
-    ]);
+    ] });
 
     // Note: Embedding is stored in Pinecone only, not in PostgreSQL
     // to avoid schema complexity and since Pinecone is the primary vector store
@@ -344,7 +344,7 @@ export async function upsertOpportunityEmbedding(
     const embedding = await generateEmbedding(text);
 
     const index = getPineconeIndex();
-    await index.upsert([
+    await index.upsert({ records: [
       {
         id: `opportunity:${opportunityId}`,
         values: embedding,
@@ -354,7 +354,7 @@ export async function upsertOpportunityEmbedding(
           text: text.slice(0, 500),
         },
       },
-    ]);
+    ] });
 
     // Note: Embedding is stored in Pinecone only, not in PostgreSQL
     // to avoid schema complexity and since Pinecone is the primary vector store
@@ -376,7 +376,7 @@ export async function upsertCommunityEmbedding(
     const embedding = await generateEmbedding(text);
 
     const index = getPineconeIndex();
-    await index.upsert([
+    await index.upsert({ records: [
       {
         id: `community:${communityId}`,
         values: embedding,
@@ -392,7 +392,7 @@ export async function upsertCommunityEmbedding(
           sectors: community.sectors || [],
         },
       },
-    ]);
+    ] });
   } catch (error) {
     logger.error('Error upserting community embedding:', error);
   }
@@ -410,7 +410,7 @@ export async function upsertSpaceEmbedding(
     const embedding = await generateEmbedding(text);
 
     const index = getPineconeIndex();
-    await index.upsert([
+    await index.upsert({ records: [
       {
         id: `space:${spaceId}`,
         values: embedding,
@@ -426,7 +426,7 @@ export async function upsertSpaceEmbedding(
           sectors: space.sectors || [],
         },
       },
-    ]);
+    ] });
   } catch (error) {
     logger.error('Error upserting space embedding:', error);
   }
@@ -439,7 +439,7 @@ export async function upsertSpaceEmbedding(
 export async function deletePineconeVector(type: string, id: string): Promise<void> {
   try {
     const index = getPineconeIndex();
-    await index.deleteOne(`${type}:${id}`);
+    await index.deleteOne({ id: `${type}:${id}` });
     logger.info(`[embedding] Deleted Pinecone vector ${type}:${id}`);
   } catch (error) {
     logger.error(`[embedding] Error deleting Pinecone vector ${type}:${id}:`, error);
@@ -483,11 +483,11 @@ export async function getSemanticBoost(
     const index = getPineconeIndex();
 
     // Fetch talent embedding
-    const talentResult = await index.fetch([`talent:${talentId}`]);
+    const talentResult = await index.fetch({ ids: [`talent:${talentId}`] });
     const talentVector = talentResult.records[`talent:${talentId}`]?.values;
 
     // Fetch opportunity embedding
-    const oppResult = await index.fetch([`opportunity:${opportunityId}`]);
+    const oppResult = await index.fetch({ ids: [`opportunity:${opportunityId}`] });
     const oppVector = oppResult.records[`opportunity:${opportunityId}`]?.values;
 
     if (talentVector && oppVector) {

@@ -230,7 +230,7 @@ export async function extractDocumentMetadata(
 
     // Cleanup: delete uploaded file from OpenAI
     if (uploadedFileId) {
-      openai.files.del(uploadedFileId).catch(() => {});
+      openai.files.delete(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

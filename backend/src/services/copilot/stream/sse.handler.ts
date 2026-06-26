@@ -356,6 +356,11 @@ export async function runAgentWithSSE(
         };
 
         try {
+          // Extended thinking (Sonnet 4.6 / Opus): opt-in via ANTHROPIC_THINKING_BUDGET
+          // (>=1024). Off by default = zero behavior change. Thinking blocks are
+          // preserved across tool turns automatically (we push response.content below).
+          const thinkingBudget = Number(process.env.ANTHROPIC_THINKING_BUDGET || 0);
+          const thinkingEnabled = thinkingBudget >= 1024;
           const stream = client.messages.stream({
             model: agentConfig.model,
             system: [
@@ -367,7 +372,10 @@ export async function runAgentWithSSE(
             ],
             messages,
             tools: toolDefs,
-            max_tokens: 4096,
+            max_tokens: thinkingEnabled ? thinkingBudget + 4096 : 4096,
+            ...(thinkingEnabled
+              ? { thinking: { type: 'enabled' as const, budget_tokens: thinkingBudget } }
+              : {}),
           });
 
           for await (const event of stream) {
