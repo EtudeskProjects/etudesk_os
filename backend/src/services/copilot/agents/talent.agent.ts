@@ -60,13 +60,14 @@ export function createTalentAgent(
     ];
     instructions = buildTalentStudyPrompt(context);
   } else {
-    // EXPLORER MODE (default): smart_search, sql_query, generate_document + execute_action
+    // EXPLORER MODE (default): smart_search, sql_query, generate_document, find_competency, execute_action
     tools = [
       smartSearchTool,
       secureSqlTool,
       createGenerateDocumentTool(context.profile.id, context.profile.avatarUrl, undefined, context.language),
       fileReaderTool,
       webSearchAsTool,
+      createFindCompetencyTool(), // validate/resolve catalog skills for skill_match (Actuel vs Cible)
       createExecuteActionTool(context.profile.id, context.language),
     ];
     instructions = buildTalentExplorerPrompt(context);

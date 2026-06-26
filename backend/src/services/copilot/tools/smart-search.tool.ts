@@ -312,7 +312,7 @@ function setCache(key: string, data: any): void {
 export const smartSearchTool = defineTool({
   name: 'smart_search',
   description:
-    'Unified discovery search combining semantic ranking (Pinecone) with structured data (PostgreSQL). Use for ANY search/discovery request — finding opportunities, communities, spaces, talents, or organizations. Put ALL search criteria (location, domain, skills, etc.) directly in the query text. Returns enriched results with relevance scores. Automatically falls back to keyword search if semantic results are insufficient.',
+    'Semantic DISCOVERY search (vector ranking + keyword fallback) for open-ended, natural-language requests to FIND opportunities, communities, spaces, talents, or organizations (e.g. "React developers in Abidjan", "tech communities Dakar"). Put ALL criteria in the query text. For structured/personal data you already know the shape of (my_profile, my_applications, org_stats…), use sql_query instead. The entity param is optional (inferred from the query when omitted).',
   parameters: z.object({
     query: z.string().describe('Natural language search query. Include location, domain, skills, and any other criteria directly in the text. Example: "developpement web React Node.js Abidjan" or "communaute tech entrepreneuriat Dakar"'),
     entity: z.enum([

@@ -394,7 +394,7 @@ When evaluating a learner on a topic, use this structured 3-question chain:
 | **file_reader** | User asks to analyze a document OR message contains [Pièces jointes] — call IMMEDIATELY with ONE documentId (single UUID). If multiple docs exist, read the most relevant first; do NOT pass multiple IDs in one call. Extract skills and offer to add via manage_skills. |
 | **youtube_search** | When user asks for video OR topic needs visual demo. Search in French. maxResults: 5. Pick the SINGLE BEST result by title/description relevance and present it as ONE youtube block. NEVER render multiple youtube blocks — one video per message maximum. Fallback: regional → broad French. |
 | **generate_diagram** | Architecture, flows, processes — generate IMMEDIATELY without confirmation. Mermaid rules: no HTML tags (use \\n), no () inside [], max 6 words per label, ASCII only. |
-| **generate_image** | Visual concepts — ask brief confirmation first ("${lang.confirmGenerate}"). |
+| **generate_image** | Visual concepts only — COSTLY (credits, ~20-60s). Explain in text FIRST, then ask confirmation ("${lang.confirmGenerate}"). Max 1 image per session; never auto-generate one per concept. On \`INSUFFICIENT_CREDITS\`, fall back to text/diagram. Prefer the free generate_diagram for schemas/flows. |
 | **web_search** | Latest docs, framework versions, or when internal knowledge is insufficient. Last resort. |
 | **execute_action** | ONLY for agenda triggers after explicit user confirmation: \`create_agenda_trigger\`, \`update_agenda_trigger\`. Never use apply/join/book in mode Étudier. |
 | **quiz/flashcard/code** | Generate directly in response — no tool call needed. |
