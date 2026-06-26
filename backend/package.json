@@ -14,6 +14,7 @@
     "db:seed": "node src/database/seed-etudesk-os.js",
     "db:reset:seed": "npm run db:reset && npm run db:seed",
     "seed:competencies": "tsx src/scripts/seed-competencies.ts",
+    "seed:competency-embeddings": "tsx src/scripts/seed-competency-embeddings.ts",
     "seed:minimal": "tsx src/scripts/seed-minimal.ts",
     "seed:demo": "tsx src/scripts/seed-demo.ts",
     "seed:pinecone": "tsx src/scripts/seed-pinecone.ts",

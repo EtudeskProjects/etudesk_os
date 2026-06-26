@@ -196,12 +196,14 @@ CREATE TABLE competencies (
     name            VARCHAR(255) NOT NULL,
     name_fr         VARCHAR(255) NOT NULL,
     catalog_version VARCHAR(20)  NOT NULL,
+    embedding       vector(1536),   -- semantic resolution (seed:competency-embeddings)
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_competencies_family ON competencies(family);
 CREATE INDEX idx_competencies_type   ON competencies(type);
+CREATE INDEX idx_competencies_embedding ON competencies USING hnsw (embedding vector_cosine_ops);
 CREATE UNIQUE INDEX uq_competencies_name    ON competencies (lower(name));
 CREATE UNIQUE INDEX uq_competencies_name_fr ON competencies (lower(name_fr));
 CREATE INDEX idx_competencies_name_trgm    ON competencies USING gin (lower(name)    gin_trgm_ops);

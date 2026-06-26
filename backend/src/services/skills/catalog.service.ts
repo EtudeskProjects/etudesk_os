@@ -4,13 +4,16 @@
  * The digital skills referential (competencies + competency_edges, seeded from
  * datasets/etudesk_digital_skills) is the single source of truth. Every writer
  * (REST API, manage_skills tool, document extraction, validation, evaluation)
- * resolves free-text labels to a catalog slug through this service. Pure SQL,
- * no LLM. An in-process cache memoizes the (small, 1211-row) catalog.
+ * resolves free-text labels to a catalog slug through this service. Resolution
+ * ladder: exact slug -> exact name -> trigram -> semantic (pgvector cosine over
+ * competencies.embedding, embedded once by seed:competency-embeddings). An
+ * in-process cache memoizes the (small, 1211-row) catalog.
  */
 
 import { pool } from '../database';
 import { logger } from '../../utils';
 import { CatalogType } from '../../constants/skills';
+import { generateEmbedding } from '../embedding.service';
 
 export interface Competency {
   slug: string;
@@ -35,6 +38,36 @@ export interface ResolveResult extends Competency {
 
 // Minimum trigram similarity to accept a fuzzy resolution.
 const RESOLVE_THRESHOLD = Number(process.env.CATALOG_RESOLVE_THRESHOLD || 0.5);
+// Minimum cosine similarity to accept a SEMANTIC (embedding) resolution — higher
+// bar than suggestions since this writes a skill. Tuned for text-embedding-3-small.
+const SEMANTIC_RESOLVE_THRESHOLD = Number(process.env.CATALOG_SEMANTIC_THRESHOLD || 0.62);
+
+/**
+ * Semantic nearest competencies via pgvector cosine over competencies.embedding
+ * (the referential is embedded once by seed:competency-embeddings). Returns rows
+ * with `sim` (cosine 0..1). Empty if embeddings are absent or the query fails.
+ */
+async function searchByEmbedding(query: string, limit: number): Promise<Array<Competency & { sim: number }>> {
+  try {
+    const vec = await generateEmbedding(query);
+    const { rows } = await pool.query(
+      `SELECT slug, family, type, name, name_fr, catalog_version,
+              1 - (embedding <=> $1::vector) AS sim
+       FROM competencies
+       WHERE embedding IS NOT NULL
+       ORDER BY embedding <=> $1::vector
+       LIMIT $2`,
+      [`[${vec.join(',')}]`, limit]
+    );
+    return rows.map((r) => ({
+      slug: r.slug, family: r.family, type: r.type, name: r.name,
+      name_fr: r.name_fr, catalog_version: r.catalog_version, sim: Number(r.sim),
+    }));
+  } catch (err: any) {
+    logger.warn(`[catalog] semantic search failed for "${query}": ${err.message}`);
+    return [];
+  }
+}
 
 // --- In-process cache -----------------------------------------------------------
 
@@ -159,13 +192,28 @@ export async function resolveLabel(label: string): Promise<ResolveResult | null>
   } catch (err: any) {
     logger.error(`[catalog] resolveLabel fuzzy failed for "${label}": ${err.message}`);
   }
+
+  // 4. semantic fallback (embedding cosine) — catches paraphrases/synonyms the
+  // trigram misses (e.g. "ML" -> "Machine Learning"). High threshold for precision.
+  const sem = await searchByEmbedding(label, 1);
+  if (sem.length > 0 && sem[0].sim >= SEMANTIC_RESOLVE_THRESHOLD) {
+    const { sim, ...c } = sem[0];
+    return { ...c, confidence: sim };
+  }
+
   return null;
 }
 
-/** Top fuzzy candidates for a label (used to suggest options to the agent). */
+/** Top candidates for a label — semantic (embedding) first, trigram fallback.
+ *  Used to suggest in-catalog alternatives (find_competency redirect). */
 export async function suggestCompetencies(label: string, limit = 3): Promise<Competency[]> {
   await ensureCache();
   const norm = normalize(label);
+  // Semantic suggestions surface the closest catalog skills by MEANING.
+  const sem = await searchByEmbedding(label, limit);
+  if (sem.length > 0) {
+    return sem.map(({ sim, ...c }) => c);
+  }
   try {
     const { rows } = await pool.query(
       `SELECT slug, family, type, name, name_fr, catalog_version,
