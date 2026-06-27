@@ -72,6 +72,11 @@ export default function DigitalSkills() {
 
   const filtering = !!(type || family || searching);
   const colorHex = (c: Competency) => (colorBy === 'family' ? FAMILY_HEX[c.family] : TYPE_HEX[c.type])[isDark ? 'dark' : 'light'];
+  // Icone Lucide du TYPE de la competence, coloree (remplace les pastilles).
+  const typeIcon = (c: Competency) => {
+    const I = TYPE_MAP[c.type].Icon;
+    return <span className="tic"><I size={15} strokeWidth={1.5} color={colorHex(c)} /></span>;
+  };
   const relTone = (k: 'pre' | 'sib' | 'rel') =>
     ({ pre: ['#2563EB', '#60A5FA'], sib: ['#16A34A', '#4ADE80'], rel: ['#D97706', '#FBBF24'] }[k][isDark ? 1 : 0]);
 
@@ -109,7 +114,7 @@ export default function DigitalSkills() {
               <div className="sresults">
                 {searchResults.map((c) => (
                   <button key={c.slug} onClick={() => { setSelected(c.slug); setQuery(''); }}>
-                    <span className="dot" style={{ background: colorHex(c) }} />
+                    {typeIcon(c)}
                     <span className="sr-name">{label(c)}</span>
                     <span className="sr-fam">{lang === 'fr' ? FAMILY_MAP[c.family].fr : FAMILY_MAP[c.family].en}</span>
                   </button>
@@ -191,7 +196,7 @@ export default function DigitalSkills() {
                       <div className="relg-items">
                         {items.map((c) => (
                           <button key={c.slug} className="rel-chip" title={label(c)} onClick={() => setSelected(c.slug)}>
-                            <span className="dot" style={{ background: colorHex(c) }} /><span className="rc-name">{label(c)}</span>
+                            {typeIcon(c)}<span className="rc-name">{label(c)}</span>
                           </button>
                         ))}
                       </div>
@@ -215,7 +220,7 @@ export default function DigitalSkills() {
                   if (!c) return null;
                   return (
                     <button key={slug} className="hub" onClick={() => setSelected(slug)}>
-                      <span className="dot" style={{ background: colorHex(c) }} />
+                      {typeIcon(c)}
                       <span className="hub-name" title={label(c)}>{label(c)}</span>
                       <span className="hub-deg">{getDegree(slug)}</span>
                     </button>
@@ -268,6 +273,7 @@ export default function DigitalSkills() {
         .row.active .rname { font-weight: var(--font-weight-bold); color: var(--text-primary); }
         .row.dim { opacity: 0.4; }
         .dot { width: 0.6rem; height: 0.6rem; border-radius: var(--radius-full); flex: none; }
+        .tic { flex: none; display: inline-flex; align-items: center; }
         .ric { display: flex; align-items: center; justify-content: center; flex: none; width: 1.1rem; }
         .rname { flex: 1; min-width: 0; font-size: var(--font-size-sm); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .rcount { font-size: var(--font-size-xs); color: var(--text-tertiary); }
