@@ -1210,3 +1210,53 @@ hardhat,web3_blockchain,tool_platform,Hardhat,Hardhat
 metamask,web3_blockchain,tool_platform,MetaMask,MetaMask
 polygon,web3_blockchain,tool_platform,Polygon,Polygon
 solana,web3_blockchain,tool_platform,Solana,Solana
+augmented-reality-development,emerging_tech,hard_skill,Augmented Reality Development,Développement en réalité augmentée
+virtual-reality-development,emerging_tech,hard_skill,Virtual Reality Development,Développement en réalité virtuelle
+mixed-reality-xr,emerging_tech,knowledge,Mixed Reality (XR),Réalité mixte (XR)
+arkit-arcore,emerging_tech,tool_platform,ARKit & ARCore,ARKit & ARCore
+webxr-development,software_dev,hard_skill,WebXR Development,Développement WebXR
+ar-vr-experience-design,product_design,hard_skill,AR/VR Experience Design,Conception d'expériences AR/VR
+semiconductor-design,emerging_tech,hard_skill,Semiconductor Design,Conception de semi-conducteurs
+integrated-circuit-design,emerging_tech,hard_skill,Integrated Circuit Design,Conception de circuits intégrés
+vlsi-design,emerging_tech,hard_skill,VLSI Design,Conception VLSI
+fpga-development,emerging_tech,hard_skill,FPGA Development,Développement FPGA
+pcb-design,emerging_tech,hard_skill,PCB Design,Conception de PCB
+electronics-engineering,emerging_tech,knowledge,Electronics Engineering,Génie électronique
+hardware-prototyping,emerging_tech,hard_skill,Hardware Prototyping,Prototypage matériel
+sensors-and-actuators,emerging_tech,knowledge,Sensors & Actuators,Capteurs et actionneurs
+chip-verification-testing,emerging_tech,hard_skill,Chip Verification & Testing,Vérification et test de puces
+electrical-engineering,emerging_tech,knowledge,Electrical Engineering,Génie électrique
+electrical-installation-wiring,emerging_tech,hard_skill,Electrical Installation & Wiring,Installation et câblage électrique
+power-systems-engineering,emerging_tech,hard_skill,Power Systems Engineering,Ingénierie des systèmes électriques
+power-electronics,emerging_tech,hard_skill,Power Electronics,Électronique de puissance
+electrical-safety,emerging_tech,knowledge,Electrical Safety,Sécurité électrique
+industrial-electricity,industry_knowledge,hard_skill,Industrial Electricity,Électricité industrielle
+solar-pv-installation,sustainability_climate,hard_skill,Solar PV Installation,Installation photovoltaïque
+solar-system-maintenance,sustainability_climate,hard_skill,Solar System Maintenance,Maintenance de systèmes solaires
+off-grid-minigrid-design,sustainability_climate,hard_skill,Off-grid & Mini-grid Design,Conception hors-réseau et mini-réseaux
+battery-storage-systems,sustainability_climate,hard_skill,Battery Storage Systems,Systèmes de stockage par batterie
+energy-audit,sustainability_climate,hard_skill,Energy Audit,Audit énergétique
+5g-6g-networks,emerging_tech,knowledge,5G/6G Networks,Réseaux 5G/6G
+rf-engineering,emerging_tech,hard_skill,RF Engineering,Ingénierie radiofréquence
+antenna-design,emerging_tech,hard_skill,Antenna Design,Conception d'antennes
+fiber-optic-installation,emerging_tech,hard_skill,Fiber Optic Installation,Installation de fibre optique
+telecom-infrastructure-deployment,cloud_devops,hard_skill,Telecom Infrastructure Deployment,Déploiement d'infrastructure telecom
+lorawan-mesh-networks,emerging_tech,hard_skill,LoRaWAN & Mesh Networks,LoRaWAN et réseaux maillés
+network-operations-noc,cloud_devops,hard_skill,Network Operations (NOC),Exploitation réseau (NOC)
+uav-traffic-management,emerging_tech,hard_skill,UAV Traffic Management (UTM),Gestion du trafic des drones (UTM)
+fpv-drone-piloting,emerging_tech,hard_skill,FPV Drone Piloting,Pilotage de drone FPV
+drone-maintenance-repair,emerging_tech,hard_skill,Drone Maintenance & Repair,Maintenance et réparation de drones
+drone-regulations-certification,emerging_tech,knowledge,Drone Regulations & Certification,Réglementation et certification des drones
+drone-payload-integration,emerging_tech,hard_skill,Drone Payload Integration,Intégration de charges utiles de drone
+drone-swarm-coordination,emerging_tech,hard_skill,Drone Swarm Coordination,Coordination d'essaims de drones
+gameplay-programming,software_dev,hard_skill,Gameplay Programming,Programmation gameplay
+level-design,media_content,hard_skill,Level Design,Conception de niveaux
+game-art-animation,media_content,hard_skill,Game Art & Animation,Art et animation de jeux
+game-audio-design,media_content,hard_skill,Game Audio Design,Conception audio de jeux
+mobile-game-development,software_dev,hard_skill,Mobile Game Development,Développement de jeux mobiles
+game-liveops-monetization,growth_marketing,hard_skill,Game LiveOps & Monetization,LiveOps et monétisation de jeux
+esports-management,business_management,hard_skill,Esports Management,Management esport
+game-production,business_management,hard_skill,Game Production,Production de jeux
+fluid-dynamics,emerging_tech,knowledge,Fluid Dynamics,Dynamique des fluides
+process-mining,data,hard_skill,Process Mining,Process mining
+traffic-flow-analysis,data,hard_skill,Traffic Flow Analysis,Analyse des flux de trafic

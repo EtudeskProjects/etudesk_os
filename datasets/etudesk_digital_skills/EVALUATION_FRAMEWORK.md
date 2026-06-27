@@ -3,7 +3,7 @@
 > Operational framework for AI services that create or update `UserCompetency` rows.
 > This is not a human self-assessment form.
 >
-> Catalog: `competency_catalog.csv` (1211 active skills, English labels + French labels).
+> Catalog: `competency_catalog.csv` (1261 active skills, English labels + French labels).
 > Graph: `competency_edges.csv`.
 > Current framework version: `2026-06-24`.
 

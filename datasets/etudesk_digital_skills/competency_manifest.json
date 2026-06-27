@@ -1,9 +1,9 @@
 {
   "catalog_version": "2026-Q2",
-  "competency_count": 1211,
-  "edge_count": 4009,
+  "competency_count": 1261,
+  "edge_count": 4147,
   "files": {
-    "competency_catalog.csv": "917bc9842e75e77952d9c6663ea036c9f0ca5d210acb130d5caedc7368971079",
-    "competency_edges.csv": "3e88c51cd634d1c39ecf2005a741415f1b3d364feb9657a9c23f807438520015"
+    "competency_catalog.csv": "2aa90887ee4c459ae425011ae435c37433bc450b135533f0193e6624cdccdfa6",
+    "competency_edges.csv": "6453c18b65431746bfccbc473982e7b7c594b8cd52bd5ab8d3171bb372db0b95"
   }
 }

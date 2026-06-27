@@ -7,7 +7,7 @@
  * resolves free-text labels to a catalog slug through this service. Resolution
  * ladder: exact slug -> exact name -> trigram -> semantic (pgvector cosine over
  * competencies.embedding, embedded once by seed:competency-embeddings). An
- * in-process cache memoizes the (small, 1211-row) catalog.
+ * in-process cache memoizes the (small, 1261-row) catalog.
  */
 
 import { pool } from '../database';

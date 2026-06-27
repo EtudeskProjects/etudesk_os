@@ -1,8 +1,8 @@
 # Etudesk Digital Skills Schema
 
 > Data model for the skill catalog, the adjacency graph, and talent skill evaluations.
-> Current catalog: `competency_catalog.csv` (1211 active skills, 16 families, 5 types, English and French labels).
-> Adjacency graph: `competency_edges.csv` (4009 edges, generated + curated, adversarially reviewed).
+> Current catalog: `competency_catalog.csv` (1261 active skills, 16 families, 5 types, English and French labels).
+> Adjacency graph: `competency_edges.csv` (4147 edges, generated + curated, adversarially reviewed).
 > Release manifest: `competency_manifest.json` (`catalog_version`: `2026-Q2`).
 > Last updated: June 24, 2026.
 
