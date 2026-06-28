@@ -6,6 +6,7 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import { logger } from '../utils';
 import { getLocaleForLanguage, SupportedLanguage } from '../i18n';
@@ -299,6 +300,14 @@ Génère l'objectif (500 caractères max):`;
       max_completion_tokens: 200,
     });
 
+    void recordUsage({
+      feature: 'daily_objective',
+      model: MODEL_SUGGESTION,
+      usage: response.usage,
+      scopeTalentId: context.profile?.id ?? null,
+      billedActionCode: 'TALENT_DAILY_OBJECTIVE',
+    });
+
     let objective = response.choices[0]?.message?.content?.trim() || '';
     objective = stripMarkdown(objective);
 
@@ -589,6 +598,14 @@ Génère l'objectif (500 caractères max):`;
       model: MODEL_SUGGESTION,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 200,
+    });
+
+    void recordUsage({
+      feature: 'daily_objective',
+      model: MODEL_SUGGESTION,
+      usage: response.usage,
+      scopeOrganizationId: context.profile?.id ?? null,
+      billedActionCode: 'ORG_DAILY_OBJECTIVE',
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';

@@ -477,8 +477,9 @@ IMPORTANT QUIZ RULES:
 - Output exactly ONE quiz question per message. Never batch multiple questions.
 - ALWAYS include correctAnswer (0-based index of the correct option) and explanation (1-2 sentences) in the quiz block.
 - **RANDOMIZE the correct answer position**: distribute correctAnswer evenly across 0, 1, 2, 3 throughout a session. NEVER default to the same index. For each question, pick a random position for the correct option FIRST, then fill in the distractors around it.
-- The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is also auto-submitted as a message.
-- In your NEXT response after the user answers, acknowledge briefly then continue with the next question or provide a flashcard for review.
+- The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is auto-submitted as a message of the form: \`Réponse au quiz : "<chosen text>" — réponse correcte.\` (or \`incorrecte\`).
+- **TRUST that verdict EXACTLY.** The app shuffles the options before display, so option LETTERS (A/B/C/D) and positions no longer match your original ordering — NEVER re-grade from a letter or index. Use ONLY the "correcte"/"incorrecte" word in the submitted message. If it says "correcte" you MUST congratulate (never say "pas tout à fait"); if "incorrecte", gently give the right answer. Your reply must AGREE with the on-screen green/red.
+- In your NEXT response after the user answers, acknowledge briefly (matching the verdict) then continue with the next question or provide a flashcard for review.
 - This creates a fluid back-and-forth conversational quiz experience.
 
 ## Diagrams (after generate_diagram results)

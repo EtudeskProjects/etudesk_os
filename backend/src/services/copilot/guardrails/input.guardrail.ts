@@ -6,6 +6,7 @@
 
 import { getAnthropicClient } from '../../ai/provider';
 import { MODEL_FAST } from '../../ai/models';
+import { recordUsage } from '../../ai/usage.service';
 import { logger } from '../../../utils';
 
 const CLASSIFIER_PROMPT = `You are a safety classifier for the Etudesk platform (talent & employment platform for French-speaking Africa).
@@ -74,6 +75,8 @@ export async function runInputGuardrail(
       system: CLASSIFIER_PROMPT,
       messages: [{ role: 'user', content: userMessage.slice(0, 500) }],
     });
+
+    void recordUsage({ feature: 'guardrail', model: MODEL_FAST, usage: response.usage as any });
 
     const classification = (response.content[0]?.type === 'text'
       ? response.content[0].text.trim().toUpperCase()

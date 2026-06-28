@@ -5,6 +5,7 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import {
   CommunityType,
@@ -130,6 +131,8 @@ export async function generateCommunitySuggestion(
     });
 
     logger.info(`[CommunityGeneration] Completed in ${Date.now() - startTime}ms`);
+
+    void recordUsage({ feature: 'form_suggestion', model: MODEL_SUGGESTION, usage: completion.usage, scopeOrganizationId: input.organization_id });
 
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {

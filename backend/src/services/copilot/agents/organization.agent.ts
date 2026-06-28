@@ -4,7 +4,7 @@
  */
 
 import { MODEL_AGENT } from '../../ai/models';
-import { AgentConfig } from '../tools/tool-helper';
+import { AgentConfig, splitSystemPrompt } from '../tools/tool-helper';
 import { OrgContext } from '../types';
 import { smartSearchTool } from '../tools/smart-search.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
@@ -47,11 +47,14 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
 
   const orgFileReaderTool = createOrgFileReaderTool(context.organizationId);
 
+  const { staticPrompt, dynamicPrompt } = splitSystemPrompt(buildOrgExplorerPrompt(context));
+
   return {
     name: 'Organization Explorer',
     mode: 'org' as const,
     model: MODEL_AGENT,
-    systemPrompt: buildOrgExplorerPrompt(context),
+    systemPrompt: dynamicPrompt,
+    systemPromptStatic: staticPrompt,
     tools: [
       smartSearchTool,
       secureSqlTool,

@@ -51,6 +51,8 @@ import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
 import { debitWalletForAction } from '../services/billing/credit.service';
+import { recordUsage } from '../services/ai/usage.service';
+import { MODEL_AGENT } from '../services/ai/models';
 import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
@@ -1173,6 +1175,28 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         traceMetrics.cacheReadTokens,
       ]
     ).catch((err) => logger.error('[copilot] Failed to persist trace:', err));
+
+    // COGS accounting — record this billed query's Sonnet spend (incl. cache write)
+    const billedActionCode = organizationId
+      ? 'ORG_ASSISTANT_MANAGER_QUERY'
+      : validMode === COPILOT_MODES.STUDY
+        ? 'TALENT_ASSISTANT_STUDY_QUERY'
+        : 'TALENT_ASSISTANT_EXPLORER_QUERY';
+    void recordUsage({
+      feature: 'copilot_agent',
+      model: MODEL_AGENT,
+      usage: {
+        input_tokens: traceMetrics.inputTokens,
+        output_tokens: traceMetrics.outputTokens,
+        cache_read_input_tokens: traceMetrics.cacheReadTokens,
+        cache_creation_input_tokens: traceMetrics.cacheCreationTokens,
+      },
+      scopeTalentId: talentId,
+      scopeOrganizationId: organizationId || null,
+      sessionId,
+      billedActionCode,
+      metadata: { mode: validMode, turns: traceMetrics.turnCount, tools: traceMetrics.toolCount },
+    });
 
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;

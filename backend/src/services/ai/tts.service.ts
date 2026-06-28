@@ -9,6 +9,7 @@
 
 import { getOpenAIClient } from './provider';
 import { MODEL_TTS } from './models';
+import { recordUsage } from './usage.service';
 import { logger } from '../../utils';
 
 const MAX_WORDS = 150; // ~1 min of audio
@@ -64,6 +65,8 @@ export async function generateTTS(
 
   const arrayBuffer = await response.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
+
+  void recordUsage({ feature: 'tts', model: MODEL_TTS, usage: null, metadata: { chars: truncated.length, bytes: buffer.length, voice } });
 
   logger.info(`[TTS] Generated ${buffer.length} bytes MP3`);
   return buffer;

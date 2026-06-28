@@ -3,7 +3,7 @@ import { pool } from '../database';
 import { logger } from '../../utils';
 import { BillingScope, WalletBalance, creditWallet } from './credit.service';
 import { createPaidInvoice } from './invoice.service';
-import { CURRENCY_CONFIG, SupportedCurrency, isSupportedCurrency } from '../../constants';
+import { CURRENCY_CONFIG, SupportedCurrency, isSupportedCurrency, CREDIT_PACKS_XOF, CREDIT_PACKS_USD } from '../../constants';
 
 interface InitCheckoutParams {
   scope: BillingScope;
@@ -54,6 +54,16 @@ function minAmountForScope(scope: BillingScope, currency: SupportedCurrency): nu
 }
 
 function creditsForAmount(amount: number, currency: SupportedCurrency): number {
+  // If the amount matches an advertised pack, grant exactly the pack's headline
+  // `credits` (bonus is already folded into that number — it's a marketing label,
+  // not an extra add-on). Otherwise fall back to the linear per-unit rate.
+  // Previously the linear rate alone was used, so pack buyers silently lost the
+  // advertised bonus tiers.
+  const packs = currency === 'USD' ? CREDIT_PACKS_USD : CREDIT_PACKS_XOF;
+  const pack = packs.find((p) => p.amount === amount);
+  if (pack) {
+    return Number(pack.credits.toFixed(2));
+  }
   const config = CURRENCY_CONFIG[currency];
   const rawCredits = amount * config.creditsPerUnit;
   return Number(rawCredits.toFixed(2));

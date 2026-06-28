@@ -10,6 +10,7 @@ import type { AgentConfig } from '../tools/tool-helper';
 import { SSEEvent, MessageSegment } from '../types';
 import { runInputGuardrail } from '../guardrails/input.guardrail';
 import { getAnthropicClient } from '../../ai/provider';
+import { recordUsage } from '../../ai/usage.service';
 import { generateToolSummary } from './tool-summary';
 import { sanitizeOutput } from '../guardrails/output.guardrail';
 import { getFileBuffer } from '../../storage.service';
@@ -21,6 +22,11 @@ const MAX_TURNS = 15;
 const MAX_TOOL_CALLS = 20;
 const MAX_SAME_TOOL_CALLS = 3;
 const MAX_TURN_DURATION_MS = 120_000;
+// Margin guardrail: a single billed query must not exceed its credit's worth of
+// compute. Output tokens are the expensive part ($15/1M on Sonnet). Capping
+// cumulative output bounds the blast radius of a runaway tool loop behind the
+// fixed credit price. Tunable via env without a deploy.
+const MAX_OUTPUT_TOKENS_PER_QUERY = Number(process.env.COPILOT_MAX_OUTPUT_TOKENS || 12_000);
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const SSE_BUFFER_FLUSH_MS = 50; // Buffer text deltas and flush every 50ms
 const MAX_PROVIDER_RETRIES = 2;
@@ -245,6 +251,7 @@ export async function runAgentWithSSE(
     inputTokens: number;
     outputTokens: number;
     cacheReadTokens: number;
+    cacheCreationTokens: number;
   };
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
@@ -261,6 +268,7 @@ export async function runAgentWithSSE(
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let totalCacheReadTokens = 0;
+  let totalCacheCreationTokens = 0;
   const sameToolCounts = new Map<string, number>();
   let consecutiveEmptyResults = 0;
 
@@ -308,7 +316,7 @@ export async function runAgentWithSSE(
           turnCount: 0, toolCount: 0, toolNames: [], toolErrors: 0,
           durationMs: Date.now() - turnStart, outputChars: 0,
           hasToolError: false, hitLoopDetection: false, hitTurnLimit: false, guardrailBlocked: true,
-          inputTokens: 0, outputTokens: 0, cacheReadTokens: 0,
+          inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0,
         },
       };
     }
@@ -326,6 +334,16 @@ export async function runAgentWithSSE(
         limitReached = true;
         const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
         sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
+        break;
+      }
+
+      // Margin guardrail: stop before another expensive model round-trip once the
+      // query has already consumed its token budget. Protects the fixed credit price.
+      if (!limitReached && totalOutputTokens >= MAX_OUTPUT_TOKENS_PER_QUERY) {
+        limitReached = true;
+        const limitMsg = 'Budget de calcul de la requête atteint. Voici les résultats disponibles.';
+        logger.warn(`[copilot] Output token budget reached (${totalOutputTokens}/${MAX_OUTPUT_TOKENS_PER_QUERY}). Stopping run.`);
+        sendSSE(res, { type: 'limit_reached', reason: 'max_tokens', message: limitMsg });
         break;
       }
 
@@ -361,15 +379,36 @@ export async function runAgentWithSSE(
           // preserved across tool turns automatically (we push response.content below).
           const thinkingBudget = Number(process.env.ANTHROPIC_THINKING_BUDGET || 0);
           const thinkingEnabled = thinkingBudget >= 1024;
+          // System prompt cache layout (1h TTL on each breakpoint):
+          //  - Block 1 (static): persona/rules/ontology/tools — IDENTICAL across all
+          //    users in the same mode/language, so it caches GLOBALLY (one shared
+          //    write, then cache-reads for everyone). This is the big cost lever.
+          //  - Block 2 (dynamic): per-user situation/profile/context.
+          // 1h TTL amortizes the ~20K-token static write across far more reads than
+          // the 5-min default. No content is reordered, so behaviour is unchanged.
+          const systemBlocks = agentConfig.systemPromptStatic
+            ? [
+                {
+                  type: 'text' as const,
+                  text: agentConfig.systemPromptStatic,
+                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
+                },
+                {
+                  type: 'text' as const,
+                  text: agentConfig.systemPrompt,
+                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
+                },
+              ]
+            : [
+                {
+                  type: 'text' as const,
+                  text: agentConfig.systemPrompt,
+                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
+                },
+              ];
           const stream = client.messages.stream({
             model: agentConfig.model,
-            system: [
-              {
-                type: 'text' as const,
-                text: agentConfig.systemPrompt,
-                cache_control: { type: 'ephemeral' as const },
-              },
-            ],
+            system: systemBlocks,
             messages,
             tools: toolDefs,
             max_tokens: thinkingEnabled ? thinkingBudget + 4096 : 4096,
@@ -437,6 +476,7 @@ export async function runAgentWithSSE(
             totalInputTokens += response.usage.input_tokens || 0;
             totalOutputTokens += response.usage.output_tokens || 0;
             totalCacheReadTokens += (response.usage as any).cache_read_input_tokens || 0;
+            totalCacheCreationTokens += (response.usage as any).cache_creation_input_tokens || 0;
           }
           break;
         } catch (streamError: any) {
@@ -707,6 +747,7 @@ export async function runAgentWithSSE(
     inputTokens: totalInputTokens,
     outputTokens: totalOutputTokens,
     cacheReadTokens: totalCacheReadTokens,
+    cacheCreationTokens: totalCacheCreationTokens,
   };
 
   return { finalOutput, toolTrace, segments, traceMetrics };
@@ -787,6 +828,8 @@ export async function generateSessionTitle(message: string, language: SupportedL
       messages: [{ role: 'user', content: message }],
     });
 
+    void recordUsage({ feature: 'session_title', model: MODEL_FAST, usage: response.usage as any });
+
     const raw = response.content[0]?.type === 'text'
       ? response.content[0].text.trim()
       : message.slice(0, 50);
@@ -816,11 +859,31 @@ export async function generateSuggestions(
     const { createSuggestionsAgent } = await import('../../ai/agent-factory');
     const { Runner } = await import('@openai/agents');
     const { openaiProvider } = await import('../../ai/provider');
+    const { MODEL_SUGGESTION } = await import('../../ai/models');
 
     const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary, getLanguageDisplayName(language));
     const agent = createSuggestionsAgent(systemPrompt);
     const suggestionRunner = new Runner({ modelProvider: openaiProvider });
     const result = await suggestionRunner.run(agent, `Generate the suggestions in ${getLanguageDisplayName(language)}.`);
+
+    // Extract token usage from the @openai/agents result (best-effort; shape varies).
+    const rawResponses: any[] = (result as any).rawResponses ?? (result as any).state?._modelResponses ?? [];
+    let promptTokens = 0;
+    let completionTokens = 0;
+    for (const r of rawResponses) {
+      promptTokens += r?.usage?.inputTokens ?? r?.usage?.prompt_tokens ?? 0;
+      completionTokens += r?.usage?.outputTokens ?? r?.usage?.completion_tokens ?? 0;
+    }
+    const suggestionsUsage = (promptTokens || completionTokens)
+      ? { prompt_tokens: promptTokens, completion_tokens: completionTokens }
+      : null;
+    void recordUsage({
+      feature: 'suggestions',
+      model: MODEL_SUGGESTION,
+      usage: suggestionsUsage,
+      ...(suggestionsUsage ? {} : { metadata: { usageUnavailable: true } }),
+    });
+
     const text = result.finalOutput?.trim() || '[]';
     return JSON.parse(text);
   } catch {

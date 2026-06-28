@@ -6,6 +6,7 @@
 import { logger } from '../../utils';
 import { getOpenAIClient } from './provider';
 import { MODEL_SUGGESTION, MODEL_STT } from './models';
+import { recordUsage } from './usage.service';
 
 const STUDY_PROMPT = `Tu es un assistant pédagogique. Analyse cette transcription vocale envoyée par un apprenant.
 
@@ -85,6 +86,8 @@ export async function analyzeAudio(
     file,
   });
 
+  void recordUsage({ feature: 'audio_stt', model: MODEL_STT, usage: (transcription as any).usage ?? null, metadata: { mode } });
+
   const transcribedText = transcription.text?.trim();
   if (!transcribedText) {
     throw new Error('No transcription result from OpenAI STT');
@@ -103,6 +106,8 @@ export async function analyzeAudio(
     ],
     max_completion_tokens: 1024, // GPT-5: max_completion_tokens (not max_tokens), default temperature only
   });
+
+  void recordUsage({ feature: 'audio_analysis', model: MODEL_SUGGESTION, usage: completion.usage });
 
   const text = completion.choices?.[0]?.message?.content?.trim();
   if (!text) {

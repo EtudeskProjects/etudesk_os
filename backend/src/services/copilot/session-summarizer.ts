@@ -6,6 +6,7 @@
 
 import { getAnthropicClient } from '../ai/provider';
 import { MODEL_FAST } from '../ai/models';
+import { recordUsage } from '../ai/usage.service';
 import { logger } from '../../utils';
 import { SupportedLanguage } from '../../i18n';
 import { getLanguageDisplayName } from '../language-preference.service';
@@ -62,6 +63,8 @@ export async function summarizeHistoryIfNeeded(
       system: buildSystemPrompt(languageName),
       messages: [{ role: 'user', content: conversationText }],
     });
+
+    void recordUsage({ feature: 'session_summarizer', model: MODEL_FAST, usage: response.usage as any });
 
     const summary = response.content
       .filter((b) => b.type === 'text')

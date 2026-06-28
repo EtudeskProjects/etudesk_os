@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MODEL_SEARCH } from './ai/models';
 import { getOpenAIClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
 import { toTOON } from './ai/toon';
@@ -332,6 +333,8 @@ export async function verifyKYCDocument(
       ],
     });
 
+    void recordUsage({ feature: 'kyc', model: MODEL_SEARCH, usage: completion.usage, scopeTalentId: talentId });
+
     const analysisText = completion.choices[0]?.message?.content?.trim();
     if (!analysisText) {
       throw new Error('Empty response from API');
@@ -527,6 +530,8 @@ export async function quickDocumentCheck(
         },
       ],
     });
+
+    void recordUsage({ feature: 'kyc', model: MODEL_SEARCH, usage: completion.usage });
 
     const resultText = completion.choices[0]?.message?.content?.trim();
     if (!resultText) {

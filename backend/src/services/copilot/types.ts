@@ -103,7 +103,7 @@ export interface SSEErrorEvent {
 
 export interface SSELimitReachedEvent {
   type: 'limit_reached';
-  reason: 'max_tools' | 'max_duration' | 'tool_loop' | 'semantic_empty_results';
+  reason: 'max_tools' | 'max_duration' | 'tool_loop' | 'semantic_empty_results' | 'max_tokens';
   message: string;
 }
 

@@ -7,6 +7,7 @@
 import { defineTool } from './tool-helper';
 import { MODEL_IMAGE } from '../../ai/models';
 import { getImageClient } from '../../ai/provider';
+import { recordUsage } from '../../ai/usage.service';
 import { z } from 'zod';
 import { uploadFile } from '../../storage.service';
 import { logger } from '../../../utils';
@@ -45,7 +46,13 @@ export function createGenerateImageTool(talentId: string) {
     },
     execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
       const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
-      const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
+      // Margin guardrail: 'high' (~$0.17) exceeds the 1-credit revenue of an image,
+      // so it is downgraded to 'medium' unless explicitly allowed via env.
+      const requestedQuality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
+      const quality: 'low' | 'medium' | 'high' =
+        requestedQuality === 'high' && process.env.ALLOW_HIGH_QUALITY_IMAGES !== 'true'
+          ? 'medium'
+          : requestedQuality;
 
       // Pre-screen prompt for prohibited content (saves API cost on obvious violations)
       const BLOCKED_PATTERNS = /\b(nude|naked|nsfw|porn|sex|violence|gore|weapon|drug|kill|murder)\b/i;
@@ -77,6 +84,14 @@ export function createGenerateImageTool(talentId: string) {
           prompt,
           size,
           quality,
+        });
+
+        void recordUsage({
+          feature: 'image',
+          model: MODEL_IMAGE,
+          images: { count: response.data?.length ?? 1, quality },
+          scopeTalentId: talentId,
+          billedActionCode: 'TALENT_IMAGE_GENERATION',
         });
 
         const imageData = response.data?.[0];

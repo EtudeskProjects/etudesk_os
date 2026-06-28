@@ -77,7 +77,11 @@ function buildSituationBlock(context: TalentContext): string {
 
 export function buildTalentExplorerPrompt(context: TalentContext): string {
   const profile = context.profile;
-  const skillsList = profile.skills?.map((s) => s.name).join(', ') || 'none listed';
+  // Include level + catalog type per skill so skill_match (current levels) and the
+  // `skills` card block render accurately in explore mode (not just names).
+  const skillsList = profile.skills?.length
+    ? profile.skills.map((s) => `- ${s.name} (${s.level || 'non défini'}) [type: ${(s as any).type || 'hard_skill'}]`).join('\n')
+    : 'none listed';
   const location = [profile.city, profile.country].filter(Boolean).join(', ') || 'not specified';
   const lang = getLanguageInstructions(context.language, profile.country);
   const isAdmin = !!context.organizations?.isOrgAdmin;

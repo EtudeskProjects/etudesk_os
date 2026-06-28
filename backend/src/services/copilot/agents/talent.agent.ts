@@ -4,7 +4,7 @@
  */
 
 import { MODEL_AGENT } from '../../ai/models';
-import { AgentConfig } from '../tools/tool-helper';
+import { AgentConfig, splitSystemPrompt } from '../tools/tool-helper';
 import type { ToolDefinition } from '../tools/tool-helper';
 import { TalentContext } from '../types';
 import { smartSearchTool } from '../tools/smart-search.tool';
@@ -79,11 +79,13 @@ export function createTalentAgent(
     instructions = buildTalentExplorerPrompt(context);
   }
 
+  const { staticPrompt, dynamicPrompt } = splitSystemPrompt(instructions);
   return {
     name: `Talent Agent (${mode})`,
     mode: mode as 'explore' | 'study',
     model: MODEL_AGENT,
-    systemPrompt: instructions,
+    systemPrompt: dynamicPrompt,
+    systemPromptStatic: staticPrompt,
     tools,
   };
 }

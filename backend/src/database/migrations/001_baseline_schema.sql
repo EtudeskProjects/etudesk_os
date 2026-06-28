@@ -1382,8 +1382,8 @@ CREATE TABLE IF NOT EXISTS credit_action_catalog (
 );
 
 INSERT INTO credit_action_catalog (action_code, scope, label, credits) VALUES
-    ('TALENT_ASSISTANT_EXPLORER_QUERY', 'TALENT', 'Assistant Explorer (requête)', 1),
-    ('TALENT_ASSISTANT_STUDY_QUERY', 'TALENT', 'Assistant Study (requête)', 0.25),
+    ('TALENT_ASSISTANT_EXPLORER_QUERY', 'TALENT', 'Assistant Explorer (requête)', 2),
+    ('TALENT_ASSISTANT_STUDY_QUERY', 'TALENT', 'Assistant Study (requête)', 1),
     ('TALENT_DOCUMENT_GENERATION', 'TALENT', 'Génération de document', 1),
     ('TALENT_IMAGE_GENERATION', 'TALENT', 'Génération d''image', 1),
     ('TALENT_DOCUMENT_UPLOAD', 'TALENT', 'Upload de document', 1),
@@ -1394,7 +1394,7 @@ INSERT INTO credit_action_catalog (action_code, scope, label, credits) VALUES
     ('TALENT_QUIZ_FLASHCARDS_DIAGRAMS', 'TALENT', 'Quiz / Flashcards / Diagrammes', 0),
     ('TALENT_VOICE_INSTRUCTION', 'TALENT', 'Instruction vocale', 0),
     ('TALENT_APPLY_BOOK_JOIN', 'TALENT', 'Postuler / Réserver / Adhérer', 0),
-    ('ORG_ASSISTANT_MANAGER_QUERY', 'ORGANIZATION', 'Assistant Manager (requête)', 1),
+    ('ORG_ASSISTANT_MANAGER_QUERY', 'ORGANIZATION', 'Assistant Manager (requête)', 2),
     ('ORG_DOCUMENT_UPLOAD', 'ORGANIZATION', 'Upload de document', 1),
     ('ORG_DOCUMENT_GENERATION', 'ORGANIZATION', 'Génération de document', 1),
     ('ORG_DAILY_OBJECTIVE', 'ORGANIZATION', 'Objectif journalier', 1),

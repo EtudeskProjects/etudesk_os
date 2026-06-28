@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { ModerationStatus } from '../types/community-activity.types';
+import { recordUsage } from './ai/usage.service';
 
 import { logger } from '../utils';
 dotenv.config();
@@ -89,6 +90,8 @@ export class AutoModerationService {
                 model: 'omni-moderation-latest',
                 input: content,
             }).then(response => {
+                void recordUsage({ feature: 'moderation', model: 'omni-moderation-latest', usage: null, metadata: { free: true } });
+
                 const result = response.results[0];
 
                 if (result.flagged) {

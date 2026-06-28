@@ -119,7 +119,12 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
   const handleOptionPress = (option: string, index: number) => {
     if (answered || !onAnswer || !hasOptions) return;
     setSelectedIndex(index);
-    onAnswer(`${OPTION_LETTERS[index]}) ${option}`);
+    // Options are SHUFFLED for display, so the letter index is meaningless to the
+    // agent (its original ordering differs). Submit the chosen TEXT + the verdict
+    // computed here (we know the remapped correctAnswer) so the agent's feedback
+    // matches the on-screen green/red result instead of re-grading from a letter.
+    const verdict = hasCorrectAnswer ? (index === correctAnswer ? 'correcte' : 'incorrecte') : 'enregistrée';
+    onAnswer(`Réponse au quiz : "${option}" — réponse ${verdict}.`);
   };
 
   const getOptionStyle = (index: number) => {

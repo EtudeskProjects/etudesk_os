@@ -10,6 +10,7 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { MODEL_EMBEDDING } from './ai/models';
 import { getEmbeddingClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
 
@@ -271,6 +272,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       input: text,
       dimensions: EMBEDDING_DIMENSION,
     });
+
+    void recordUsage({ feature: 'embedding', model: MODEL_EMBEDDING, usage: { total_tokens: response.usage?.total_tokens } });
 
     const embedding = response.data[0].embedding;
 

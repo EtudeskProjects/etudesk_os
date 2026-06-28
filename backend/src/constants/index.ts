@@ -56,8 +56,11 @@ export const CURRENCY_CONFIG: Record<SupportedCurrency, {
   creditsPerUnit: number;
   paystackCurrency: string;
 }> = {
+  // 1 credit = 100 FCFA (XOF) = $0.20 (USD). The two rates must stay consistent
+  // with the CREDIT_PACKS below. USD was previously 0.5 (a 10x undercredit bug:
+  // $5 gave 2.5 credits instead of the advertised 25).
   XOF: { minTalent: 2000, minOrg: 10000, label: 'FCFA', creditsPerUnit: 0.01, paystackCurrency: 'XOF' },
-  USD: { minTalent: 5, minOrg: 20, label: 'USD', creditsPerUnit: 0.5, paystackCurrency: 'USD' },
+  USD: { minTalent: 5, minOrg: 20, label: 'USD', creditsPerUnit: 5, paystackCurrency: 'USD' },
 } as const;
 
 export const CREDIT_PACKS_USD = [

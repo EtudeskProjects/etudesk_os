@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import { MODEL_SEARCH } from '../ai/models';
 import { getOpenAIClient } from '../ai/provider';
+import { recordUsage } from '../ai/usage.service';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -226,6 +227,14 @@ export async function extractDocumentMetadata(
         { role: 'user', content: contentParts },
       ],
       response_format: { type: 'json_object' },
+    });
+
+    void recordUsage({
+      feature: 'document_extraction',
+      model: MODEL_SEARCH,
+      usage: completion.usage,
+      scopeTalentId: talentId ?? null,
+      billedActionCode: 'TALENT_DOCUMENT_UPLOAD',
     });
 
     // Cleanup: delete uploaded file from OpenAI

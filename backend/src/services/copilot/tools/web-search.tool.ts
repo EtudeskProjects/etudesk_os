@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { defineTool } from './tool-helper';
 import { openaiResponsesProvider } from '../../ai/provider';
 import { Runner } from '@openai/agents';
+import { recordUsage } from '../../ai/usage.service';
 import { logger } from '../../../utils';
 
 const SEARCH_INSTRUCTIONS = `# Role and Objective
@@ -65,6 +66,25 @@ const webSearchAgent = new Agent({
 async function executeWebSearch(query: string): Promise<string> {
   const runner = new Runner({ modelProvider: openaiResponsesProvider });
   const result = await runner.run(webSearchAgent, query, { maxTurns: 2 });
+
+  // Extract token usage from the @openai/agents result (best-effort; shape varies).
+  const rawResponses: any[] = (result as any).rawResponses ?? (result as any).state?._modelResponses ?? [];
+  let promptTokens = 0;
+  let completionTokens = 0;
+  for (const r of rawResponses) {
+    promptTokens += r?.usage?.inputTokens ?? r?.usage?.prompt_tokens ?? 0;
+    completionTokens += r?.usage?.outputTokens ?? r?.usage?.completion_tokens ?? 0;
+  }
+  const webSearchUsage = (promptTokens || completionTokens)
+    ? { prompt_tokens: promptTokens, completion_tokens: completionTokens }
+    : null;
+  void recordUsage({
+    feature: 'web_search',
+    model: 'gpt-4.1-mini',
+    usage: webSearchUsage,
+    ...(webSearchUsage ? {} : { metadata: { usageUnavailable: true } }),
+  });
+
   return result.finalOutput?.trim() || 'No relevant results found.';
 }
 

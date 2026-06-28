@@ -28,8 +28,12 @@ export const MODEL_FAST = 'claude-haiku-4-5';
 
 // --- OpenAI (specialized capabilities) ---
 
-/** Image generation — gpt-image-2 (current SOTA, used by the study tutor for illustrations) */
-export const MODEL_IMAGE = 'gpt-image-2';
+/**
+ * Image generation. Default 'gpt-image-1' (verified-available). The previous
+ * 'gpt-image-2' is not a confirmed OpenAI model id and would 404 — override via
+ * OPENAI_IMAGE_MODEL only once the target id is confirmed in the account.
+ */
+export const MODEL_IMAGE = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
 
 /** Document vision/extraction + KYC (gpt-5.4-mini: vision-capable, low latency) */
 export const MODEL_SEARCH = 'gpt-5.4-mini';
