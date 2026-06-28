@@ -73,8 +73,8 @@ export default function SkillsMap({ match, filtering, selected, onSelect, lang, 
     const hi = selIdx >= 0 ? selIdx : (hover ?? -1);
 
     // 1. toutes les aretes (faibles)
-    ctx.lineWidth = Math.max(0.4, 0.55 * scale);
-    ctx.strokeStyle = isDark ? 'rgba(250,250,250,0.10)' : 'rgba(9,9,11,0.09)';
+    ctx.lineWidth = Math.max(0.45, 0.62 * scale);
+    ctx.strokeStyle = isDark ? 'rgba(250,250,250,0.10)' : 'rgba(9,9,11,0.15)';
     ctx.beginPath();
     for (const [a, b] of GRAPH.edges) {
       if (hi >= 0 && (a === hi || b === hi)) continue;

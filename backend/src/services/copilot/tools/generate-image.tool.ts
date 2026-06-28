@@ -1,5 +1,5 @@
 /**
- * Generate Image Tool — AI image generation via OpenAI gpt-image-1
+ * Generate Image Tool — AI image generation via configured image model
  * Generates an image synchronously and returns the URL for display.
  * Factory pattern: injects talentId for credit debit.
  */
@@ -94,13 +94,18 @@ export function createGenerateImageTool(talentId: string) {
           billedActionCode: 'TALENT_IMAGE_GENERATION',
         });
 
-        const imageData = response.data?.[0];
-        const b64 = imageData?.b64_json;
-        if (!b64) {
+        const imageData: any = response.data?.[0];
+        let imageBuffer: Buffer | null = null;
+        if (imageData?.b64_json) {
+          imageBuffer = Buffer.from(imageData.b64_json, 'base64');
+        } else if (imageData?.url) {
+          const imgRes = await fetch(imageData.url);
+          if (!imgRes.ok) throw new Error(`Image download failed (${imgRes.status})`);
+          imageBuffer = Buffer.from(await imgRes.arrayBuffer());
+        }
+        if (!imageBuffer) {
           return { success: false, error: 'No image data returned' };
         }
-
-        const imageBuffer = Buffer.from(b64, 'base64');
         const filename = `image-${Date.now()}.png`;
         const storagePath = `generated/${filename}`;
 

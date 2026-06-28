@@ -687,7 +687,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
     'STRICT CV/resume canonical contract (root fields only, no wrappers):',
     toTOON(CV_CONTENT_CONTRACT),
     'IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages. Each skill MUST carry its catalog "type" (one of: knowledge, hard_skill, soft_skill, tool_platform, language) and "level" (one of: beginner, intermediate, advanced, master) exactly as returned by sql_query(my_skills) — these drive the CV color coding and proficiency bars. Do NOT invent a type or use legacy labels like "hard"/"soft".',
-    '(b) Use ONLY real data from sql_query/file_reader — NEVER invent or modify personal info. If email is null in profile (WhatsApp signup), OMIT the email field. If no LinkedIn in source data, OMIT it. NEVER fabricate emails, URLs, certifications, or dates.',
+    '(b) Use ONLY real data from sql_query/file_reader — NEVER invent or modify personal info. If email is null in profile, OMIT the email field. If no LinkedIn in source data, OMIT it. NEVER fabricate emails, URLs, certifications, or dates.',
     '(c) Do NOT wrap in {type:"cv", profile:{...}} — put fields at root level.',
     'Other supported contracts:',
     'Org document:',
@@ -747,7 +747,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
           throw debitError;
         }
 
-        // Normalize format to uppercase (Claude native SDK may send lowercase)
+        // Normalize format to uppercase (some providers may send lowercase)
         const format = typeof rawFormat === 'string' ? rawFormat.toUpperCase() : 'PDF';
         if (!FORMAT_EXTENSIONS[format]) {
           return { success: false, error: tr('copilot:toolFormatUnsupported', { format: rawFormat }) };

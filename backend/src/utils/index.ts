@@ -34,7 +34,7 @@ interface LogContext {
 // Patterns to mask in logs (tokens, passwords, keys)
 const SENSITIVE_PATTERNS = [
   /Bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]*/gi, // JWT tokens
-  /sk-[A-Za-z0-9\-_]+/gi, // OpenAI/Anthropic keys
+  /sk-[A-Za-z0-9\-_]+/gi, // AI provider keys
   /pk_[a-z]+_[A-Za-z0-9]+/gi, // Paystack public keys
   /sk_[a-z]+_[A-Za-z0-9]+/gi, // Paystack secret keys
   /password["']?\s*[:=]\s*["']?[^"'\s,}]+/gi, // password fields

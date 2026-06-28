@@ -42,7 +42,7 @@ interface TestResult {
 const results: TestResult[] = [];
 
 /**
- * Native Anthropic ToolDefinition pattern: toolObj.execute(params)
+ * Provider-neutral ToolDefinition pattern: toolObj.execute(params)
  * execute() receives parsed params and returns the result directly.
  */
 async function invokeTool(toolObj: any, params: Record<string, any>): Promise<any> {
@@ -560,7 +560,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   // 10. WEB_SEARCH
   // ═══════════════════════════════════════════
   console.log('┌─ 10. web_search (sub-agent — skipped) ────────────');
-  results.push({ tool: 'web_search', test: 'Sub-agent config', input: {}, output: { agentName: 'WebSearchAgent', model: 'gpt-5-mini', maxTurns: 5 }, summary: 'Recherche web terminée', duration: 0, status: 'SKIP' });
+  results.push({ tool: 'web_search', test: 'Sub-agent config', input: {}, output: { agentName: 'WebSearchAgent', model: 'vision-model', maxTurns: 5 }, summary: 'Recherche web terminée', duration: 0, status: 'SKIP' });
   console.log('  ⊘ Skipped (sub-agent handoff pattern)');
   console.log('');
 

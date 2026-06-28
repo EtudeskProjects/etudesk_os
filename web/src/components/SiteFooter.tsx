@@ -5,7 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LangContext';
-import { SOCIALS, IOS_URL, NAV } from '../lib/site';
+import { SOCIALS, NAV } from '../lib/site';
+import DownloadSoonLink from './DownloadSoonLink';
 
 export default function SiteFooter() {
   const { isDark } = useContext(ThemeContext);
@@ -36,7 +37,7 @@ export default function SiteFooter() {
             {NAV.map((n) => (
               <Link key={n.href} href={`/${lang}${n.href}`}>{lang === 'fr' ? n.fr : n.en}</Link>
             ))}
-            <a href={IOS_URL} target="_blank" rel="noopener noreferrer">{t.dl}</a>
+            <DownloadSoonLink platform="download">{t.dl}</DownloadSoonLink>
           </nav>
         </div>
 

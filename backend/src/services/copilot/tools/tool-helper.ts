@@ -1,22 +1,24 @@
 /**
- * Tool Helper — Native Anthropic SDK tool definition
- * Replaces @openai/agents tool() with a format compatible with Anthropic messages API.
- * Zod schemas are converted to JSON Schema for Anthropic's input_schema field via
+ * Tool Helper — provider-neutral tool definition.
+ * Zod schemas are converted to JSON Schema for the model tool input schema via
  * Zod v4's built-in `z.toJSONSchema` (the standalone `zod-to-json-schema` package
  * is v3-only and silently collapses v4 schemas to `{type:'object'}`, stripping all
  * parameters from the tool definition).
  */
 
 import { z } from 'zod';
-import type Anthropic from '@anthropic-ai/sdk';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface ToolDefinition {
-  /** Anthropic tool definition (name, description, input_schema) */
-  definition: Anthropic.Tool;
+  /** Tool definition (name, description, input_schema). */
+  definition: {
+    name: string;
+    description?: string;
+    input_schema: Record<string, any>;
+  };
   /** Execute the tool with parsed & validated input */
   execute: (input: any) => Promise<any>;
 }
@@ -57,7 +59,7 @@ export function splitSystemPrompt(full: string): { staticPrompt?: string; dynami
 }
 
 // ---------------------------------------------------------------------------
-// defineTool — drop-in replacement for @openai/agents tool()
+// defineTool — local tool definition helper
 // ---------------------------------------------------------------------------
 
 export function defineTool<T extends z.ZodType>(opts: {
@@ -70,18 +72,18 @@ export function defineTool<T extends z.ZodType>(opts: {
 }): ToolDefinition {
   // Convert Zod schema to JSON Schema. `io: 'input'` makes fields with a default
   // optional (the tool caller may omit them); `target: 'draft-7'` is the dialect
-  // Anthropic's input_schema expects. Strip `$schema` — Anthropic rejects it.
+  // Tool schemas omit `$schema` for broad provider compatibility.
   const { $schema, ...jsonSchema } = z.toJSONSchema(opts.parameters, {
     target: 'draft-7',
     io: 'input',
   }) as Record<string, any>;
 
-  // Anthropic REQUIRES type: 'object' at the root of input_schema.
+  // Tool schemas require type: 'object' at the root.
   if (!jsonSchema.type) {
     jsonSchema.type = 'object';
   }
 
-  const inputSchema = jsonSchema as Anthropic.Tool['input_schema'];
+  const inputSchema = jsonSchema;
 
   return {
     definition: {
@@ -90,7 +92,7 @@ export function defineTool<T extends z.ZodType>(opts: {
       input_schema: inputSchema,
     },
     execute: async (input: any) => {
-      // Unwrap nested {input: {...}} that Claude sometimes sends
+      // Unwrap nested {input: {...}} that some providers send
       let unwrapped = (input && typeof input === 'object' && 'input' in input && Object.keys(input).length === 1)
         ? input.input
         : input;

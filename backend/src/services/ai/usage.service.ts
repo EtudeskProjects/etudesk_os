@@ -12,38 +12,53 @@
 import { pool } from '../database';
 import { logger } from '../../utils';
 
-export type AIProvider = 'anthropic' | 'openai';
+export type AIProvider = 'ai';
 
 interface TokenPricing {
   provider: AIProvider;
   input: number;        // $/1M input tokens
   output: number;       // $/1M output tokens
-  cacheWrite?: number;  // $/1M cache-creation tokens (Anthropic; 5-min TTL = 1.25x input)
-  cacheRead?: number;   // $/1M cache-read tokens (Anthropic; 0.1x input)
+  cacheWrite?: number;  // $/1M cache-creation tokens when provider supports prompt caching
+  cacheRead?: number;   // $/1M cache-read tokens when provider supports prompt caching
 }
 
-/** Per-1M-token pricing. Cache 5-min TTL: write = 1.25x input, read = 0.1x input. */
+/**
+ * Per-1M-token pricing (USD). Current provider model prices.
+ * The actual provider is configured via env. Cache fields apply only where the
+ * model/provider exposes prompt caching.
+ */
 export const PRICING: Record<string, TokenPricing> = {
-  // --- Anthropic ---
-  'claude-sonnet-4-6': { provider: 'anthropic', input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
-  'claude-haiku-4-5': { provider: 'anthropic', input: 1, output: 5, cacheWrite: 1.25, cacheRead: 0.1 },
-  // --- OpenAI ---
-  'gpt-5.4-nano': { provider: 'openai', input: 0.2, output: 1.25 },
-  'gpt-5.4-mini': { provider: 'openai', input: 0.75, output: 4.5 },
-  'gpt-4.1-mini': { provider: 'openai', input: 0.4, output: 1.6 },
-  'text-embedding-3-small': { provider: 'openai', input: 0.02, output: 0 },
-  'gpt-4o-mini-transcribe': { provider: 'openai', input: 1.25, output: 5 },
-  'gpt-4o-mini-tts': { provider: 'openai', input: 0.6, output: 12 },
+  // --- Current provider models ---
+  'Qwen/Qwen3-235B-A22B-Instruct-2507': { provider: 'ai', input: 0.09, output: 0.10 },
+  'deepseek-ai/DeepSeek-V3.2': { provider: 'ai', input: 0.26, output: 0.38, cacheRead: 0.13 },
+  'deepseek-ai/DeepSeek-V4-Flash': { provider: 'ai', input: 0.10, output: 0.20 },
+  'meta-llama/Llama-4-Scout-17B-16E-Instruct': { provider: 'ai', input: 0.08, output: 0.30 },
+  'meta-llama/Llama-4-Maverick-17B-128E-Instruct': { provider: 'ai', input: 0.15, output: 0.60 },
+  'Qwen/Qwen3-VL-235B-A22B-Instruct': { provider: 'ai', input: 0.20, output: 0.88 },
+  'google/gemma-3-27b-it': { provider: 'ai', input: 0.08, output: 0.16 },
+  'BAAI/bge-m3': { provider: 'ai', input: 0.01, output: 0 },
+  'Qwen/Qwen3-Embedding-8B': { provider: 'ai', input: 0.01, output: 0 },
+  // STT/TTS are priced per minute / per char, not tokens — handled via metadata, cost approximated elsewhere.
+  'openai/whisper-large-v3-turbo': { provider: 'ai', input: 0, output: 0 },
+  'hexgrad/Kokoro-82M': { provider: 'ai', input: 0, output: 0 },
 };
 
-/**
- * Image pricing: USD per generated image, by quality. gpt-image-1 / gpt-image-2.
- * We cap quality at 'medium' by default to protect margin (see generate-image tool).
- */
+/** STT cost estimate per minute. */
+export const STT_USD_PER_MINUTE = 0.0002;
+/** TTS cost estimate per 1M chars. */
+export const TTS_USD_PER_1M_CHARS = 0.8;
+/** Image cost per generated image, by FLUX variant (approx). */
+export const IMAGE_FLUX_USD: Record<string, number> = {
+  'black-forest-labs/FLUX-1-schnell': 0.0011,
+  'black-forest-labs/FLUX-2-dev': 0.012,
+  'black-forest-labs/FLUX-2-pro': 0.015,
+};
+
+/** Image pricing: USD per generated image. */
 export const IMAGE_PRICE_USD: Record<string, number> = {
-  low: 0.011,
-  medium: 0.042,
-  high: 0.167,
+  low: 0.0011,
+  medium: 0.0011,
+  high: 0.012,
 };
 
 const FCFA_PER_USD = Number(process.env.FCFA_PER_USD || 605);
@@ -55,7 +70,7 @@ export function usdToFcfa(usd: number): number {
 export interface RecordUsageParams {
   feature: string;
   model: string;
-  /** Raw usage object from the SDK (Anthropic Message.usage or OpenAI response.usage). */
+  /** Raw usage object from the configured API client. */
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
@@ -110,7 +125,7 @@ export function computeCost(params: RecordUsageParams): NormalizedUsage {
 
   const imageCount = params.images?.count ?? 0;
   if (imageCount > 0) {
-    const perImage = IMAGE_PRICE_USD[params.images?.quality ?? 'medium'] ?? IMAGE_PRICE_USD.medium;
+    const perImage = IMAGE_FLUX_USD[params.model] ?? IMAGE_PRICE_USD[params.images?.quality ?? 'medium'] ?? IMAGE_PRICE_USD.medium;
     costUsd += imageCount * perImage;
   }
 
@@ -137,7 +152,7 @@ export async function recordUsage(params: RecordUsageParams): Promise<void> {
   try {
     const c = computeCost(params);
     const price = PRICING[params.model];
-    const provider: AIProvider = price?.provider ?? (params.model.startsWith('claude') ? 'anthropic' : 'openai');
+    const provider: AIProvider = price?.provider ?? 'ai';
 
     await pool.query(
       `INSERT INTO ai_usage (

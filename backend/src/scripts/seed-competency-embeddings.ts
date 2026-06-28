@@ -1,6 +1,6 @@
 /**
  * Seed competency embeddings — embeds the skills referential ONCE into
- * competencies.embedding (pgvector 1536d, OpenAI text-embedding-3-small).
+ * competencies.embedding (pgvector, provider embedding model).
  *
  * The catalog is the single gate (catalog.service) used by every service
  * (find_competency, CV/document extraction, matching, manage_skills), so a
@@ -14,8 +14,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { pool } from '../services/database';
-import { getOpenAIClient } from '../services/ai/provider';
-import { MODEL_EMBEDDING } from '../services/ai/models';
+import { getEmbeddingClient } from '../services/ai/provider';
+import { EMBEDDING_DIMENSION, MODEL_EMBEDDING } from '../services/ai/models';
 
 const BATCH = 96;
 
@@ -26,7 +26,7 @@ function embedText(c: { name: string; name_fr: string; family: string; type: str
 
 async function main() {
   const reembedAll = process.argv.includes('--all');
-  const openai = getOpenAIClient();
+  const embeddings = getEmbeddingClient();
 
   const { rows } = await pool.query(
     `SELECT slug, name, name_fr, family, type FROM competencies
@@ -43,10 +43,11 @@ async function main() {
   let done = 0;
   for (let i = 0; i < rows.length; i += BATCH) {
     const chunk = rows.slice(i, i + BATCH);
-    const resp = await openai.embeddings.create({
+    const resp = await embeddings.embeddings.create({
       model: MODEL_EMBEDDING,
       input: chunk.map(embedText),
-    });
+      dimensions: EMBEDDING_DIMENSION,
+    } as any);
     // Persist each vector (pgvector accepts a JSON-style array string).
     await Promise.all(
       chunk.map((c, j) => {

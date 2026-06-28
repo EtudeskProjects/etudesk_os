@@ -1,42 +1,38 @@
 /**
- * Embedding Service - Semantic similarity using OpenAI embeddings and Pinecone
+ * Embedding Service - provider embeddings + local pgvector storage.
  *
  * Uses:
- * - OpenAI text-embedding-3-small for generating embeddings
- * - Pinecone for vector storage and similarity search
- * - PostgreSQL as fallback/cache
+ * - OpenAI-compatible embeddings (default BAAI/bge-m3)
+ * - PostgreSQL pgvector columns for storage/search
  */
 
-import { Pinecone } from '@pinecone-database/pinecone';
-import { MODEL_EMBEDDING } from './ai/models';
+import { EMBEDDING_DIMENSION, MODEL_EMBEDDING } from './ai/models';
 import { getEmbeddingClient } from './ai/provider';
 import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
-
 import { logger } from '../utils';
-// --- Client Initialization ---
 
-const openai = getEmbeddingClient();
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || '',
-});
-
-const PINECONE_INDEX = process.env.PINECONE_INDEX || 'etudesk';
+const embeddingClient = getEmbeddingClient();
 const EMBEDDING_MODEL = MODEL_EMBEDDING;
-const EMBEDDING_DIMENSION = parseInt(process.env.PINECONE_DIMENSION || '1536', 10);
 
-// Cache for embeddings to reduce API calls
 const embeddingCache = new Map<string, { embedding: number[]; timestamp: number }>();
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 
-// --- Embedding Text Builders ---
+type EntityType = 'talent' | 'organization' | 'opportunity' | 'community' | 'space';
 
-/**
- * Build embedding text for a talent profile
- * Optimized for ~500 tokens max
- */
+const ENTITY_TABLE: Record<EntityType, string> = {
+  talent: 'talents',
+  organization: 'organizations',
+  opportunity: 'opportunities',
+  community: 'communities',
+  space: 'spaces',
+};
+
+export function vectorToSql(embedding: number[]): string {
+  return `[${embedding.join(',')}]`;
+}
+
 export function buildTalentEmbeddingText(talent: {
   display_name?: string | null;
   skills?: string[];
@@ -45,60 +41,27 @@ export function buildTalentEmbeddingText(talent: {
   city?: string | null;
   country?: string | null;
   profile_tags?: string[];
-  // New fields
   goals?: string[];
   remote_ready?: boolean;
   willing_to_relocate?: boolean;
   documents_metadata?: Array<{ title?: string | null; original_filename: string }>;
 }): string {
   const parts: string[] = [];
-
-  if (talent.display_name) {
-    parts.push(talent.display_name);
+  if (talent.display_name) parts.push(talent.display_name);
+  if (talent.skills?.length) parts.push(`Competences: ${talent.skills.slice(0, 10).join(', ')}`);
+  if (talent.sectors?.length) parts.push(`Secteurs: ${talent.sectors.slice(0, 5).join(', ')}`);
+  if (talent.profile_tags?.length) parts.push(`Profil: ${talent.profile_tags.join(', ')}`);
+  if (talent.city || talent.country) parts.push(`Localisation: ${[talent.city, talent.country].filter(Boolean).join(', ')}`);
+  if (talent.bio) parts.push(talent.bio.slice(0, 200));
+  if (talent.goals?.length) parts.push(`Objectifs: ${talent.goals.join(', ')}`);
+  if (talent.remote_ready) parts.push('Disponible en teletravail');
+  if (talent.willing_to_relocate) parts.push('Pret a demenager');
+  if (talent.documents_metadata?.length) {
+    parts.push(`Documents: ${talent.documents_metadata.map((d) => d.title || d.original_filename).join(', ')}`);
   }
-
-  if (talent.skills && talent.skills.length > 0) {
-    parts.push(`Compétences: ${talent.skills.slice(0, 10).join(', ')}`);
-  }
-
-  if (talent.sectors && talent.sectors.length > 0) {
-    parts.push(`Secteurs: ${talent.sectors.slice(0, 5).join(', ')}`);
-  }
-
-  if (talent.profile_tags && talent.profile_tags.length > 0) {
-    parts.push(`Profil: ${talent.profile_tags.join(', ')}`);
-  }
-
-  if (talent.city || talent.country) {
-    parts.push(`Localisation: ${[talent.city, talent.country].filter(Boolean).join(', ')}`);
-  }
-
-  if (talent.bio) {
-    // Limit bio to ~200 chars
-    parts.push(talent.bio.slice(0, 200));
-  }
-
-  if (talent.goals && talent.goals.length > 0) {
-    parts.push(`Objectifs: ${talent.goals.join(', ')}`);
-  }
-
-  if (talent.remote_ready) parts.push('Disponible en télétravail');
-  if (talent.willing_to_relocate) parts.push('Prêt à déménager');
-
-  if (talent.documents_metadata && talent.documents_metadata.length > 0) {
-    const docNames = talent.documents_metadata
-      .map((d) => d.title || d.original_filename)
-      .join(', ');
-    parts.push(`Documents: ${docNames}`);
-  }
-
   return parts.join('. ').slice(0, 1000);
 }
 
-/**
- * Build embedding text for an opportunity
- * Optimized for ~500 tokens max
- */
 export function buildOpportunityEmbeddingText(opportunity: {
   title?: string;
   summary?: string;
@@ -113,55 +76,21 @@ export function buildOpportunityEmbeddingText(opportunity: {
   skills?: string[];
 }): string {
   const parts: string[] = [];
-
-  if (opportunity.title) {
-    parts.push(opportunity.title);
-  }
-
-  if (opportunity.type) {
-    parts.push(`Type: ${opportunity.type}`);
-  }
-
-  if (opportunity.contract_type) {
-    parts.push(`Contrat: ${opportunity.contract_type}`);
-  }
-
-  if (opportunity.work_rhythm) {
-    parts.push(`Rythme: ${opportunity.work_rhythm}`);
-  }
-
-  if (opportunity.location_type) {
-    parts.push(`Mode: ${opportunity.location_type}`);
-  }
-
+  if (opportunity.title) parts.push(opportunity.title);
+  if (opportunity.type) parts.push(`Type: ${opportunity.type}`);
+  if (opportunity.contract_type) parts.push(`Contrat: ${opportunity.contract_type}`);
+  if (opportunity.work_rhythm) parts.push(`Rythme: ${opportunity.work_rhythm}`);
+  if (opportunity.location_type) parts.push(`Mode: ${opportunity.location_type}`);
   const location = opportunity.locations?.[0];
-  if (location?.city || location?.country) {
-    parts.push(`Lieu: ${[location.city, location.country].filter(Boolean).join(', ')}`);
-  }
-
-  if (opportunity.sectors && opportunity.sectors.length > 0) {
-    parts.push(`Secteurs: ${opportunity.sectors.slice(0, 5).join(', ')}`);
-  }
-
-  if (opportunity.summary) {
-    parts.push(opportunity.summary.slice(0, 300));
-  }
-
-  if (opportunity.skills && opportunity.skills.length > 0) {
-    parts.push(`Competences: ${opportunity.skills.slice(0, 12).join(', ')}`);
-  }
-
-  if (opportunity.requirements) {
-    parts.push(`Requis: ${opportunity.requirements.slice(0, 200)}`);
-  }
-
-  return parts.join('. ').slice(0, 800);
+  if (location?.city || location?.country) parts.push(`Lieu: ${[location.city, location.country].filter(Boolean).join(', ')}`);
+  if (opportunity.sectors?.length) parts.push(`Secteurs: ${opportunity.sectors.slice(0, 5).join(', ')}`);
+  if (opportunity.summary) parts.push(opportunity.summary.slice(0, 300));
+  if (opportunity.skills?.length) parts.push(`Competences: ${opportunity.skills.slice(0, 12).join(', ')}`);
+  if (opportunity.requirements) parts.push(`Requis: ${opportunity.requirements.slice(0, 200)}`);
+  if (opportunity.nice_to_have) parts.push(`Atouts: ${opportunity.nice_to_have.slice(0, 160)}`);
+  return parts.join('. ').slice(0, 900);
 }
 
-/**
- * Build embedding text for a community
- * Optimized for ~500 tokens max
- */
 export function buildCommunityEmbeddingText(community: {
   name?: string;
   description?: string | null;
@@ -174,36 +103,17 @@ export function buildCommunityEmbeddingText(community: {
   is_paid?: boolean;
 }): string {
   const parts: string[] = [];
-
   if (community.name) parts.push(community.name);
   if (community.type) parts.push(`Type: ${community.type}`);
-  if (community.access_type) parts.push(`Accès: ${community.access_type}`);
-
-  if (community.city || community.country) {
-    parts.push(`Lieu: ${[community.city, community.country].filter(Boolean).join(', ')}`);
-  }
-
-  if (community.sectors && community.sectors.length > 0) {
-    parts.push(`Secteurs: ${community.sectors.slice(0, 5).join(', ')}`);
-  }
-
-  if (community.tags && community.tags.length > 0) {
-    parts.push(`Tags: ${community.tags.slice(0, 8).join(', ')}`);
-  }
-
-  if (community.is_paid) parts.push('Communauté payante');
-
-  if (community.description) {
-    parts.push(community.description.slice(0, 300));
-  }
-
+  if (community.access_type) parts.push(`Acces: ${community.access_type}`);
+  if (community.city || community.country) parts.push(`Lieu: ${[community.city, community.country].filter(Boolean).join(', ')}`);
+  if (community.sectors?.length) parts.push(`Secteurs: ${community.sectors.slice(0, 5).join(', ')}`);
+  if (community.tags?.length) parts.push(`Tags: ${community.tags.slice(0, 8).join(', ')}`);
+  if (community.is_paid) parts.push('Communaute payante');
+  if (community.description) parts.push(community.description.slice(0, 300));
   return parts.join('. ').slice(0, 800);
 }
 
-/**
- * Build embedding text for a space
- * Optimized for ~500 tokens max
- */
 export function buildSpaceEmbeddingText(space: {
   name?: string;
   description?: string | null;
@@ -219,328 +129,156 @@ export function buildSpaceEmbeddingText(space: {
   address?: string | null;
 }): string {
   const parts: string[] = [];
-
   if (space.name) parts.push(space.name);
   if (space.type) parts.push(`Type: ${space.type}`);
-  if (space.capacity) parts.push(`Capacité: ${space.capacity} personnes`);
-
-  if (space.city || space.country) {
-    parts.push(`Lieu: ${[space.city, space.country].filter(Boolean).join(', ')}`);
-  }
-
+  if (space.capacity) parts.push(`Capacite: ${space.capacity} personnes`);
+  if (space.city || space.country) parts.push(`Lieu: ${[space.city, space.country].filter(Boolean).join(', ')}`);
   if (space.address) parts.push(`Adresse: ${space.address.slice(0, 100)}`);
-
-  if (space.sectors && space.sectors.length > 0) {
-    parts.push(`Secteurs: ${space.sectors.slice(0, 5).join(', ')}`);
-  }
-
-  if (space.equipment && space.equipment.length > 0) {
-    parts.push(`Équipements: ${space.equipment.slice(0, 6).join(', ')}`);
-  }
-
-  if (space.amenities && space.amenities.length > 0) {
-    parts.push(`Services: ${space.amenities.slice(0, 6).join(', ')}`);
-  }
-
+  if (space.sectors?.length) parts.push(`Secteurs: ${space.sectors.slice(0, 5).join(', ')}`);
+  if (space.equipment?.length) parts.push(`Equipements: ${space.equipment.slice(0, 6).join(', ')}`);
+  if (space.amenities?.length) parts.push(`Services: ${space.amenities.slice(0, 6).join(', ')}`);
   if (space.hourly_rate) parts.push(`Tarif: ${space.hourly_rate} XOF/h`);
-  if (space.is_bookable === false) parts.push('Non réservable en ligne');
-
-  if (space.description) {
-    parts.push(space.description.slice(0, 300));
-  }
-
+  if (space.is_bookable === false) parts.push('Non reservable en ligne');
+  if (space.description) parts.push(space.description.slice(0, 300));
   return parts.join('. ').slice(0, 800);
 }
 
-// --- Embedding Generation ---
-
-/**
- * Generate embedding for text using OpenAI
- */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // Check cache first
-  const cacheKey = `emb:${Buffer.from(text).toString('base64').slice(0, 50)}`;
+  const cacheKey = `emb:${EMBEDDING_MODEL}:${EMBEDDING_DIMENSION}:${Buffer.from(text).toString('base64').slice(0, 80)}`;
   const cached = embeddingCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached.embedding;
 
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.embedding;
-  }
+  const response = await embeddingClient.embeddings.create({
+    model: EMBEDDING_MODEL,
+    input: text,
+    dimensions: EMBEDDING_DIMENSION,
+  } as any);
 
-  try {
-    const response = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: text,
-      dimensions: EMBEDDING_DIMENSION,
-    });
+  void recordUsage({ feature: 'embedding', model: MODEL_EMBEDDING, usage: { total_tokens: response.usage?.total_tokens } });
 
-    void recordUsage({ feature: 'embedding', model: MODEL_EMBEDDING, usage: { total_tokens: response.usage?.total_tokens } });
-
-    const embedding = response.data[0].embedding;
-
-    // Cache the result
-    embeddingCache.set(cacheKey, { embedding, timestamp: Date.now() });
-
-    return embedding;
-  } catch (error) {
-    logger.error('Error generating embedding:', error);
-    throw error;
-  }
+  const embedding = response.data[0]?.embedding;
+  if (!embedding?.length) throw new Error('Embedding provider returned an empty vector');
+  embeddingCache.set(cacheKey, { embedding, timestamp: Date.now() });
+  return embedding;
 }
 
-// --- Pinecone Operations ---
-
-/**
- * Get Pinecone index
- */
-function getPineconeIndex() {
-  return pinecone.index(PINECONE_INDEX);
+async function upsertEntityEmbedding(type: EntityType, id: string, text: string): Promise<void> {
+  const table = ENTITY_TABLE[type];
+  const embedding = await generateEmbedding(text);
+  await pool.query(
+    `UPDATE ${table} SET embedding = $1::vector, updated_at = updated_at WHERE id = $2`,
+    [vectorToSql(embedding), id]
+  );
 }
 
-/**
- * Upsert talent embedding to Pinecone
- */
 export async function upsertTalentEmbedding(
   talentId: string,
   talent: Parameters<typeof buildTalentEmbeddingText>[0]
 ): Promise<void> {
   try {
-    const text = buildTalentEmbeddingText(talent);
-    const embedding = await generateEmbedding(text);
-
-    const index = getPineconeIndex();
-    await index.upsert({ records: [
-      {
-        id: `talent:${talentId}`,
-        values: embedding,
-        metadata: {
-          type: 'talent',
-          id: talentId,
-          text: text.slice(0, 1000),
-          // Metadata for filtering
-          city: talent.city || '',
-          country: talent.country || '',
-          remote_ready: !!talent.remote_ready,
-          willing_to_relocate: !!talent.willing_to_relocate,
-          sectors: talent.sectors || [],
-          skills: talent.skills || [],
-        },
-      },
-    ] });
-
-    // Note: Embedding is stored in Pinecone only, not in PostgreSQL
-    // to avoid schema complexity and since Pinecone is the primary vector store
+    await upsertEntityEmbedding('talent', talentId, buildTalentEmbeddingText(talent));
   } catch (error) {
     logger.error('Error upserting talent embedding:', error);
-    // Don't throw - embedding is optional enhancement
   }
 }
 
-/**
- * Upsert opportunity embedding to Pinecone
- */
 export async function upsertOpportunityEmbedding(
   opportunityId: string,
   opportunity: Parameters<typeof buildOpportunityEmbeddingText>[0]
 ): Promise<void> {
   try {
-    const text = buildOpportunityEmbeddingText(opportunity);
-    const embedding = await generateEmbedding(text);
-
-    const index = getPineconeIndex();
-    await index.upsert({ records: [
-      {
-        id: `opportunity:${opportunityId}`,
-        values: embedding,
-        metadata: {
-          type: 'opportunity',
-          id: opportunityId,
-          text: text.slice(0, 500),
-        },
-      },
-    ] });
-
-    // Note: Embedding is stored in Pinecone only, not in PostgreSQL
-    // to avoid schema complexity and since Pinecone is the primary vector store
+    await upsertEntityEmbedding('opportunity', opportunityId, buildOpportunityEmbeddingText(opportunity));
   } catch (error) {
     logger.error('Error upserting opportunity embedding:', error);
-    // Don't throw - embedding is optional enhancement
   }
 }
 
-/**
- * Upsert community embedding to Pinecone
- */
 export async function upsertCommunityEmbedding(
   communityId: string,
   community: Parameters<typeof buildCommunityEmbeddingText>[0]
 ): Promise<void> {
   try {
-    const text = buildCommunityEmbeddingText(community);
-    const embedding = await generateEmbedding(text);
-
-    const index = getPineconeIndex();
-    await index.upsert({ records: [
-      {
-        id: `community:${communityId}`,
-        values: embedding,
-        metadata: {
-          type: 'community',
-          id: communityId,
-          text: text.slice(0, 500),
-          city: community.city || '',
-          country: community.country || '',
-          community_type: community.type || '',
-          access_type: community.access_type || '',
-          is_paid: !!community.is_paid,
-          sectors: community.sectors || [],
-        },
-      },
-    ] });
+    await upsertEntityEmbedding('community', communityId, buildCommunityEmbeddingText(community));
   } catch (error) {
     logger.error('Error upserting community embedding:', error);
   }
 }
 
-/**
- * Upsert space embedding to Pinecone
- */
 export async function upsertSpaceEmbedding(
   spaceId: string,
   space: Parameters<typeof buildSpaceEmbeddingText>[0]
 ): Promise<void> {
   try {
-    const text = buildSpaceEmbeddingText(space);
-    const embedding = await generateEmbedding(text);
-
-    const index = getPineconeIndex();
-    await index.upsert({ records: [
-      {
-        id: `space:${spaceId}`,
-        values: embedding,
-        metadata: {
-          type: 'space',
-          id: spaceId,
-          text: text.slice(0, 500),
-          city: space.city || '',
-          country: space.country || '',
-          space_type: space.type || '',
-          capacity: space.capacity || 0,
-          is_bookable: space.is_bookable !== false,
-          sectors: space.sectors || [],
-        },
-      },
-    ] });
+    await upsertEntityEmbedding('space', spaceId, buildSpaceEmbeddingText(space));
   } catch (error) {
     logger.error('Error upserting space embedding:', error);
   }
 }
 
-/**
- * Delete a vector from Pinecone by entity type and ID.
- * Call when an entity is soft-deleted to prevent ghost vectors.
- */
-export async function deletePineconeVector(type: string, id: string): Promise<void> {
+export async function deletePgVector(type: string, id: string): Promise<void> {
+  const table = ENTITY_TABLE[type as EntityType];
+  if (!table) return;
   try {
-    const index = getPineconeIndex();
-    await index.deleteOne({ id: `${type}:${id}` });
-    logger.info(`[embedding] Deleted Pinecone vector ${type}:${id}`);
+    await pool.query(`UPDATE ${table} SET embedding = NULL, updated_at = updated_at WHERE id = $1`, [id]);
+    logger.info(`[embedding] Cleared pgvector ${type}:${id}`);
   } catch (error) {
-    logger.error(`[embedding] Error deleting Pinecone vector ${type}:${id}:`, error);
-    // Don't throw - deletion is best-effort
+    logger.error(`[embedding] Error clearing pgvector ${type}:${id}:`, error);
   }
 }
 
-// --- Similarity Calculation ---
-
-/**
- * Calculate cosine similarity between two vectors
- */
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0;
-
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
-
   for (let i = 0; i < a.length; i++) {
     dotProduct += a[i] * b[i];
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
-
   if (normA === 0 || normB === 0) return 0;
-
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-/**
- * Get semantic similarity between talent and opportunity
- * Returns a boost value between -20 and +20
- */
-export async function getSemanticBoost(
-  talentId: string,
-  opportunityId: string
-): Promise<number> {
+export async function getSemanticBoost(talentId: string, opportunityId: string): Promise<number> {
   try {
-    // Try to get from Pinecone first
-    const index = getPineconeIndex();
-
-    // Fetch talent embedding
-    const talentResult = await index.fetch({ ids: [`talent:${talentId}`] });
-    const talentVector = talentResult.records[`talent:${talentId}`]?.values;
-
-    // Fetch opportunity embedding
-    const oppResult = await index.fetch({ ids: [`opportunity:${opportunityId}`] });
-    const oppVector = oppResult.records[`opportunity:${opportunityId}`]?.values;
-
-    if (talentVector && oppVector) {
-      const similarity = cosineSimilarity(talentVector, oppVector);
-      // Convert similarity (0-1) to boost (-20 to +20)
-      // similarity of 0.5 = neutral (0 boost)
-      // similarity of 1.0 = max boost (+20)
-      // similarity of 0.0 = min boost (-20)
-      return (similarity - 0.5) * 40;
-    }
-
-    // No embeddings available in Pinecone, return neutral
-    return 0;
+    const { rows } = await pool.query(
+      `SELECT 1 - (t.embedding <=> o.embedding) AS similarity
+       FROM talents t
+       JOIN opportunities o ON o.id = $2
+       WHERE t.id = $1 AND t.embedding IS NOT NULL AND o.embedding IS NOT NULL`,
+      [talentId, opportunityId]
+    );
+    const similarity = Number(rows[0]?.similarity ?? 0);
+    return similarity ? (similarity - 0.5) * 40 : 0;
   } catch (error) {
     logger.error('Error getting semantic boost:', error);
-    return 0; // Neutral boost on error
+    return 0;
   }
 }
 
-/**
- * Generate embedding for a talent on profile update
- * Call this when talent profile is created/updated
- */
 export async function onTalentProfileUpdate(talentId: string): Promise<void> {
   try {
     const t = await buildTalentObject(talentId);
-    if (t) {
-      await upsertTalentEmbedding(talentId, {
-        display_name: t.display_name,
-        skills: t.skills,
-        sectors: t.sectors,
-        bio: t.bio,
-        city: t.city,
-        country: t.country,
-        profile_tags: t.profile_tags,
-        goals: t.goals,
-        remote_ready: t.remote_ready,
-        willing_to_relocate: t.willing_to_relocate,
-        documents_metadata: t.documents_metadata,
-      });
-    }
+    if (!t) return;
+    await upsertTalentEmbedding(talentId, {
+      display_name: t.display_name,
+      skills: t.skills,
+      sectors: t.sectors,
+      bio: t.bio,
+      city: t.city,
+      country: t.country,
+      profile_tags: t.profile_tags,
+      goals: t.goals,
+      remote_ready: t.remote_ready,
+      willing_to_relocate: t.willing_to_relocate,
+      documents_metadata: t.documents_metadata,
+    });
   } catch (error) {
     logger.error('Error updating talent embedding on profile update:', error);
   }
 }
 
-/**
- * Generate embedding for an opportunity on creation/update
- * Call this when opportunity is created/updated
- */
 export async function onOpportunityUpdate(opportunityId: string): Promise<void> {
   try {
     const result = await pool.query(`
@@ -559,137 +297,92 @@ export async function onOpportunityUpdate(opportunityId: string): Promise<void> 
       WHERE o.id = $1
     `, [opportunityId]);
 
-    if (result.rows.length > 0) {
-      await upsertOpportunityEmbedding(opportunityId, result.rows[0]);
-    }
+    if (result.rows.length > 0) await upsertOpportunityEmbedding(opportunityId, result.rows[0]);
   } catch (error) {
     logger.error('Error updating opportunity embedding:', error);
   }
 }
 
-/**
- * Batch update embeddings for all talents (for initial setup)
- */
-export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<number> {
-  // Note: We don't check PostgreSQL embedding column since it may not exist
-  // Pinecone is the source of truth for embeddings
+export async function batchUpdateTalentEmbeddings(limit = 100): Promise<number> {
   const result = await pool.query(`
     SELECT
-           t.id,
-           COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
-           t.sectors,
-           t.bio,
-           t.city,
-           t.country,
-           t.profile_tags,
-           t.goals,
-           t.remote_ready,
-           t.willing_to_relocate,
-           ARRAY(
-             SELECT c.name FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
-             WHERE ts.talent_id = t.id AND ts.decay_state = 'active'
-             ORDER BY ts.score DESC
-           ) as skills
-           ,
-           COALESCE(
-             (SELECT json_agg(json_build_object(
-               'title', d.title,
-               'original_filename', d.original_filename
-             ) ORDER BY d.created_at DESC)
-              FROM talent_documents d
-              WHERE d.talent_id = t.id AND d.deleted_at IS NULL),
-             '[]'::json
-           ) as documents_metadata
+      t.id,
+      COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
+      t.sectors, t.bio, t.city, t.country, t.profile_tags, t.goals,
+      t.remote_ready, t.willing_to_relocate,
+      ARRAY(
+        SELECT c.name FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug
+        WHERE ts.talent_id = t.id AND ts.decay_state = 'active'
+        ORDER BY ts.score DESC
+      ) as skills,
+      COALESCE(
+        (SELECT json_agg(json_build_object('title', d.title, 'original_filename', d.original_filename) ORDER BY d.created_at DESC)
+         FROM talent_documents d
+         WHERE d.talent_id = t.id AND d.deleted_at IS NULL),
+        '[]'::json
+      ) as documents_metadata
     FROM talents t
     WHERE t.deleted_at IS NULL
+    ORDER BY t.updated_at DESC NULLS LAST
     LIMIT $1
   `, [limit]);
 
   let updated = 0;
   for (const talent of result.rows) {
-    try {
-      await upsertTalentEmbedding(talent.id, talent);
-      updated++;
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } catch (error) {
-      logger.error(`Error updating embedding for talent ${talent.id}:`, error);
-    }
+    await upsertTalentEmbedding(talent.id, talent);
+    updated++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-
   return updated;
 }
 
-/**
- * Batch update embeddings for all opportunities (for initial setup)
- */
-export async function batchUpdateOpportunityEmbeddings(limit: number = 100): Promise<number> {
-  // Note: We don't check PostgreSQL embedding column since it may not exist
-  // Pinecone is the source of truth for embeddings
+export async function batchUpdateOpportunityEmbeddings(limit = 100): Promise<number> {
   const result = await pool.query(`
     SELECT o.id, o.title, o.summary, o.requirements, o.nice_to_have,
            o.type, o.contract_type, o.work_rhythm, o.location_type, o.locations,
-           org.sectors
+           org.sectors,
+           ARRAY(
+             SELECT c.name FROM opportunity_skills os
+             JOIN competencies c ON c.slug = os.competency_slug
+             WHERE os.opportunity_id = o.id
+           ) AS skills
     FROM opportunities o
     LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
     LEFT JOIN organizations org ON op.poster_organization_id = org.id
     WHERE o.deleted_at IS NULL
+    ORDER BY o.updated_at DESC NULLS LAST
     LIMIT $1
   `, [limit]);
 
   let updated = 0;
   for (const opp of result.rows) {
-    try {
-      await upsertOpportunityEmbedding(opp.id, opp);
-      updated++;
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } catch (error) {
-      logger.error(`Error updating embedding for opportunity ${opp.id}:`, error);
-    }
+    await upsertOpportunityEmbedding(opp.id, opp);
+    updated++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-
   return updated;
 }
 
-/**
- * Batch update embeddings for all communities (for initial setup)
- */
-export async function batchUpdateCommunityEmbeddings(limit: number = 100): Promise<number> {
+export async function batchUpdateCommunityEmbeddings(limit = 100): Promise<number> {
   const result = await pool.query(`
     SELECT c.id, c.name, c.description, c.type, c.access_type,
-           c.city, c.country, c.is_paid,
-           c.sectors::text as sectors_json,
-           c.tags::text as tags_json
+           c.city, c.country, c.is_paid, c.sectors, c.tags
     FROM communities c
     WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
+    ORDER BY c.updated_at DESC NULLS LAST
     LIMIT $1
   `, [limit]);
 
   let updated = 0;
-  for (const row of result.rows) {
-    try {
-      const sectors = row.sectors_json ? JSON.parse(row.sectors_json) : [];
-      const tags = row.tags_json ? JSON.parse(row.tags_json) : [];
-      await upsertCommunityEmbedding(row.id, {
-        ...row,
-        sectors,
-        tags,
-      });
-      updated++;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } catch (error) {
-      logger.error(`Error updating embedding for community ${row.id}:`, error);
-    }
+  for (const community of result.rows) {
+    await upsertCommunityEmbedding(community.id, community);
+    updated++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-
   return updated;
 }
 
-/**
- * Batch update embeddings for all spaces (for initial setup)
- */
-export async function batchUpdateSpaceEmbeddings(limit: number = 100): Promise<number> {
+export async function batchUpdateSpaceEmbeddings(limit = 100): Promise<number> {
   const result = await pool.query(`
     SELECT s.id, s.name, s.description, s.type, s.capacity,
            s.equipment, s.amenities, s.sectors,
@@ -697,19 +390,15 @@ export async function batchUpdateSpaceEmbeddings(limit: number = 100): Promise<n
            s.hourly_rate, s.address
     FROM spaces s
     WHERE s.deleted_at IS NULL AND s.status = 'ACTIVE'
+    ORDER BY s.updated_at DESC NULLS LAST
     LIMIT $1
   `, [limit]);
 
   let updated = 0;
   for (const space of result.rows) {
-    try {
-      await upsertSpaceEmbedding(space.id, space);
-      updated++;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } catch (error) {
-      logger.error(`Error updating embedding for space ${space.id}:`, error);
-    }
+    await upsertSpaceEmbedding(space.id, space);
+    updated++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-
   return updated;
 }

@@ -196,27 +196,10 @@ export const requestOtpSchema = z.object({
     .transform((v) => v.toLowerCase().trim())
 });
 
-export const requestWhatsAppOtpSchema = z.object({
-  phone: z.string()
-    .min(8, 'validation:auth.invalidPhone')
-    .max(30, 'validation:auth.invalidPhone')
-    .transform((v) => v.trim())
-});
-
 export const verifyOtpSchema = z.object({
   email: z.string()
     .email('validation:auth.invalidEmail')
     .transform((v) => v.toLowerCase().trim()),
-  code: z.string()
-    .length(6, 'validation:auth.codeLength')
-    .regex(/^\d{6}$/, 'validation:auth.codeDigits')
-});
-
-export const verifyWhatsAppOtpSchema = z.object({
-  phone: z.string()
-    .min(8, 'validation:auth.invalidPhone')
-    .max(30, 'validation:auth.invalidPhone')
-    .transform((v) => v.trim()),
   code: z.string()
     .length(6, 'validation:auth.codeLength')
     .regex(/^\d{6}$/, 'validation:auth.codeDigits')

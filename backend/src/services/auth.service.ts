@@ -8,7 +8,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from './database';
-import { deletePineconeVector } from './embedding.service';
+import { deletePgVector } from './embedding.service';
 
 import { logger } from '../utils';
 import { i18next } from '../i18n';
@@ -380,7 +380,7 @@ export interface DeleteAccountResult {
 }
 
 /**
- * Delete a user account — full cascade with org cleanup, data anonymization, and Pinecone cleanup
+ * Delete a user account — full cascade with org cleanup, data anonymization, and pgvector cleanup
  */
 export async function deleteAccount(userId: string): Promise<DeleteAccountResult> {
   const client = await pool.connect();
@@ -467,12 +467,12 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
 
     // ── Phase B — Cleanup organisations ──
 
-    // Track deleted opportunities for Pinecone cleanup
+    // Track deleted opportunities for pgvector cleanup
     const deletedOpportunityIds: string[] = [];
 
     // B: Delete orgs where sole admin and 0 other members
     for (const orgId of orgsToDelete) {
-      // Collect opportunity IDs for Pinecone
+      // Collect opportunity IDs for pgvector cleanup
       const oppRes = await client.query(
         `SELECT id FROM opportunities WHERE organization_id = $1 AND deleted_at IS NULL`,
         [orgId]
@@ -652,18 +652,18 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
     // ── Phase E — Post-transaction cleanup (fire-and-forget) ──
 
     if (talentId) {
-      deletePineconeVector('talent', talentId).catch(err =>
-        logger.warn('Failed to delete talent Pinecone vector', { talentId, error: err })
+      deletePgVector('talent', talentId).catch(err =>
+        logger.warn('Failed to clear talent pgvector', { talentId, error: err })
       );
     }
     for (const orgId of orgsToDelete) {
-      deletePineconeVector('organization', orgId).catch(err =>
-        logger.warn('Failed to delete org Pinecone vector', { orgId, error: err })
+      deletePgVector('organization', orgId).catch(err =>
+        logger.warn('Failed to clear org pgvector', { orgId, error: err })
       );
     }
     for (const oppId of deletedOpportunityIds) {
-      deletePineconeVector('opportunity', oppId).catch(err =>
-        logger.warn('Failed to delete opportunity Pinecone vector', { oppId, error: err })
+      deletePgVector('opportunity', oppId).catch(err =>
+        logger.warn('Failed to clear opportunity pgvector', { oppId, error: err })
       );
     }
 

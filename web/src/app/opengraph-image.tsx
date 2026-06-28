@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Etudesk - Apprends les compétences du digital avec ton tuteur IA';
+export const alt = 'Etudesk - Découvrir, apprendre et valoriser les compétences numériques';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -41,10 +41,10 @@ export default function OpengraphImage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div style={{ color: '#FFFFFF', fontSize: 70, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2, maxWidth: 980 }}>
-            Les compétences du digital, à la vitesse du marché.
+            Découvre, apprends et valorise tes compétences numériques.
           </div>
           <div style={{ color: '#A1A1AA', fontSize: 32, lineHeight: 1.3, maxWidth: 900 }}>
-            Un tuteur IA pour apprendre, un guide carrière IA pour décrocher.
+            Des opportunités locales et internationales, reliées à un référentiel propriétaire.
           </div>
         </div>
 

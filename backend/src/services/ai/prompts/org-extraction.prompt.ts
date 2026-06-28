@@ -1,6 +1,6 @@
 /**
  * Organization Document Extraction Prompt
- * Model: gpt-5-mini (vision) | Output: JSON
+ * Model: vision model | Output: JSON
  * Dedicated to organizational documents — NO skill extraction
  */
 

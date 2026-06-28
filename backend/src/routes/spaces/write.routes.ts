@@ -20,7 +20,7 @@ import {
   calculateCapacity,
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
-import { upsertSpaceEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { upsertSpaceEmbedding, deletePgVector } from '../../services/embedding.service';
 import { setSpaceSkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 
@@ -371,7 +371,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    // Update Pinecone embedding (fire-and-forget)
+    // Update local pgvector embedding (fire-and-forget)
     const updated = result.rows[0];
     upsertSpaceEmbedding(id, {
       name: updated.name, description: updated.description, type: updated.type,
@@ -379,7 +379,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       hourly_rate: updated.hourly_rate, is_bookable: updated.is_bookable,
       equipment: updated.equipment, amenities: updated.amenities,
       sectors: updated.sectors, address: updated.address,
-    }).catch(err => logger.error('[spaces] Error updating Pinecone embedding:', err));
+    }).catch(err => logger.error('[spaces] Error updating pgvector embedding:', err));
 
     // Update catalog skill tags only when provided
     let skillTags = null;
@@ -544,8 +544,8 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       [id]
     );
 
-    // Remove Pinecone vector (fire-and-forget)
-    deletePineconeVector('space', id).catch(err => logger.error('[spaces] Error deleting Pinecone vector:', err));
+    // Remove local pgvector embedding (fire-and-forget)
+    deletePgVector('space', id).catch(err => logger.error('[spaces] Error clearing pgvector:', err));
 
     res.json({ success: true, message: req.t('spaces:deleted') });
   } catch (error) {

@@ -1,24 +1,17 @@
 /**
- * TTS Service — Text-to-Speech via OpenAI gpt-4o-mini-tts
+ * TTS Service — Text-to-Speech via provider inference.
  * Generates MP3 audio from text for study mode responses.
- * Steerable voice via `instructions` parameter — optimized for UEMOA French context.
- *
- * Voices: https://platform.openai.com/docs/guides/text-to-speech
- * Recommended by OpenAI for quality: marin, cedar, coral
+ * Voice/instructions are passed through best-effort; model support varies.
  */
 
-import { getOpenAIClient } from './provider';
 import { MODEL_TTS } from './models';
 import { recordUsage } from './usage.service';
 import { logger } from '../../utils';
+import { textToSpeechWithProvider } from './media.client';
 
 const MAX_WORDS = 150; // ~1 min of audio
 
-/** All available gpt-4o-mini-tts voices (as of 2025-12) */
-type TTSVoice =
-  | 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo'
-  | 'fable' | 'marin' | 'nova' | 'onyx' | 'sage'
-  | 'shimmer' | 'verse' | 'cedar';
+type TTSVoice = string;
 
 /**
  * Default voice instructions for UEMOA French educational context.
@@ -34,7 +27,7 @@ Language: French is the primary language. If the text contains English technical
 /**
  * Generate TTS audio from text.
  * @param text - The text to convert to speech
- * @param voice - OpenAI TTS voice (default: coral — warm, natural, best quality for French)
+ * @param voice - TTS voice hint. The selected model may ignore unsupported voices.
  * @param instructions - Style instructions for voice control (uses UEMOA-optimized default)
  * @returns Buffer containing MP3 audio data
  */
@@ -43,8 +36,6 @@ export async function generateTTS(
   voice: TTSVoice = 'coral',
   instructions?: string
 ): Promise<Buffer> {
-  const openai = getOpenAIClient();
-
   // Truncate to ~150 words (~1 min audio)
   const words = text.split(/\s+/);
   const truncated = words.length > MAX_WORDS
@@ -55,16 +46,11 @@ export async function generateTTS(
 
   logger.info(`[TTS] Generating audio: ${truncated.length} chars, voice=${voice}`);
 
-  const response = await openai.audio.speech.create({
-    model: MODEL_TTS,
+  const buffer = await textToSpeechWithProvider({
+    text: truncated,
     voice,
-    input: truncated,
-    response_format: 'mp3',
     instructions: finalInstructions,
-  } as any);
-
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  });
 
   void recordUsage({ feature: 'tts', model: MODEL_TTS, usage: null, metadata: { chars: truncated.length, bytes: buffer.length, voice } });
 

@@ -95,7 +95,7 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
-      // Accept dataJson as object or string (Claude native SDK may send objects)
+      // Accept dataJson as object or string (some providers may send objects)
       const data = typeof dataJson === 'object' && dataJson !== null
         ? dataJson
         : (typeof dataJson === 'string' && dataJson.trim() ? JSON.parse(dataJson) : {});

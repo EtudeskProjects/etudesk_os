@@ -1,6 +1,6 @@
 /**
  * Bio Generation Prompt
- * Model: gpt-5-nano | Output: plain text (250 chars max)
+ * Model: suggestion model | Output: plain text (250 chars max)
  */
 
 export function buildBioGenSystemPrompt(languageName: string = 'English'): string {

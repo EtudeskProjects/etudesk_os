@@ -37,7 +37,7 @@ const YOUTUBE_PATTERNS = [
 // Generic URL pattern - matches http/https URLs
 const URL_PATTERN = /https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
 
-// WhatsApp-style formatting patterns
+// Lightweight chat formatting patterns
 const BOLD_PATTERN = /\*([^*]+)\*/g;
 const ITALIC_PATTERN = /_([^_]+)_/g;
 const STRIKETHROUGH_PATTERN = /~([^~]+)~/g;

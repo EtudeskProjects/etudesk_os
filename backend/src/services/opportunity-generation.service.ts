@@ -248,8 +248,8 @@ export async function generateOpportunitySuggestion(
   data?: GeneratedOpportunity;
   error?: string;
 }> {
-  if (!process.env.OPENAI_API_KEY) {
-    return { success: false, error: 'OPENAI_API_KEY not configured' };
+  if (!process.env.AI_API_KEY) {
+    return { success: false, error: 'AI_API_KEY not configured' };
   }
 
   // Validate required fields

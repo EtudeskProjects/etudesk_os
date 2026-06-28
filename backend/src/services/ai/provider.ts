@@ -1,86 +1,57 @@
 /**
- * AI Provider Configuration — Multi-provider (simultaneous)
+ * AI Provider Configuration — single OpenAI-compatible provider
  *
- * Two providers used simultaneously for their strengths:
- * - OpenAI: suggestions, images, web search, embeddings, STT, matching, vision
- * - Anthropic Claude: main agents (native SDK), summaries/titles/guardrails (Haiku)
+ * MIGRATION (2026-06): consolidated onto one OpenAI-compatible AI provider.
+ *   base_url: AI_BASE_URL
+ *   key:      AI_API_KEY
  *
- * OPENAI_API_KEY is ALWAYS required.
- * ANTHROPIC_API_KEY required for Claude agents.
+ * - Chat (agent, fast, suggestions, vision), embeddings → OpenAI-compatible client below.
+ * - Media (image/STT/TTS) uses the provider's native inference API — see media.client.ts.
  */
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
-import { OpenAIProvider } from '@openai/agents';
 import { logger } from '../../utils';
 
+const AI_BASE_URL = process.env.AI_BASE_URL || '';
+const AI_API_KEY = process.env.AI_API_KEY || '';
+
 // ---------------------------------------------------------------------------
-// 1. OpenAI Client — STT, moderation, embeddings, images, web search, vision
+// OpenAI-compatible client — chat + embeddings
 // ---------------------------------------------------------------------------
 
-const openaiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const aiClient = new OpenAI({
+  apiKey: AI_API_KEY,
+  ...(AI_BASE_URL ? { baseURL: AI_BASE_URL } : {}),
 });
 
 // ---------------------------------------------------------------------------
-// 2. Anthropic Client — Native SDK for agents, guardrails, titles
+// Status log
 // ---------------------------------------------------------------------------
 
-const anthropicClient = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-// ---------------------------------------------------------------------------
-// ModelProvider instances for @openai/agents run() overrides
-// (Used for OpenAI suggestions + web search sub-agent)
-// ---------------------------------------------------------------------------
-
-/** OpenAI provider for agents that MUST run on OpenAI (recommendations, etc.) */
-export const openaiProvider = new OpenAIProvider({
-  openAIClient: openaiClient as any,
-  useResponses: false,
-});
-
-/** OpenAI Responses API provider — for webSearchTool() which needs Responses API */
-export const openaiResponsesProvider = new OpenAIProvider({
-  openAIClient: openaiClient as any,
-  useResponses: true,
-});
-
-// ---------------------------------------------------------------------------
-// Log provider status
-// ---------------------------------------------------------------------------
-
-if (process.env.ANTHROPIC_API_KEY) {
-  logger.info('[AI Provider] ANTHROPIC (native SDK for agents), OPENAI (suggestions/images/STT/embeddings/vision/web-search)');
+if (AI_API_KEY && AI_BASE_URL) {
+  logger.info(`[AI Provider] OpenAI-compatible provider (${AI_BASE_URL}) — chat + embeddings`);
 } else {
-  logger.warn('[AI Provider] ANTHROPIC_API_KEY missing — agents will fail');
-}
-
-if (!process.env.OPENAI_API_KEY) {
-  logger.warn('[AI Provider] OPENAI_API_KEY missing — STT, moderation, embeddings, images unavailable');
+  logger.warn('[AI Provider] AI_API_KEY or AI_BASE_URL missing — AI calls may fail');
 }
 
 // ---------------------------------------------------------------------------
-// Client getters
+// Client getters — all return the single AI client.
 // ---------------------------------------------------------------------------
 
-/** Anthropic client — for main agents, guardrails, titles */
-export function getAnthropicClient(): Anthropic { return anthropicClient; }
+/** Main chat client (agent, guardrails, summaries, titles, suggestions, vision). */
+export function getChatClient(): OpenAI { return aiClient; }
 
-/** Suggestion client — OpenAI (gpt-5.4-nano for form/field suggestions) */
-export function getSuggestionClient(): OpenAI {
-  return openaiClient;
-}
+/** Suggestion client. */
+export function getSuggestionClient(): OpenAI { return aiClient; }
 
-/** OpenAI client — STT, moderation, vision, files API */
-export function getOpenAIClient(): OpenAI { return openaiClient; }
+/** General chat / vision / files client. */
+export function getAIClient(): OpenAI { return aiClient; }
 
-/** Image generation — always OpenAI (gpt-image-2) */
-export function getImageClient(): OpenAI { return openaiClient; }
+/** Image generation client. */
+export function getImageClient(): OpenAI { return aiClient; }
 
-/** Embeddings — always OpenAI (Pinecone 1536d compat) */
-export function getEmbeddingClient(): OpenAI { return openaiClient; }
+/** Embeddings client, stored in pgvector. */
+export function getEmbeddingClient(): OpenAI { return aiClient; }

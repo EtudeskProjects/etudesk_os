@@ -60,7 +60,7 @@ ${toTOON(SUGGESTIONS_OUTPUT_CONTRACT)}
 
 /**
  * Build a prompt for intent prediction based on conversation history
- * Used with gpt-5-nano for fast, contextual suggestions
+ * Used with the suggestion model for fast, contextual suggestions
  */
 export function buildIntentSuggestionsPrompt(
   mode: string,

@@ -1,6 +1,6 @@
 /**
  * Copilot — Shared Types
- * Native Anthropic SDK + Claude (MODEL_AGENT) + SSE Streaming
+ * Provider-neutral agent config + SSE streaming
  */
 
 // --- Context Types ---

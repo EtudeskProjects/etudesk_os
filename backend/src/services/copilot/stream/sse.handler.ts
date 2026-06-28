@@ -1,15 +1,15 @@
 /**
- * SSE Streaming Handler — Native Anthropic SDK
+ * SSE Streaming Handler — OpenAI-compatible Chat Completions
  * Handles Server-Sent Events for real-time copilot responses.
- * Uses anthropicClient.messages.stream() with a manual agentic loop.
+ * Uses chat.completions streaming with a manual agentic loop.
  */
 
 import { Response } from 'express';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import type { AgentConfig } from '../tools/tool-helper';
 import { SSEEvent, MessageSegment } from '../types';
 import { runInputGuardrail } from '../guardrails/input.guardrail';
-import { getAnthropicClient } from '../../ai/provider';
+import { getChatClient } from '../../ai/provider';
 import { recordUsage } from '../../ai/usage.service';
 import { generateToolSummary } from './tool-summary';
 import { sanitizeOutput } from '../guardrails/output.guardrail';
@@ -150,18 +150,17 @@ function isToolResultEffectivelyEmpty(output: unknown): boolean {
 }
 
 /**
- * Build Anthropic messages array from history + user message + attachments
+ * Build chat messages array from history + user message + attachments
  */
 function buildMessages(
   history: Array<{ role: string; content: string }>,
   message: string,
   attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>,
   imageBuffers?: Array<{ mimeType: string; base64: string; name: string }>
-): Anthropic.MessageParam[] {
-  const messages: Anthropic.MessageParam[] = [];
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 
   // Add conversation history (already alternating user/assistant from DB)
-  // Skip entries with empty content — Anthropic rejects empty user messages
   for (const h of history) {
     if (!h.content?.trim()) continue;
     if (h.role === 'user') {
@@ -183,22 +182,18 @@ function buildMessages(
     userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nCall file_reader with each documentId above to read the attached document(s).`;
   }
 
-  // Image attachments → multimodal content parts
+  // Image attachments → OpenAI multimodal content parts (image_url with data URI)
   if (imageBuffers && imageBuffers.length > 0) {
     const imgNames = imageBuffers.map((b) => `- ${b.name}`).join('\n');
     userMessage += `\n\n[Pièces jointes — Images]\n${imgNames}\nThe images are provided below for direct visual analysis. Describe and analyze them.`;
 
-    const contentParts: Anthropic.ContentBlockParam[] = [
+    const contentParts: OpenAI.Chat.ChatCompletionContentPart[] = [
       { type: 'text', text: userMessage },
     ];
     for (const img of imageBuffers) {
       contentParts.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: img.mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-          data: img.base64,
-        },
+        type: 'image_url',
+        image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
       });
     }
     messages.push({ role: 'user', content: contentParts });
@@ -206,15 +201,16 @@ function buildMessages(
     messages.push({ role: 'user', content: userMessage });
   }
 
-  // Ensure alternating roles (merge consecutive same-role messages)
-  const merged: Anthropic.MessageParam[] = [];
+  // Merge consecutive same-role *string* messages (OpenAI tolerates consecutive
+  // roles, but merging keeps the transcript clean; skip merging multimodal parts).
+  const merged: OpenAI.Chat.ChatCompletionMessageParam[] = [];
   for (const msg of messages) {
     const last = merged[merged.length - 1];
-    if (last && last.role === msg.role) {
-      // Merge text content — keep whichever is non-empty, or combine both
-      const lastText = typeof last.content === 'string' ? last.content : '';
-      const msgText = typeof msg.content === 'string' ? msg.content : '';
-      last.content = [lastText, msgText].filter(Boolean).join('\n') || lastText || msgText;
+    if (
+      last && last.role === msg.role &&
+      typeof last.content === 'string' && typeof msg.content === 'string'
+    ) {
+      last.content = [last.content, msg.content].filter(Boolean).join('\n') || last.content || msg.content;
     } else {
       merged.push(msg);
     }
@@ -224,7 +220,7 @@ function buildMessages(
 }
 
 /**
- * Run an agent with SSE streaming using native Anthropic SDK.
+ * Run an agent with SSE streaming using OpenAI-compatible chat completions.
  * Manual agentic loop: stream → collect tool_use → execute → re-submit.
  */
 export async function runAgentWithSSE(
@@ -297,7 +293,7 @@ export async function runAgentWithSSE(
       }
     }
 
-    // Build native Anthropic messages
+    // Build chat messages
     const messages = buildMessages(history, message, attachments, imageBuffers);
 
     // Check guardrail result
@@ -322,8 +318,17 @@ export async function runAgentWithSSE(
     }
 
     // --- Agentic loop ---
-    const client = getAnthropicClient();
-    const toolDefs = agentConfig.tools.map((t) => t.definition);
+    const client = getChatClient();
+    // Convert internal tool defs (name/description/input_schema) to chat-completion tools
+    // function-tool format (type:function, function:{name,description,parameters}).
+    const toolDefs: OpenAI.Chat.ChatCompletionTool[] = agentConfig.tools.map((t) => ({
+      type: 'function' as const,
+      function: {
+        name: t.definition.name,
+        description: t.definition.description,
+        parameters: (t.definition.input_schema as Record<string, unknown>) ?? { type: 'object', properties: {} },
+      },
+    }));
 
     while (turnCount < MAX_TURNS) {
       turnCount++;
@@ -347,17 +352,25 @@ export async function runAgentWithSSE(
         break;
       }
 
-      // Stream the response — with prompt caching on system prompt
-      let response: Anthropic.Message | null = null;
+      // Stream the response (OpenAI-compatible chat completions).
+      let response: { stopReason: string; assistantMessage: OpenAI.Chat.ChatCompletionMessageParam } | null = null;
       let currentTurnText = '';
       let toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
       const maxAttempts = MAX_PROVIDER_RETRIES + 1;
+
+      // System prompt: static (shared) + dynamic (per-user). Open models take a
+      // single system message; we concatenate the two halves (no reordering).
+      const systemText = agentConfig.systemPromptStatic
+        ? `${agentConfig.systemPromptStatic}\n\n${agentConfig.systemPrompt}`
+        : agentConfig.systemPrompt;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         let attemptProducedOutput = false;
         currentTurnText = '';
         toolUseBlocks = [];
-        let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
+        // tool_calls arrive across streaming deltas, keyed by their index.
+        const toolCallAccum: Record<number, { id: string; name: string; args: string }> = {};
+        let finishReason: string | null = null;
         let textBuffer = '';
         let bufferTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -374,110 +387,89 @@ export async function runAgentWithSSE(
         };
 
         try {
-          // Extended thinking (Sonnet 4.6 / Opus): opt-in via ANTHROPIC_THINKING_BUDGET
-          // (>=1024). Off by default = zero behavior change. Thinking blocks are
-          // preserved across tool turns automatically (we push response.content below).
-          const thinkingBudget = Number(process.env.ANTHROPIC_THINKING_BUDGET || 0);
-          const thinkingEnabled = thinkingBudget >= 1024;
-          // System prompt cache layout (1h TTL on each breakpoint):
-          //  - Block 1 (static): persona/rules/ontology/tools — IDENTICAL across all
-          //    users in the same mode/language, so it caches GLOBALLY (one shared
-          //    write, then cache-reads for everyone). This is the big cost lever.
-          //  - Block 2 (dynamic): per-user situation/profile/context.
-          // 1h TTL amortizes the ~20K-token static write across far more reads than
-          // the 5-min default. No content is reordered, so behaviour is unchanged.
-          const systemBlocks = agentConfig.systemPromptStatic
-            ? [
-                {
-                  type: 'text' as const,
-                  text: agentConfig.systemPromptStatic,
-                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
-                },
-                {
-                  type: 'text' as const,
-                  text: agentConfig.systemPrompt,
-                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
-                },
-              ]
-            : [
-                {
-                  type: 'text' as const,
-                  text: agentConfig.systemPrompt,
-                  cache_control: { type: 'ephemeral' as const, ttl: '1h' as const },
-                },
-              ];
-          const stream = client.messages.stream({
+          const stream = await client.chat.completions.create({
             model: agentConfig.model,
-            system: systemBlocks,
-            messages,
-            tools: toolDefs,
-            max_tokens: thinkingEnabled ? thinkingBudget + 4096 : 4096,
-            ...(thinkingEnabled
-              ? { thinking: { type: 'enabled' as const, budget_tokens: thinkingBudget } }
-              : {}),
+            messages: [{ role: 'system', content: systemText }, ...messages],
+            tools: toolDefs.length > 0 ? toolDefs : undefined,
+            max_tokens: 4096,
+            stream: true,
+            stream_options: { include_usage: true },
           });
 
-          for await (const event of stream) {
-            if (event.type === 'content_block_start') {
-              const block = (event as any).content_block;
-              if (block?.type === 'tool_use') {
-                flushTextBuffer();
-                currentToolUse = { id: block.id, name: block.name, inputJson: '' };
-                attemptProducedOutput = true;
-              }
-            }
-
-            if (event.type === 'content_block_delta') {
-              const delta = (event as any).delta;
-              if (delta?.type === 'text_delta' && delta.text) {
-                finalOutput += delta.text;
-                currentTurnText += delta.text;
-                textBuffer += delta.text;
+          for await (const chunk of stream) {
+            const choice = chunk.choices?.[0];
+            if (choice) {
+              const delta = choice.delta;
+              if (delta?.content) {
+                finalOutput += delta.content;
+                currentTurnText += delta.content;
+                textBuffer += delta.content;
 
                 const lastSeg = segments[segments.length - 1];
                 if (lastSeg && lastSeg.type === 'text') {
-                  lastSeg.content = (lastSeg.content || '') + delta.text;
+                  lastSeg.content = (lastSeg.content || '') + delta.content;
                 } else {
-                  segments.push({ type: 'text', content: delta.text });
+                  segments.push({ type: 'text', content: delta.content });
                 }
 
                 if (!bufferTimer) {
                   bufferTimer = setTimeout(flushTextBuffer, SSE_BUFFER_FLUSH_MS);
                 }
               }
-              if (delta?.type === 'input_json_delta' && currentToolUse) {
-                currentToolUse.inputJson += delta.partial_json || '';
-              }
-            }
-
-            if (event.type === 'content_block_stop') {
-              if (currentToolUse) {
-                let parsedInput: any = {};
-                try {
-                  parsedInput = JSON.parse(currentToolUse.inputJson || '{}');
-                } catch {
-                  parsedInput = {};
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = tc.index ?? 0;
+                  if (!toolCallAccum[idx]) {
+                    flushTextBuffer();
+                    toolCallAccum[idx] = { id: tc.id || '', name: '', args: '' };
+                    attemptProducedOutput = true;
+                  }
+                  if (tc.id) toolCallAccum[idx].id = tc.id;
+                  if (tc.function?.name) toolCallAccum[idx].name += tc.function.name;
+                  if (tc.function?.arguments) toolCallAccum[idx].args += tc.function.arguments;
                 }
-                toolUseBlocks.push({
-                  id: currentToolUse.id,
-                  name: currentToolUse.name,
-                  input: parsedInput,
-                });
-                currentToolUse = null;
               }
+              if (choice.finish_reason) finishReason = choice.finish_reason;
+            }
+            // Final usage chunk (stream_options.include_usage)
+            if (chunk.usage) {
+              totalInputTokens += chunk.usage.prompt_tokens || 0;
+              totalOutputTokens += chunk.usage.completion_tokens || 0;
+              totalCacheReadTokens += (chunk.usage as any).prompt_tokens_details?.cached_tokens || 0;
             }
           }
 
           flushTextBuffer();
-          response = await stream.finalMessage();
 
-          // Accumulate token usage
-          if (response?.usage) {
-            totalInputTokens += response.usage.input_tokens || 0;
-            totalOutputTokens += response.usage.output_tokens || 0;
-            totalCacheReadTokens += (response.usage as any).cache_read_input_tokens || 0;
-            totalCacheCreationTokens += (response.usage as any).cache_creation_input_tokens || 0;
-          }
+          // Finalize tool calls (ordered by streaming index).
+          toolUseBlocks = Object.keys(toolCallAccum)
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map((k) => {
+              const t = toolCallAccum[k];
+              let parsedInput: any = {};
+              try {
+                parsedInput = JSON.parse(t.args || '{}');
+              } catch {
+                parsedInput = {};
+              }
+              return { id: t.id, name: t.name, input: parsedInput };
+            });
+
+          // Build the assistant message to replay on the next turn.
+          const assistantMessage: OpenAI.Chat.ChatCompletionMessageParam = toolUseBlocks.length > 0
+            ? {
+                role: 'assistant',
+                content: currentTurnText || null,
+                tool_calls: toolUseBlocks.map((t) => ({
+                  id: t.id,
+                  type: 'function' as const,
+                  function: { name: t.name, arguments: JSON.stringify(t.input) },
+                })),
+              }
+            : { role: 'assistant', content: currentTurnText || '' };
+
+          response = { stopReason: finishReason || 'stop', assistantMessage };
           break;
         } catch (streamError: any) {
           const isRetriable = isOverloadedProviderError(streamError) && !attemptProducedOutput && attempt < maxAttempts;
@@ -494,28 +486,28 @@ export async function runAgentWithSSE(
         throw new Error('Service IA temporairement indisponible. Réessayez dans quelques secondes.');
       }
 
-      // Safety refusal (Claude 4+ peut renvoyer stop_reason: 'refusal' avec un
+      // Safety refusal (some models can return stop_reason: 'refusal' avec un
       // content vide). Sans ce garde-fou, on renvoyait une reponse vide a
       // l'utilisateur. On surface un message propre + log.
-      if (response.stop_reason === 'refusal' && !finalOutput.trim()) {
+      if (response.stopReason === 'content_filter' && !finalOutput.trim()) {
         const refusalMsg = "Je ne peux pas t'aider sur cette demande. Reformule ou pose une autre question.";
         finalOutput = refusalMsg;
         segments.push({ type: 'text', content: refusalMsg });
         sendSSE(res, { type: 'text_delta', delta: refusalMsg });
-        logger.warn('[copilot] Reponse refusee par le classifieur de securite (stop_reason: refusal)');
+        logger.warn('[copilot] Reponse refusee par le filtre de securite (finish_reason: content_filter)');
         break;
       }
 
       // If no tool_use blocks, we're done
-      if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
+      if (toolUseBlocks.length === 0 || response.stopReason === 'stop') {
         break;
       }
 
       // --- Execute tool calls ---
-      // Add assistant message to conversation
-      messages.push({ role: 'assistant', content: response.content });
+      // Add assistant message (with tool_calls) to conversation
+      messages.push(response.assistantMessage);
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      const toolResults: OpenAI.Chat.ChatCompletionToolMessageParam[] = [];
 
       for (const toolUse of toolUseBlocks) {
         toolCallCounter++;
@@ -545,8 +537,8 @@ export async function runAgentWithSSE(
           sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
           // Return cached error for remaining tool results
           toolResults.push({
-            type: 'tool_result',
-            tool_use_id: toolUse.id,
+            role: 'tool',
+            tool_call_id: toolUse.id,
             content: JSON.stringify({ error: 'Tool loop detected. Stopping.' }),
           });
           continue;
@@ -661,20 +653,20 @@ export async function runAgentWithSSE(
           consecutiveEmptyResults = 0;
         }
 
-        // Add tool result for Anthropic (trimmed only for very large payloads)
+        // Add tool result (trimmed only for very large payloads)
         const rawContent = resultStr;
         const trimmedContent = (rawContent || '[no output]').length > 8000
           ? rawContent.slice(0, 8000) + '\n... [trimmed — ' + rawContent.length + ' chars total]'
           : rawContent || '[no output]';
         toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
+          role: 'tool',
+          tool_call_id: toolUse.id,
           content: trimmedContent || '[no output]',
         });
       }
 
-      // Add tool results as user message
-      messages.push({ role: 'user', content: toolResults });
+      // Add tool result messages (one per tool call) to the conversation
+      messages.push(...toolResults);
 
       // If limit reached, break out of the loop
       if (limitReached) break;
@@ -806,33 +798,27 @@ function stableStringify(value: any): string {
 }
 
 /**
- * Generate a session title using Anthropic Haiku
+ * Generate a session title using the fast model
  */
 export async function generateSessionTitle(message: string, language: SupportedLanguage = 'en'): Promise<string> {
   try {
     const { MODEL_FAST } = await import('../../ai/models');
-    const client = getAnthropicClient();
+    const client = getChatClient();
     const { buildSessionTitleSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
     const languageName = getLanguageDisplayName(language);
 
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODEL_FAST,
       max_tokens: 50,
-      system: [
-        {
-          type: 'text' as const,
-          text: buildSessionTitleSystemPrompt(languageName),
-          cache_control: { type: 'ephemeral' as const },
-        },
+      messages: [
+        { role: 'system', content: buildSessionTitleSystemPrompt(languageName) },
+        { role: 'user', content: message },
       ],
-      messages: [{ role: 'user', content: message }],
     });
 
     void recordUsage({ feature: 'session_title', model: MODEL_FAST, usage: response.usage as any });
 
-    const raw = response.content[0]?.type === 'text'
-      ? response.content[0].text.trim()
-      : message.slice(0, 50);
+    const raw = (response.choices[0]?.message?.content || message.slice(0, 50)).trim();
     // Strip any markdown formatting (**, *, #, quotes)
     const title = (raw || message.slice(0, 50))
       .replace(/[*#`"]/g, '')
@@ -847,7 +833,7 @@ export async function generateSessionTitle(message: string, language: SupportedL
 }
 
 /**
- * Generate prompt suggestions (OpenAI via @openai/agents)
+ * Generate prompt suggestions through the configured AI provider.
  */
 export async function generateSuggestions(
   mode: string,
@@ -856,35 +842,27 @@ export async function generateSuggestions(
 ): Promise<string[]> {
   try {
     const { buildSuggestionsSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
-    const { createSuggestionsAgent } = await import('../../ai/agent-factory');
-    const { Runner } = await import('@openai/agents');
-    const { openaiProvider } = await import('../../ai/provider');
+    const { getSuggestionClient } = await import('../../ai/provider');
     const { MODEL_SUGGESTION } = await import('../../ai/models');
 
     const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary, getLanguageDisplayName(language));
-    const agent = createSuggestionsAgent(systemPrompt);
-    const suggestionRunner = new Runner({ modelProvider: openaiProvider });
-    const result = await suggestionRunner.run(agent, `Generate the suggestions in ${getLanguageDisplayName(language)}.`);
+    const client = getSuggestionClient();
+    const completion = await client.chat.completions.create({
+      model: MODEL_SUGGESTION,
+      max_tokens: 160,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Generate the suggestions in ${getLanguageDisplayName(language)}.` },
+      ],
+    });
 
-    // Extract token usage from the @openai/agents result (best-effort; shape varies).
-    const rawResponses: any[] = (result as any).rawResponses ?? (result as any).state?._modelResponses ?? [];
-    let promptTokens = 0;
-    let completionTokens = 0;
-    for (const r of rawResponses) {
-      promptTokens += r?.usage?.inputTokens ?? r?.usage?.prompt_tokens ?? 0;
-      completionTokens += r?.usage?.outputTokens ?? r?.usage?.completion_tokens ?? 0;
-    }
-    const suggestionsUsage = (promptTokens || completionTokens)
-      ? { prompt_tokens: promptTokens, completion_tokens: completionTokens }
-      : null;
     void recordUsage({
       feature: 'suggestions',
       model: MODEL_SUGGESTION,
-      usage: suggestionsUsage,
-      ...(suggestionsUsage ? {} : { metadata: { usageUnavailable: true } }),
+      usage: completion.usage as any,
     });
 
-    const text = result.finalOutput?.trim() || '[]';
+    const text = completion.choices[0]?.message?.content?.trim() || '[]';
     return JSON.parse(text);
   } catch {
     return [];

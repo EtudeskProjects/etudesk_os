@@ -822,7 +822,7 @@ INSERT INTO community_activities (
     '11000000-0000-4000-8000-000000000002',
     '90000000-0000-4000-8000-000000000015',
     'POST',
-    'Agro: on a testé 2 canaux (WhatsApp vs revendeurs). Résultat: revendeurs gagnent en volume, WhatsApp en marge. Partage des leçons si intéressés.',
+    'Agro: on a testé 2 canaux (messagerie directe vs revendeurs). Résultat: revendeurs gagnent en volume, messagerie directe en marge. Partage des leçons si intéressés.',
     '{"topic":"distribution","domain":"agriculture"}'::jsonb,
     '[]'::jsonb,
     false,

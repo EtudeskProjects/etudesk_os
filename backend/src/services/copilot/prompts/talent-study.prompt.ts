@@ -1,7 +1,7 @@
 /**
- * Talent Study Prompt — Claude Sonnet 4.6 optimized
+ * Talent Study Prompt — provider-neutral agent optimized
  * English system prompt with dynamic user-facing response language
- * Follows Claude prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
+ * Follows prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
  */
 
 import { TalentContext } from '../types';

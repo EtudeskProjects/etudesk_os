@@ -1,11 +1,11 @@
 /**
  * Document Extraction Service
- * Uses OpenAI gpt-5-mini vision for structured metadata extraction from documents
+ * Uses the configured vision model for structured metadata extraction from documents
  */
 
 import OpenAI from 'openai';
 import { MODEL_SEARCH } from '../ai/models';
-import { getOpenAIClient } from '../ai/provider';
+import { getAIClient } from '../ai/provider';
 import { recordUsage } from '../ai/usage.service';
 import {
   DocumentType,
@@ -150,7 +150,7 @@ function parseExtractionPayload(content: string): Partial<ExtractedDocumentData>
 // --- Extraction Functions ---
 
 /**
- * Extract metadata from a document using gpt-5-mini vision
+ * Extract metadata from a document using the configured vision model
  */
 export async function extractDocumentMetadata(
   fileUrl: string,
@@ -188,7 +188,7 @@ export async function extractDocumentMetadata(
     }
 
     const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills);
-    const openai = getOpenAIClient();
+    const openai = getAIClient();
 
     // Build content parts
     const contentParts: OpenAI.ChatCompletionContentPart[] = [

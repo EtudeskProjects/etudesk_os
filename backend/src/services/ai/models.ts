@@ -1,51 +1,47 @@
 /**
- * Centralized LLM model configuration — Multi-provider by usage
+ * Centralized LLM model configuration — provider-neutral by usage.
  * Single source of truth — all model references import from here.
  *
- * Each constant targets the best provider for its use case:
- * - Anthropic Claude: agents + guardrails/summaries (best reasoning)
- * - OpenAI: form suggestions, images, web search, embeddings, STT, matching, vision
+ * MIGRATION (2026-06): moved to a single OpenAI-compatible AI provider.
+ * Every id is env-overridable because provider model slugs/versions change.
  *
- * Updated 2026-06 to the current OpenAI lineup (GPT-5.4 family + gpt-image-2).
- * Note: GPT-5 chat models reject a custom `temperature` and require
- * `max_completion_tokens` (not `max_tokens`) — call sites are aligned accordingly.
+ * Provider routing now goes through a single AI client (see provider.ts).
  */
 
-// --- OpenAI (form suggestions — gpt-5.4-nano: fast/cheap) ---
+// --- Main copilot agent (best open reasoning + tool use) ---
 
-/** Form generation: spaces, communities, opportunities, bios, daily objectives, WhatsApp */
-export const MODEL_SUGGESTION = 'gpt-5.4-nano';
+/** Main copilot agents: talent explorer, org explorer, study mode.
+ *  Default Qwen3-235B-A22B-Instruct (frontier-class, strong FR + tool calling). */
+export const MODEL_AGENT = process.env.AI_MODEL_AGENT || 'Qwen/Qwen3-235B-A22B-Instruct-2507';
 
-// --- Anthropic Claude (agents — best reasoning + tool use) ---
+/** Fast tasks: summaries, titles, guardrails, intent suggestions. */
+export const MODEL_FAST = process.env.AI_MODEL_FAST || 'meta-llama/Llama-4-Scout-17B-16E-Instruct';
 
-/** Main copilot agents: talent explorer, org explorer, study mode */
-// Sonnet line (balanced quality/cost). Uses Anthropic alias by default.
-// Override with ANTHROPIC_MODEL_AGENT to pin a snapshot when needed.
-export const MODEL_AGENT = process.env.ANTHROPIC_MODEL_AGENT || 'claude-sonnet-4-6';
+/** Form generation: spaces, communities, opportunities, bios, daily objectives. */
+export const MODEL_SUGGESTION = process.env.AI_MODEL_SUGGESTION || 'meta-llama/Llama-4-Scout-17B-16E-Instruct';
 
-/** Fast tasks: summaries, titles, guardrails, intent suggestions */
-export const MODEL_FAST = 'claude-haiku-4-5';
+/** Recommendations matching (cost-effective). */
+export const MODEL_MATCH = process.env.AI_MODEL_MATCH || 'meta-llama/Llama-4-Scout-17B-16E-Instruct';
 
-// --- OpenAI (specialized capabilities) ---
+/** Document vision/extraction + KYC (vision-capable, OCR 32 langues incl. FR). */
+export const MODEL_SEARCH = process.env.AI_MODEL_VISION || 'Qwen/Qwen3-VL-235B-A22B-Instruct';
 
-/**
- * Image generation. Default 'gpt-image-1' (verified-available). The previous
- * 'gpt-image-2' is not a confirmed OpenAI model id and would 404 — override via
- * OPENAI_IMAGE_MODEL only once the target id is confirmed in the account.
- */
-export const MODEL_IMAGE = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+// --- Media (provider inference API, not necessarily OpenAI-compatible) ---
 
-/** Document vision/extraction + KYC (gpt-5.4-mini: vision-capable, low latency) */
-export const MODEL_SEARCH = 'gpt-5.4-mini';
+/** Image generation — FLUX (schnell = cheapest, dev = higher quality). */
+export const MODEL_IMAGE = process.env.AI_MODEL_IMAGE || 'black-forest-labs/FLUX-1-schnell';
 
-/** Recommendations matching (cost-effective — gpt-5.4-nano) */
-export const MODEL_MATCH = 'gpt-5.4-nano';
+/** Speech-to-text — Whisper large v3 turbo (best WER, multilingual FR). */
+export const MODEL_STT = process.env.AI_MODEL_STT || 'openai/whisper-large-v3-turbo';
 
-/** Speech-to-text (OpenAI — gpt-4o-mini-transcribe: lower WER, better French recognition than whisper-1) */
-export const MODEL_STT = 'gpt-4o-mini-transcribe';
+/** Text-to-speech — Kokoro 82M. */
+export const MODEL_TTS = process.env.AI_MODEL_TTS || 'hexgrad/Kokoro-82M';
 
-/** Text-to-speech (OpenAI — gpt-4o-mini-tts: steerable voice with instructions parameter) */
-export const MODEL_TTS = 'gpt-4o-mini-tts';
+// --- Embeddings ---
 
-/** Text embeddings (always OpenAI for Pinecone 1536d compat) */
-export const MODEL_EMBEDDING = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
+/** Text embeddings — BGE-M3 (1024d, multilingual 100+ langues). Stored in pgvector.
+ *  Keep EMBEDDING_DIMENSION (provider/db) in sync with whatever model is set here. */
+export const MODEL_EMBEDDING = process.env.AI_MODEL_EMBEDDING || 'BAAI/bge-m3';
+
+/** Embedding vector dimension. BGE-M3 = 1024. Must match the pgvector column. */
+export const EMBEDDING_DIMENSION = parseInt(process.env.EMBEDDING_DIMENSION || '1024', 10);

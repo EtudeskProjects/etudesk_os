@@ -173,17 +173,7 @@
       "verifyError": "Error de verificación. Inténtalo de nuevo.",
       "codeSent": "¡Nuevo código enviado!",
       "verified": "¡Email verificado!",
-      "redirecting": "Iniciando sesión...",
-      "titleWhatsApp": "Verifica tu WhatsApp",
-      "subtitleWhatsApp": "Ingresa el código enviado al número"
-    },
-    "whatsappLogin": {
-      "title": "Iniciar sesión por WhatsApp",
-      "subtitle": "Ingresa tu número para recibir un código en WhatsApp",
-      "phoneLabel": "Número de WhatsApp",
-      "sendCode": "Recibir el código",
-      "infoText": "Recibirás un código de 6 dígitos en WhatsApp",
-      "sendError": "No se pudo enviar el código de WhatsApp. Verifica tu número."
+      "redirecting": "Iniciando sesión..."
     }
   },
   "tabs": {
@@ -498,7 +488,7 @@
     "contact": "Contactar al soporte",
     "email": "Email",
     "phone": "Teléfono",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "Información legal",

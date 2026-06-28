@@ -39,7 +39,7 @@ export interface ResolveResult extends Competency {
 // Minimum trigram similarity to accept a fuzzy resolution.
 const RESOLVE_THRESHOLD = Number(process.env.CATALOG_RESOLVE_THRESHOLD || 0.5);
 // Minimum cosine similarity to accept a SEMANTIC (embedding) resolution — higher
-// bar than suggestions since this writes a skill. Tuned for text-embedding-3-small.
+// bar than suggestions since this writes a skill. Tuned for configured embedding model.
 const SEMANTIC_RESOLVE_THRESHOLD = Number(process.env.CATALOG_SEMANTIC_THRESHOLD || 0.62);
 
 /**

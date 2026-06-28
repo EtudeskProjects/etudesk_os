@@ -14,7 +14,7 @@ import { createTalentAgent } from '../services/copilot/agents/talent.agent';
 import { createOrgAgent } from '../services/copilot/agents/organization.agent';
 import type { AgentConfig } from '../services/copilot/tools/tool-helper';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
-import { getAnthropicClient } from '../services/ai/provider';
+import { getChatClient } from '../services/ai/provider';
 
 // --- Config ---
 
@@ -187,7 +187,7 @@ function buildOrgTestContext(talentId: string, talentName: string, org: { id: st
   };
 }
 
-// --- Agent Runner — Full Capture ---
+// --- Agent Execution — Full Capture ---
 
 interface ToolCallCapture {
   name: string;
@@ -302,48 +302,46 @@ async function runAgentTest(
   log('dim', `Agent: ${agentType} | Message: "${message}"`);
 
   try {
-    const client = getAnthropicClient();
+    const client = getChatClient();
     const messages: any[] = [{ role: 'user' as const, content: message }];
-    const toolDefs = agent.tools.map(t => t.definition);
+    const toolDefs = agent.tools.map(t => ({
+      type: 'function' as const,
+      function: {
+        name: t.definition.name,
+        description: t.definition.description,
+        parameters: t.definition.input_schema,
+      },
+    }));
     let turnCount = 0;
     const MAX_TURNS = 15;
 
     while (turnCount < MAX_TURNS) {
-      const stream = client.messages.stream({
+      const response = await client.chat.completions.create({
         model: agent.model,
-        system: agent.systemPrompt,
-        messages,
+        messages: [{ role: 'system' as const, content: agent.systemPrompt }, ...messages],
         tools: toolDefs,
         max_tokens: 4096,
       });
 
-      // Collect streaming events
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta') {
-          const delta = event.delta as any;
-          if (delta.type === 'text_delta') {
-            output += delta.text;
-            if (!firstToolSeen) textBeforeFirstTool += delta.text;
-          }
-        }
-      }
-
-      const response = await stream.finalMessage();
+      const responseMessage = response.choices[0]?.message;
+      const responseText = responseMessage?.content || '';
+      output += responseText;
+      if (!firstToolSeen) textBeforeFirstTool += responseText;
 
       // Check for tool_use blocks
-      const toolUseBlocks = response.content.filter((b: any) => b.type === 'tool_use');
+      const toolUseBlocks = responseMessage?.tool_calls || [];
 
       if (toolUseBlocks.length === 0) break; // No tools → done
 
       // Execute tools
-      messages.push({ role: 'assistant' as const, content: response.content });
+      messages.push(responseMessage);
       const toolResults: any[] = [];
 
       for (const toolUse of toolUseBlocks) {
         if (!firstToolSeen) firstToolSeen = true;
         currentToolStart = Date.now();
-        const toolName = (toolUse as any).name;
-        const toolArgs = (toolUse as any).input;
+        const toolName = (toolUse as any).function?.name;
+        const toolArgs = JSON.parse((toolUse as any).function?.arguments || '{}');
 
         log('blue', `  Tool: ${toolName}`);
         log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
@@ -372,13 +370,13 @@ async function runAgentTest(
         }
 
         toolResults.push({
-          type: 'tool_result',
-          tool_use_id: (toolUse as any).id,
+          role: 'tool',
+          tool_call_id: (toolUse as any).id,
           content: JSON.stringify(result),
         });
       }
 
-      messages.push({ role: 'user' as const, content: toolResults });
+      messages.push(...toolResults);
       turnCount++;
     }
   } catch (error: any) {
@@ -697,12 +695,11 @@ function writeCalibrationReport(results: TestResult[]) {
 async function main() {
   header('COPILOT AGENT CALIBRATION');
   log('dim', `  Date: ${new Date().toISOString()}`);
-  log('dim', `  OpenAI Key: ${process.env.OPENAI_API_KEY ? 'set' : 'MISSING'}`);
-  log('dim', `  Pinecone Key: ${process.env.PINECONE_API_KEY ? 'set' : 'MISSING'}`);
+  log('dim', `  AI provider key: ${process.env.AI_API_KEY ? 'set' : 'MISSING'}`);
   log('dim', `  YouTube Key: ${process.env.YOUTUBE_API_KEY ? 'set' : 'MISSING'}`);
 
-  if (!process.env.OPENAI_API_KEY) {
-    log('red', '  OPENAI_API_KEY not set.');
+  if (!process.env.AI_API_KEY) {
+    log('red', '  AI_API_KEY not set.');
     process.exit(1);
   }
 

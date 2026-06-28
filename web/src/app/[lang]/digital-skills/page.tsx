@@ -11,12 +11,12 @@ const META: Record<Locale, { title: string; description: string }> = {
   fr: {
     title: 'Référentiel des compétences digitales',
     description:
-      'Explore la carte vivante des compétences du digital : 1687 compétences, leurs prérequis, voisins et débouchés. De zéro à la pointe de l\'IA, étape par étape.',
+      'Un référentiel propriétaire qui agrège les meilleurs cadres mondiaux de compétences numériques et les signaux réels du marché de l\'emploi.',
   },
   en: {
     title: 'Digital Skills Referential',
     description:
-      'Explore the living map of digital skills: 1687 skills with their prerequisites, neighbours and outcomes. From zero to the cutting edge of AI, step by step.',
+      'A proprietary referential aggregating the world\'s leading digital skills frameworks and real job-market signals.',
   },
 };
 

@@ -11,12 +11,12 @@ const META: Record<Locale, { title: string; description: string }> = {
   fr: {
     title: 'Etudesk - Les compétences du digital, à la vitesse du marché',
     description:
-      'Forme-toi aux compétences du digital avec ton tuteur IA, et transforme-les en opportunités avec ton guide carrière IA. Référentiel vivant, sans abonnement, 20 crédits offerts. Sur iOS et Android.',
+      'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales.',
   },
   en: {
     title: 'Etudesk - Digital skills, at the speed of the market',
     description:
-      'Learn digital skills with your AI tutor, and turn them into opportunities with your AI career guide. A living referential, no subscription, 20 free credits. On iOS and Android.',
+      'Etudesk helps every talent discover, learn and showcase the digital skills that open local and international opportunities.',
   },
 };
 

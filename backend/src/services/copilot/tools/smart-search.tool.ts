@@ -1,36 +1,20 @@
 /**
- * Smart Search Tool — Unified Pinecone + PostgreSQL hybrid search
+ * Smart Search Tool — Unified pgvector + PostgreSQL hybrid search
  * Replaces both vector_query and sql_query search_* intents.
  *
- * Phase 1: Pinecone semantic ranking (embeddings)
+ * Phase 1: pgvector semantic ranking (provider embeddings)
  * Phase 2: PostgreSQL enrichment + keyword fallback
  * Phase 3: Merge, deduplicate, sort by score DESC
  */
 
 import { defineTool } from './tool-helper';
 import { z } from 'zod';
-import { Pinecone } from '@pinecone-database/pinecone';
-import { generateEmbedding } from '../../embedding.service';
+import { generateEmbedding, vectorToSql } from '../../embedding.service';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
 
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || '',
-});
-
-const PINECONE_INDEX = process.env.PINECONE_INDEX || 'etudesk';
 const SEMANTIC_THRESHOLD = 0.35;
-const KEYWORD_FALLBACK_THRESHOLD = 3; // trigger keyword fallback if < 3 Pinecone results
-// Hosted reranking model (Pinecone Inference v8). Override via env if needed.
-const RERANK_MODEL = process.env.PINECONE_RERANK_MODEL || 'pinecone-rerank-v0';
-
-const ENTITY_TO_TYPE: Record<string, string> = {
-  opportunities: 'opportunity',
-  communities: 'community',
-  spaces: 'space',
-  talents: 'talent',
-  organizations: 'organization',
-};
+const KEYWORD_FALLBACK_THRESHOLD = 3;
 
 /**
  * Infer entity type from query text when the LLM omits the entity param.
@@ -51,7 +35,7 @@ function inferEntityFromQuery(query: string): string | undefined {
   return undefined;
 }
 
-/** Valid Pinecone metadata filter keys per entity type */
+/** Valid structured filter keys per entity type */
 const VALID_FILTER_KEYS: Record<string, ReadonlySet<string>> = {
   opportunities: new Set(['type', 'contract_type', 'contractType', 'location_type', 'locationType', 'location', 'sector', 'status']),
   communities: new Set(['type', 'sector', 'is_paid', 'isPaid', 'city']),
@@ -61,7 +45,7 @@ const VALID_FILTER_KEYS: Record<string, ReadonlySet<string>> = {
 };
 
 /**
- * Sanitize filters: whitelist valid keys per entity + only keep Pinecone-compatible values.
+ * Sanitize filters: whitelist valid keys per entity + keep scalar/simple-array values.
  */
 function sanitizeFilters(raw: Record<string, unknown>, entity?: string): Record<string, unknown> {
   const allowedKeys = entity ? VALID_FILTER_KEYS[entity] : null;
@@ -139,6 +123,101 @@ const PG_QUERIES: Record<string, string> = {
             FROM (SELECT c.name AS name, sk.level AS level FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state = 'active' ORDER BY sk.score DESC LIMIT 5) ts) as top_skills
     FROM talents t
     WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL AND t.is_visible = TRUE`,
+};
+
+const SEMANTIC_QUERIES: Record<string, (filters: Record<string, unknown>, limit: number) => { sql: string; params: any[] }> = {
+  opportunities: (filters, limit) => {
+    const p: any[] = [];
+    let idx = 2;
+    let sql = `
+      SELECT o.id, o.title, o.summary, o.type, o.contract_type, o.location_type,
+             o.locations, o.status, o.deadline, o.slug,
+             o.compensation_min, o.compensation_max, o.currency,
+             org.name as org_name, org.slug as org_slug,
+             1 - (o.embedding <=> $1::vector) AS semantic_score
+      FROM opportunities o
+      LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
+      LEFT JOIN organizations org ON op.poster_organization_id = org.id
+      WHERE o.status = 'OPEN' AND o.deleted_at IS NULL AND o.embedding IS NOT NULL`;
+    if (filters.type) { sql += ` AND o.type = $${idx}::text`; p.push(filters.type); idx++; }
+    if (filters.contractType || filters.contract_type) { sql += ` AND o.contract_type = $${idx}::text`; p.push(filters.contractType || filters.contract_type); idx++; }
+    if (filters.location) { sql += ` AND o.locations::text ILIKE '%' || $${idx}::text || '%'`; p.push(filters.location); idx++; }
+    sql += ` ORDER BY o.embedding <=> $1::vector LIMIT $${idx}`;
+    p.push(limit);
+    return { sql, params: p };
+  },
+  communities: (filters, limit) => {
+    const p: any[] = [];
+    let idx = 2;
+    let sql = `
+      SELECT c.id, c.name, c.description, c.type, c.slug, c.is_paid, c.city,
+             org.name as org_name,
+             (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE') as member_count,
+             1 - (c.embedding <=> $1::vector) AS semantic_score
+      FROM communities c
+      LEFT JOIN organizations org ON c.organization_id = org.id
+      WHERE c.status = 'ACTIVE' AND c.deleted_at IS NULL AND c.embedding IS NOT NULL`;
+    if (filters.type) { sql += ` AND c.type = $${idx}`; p.push(filters.type); idx++; }
+    if (filters.is_paid !== undefined || filters.isPaid !== undefined) { sql += ` AND c.is_paid = $${idx}`; p.push(filters.is_paid ?? filters.isPaid); idx++; }
+    if (filters.city || filters.location) { sql += ` AND c.city ILIKE '%' || $${idx} || '%'`; p.push(filters.city || filters.location); idx++; }
+    sql += ` ORDER BY c.embedding <=> $1::vector LIMIT $${idx}`;
+    p.push(limit);
+    return { sql, params: p };
+  },
+  spaces: (filters, limit) => {
+    const p: any[] = [];
+    let idx = 2;
+    let sql = `
+      SELECT s.id, s.name, s.description, s.type, s.slug, s.capacity,
+             s.hourly_rate, s.city,
+             org.name as org_name,
+             1 - (s.embedding <=> $1::vector) AS semantic_score
+      FROM spaces s
+      LEFT JOIN organizations org ON s.organization_id = org.id
+      WHERE s.status = 'ACTIVE' AND s.deleted_at IS NULL AND s.embedding IS NOT NULL`;
+    if (filters.type) { sql += ` AND s.type = $${idx}`; p.push(filters.type); idx++; }
+    if (filters.city || filters.location) { sql += ` AND s.city ILIKE '%' || $${idx} || '%'`; p.push(filters.city || filters.location); idx++; }
+    sql += ` ORDER BY s.embedding <=> $1::vector LIMIT $${idx}`;
+    p.push(limit);
+    return { sql, params: p };
+  },
+  organizations: (filters, limit) => {
+    const p: any[] = [];
+    let idx = 2;
+    let sql = `
+      SELECT o.id, o.name, o.description, o.sectors, o.slug,
+             o.headquarters_city as city, o.headquarters_country as country,
+             1 - (o.embedding <=> $1::vector) AS semantic_score
+      FROM organizations o
+      WHERE o.deleted_at IS NULL AND o.verification_status IN ('VERIFIED', 'OFFICIAL') AND o.is_visible = TRUE
+        AND o.embedding IS NOT NULL`;
+    if (filters.sectors && Array.isArray(filters.sectors)) { sql += ` AND o.sectors && $${idx}::text[]`; p.push(filters.sectors); idx++; }
+    sql += ` ORDER BY o.embedding <=> $1::vector LIMIT $${idx}`;
+    p.push(limit);
+    return { sql, params: p };
+  },
+  talents: (filters, limit) => {
+    const p: any[] = [];
+    let idx = 2;
+    let sql = `
+      SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
+             t.bio, t.city, t.country,
+             (SELECT json_agg(json_build_object('name', ts.name, 'level', ts.level))
+              FROM (SELECT c.name AS name, sk.level AS level FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state = 'active' ORDER BY sk.score DESC LIMIT 5) ts) as top_skills,
+             1 - (t.embedding <=> $1::vector) AS semantic_score
+      FROM talents t
+      WHERE t.deleted_at IS NULL AND t.is_visible = TRUE AND t.embedding IS NOT NULL`;
+    if (filters.city) { sql += ` AND t.city ILIKE '%' || $${idx} || '%'`; p.push(filters.city); idx++; }
+    if (filters.country) { sql += ` AND t.country = $${idx}`; p.push(filters.country); idx++; }
+    if (filters.skills && Array.isArray(filters.skills) && filters.skills.length > 0) {
+      sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug WHERE ts.talent_id = t.id AND (LOWER(c.name) = ANY($${idx}::text[]) OR LOWER(c.name_fr) = ANY($${idx}::text[]) OR ts.competency_slug = ANY($${idx}::text[])))`;
+      p.push((filters.skills as string[]).map((s: string) => s.toLowerCase()));
+      idx++;
+    }
+    sql += ` ORDER BY t.embedding <=> $1::vector LIMIT $${idx}`;
+    p.push(limit);
+    return { sql, params: p };
+  },
 };
 
 // --- Keyword fallback queries per entity ---
@@ -357,69 +436,31 @@ export const smartSearchTool = defineTool({
       const filters = rawFilters ? sanitizeFilters(rawFilters, entity) : {};
       const mapper = MAPPERS[entity];
 
-      // --- Phase 1: Pinecone semantic search ---
-      let pineconeIds: Array<{ id: string; score: number }> = [];
-      try {
-        const embedding = await generateEmbedding(query);
-        const index = pinecone.index(PINECONE_INDEX);
-
-        const pineconeFilter: Record<string, unknown> = {
-          type: ENTITY_TO_TYPE[entity] || entity,
-          ...filters,
-        };
-
-        let searchResult;
-        try {
-          searchResult = await index.query({
-            vector: embedding,
-            topK,
-            filter: pineconeFilter,
-            includeMetadata: true,
-          });
-        } catch (filterError: any) {
-          // Fallback: retry with type-only filter if extra filters cause issues
-          logger.warn('[smart_search] Pinecone filter error, retrying with type-only filter:', filterError.message);
-          searchResult = await index.query({
-            vector: embedding,
-            topK,
-            filter: { type: ENTITY_TO_TYPE[entity] || entity },
-            includeMetadata: true,
-          });
-        }
-
-        pineconeIds = searchResult.matches
-          .filter((m) => m.score && m.score > SEMANTIC_THRESHOLD)
-          .map((m) => ({
-            id: (m.metadata?.id as string) || m.id.replace(`${ENTITY_TO_TYPE[entity] || entity}:`, ''),
-            score: Math.round((m.score || 0) * 100),
-          }));
-      } catch (embeddingError: any) {
-        logger.warn('[smart_search] Pinecone/embedding error, falling back to keyword-only:', embeddingError.message);
-      }
-
-      // --- Phase 2: PostgreSQL enrichment + keyword fallback ---
+      // --- Phase 1: pgvector semantic search ---
       const semanticResults: any[] = [];
       const semanticIdSet = new Set<string>();
-
-      // Enrich Pinecone results with PostgreSQL
-      if (pineconeIds.length > 0) {
-        const entityIds = pineconeIds.map((i) => i.id);
-        const pgQuery = PG_QUERIES[entity];
-        if (pgQuery) {
-          const res = await queryWithRetry(pgQuery, [entityIds]);
-          for (const row of res.rows) {
-            const pineconeMatch = pineconeIds.find((i) => i.id === row.id);
-            semanticResults.push(mapper(row, pineconeMatch?.score || 0));
+      try {
+        const embedding = await generateEmbedding(query);
+        const semanticBuilder = SEMANTIC_QUERIES[entity];
+        if (semanticBuilder) {
+          const { sql, params } = semanticBuilder(filters, topK);
+          const semanticRes = await queryWithRetry(sql, [vectorToSql(embedding), ...params]);
+          for (const row of semanticRes.rows) {
+            const score = Number(row.semantic_score || 0);
+            if (score < SEMANTIC_THRESHOLD) continue;
+            semanticResults.push(mapper(row, Math.round(score * 100)));
             semanticIdSet.add(row.id);
           }
         }
+      } catch (embeddingError: any) {
+        logger.warn('[smart_search] pgvector/embedding error, falling back to keyword-only:', embeddingError.message);
       }
 
-      // Keyword fallback if < threshold Pinecone results
+      // --- Phase 2: keyword fallback if semantic results are sparse ---
       let keywordResults: any[] = [];
-      let source: 'semantic' | 'keyword' | 'hybrid' = pineconeIds.length > 0 ? 'semantic' : 'keyword';
+      let source: 'semantic' | 'keyword' | 'hybrid' = semanticResults.length > 0 ? 'semantic' : 'keyword';
 
-      if (pineconeIds.length < KEYWORD_FALLBACK_THRESHOLD) {
+      if (semanticResults.length < KEYWORD_FALLBACK_THRESHOLD) {
         const keywordBuilder = KEYWORD_QUERIES[entity];
         if (keywordBuilder) {
           const remainingSlots = topK - semanticResults.length;
@@ -445,36 +486,13 @@ export const smartSearchTool = defineTool({
       // Sort: semantic score DESC, then keyword results at end
       allResults.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
-      // --- Phase 3b: semantic reranking (Pinecone Inference) — sharpens relevance ---
-      // Reorders the candidate pool by true query relevance; best-effort (skips on failure).
-      let reranked = allResults;
-      let didRerank = false;
-      if (allResults.length > 1) {
-        try {
-          const documents = allResults.map(
-            (r: any) => `${r.name || r.title || ''}. ${r.description || r.summary || ''}`.trim().slice(0, 512)
-          );
-          const rr = await pinecone.inference.rerank({
-            model: RERANK_MODEL,
-            query,
-            documents,
-            topN: Math.min(allResults.length, Math.max(topK, 12)),
-            returnDocuments: false,
-          });
-          reranked = rr.data.map((d) => ({ ...allResults[d.index], rerankScore: d.score }));
-          didRerank = true;
-        } catch (e: any) {
-          logger.warn(`[smart_search] rerank skipped: ${e.message}`);
-        }
-      }
-
-      const finalResults = reranked.slice(0, topK);
+      const finalResults = allResults.slice(0, topK);
 
       const result = {
         results: finalResults,
         totalFound: finalResults.length,
         source,
-        reranked: didRerank,
+        reranked: false,
       };
 
       // Cache for anti-loop (with TTL)

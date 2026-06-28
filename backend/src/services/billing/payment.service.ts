@@ -91,9 +91,8 @@ function isValidEmail(email: string): boolean {
 /**
  * Resolve a valid email for Paystack checkout.
  * Priority: token email → users table → talents table.
- * Fallback for WhatsApp-only users: hello@etudesk.org (with phone in metadata).
  */
-async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): Promise<{ email: string; whatsappPhone?: string }> {
+async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): Promise<{ email: string }> {
   const fromToken = normalizeEmail(actorEmail);
   if (isValidEmail(fromToken)) return { email: fromToken };
 
@@ -112,7 +111,7 @@ async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): 
   if (isValidEmail(fromUser)) return { email: fromUser };
 
   const talentRes = await pool.query(
-    `SELECT email, phone
+    `SELECT email
      FROM talents
      WHERE id = $1
        AND deleted_at IS NULL
@@ -122,9 +121,7 @@ async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): 
   const fromTalent = normalizeEmail(talentRes.rows[0]?.email);
   if (isValidEmail(fromTalent)) return { email: fromTalent };
 
-  // WhatsApp-only user: use Etudesk email as billing proxy, attach phone for traceability
-  const phone = talentRes.rows[0]?.phone || null;
-  return { email: 'hello@etudesk.org', whatsappPhone: phone };
+  return { email: 'hello@etudesk.org' };
 }
 
 async function paystackRequest(path: string, method: 'GET' | 'POST', body?: Record<string, unknown>): Promise<any> {
@@ -192,7 +189,7 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
     return existing.rows[0];
   }
 
-  const { email: checkoutEmail, whatsappPhone } = await resolveCheckoutEmail(actorEmail, actorTalentId);
+  const { email: checkoutEmail } = await resolveCheckoutEmail(actorEmail, actorTalentId);
   const creditsToCredit = creditsForAmount(amount, currency);
   const reference = createPaystackReference(scope);
   const currencyConfig = CURRENCY_CONFIG[currency];
@@ -264,7 +261,6 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
       actorTalentId,
       etudeskPaymentId: payment.id,
       originalCurrency: currency,
-      ...(whatsappPhone ? { whatsappPhone } : {}),
       ...metadata,
     },
   };

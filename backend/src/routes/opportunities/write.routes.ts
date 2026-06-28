@@ -13,7 +13,7 @@ import {
   canGenerate,
   GenerationInput,
 } from '../../services/opportunity-generation.service';
-import { onOpportunityUpdate, deletePineconeVector } from '../../services/embedding.service';
+import { onOpportunityUpdate, deletePgVector } from '../../services/embedding.service';
 import { setOpportunitySkills } from '../../services/skills/entity-skills.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
@@ -383,8 +383,8 @@ router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async
       throw createNotFoundError('Opportunity');
     }
 
-    // Remove Pinecone vector (fire-and-forget)
-    deletePineconeVector('opportunity', id).catch(err => logger.error('[opportunities] Error deleting Pinecone vector:', err));
+    // Remove local pgvector embedding (fire-and-forget)
+    deletePgVector('opportunity', id).catch(err => logger.error('[opportunities] Error clearing pgvector:', err));
 
     res.json({ success: true, message: req.t('opportunities:deleted') });
   } catch (error) {

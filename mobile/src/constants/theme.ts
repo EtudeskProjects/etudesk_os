@@ -139,7 +139,6 @@ export const LIGHT_COLORS = {
 // Brand / partner colors (used for third-party identity, payments, etc.)
 // Keep these centralized to avoid hardcoding values across the app.
 export const BRAND_COLORS = {
-  whatsapp: '#25D366',
   orangeMoney: '#FF6600',
   mtnMoney: '#FFCC00',
   moovMoney: '#0066CC',

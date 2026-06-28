@@ -7,7 +7,8 @@ import { usePathname } from 'next/navigation';
 import { Sun, Moon, Menu, X } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LangContext';
-import { NAV, IOS_URL, type NavItem } from '../lib/site';
+import { NAV, type NavItem } from '../lib/site';
+import DownloadSoonLink from './DownloadSoonLink';
 
 export default function SiteHeader() {
   const { isDark, toggleTheme } = useContext(ThemeContext);
@@ -62,7 +63,7 @@ export default function SiteHeader() {
             <button className={lang === 'fr' ? 'on' : ''} onClick={() => setLang('fr')}>FR</button>
             <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
           </div>
-          <a href={IOS_URL} target="_blank" rel="noopener noreferrer" className="cta">{dl}</a>
+          <DownloadSoonLink platform="download" className="cta">{dl}</DownloadSoonLink>
           <button className="icon-btn burger" onClick={() => setOpen((v) => !v)} aria-label="Menu">
             {open ? <X size={20} strokeWidth={1.25} /> : <Menu size={20} strokeWidth={1.25} />}
           </button>
@@ -76,7 +77,7 @@ export default function SiteHeader() {
               {lang === 'fr' ? n.fr : n.en}
             </Link>
           ))}
-          <a href={IOS_URL} target="_blank" rel="noopener noreferrer" className="sheet-cta">{dl}</a>
+          <DownloadSoonLink platform="download" className="sheet-cta">{dl}</DownloadSoonLink>
         </div>
       )}
 
@@ -96,19 +97,19 @@ export default function SiteHeader() {
         .lang button { background: none; border: none; padding: 0.4rem 0.6rem; font-family: var(--font-family); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--text-tertiary); cursor: pointer; transition: all var(--transition-fast); }
         .lang button.on { background: var(--primary); color: var(--text-on-primary); }
         .lang button:not(.on):hover { color: var(--text-primary); }
-        .cta { padding: 0.5rem 1rem; background: var(--primary); color: var(--text-on-primary); border-radius: var(--radius-sm); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); transition: opacity var(--transition-fast); }
-        .cta:hover { opacity: 0.9; color: var(--text-on-primary); text-decoration: none; }
+        :global(.cta) { padding: 0.5rem 1rem; background: var(--primary); color: var(--text-on-primary); border-radius: var(--radius-sm); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); transition: opacity var(--transition-fast); }
+        :global(.cta:hover) { opacity: 0.9; color: var(--text-on-primary); text-decoration: none; }
         .burger { display: none; }
         .sheet { display: none; }
         @media (max-width: 880px) {
           .links { display: none; }
-          .cta { display: none; }
+          :global(.cta) { display: none; }
           .burger { display: flex; }
           .sheet { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1.5rem 1.25rem; border-top: 1px solid var(--border-color); background: var(--background); }
           :global(.sheet a) { display: block; padding: 0.7rem 0.6rem; border-radius: var(--radius-sm); font-size: var(--font-size-md); font-weight: var(--font-weight-medium); color: var(--text-secondary); text-decoration: none; }
           :global(.sheet a:hover) { text-decoration: none; }
           :global(.sheet a.active) { color: var(--text-on-primary); background: var(--primary); }
-          .sheet-cta { margin-top: 0.75rem; text-align: center; padding: 0.8rem 1rem !important; background: var(--primary); color: var(--text-on-primary) !important; border-radius: var(--radius-sm); font-weight: var(--font-weight-bold); border-bottom: none !important; }
+          :global(.sheet-cta) { margin-top: 0.75rem; text-align: center; padding: 0.8rem 1rem !important; background: var(--primary); color: var(--text-on-primary) !important; border-radius: var(--radius-sm); font-weight: var(--font-weight-bold); border-bottom: none !important; }
         }
       `}</style>
     </header>

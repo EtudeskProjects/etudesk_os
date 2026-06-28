@@ -258,10 +258,9 @@
       "displayNameRequired": "Display name is required",
       "profileCreationFailed": "Profile creation failed",
       "serverError": "Server error (500). Please try again later or contact support.",
-      "whatsappVerified": "Number verified via WhatsApp",
       "deleteAccountCta": "Delete this account",
       "deleteAccountTitle": "Delete this account",
-      "deleteAccountMessage": "This account is still being created. If you delete it, your email or WhatsApp number will become available again immediately.",
+      "deleteAccountMessage": "This account is still being created. If you delete it, your email number will become available again immediately.",
       "deleteAccountConfirmTitle": "Confirmation",
       "deleteAccountConfirmMessage": "Are you sure you want to permanently delete this account that is still being created?",
       "deleteAccountConfirm": "Delete permanently",
@@ -286,17 +285,7 @@
       "verifyError": "Verification error. Please retry.",
       "codeSent": "New code sent!",
       "verified": "Email verified!",
-      "redirecting": "Signing in...",
-      "titleWhatsApp": "Check your WhatsApp",
-      "subtitleWhatsApp": "Enter the code sent to the number"
-    },
-    "whatsappLogin": {
-      "title": "Sign in with WhatsApp",
-      "subtitle": "Enter your phone number to receive a WhatsApp code",
-      "phoneLabel": "WhatsApp number",
-      "sendCode": "Get code",
-      "infoText": "You will receive a 6-digit code on WhatsApp",
-      "sendError": "Unable to send WhatsApp code. Check your number."
+      "redirecting": "Signing in..."
     }
   },
   "tabs": {
@@ -921,7 +910,7 @@
     "contact": "Contact support",
     "email": "Email",
     "phone": "Phone",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "Legal Information",

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS waitlist (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     type VARCHAR(20) NOT NULL CHECK (type IN ('TALENT', 'ORGANIZATION')),
     country VARCHAR(100) NOT NULL,
-    contact_type VARCHAR(10) NOT NULL CHECK (contact_type IN ('EMAIL', 'WHATSAPP')),
+    contact_type VARCHAR(10) NOT NULL CHECK (contact_type IN ('EMAIL')),
     contact_value VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

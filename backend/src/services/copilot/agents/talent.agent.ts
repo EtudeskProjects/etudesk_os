@@ -1,6 +1,6 @@
 /**
  * Talent Agent — Explorer + Study modes
- * Returns AgentConfig for native Anthropic SDK execution
+ * Returns AgentConfig for provider-neutral tool execution
  */
 
 import { MODEL_AGENT } from '../../ai/models';

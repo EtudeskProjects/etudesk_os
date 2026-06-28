@@ -1,5 +1,5 @@
 -- Migration 026: Unified AI usage / token accounting
--- Single table that records EVERY LLM/AI call (Anthropic + OpenAI), so we can
+-- Single table that records every LLM/AI call so we can
 -- compute true COGS per feature and never "vendre du token non comptabilise".
 -- All previously-untracked paths (guardrails, summarizer, titles, suggestions,
 -- STT/TTS, embeddings, KYC, extraction, image gen, web search) write here.
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS ai_usage (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     -- What was called
-    provider VARCHAR(20) NOT NULL CHECK (provider IN ('anthropic', 'openai')),
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('ai')),
     model VARCHAR(80) NOT NULL,
     feature VARCHAR(80) NOT NULL,            -- e.g. copilot_agent, guardrail, summarizer, kyc, embedding, image, tts, stt, web_search
     billed_action_code VARCHAR(80),          -- credit_action_catalog action_code if this call was billed, else NULL

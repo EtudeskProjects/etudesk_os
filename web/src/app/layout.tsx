@@ -6,7 +6,7 @@ import { LangProvider } from '../contexts/LangContext';
 const BASE = 'https://etudesk.com';
 const TITLE = 'Etudesk - Les compétences du digital, à la vitesse du marché';
 const DESC =
-  'Forme-toi aux compétences du digital avec ton tuteur IA, et transforme-les en opportunités avec ton guide carrière IA. Référentiel vivant de 1687 compétences, sans abonnement, 20 crédits offerts. Sur iOS et Android.';
+  'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: TITLE,
     description:
-      'Ton tuteur IA t\'explique, ton guide carrière IA te trouve l\'opportunité, sur un référentiel vivant. 20 crédits offerts. Sur App Store et Google Play.',
+      'Un tuteur IA pour apprendre, un guide carrière IA pour avancer, et un référentiel propriétaire nourri par les meilleurs cadres mondiaux et les signaux du marché.',
     url: BASE,
     type: 'website',
     siteName: 'Etudesk',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: TITLE,
     description:
-      'Apprends les compétences du digital avec ton tuteur IA, décroche avec ton guide carrière IA. Sans abonnement.',
+      'Découvre, apprends et valorise les compétences numériques qui ouvrent des opportunités locales et internationales.',
     site: '@etudesk',
     creator: '@etudesk',
   },

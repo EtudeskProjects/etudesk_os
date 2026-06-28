@@ -1,6 +1,6 @@
 /**
  * Copilot — Main Exports
- * Native Anthropic SDK + Claude + SSE Streaming
+ * Provider-neutral AI client + SSE streaming
  */
 
 // Agents (return AgentConfig, not Agent)

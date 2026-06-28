@@ -1,7 +1,7 @@
 /**
  * Copilot API Routes
  * Routes for AI copilot chat and session management
- * Native Anthropic SDK + Claude + SSE Streaming
+ * OpenAI-compatible agents + SSE Streaming
  */
 
 import { Router, Response } from 'express';
@@ -20,7 +20,6 @@ import {
   canUploadDocument,
   validateFile,
 } from '../services/documents/document.service';
-import { MODEL_STT } from '../services/ai/models';
 import { analyzeAudio } from '../services/ai/audio-analysis.service';
 import { generateTTS } from '../services/ai/tts.service';
 import { uploadFile } from '../services/storage.service';
@@ -1290,20 +1289,27 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       sectors: profileRow.sectors,
     } : undefined;
 
-    // 3. Generate suggestions (OpenAI)
-    const { Runner } = await import('@openai/agents');
-    const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
+    // 3. Generate suggestions
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
-    const { openaiProvider } = await import('../services/ai/provider');
+    const { getSuggestionClient } = await import('../services/ai/provider');
+    const { MODEL_SUGGESTION } = await import('../services/ai/models');
+    const { recordUsage } = await import('../services/ai/usage.service');
 
     const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext, languageName);
-    const agent = createIntentSuggestionsAgent(systemPrompt);
-    const suggestionRunner = new Runner({ modelProvider: openaiProvider });
 
     let suggestions: string[] = [];
     try {
-      const result = await suggestionRunner.run(agent, `Generate 4 suggestions in ${languageName}.`);
-      const text = result.finalOutput?.trim() || '[]';
+      const client = getSuggestionClient();
+      const completion = await client.chat.completions.create({
+        model: MODEL_SUGGESTION,
+        max_tokens: 180,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Generate 4 suggestions in ${languageName}.` },
+        ],
+      });
+      void recordUsage({ feature: 'intent_suggestions', model: MODEL_SUGGESTION, usage: completion.usage as any });
+      const text = completion.choices[0]?.message?.content?.trim() || '[]';
       suggestions = JSON.parse(text);
 
       if (!Array.isArray(suggestions) || suggestions.length < 4) {
@@ -1544,8 +1550,7 @@ const audioUpload = multer({
 });
 
 /**
- * POST /api/copilot/transcribe - Transcribe audio using OpenAI gpt-4o-mini-transcribe
- * Better WER and French language recognition than whisper-1.
+ * POST /api/copilot/transcribe - Transcribe audio using provider STT.
  * Body: FormData with 'audio' file field
  * Returns: { text: string }
  */
@@ -1565,24 +1570,15 @@ router.post(
         return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
-      const { getOpenAIClient } = await import('../services/ai/provider');
-      const openai = getOpenAIClient();
-
-      // Create a File-like object from buffer for the API
-      const audioFile = new File([file.buffer], file.originalname, {
-        type: file.mimetype,
-      });
-
-      // gpt-4o-mini-transcribe: better accuracy, lower WER, better French support
-      // response_format must be 'json' for gpt-4o-mini-transcribe (text not supported)
       const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
-      const result = await openai.audio.transcriptions.create({
-        file: audioFile,
-        model: MODEL_STT,
+      const { transcribeWithProvider } = await import('../services/ai/media.client');
+      const result = await transcribeWithProvider({
+        buffer: file.buffer,
+        filename: file.originalname || 'audio.webm',
+        mimeType: file.mimetype,
         language,
       });
-
-      const transcription = typeof result === 'string' ? result : (result as any).text || '';
+      const transcription = result || '';
 
       logger.info(`Audio transcribed for talent ${talentId}: ${transcription.slice(0, 50)}...`);
 
@@ -1595,7 +1591,6 @@ router.post(
     } catch (error: any) {
       logger.error('Error transcribing audio:', error);
 
-      // Handle specific OpenAI errors
       if (error?.status === 400) {
         return res.status(400).json({
           error: req.t('copilot:invalidAudioFormat'),

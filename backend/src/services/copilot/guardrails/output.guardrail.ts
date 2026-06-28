@@ -6,7 +6,7 @@
 
 import { logger } from '../../../utils';
 
-/** Local OutputGuardrail type (replaces @openai/agents import) */
+/** Local OutputGuardrail type */
 interface OutputGuardrail {
   name: string;
   execute: (params: { agentOutput: any; agent: any }) => Promise<{

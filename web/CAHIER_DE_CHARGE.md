@@ -261,7 +261,7 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 5. **Ton profil et ta carriere** : profil, documents (CV, certificats), candidatures, reservations, invitations.
 6. **Multimodal** : texte, voix (transcription), pieces jointes (PDF/images).
 7. **Multilingue** : plusieurs langues (FR, EN et au-dela).
-8. **Onboarding express** : connexion email ou WhatsApp + code, profil en quelques etapes.
+8. **Onboarding express** : connexion email + code, profil en quelques etapes.
 9. **Modele simple** : les 20 credits offerts, recharge en FCFA (voir section 9).
 10. **CTA stores final** + QR code (desktop -> mobile).
 

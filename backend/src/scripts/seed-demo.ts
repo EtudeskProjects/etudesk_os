@@ -8,7 +8,7 @@
  *   slug via catalog.service. Non-catalog labels are skipped (logged).
  * - Idempotent: upserts by stable slugs; child content is scope-deleted per demo
  *   entity then re-inserted.
- * - No embeddings / Pinecone. Run AFTER migrations + seed:competencies:
+ * - No embeddings / pgvector seed. Run AFTER migrations + seed:competencies:
  *     npx tsx src/scripts/seed-demo.ts
  */
 

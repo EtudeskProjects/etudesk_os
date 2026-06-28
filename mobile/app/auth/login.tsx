@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, Dimensions, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AtSign } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, BRAND_COLORS, LIGHT_COLORS } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAlert } from '../../src/contexts/AlertContext';
@@ -80,10 +80,6 @@ export default function LoginScreen() {
     promptAsync();
   };
 
-  const handleWhatsAppLogin = () => {
-    router.push('/auth/whatsapp-login');
-  };
-
   const handleEmailLogin = () => {
     router.push('/auth/email-login');
   };
@@ -108,20 +104,6 @@ export default function LoginScreen() {
           </Text>
 
           {/* TODO: Google OAuth — réactiver quand les client IDs seront configurés en production */}
-
-          <SelectCard
-            style={[styles.authButton, styles.authButtonWhatsApp]}
-            onPress={handleWhatsAppLogin}
-            selected={false}
-            accessibilityLabel={t('common.continueWith') + ' WhatsApp'}
-          >
-            <Image
-              source={require('../../assets/whatsapp_icon.png')}
-              style={styles.socialIcon}
-            />
-            {/* WhatsApp button always has white bg, so text must always be dark */}
-            <Text style={[styles.authButtonText, { color: LIGHT_COLORS.black }]}>WhatsApp</Text>
-          </SelectCard>
 
           <SelectCard
             style={[styles.authButton, styles.authButtonEmail, { backgroundColor: colors.primary, borderColor: colors.primary }]}
@@ -201,18 +183,6 @@ const styles = StyleSheet.create({
     height: LAYOUT.buttonHeight,
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
-  },
-
-  authButtonWhatsApp: {
-    // WhatsApp brand colors
-    backgroundColor: LIGHT_COLORS.white,
-    borderColor: BRAND_COLORS.whatsapp,
-  },
-
-  socialIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
   },
 
   authButtonText: {

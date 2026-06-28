@@ -2,7 +2,7 @@
  * Seed Minimal — small, dependency-free demo dataset to test the skills referential
  * end-to-end (talent skills, opportunity/community/space skill tags, matching).
  *
- * - No embeddings / Pinecone (safe to run without API keys).
+ * - No embeddings / pgvector seed (safe to run without API keys).
  * - Idempotent (ON CONFLICT on slugs/emails).
  * - All skills are resolved to catalog slugs via catalog.service (real flow).
  *

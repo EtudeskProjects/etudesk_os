@@ -12,7 +12,7 @@ import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
-import { getOpenAIClient } from '../ai/provider';
+import { getAIClient } from '../ai/provider';
 import { buildOrgExtractionPrompt, ORG_EXTRACTION_SYSTEM_PROMPT } from '../ai/prompts/org-extraction.prompt';
 import { DOCUMENT_STATUS, DocumentStatus } from '../../constants/documents';
 import {
@@ -237,7 +237,7 @@ export async function processOrgDocumentExtraction(
     }
 
     const prompt = buildOrgExtractionPrompt(mimeType);
-    const openai = getOpenAIClient();
+    const openai = getAIClient();
 
     const contentParts: OpenAI.ChatCompletionContentPart[] = [
       { type: 'text', text: prompt },

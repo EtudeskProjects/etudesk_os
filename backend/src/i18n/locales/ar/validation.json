@@ -24,8 +24,7 @@
     "codeLength": "الرمز يجب أن يحتوي على 6 أرقام",
     "codeDigits": "الرمز يجب أن يتكون من 6 أرقام",
     "refreshTokenRequired": "رمز التجديد مطلوب",
-    "invalidPhone": "رقم هاتف غير صالح",
-    "invalidWhatsApp": "رقم واتساب غير صالح"
+    "invalidPhone": "رقم هاتف غير صالح"
   },
   "opportunity": {
     "titleMinLength": "العنوان يجب أن يحتوي على 3 أحرف على الأقل",

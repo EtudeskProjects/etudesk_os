@@ -281,10 +281,9 @@
       "displayNameRequired": "Le nom d'affichage est requis",
       "profileCreationFailed": "Échec de la création du profil",
       "serverError": "Erreur serveur (500). Réessaie plus tard ou contacte le support.",
-      "whatsappVerified": "Numéro vérifié via WhatsApp",
       "deleteAccountCta": "Supprimer ce compte",
       "deleteAccountTitle": "Supprimer ce compte",
-      "deleteAccountMessage": "Ce compte est encore en cours de création. Si tu le supprimes, ton email ou ton numéro WhatsApp redeviendra disponible immédiatement.",
+      "deleteAccountMessage": "Ce compte est encore en cours de création. Si tu le supprimes, ton email redeviendra disponible immédiatement.",
       "deleteAccountConfirmTitle": "Confirmation",
       "deleteAccountConfirmMessage": "Es-tu vraiment sûr de vouloir supprimer définitivement ce compte en cours de création ?",
       "deleteAccountConfirm": "Supprimer définitivement",
@@ -309,17 +308,7 @@
       "verifyError": "Erreur de vérification. Réessaie.",
       "codeSent": "Nouveau code envoyé !",
       "verified": "Email vérifié !",
-      "redirecting": "Connexion en cours...",
-      "titleWhatsApp": "Vérifie ton WhatsApp",
-      "subtitleWhatsApp": "Entre le code envoyé au numéro"
-    },
-    "whatsappLogin": {
-      "title": "Connexion par WhatsApp",
-      "subtitle": "Entre ton numéro pour recevoir un code sur WhatsApp",
-      "phoneLabel": "Numéro WhatsApp",
-      "sendCode": "Recevoir le code",
-      "infoText": "Tu recevras un code à 6 chiffres sur WhatsApp",
-      "sendError": "Impossible d'envoyer le code WhatsApp. Vérifie ton numéro."
+      "redirecting": "Connexion en cours..."
     }
   },
   "tabs": {
@@ -944,7 +933,7 @@
     "contact": "Contacter le support",
     "email": "Email",
     "phone": "Téléphone",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "Informations légales",

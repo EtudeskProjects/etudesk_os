@@ -11,7 +11,7 @@ const WAITLIST_NOTIFY_EMAIL = process.env.WAITLIST_NOTIFY_EMAIL || 'etudesksas@g
 const waitlistSchema = z.object({
   type: z.enum(['TALENT', 'ORGANIZATION']),
   country: z.string().min(1).max(100),
-  contactType: z.enum(['EMAIL', 'WHATSAPP']),
+  contactType: z.enum(['EMAIL']).default('EMAIL'),
   contactValue: z.string().min(1).max(255),
 });
 
@@ -29,32 +29,21 @@ router.post('/', waitlistLimiter, async (req: Request, res: Response) => {
     const { type, country, contactType, contactValue } = parsed.data;
 
     // Normalize inputs for common mobile copy/paste/autocorrect issues
-    const cleanedEmail = contactType === 'EMAIL'
-      ? contactValue.trim().toLowerCase().replace(/\s+/g, '').replace(/[,\.;]+$/, '')
-      : contactValue;
+    const cleanedEmail = contactValue.trim().toLowerCase().replace(/\s+/g, '').replace(/[,\.;]+$/, '');
 
     // Basic email validation
-    if (contactType === 'EMAIL' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
       return res.status(400).json({ error: req.t('common:invalidEmail') });
     }
 
-    // Basic WhatsApp validation (digits, optional +, 7-15 chars)
-    // Strip spaces, dashes, parentheses before validating
-    const cleanedWhatsApp = contactType === 'WHATSAPP'
-      ? contactValue.replace(/[\s\-\(\)]/g, '')
-      : contactValue;
-    if (contactType === 'WHATSAPP' && !/^\+?\d{7,15}$/.test(cleanedWhatsApp)) {
-      return res.status(400).json({ error: req.t('validation:invalidWhatsApp') });
-    }
-
-    const storedContactValue = contactType === 'WHATSAPP' ? cleanedWhatsApp : cleanedEmail;
+    const storedContactValue = cleanedEmail;
 
     await pool.query(
       `INSERT INTO waitlist (type, country, contact_type, contact_value)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (contact_value)
        DO UPDATE SET type = EXCLUDED.type, country = EXCLUDED.country, contact_type = EXCLUDED.contact_type`,
-      [type, country, contactType, storedContactValue],
+      [type, country, 'EMAIL', storedContactValue],
     );
 
     const escapeHtml = (value: string): string =>

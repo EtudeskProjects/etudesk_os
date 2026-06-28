@@ -1,7 +1,7 @@
 /**
- * Organization Explorer Prompt — Claude Sonnet 4.6 optimized
+ * Organization Explorer Prompt — provider-neutral agent optimized
  * English system prompt with dynamic user-facing response language
- * Follows Claude prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
+ * Follows prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
  */
 
 import { OrgContext } from '../types';
@@ -157,7 +157,7 @@ N'utilise que des compétences du référentiel (catalogue), jamais inventées.
 **chart_hint**: Use chart_hint from SQL results to pick chart type. Always prefer charts over raw data.
 
 **Other tools (in order):**
-- **smart_search**: Semantic search for talents, opportunities, communities, spaces, organizations. Combines Pinecone ranking with keyword fallback automatically. ONE call is sufficient — no need to retry.
+- **smart_search**: Semantic search for talents, opportunities, communities, spaces, organizations. Combines pgvector semantic ranking with keyword fallback automatically. ONE call is sufficient — no need to retry.
 - **generate_document**: AFTER gathering data with sql_query. Sequence: gather → confirm ("${lang.confirmGenerate}") → generate. NEVER skip data gathering.
 - **file_reader**: After org_documents to read content. Workflow: org_documents(search) → file_reader(documentId) → actionable insights.
 - **web_search**: Last resort for market data/trends not in platform.

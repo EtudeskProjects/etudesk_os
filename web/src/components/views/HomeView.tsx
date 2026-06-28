@@ -504,7 +504,9 @@ export default function HomeView({ lang }: { lang: Lang }) {
         @media (max-width: 560px) { .partners-row { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 880px) {
           .agent-row { grid-template-columns: 1fr; gap: 2.25rem; justify-items: center; text-align: center; max-width: 460px; }
-          .agent-row .agent-device { order: -1; }
+          .agent-row .agent-copy { order: 1; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 420px; }
+          .agent-row .agent-device,
+          .agent-row.reverse .agent-device { order: 2; }
           .agent-acc { text-align: left; width: 100%; max-width: 360px; }
           .credits { grid-template-columns: 1fr; }
           .ref-inner { grid-template-columns: 1fr; gap: 2.5rem; max-width: 560px; }

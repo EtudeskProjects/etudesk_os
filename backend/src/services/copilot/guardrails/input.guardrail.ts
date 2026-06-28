@@ -1,10 +1,10 @@
 /**
  * Input Safety Guardrail
- * Uses Anthropic Claude Haiku to classify user input.
+ * Uses the fast model to classify user input.
  * Triggers tripwire on INJECTION or HARMFUL content.
  */
 
-import { getAnthropicClient } from '../../ai/provider';
+import { getChatClient } from '../../ai/provider';
 import { MODEL_FAST } from '../../ai/models';
 import { recordUsage } from '../../ai/usage.service';
 import { logger } from '../../../utils';
@@ -68,19 +68,19 @@ export async function runInputGuardrail(
       return { tripwireTriggered: false, outputInfo: { classification: 'SAFE' } };
     }
 
-    const client = getAnthropicClient();
-    const response = await client.messages.create({
+    const client = getChatClient();
+    const response = await client.chat.completions.create({
       model: MODEL_FAST,
       max_tokens: 10,
-      system: CLASSIFIER_PROMPT,
-      messages: [{ role: 'user', content: userMessage.slice(0, 500) }],
+      messages: [
+        { role: 'system', content: CLASSIFIER_PROMPT },
+        { role: 'user', content: userMessage.slice(0, 500) },
+      ],
     });
 
     void recordUsage({ feature: 'guardrail', model: MODEL_FAST, usage: response.usage as any });
 
-    const classification = (response.content[0]?.type === 'text'
-      ? response.content[0].text.trim().toUpperCase()
-      : 'SAFE') || 'SAFE';
+    const classification = (response.choices[0]?.message?.content || 'SAFE').trim().toUpperCase() || 'SAFE';
 
     const isUnsafe = classification === 'INJECTION' || classification === 'HARMFUL';
 

@@ -42,20 +42,6 @@ async function sendOTP(email: string): Promise<void> {
 }
 
 /**
- * Send OTP code to phone number via WhatsApp
- */
-async function sendWhatsAppOTP(phone: string): Promise<void> {
-  try {
-    await api.publicPost<{ success?: boolean; error?: string }>('/auth/request-whatsapp-otp', { phone });
-
-    logger.info(LOG_SOURCE, 'WhatsApp OTP sent', { phone });
-  } catch (error: any) {
-    logger.error(LOG_SOURCE, 'Failed to send WhatsApp OTP', error, { phone });
-    throw new Error(error?.error || i18n.t('otpService.sendError'));
-  }
-}
-
-/**
  * Result of OTP verification
  */
 interface VerifyOTPResult {
@@ -131,43 +117,6 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
     return { success: false, needsOnboarding: false };
   } catch (error) {
     logger.error(LOG_SOURCE, 'OTP verification error', error, { email });
-    return { success: false, needsOnboarding: false };
-  }
-}
-
-/**
- * Verify WhatsApp OTP code
- */
-async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTPResult> {
-  try {
-    const { ok, status, data } = await api.rawRequest<AuthSessionPayload>('POST', '/auth/verify-whatsapp-otp', { phone, code });
-
-    if (!ok) {
-      logger.apiError(LOG_SOURCE, status, data.error || 'WhatsApp OTP verification failed', '/api/auth/verify-whatsapp-otp');
-      return { success: false, needsOnboarding: false };
-    }
-
-    if (data.success && data.tokens) {
-      const stored = await storeAuthSession(data);
-      if (!stored) {
-        return { success: false, needsOnboarding: false };
-      }
-
-      logger.info(LOG_SOURCE, 'WhatsApp authentication successful', {
-        phone,
-        needsOnboarding: data.needsOnboarding,
-      });
-
-      return {
-        success: true,
-        needsOnboarding: data.needsOnboarding ?? false,
-        user: data.user
-      };
-    }
-
-    return { success: false, needsOnboarding: false };
-  } catch (error) {
-    logger.error(LOG_SOURCE, 'WhatsApp OTP verification error', error, { phone });
     return { success: false, needsOnboarding: false };
   }
 }
@@ -357,9 +306,7 @@ async function deleteAccount(): Promise<{
 
 export const otpService = {
   sendOTP,
-  sendWhatsAppOTP,
   verifyOTP,
-  verifyWhatsAppOTP,
   signInWithGoogle,
   getAccessToken,
   getUser,

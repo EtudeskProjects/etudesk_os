@@ -128,9 +128,6 @@ export default function CreateProfileScreen() {
     }, delay);
   }, []);
 
-  // Track if user signed up via WhatsApp (phone becomes mandatory + locked)
-  const [isWhatsAppSignup, setIsWhatsAppSignup] = useState(false);
-
   const loadAuthData = useCallback(async () => {
     try {
       const user = await otpService.getUser();
@@ -149,9 +146,6 @@ export default function CreateProfileScreen() {
           form.setValues({ phone: user.phone });
         }
 
-        if (user.authMethod === 'whatsapp') {
-          setIsWhatsAppSignup(true);
-        }
       }
     } catch {
     }
@@ -317,10 +311,7 @@ export default function CreateProfileScreen() {
   };
 
   const canProceed = () => {
-    const baseValid = firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
-    // WhatsApp signup requires phone
-    if (isWhatsAppSignup && !phone.trim()) return false;
-    return baseValid;
+    return firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
   };
 
   return (
@@ -559,12 +550,11 @@ export default function CreateProfileScreen() {
 
                 {/* Téléphone */}
                 <PhoneInput
-                  label={isWhatsAppSignup ? `${t('auth.createProfile.phone')} *` : t('auth.createProfile.phone')}
+                  label={t('auth.createProfile.phone')}
                   value={phone}
                   onChangeValue={(e164) => form.setValue('phone', e164)}
                   defaultCountryCode={country}
-                  editable={!isWhatsAppSignup}
-                  hint={isWhatsAppSignup ? t('auth.createProfile.whatsappVerified') : t('common.optional')}
+                  hint={t('common.optional')}
                 />
 
                 {/* Email */}

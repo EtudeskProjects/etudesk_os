@@ -4,7 +4,7 @@
 export const homeCopy = {
   fr: {
     heroTitle: 'Prépare-toi aux\ncompétences de demain.',
-    heroSub: 'Le seul endroit où tes compétences digitales deviennent directement des opportunités. Un tuteur IA pour apprendre, un guide carrière IA pour avancer. Dans ta poche, à ton rythme.',
+    heroSub: 'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales. Un tuteur IA pour apprendre, un guide carrière IA pour avancer. Dans ta poche, à ton rythme.',
     heroExplore: 'Voir le référentiel',
     trust: '3 000 000+ formés  ·  53 pays  ·  depuis 2016',
 
@@ -42,7 +42,7 @@ export const homeCopy = {
 
     refEyebrow: 'Le référentiel',
     refTitle: 'Pas un catalogue figé. Un écosystème vivant.',
-    refDesc: 'Le référentiel Etudesk est une carte propriétaire des compétences du digital, mise à jour à la vitesse du marché. Chaque compétence sait ce qui vient avant, à côté et après : l\'app te donne toujours le prochain pas.',
+    refDesc: 'Notre référentiel propriétaire agrège les meilleurs cadres mondiaux de compétences numériques et les signaux réels du marché de l\'emploi. Chaque compétence sait ce qui vient avant, à côté et après : l\'app te donne toujours le prochain pas.',
     refSkills: 'compétences', refFamilies: 'familles', refRelations: 'liens typés',
     refPoint1T: 'Des savoirs qui durent',
     refPoint1B: '60% des fondations',
@@ -57,7 +57,7 @@ export const homeCopy = {
     f3t: 'Ton profil & ta carrière', f3d: 'Profil, documents (CV, certificats), candidatures, réservations, invitations.',
     f4t: 'Multimodal', f4d: 'Texte, voix (transcription), pièces jointes (PDF, images).',
     f5t: 'Multilingue', f5d: 'Plusieurs langues, à l\'écrit comme à la voix.',
-    f6t: 'Onboarding express', f6d: 'Connexion email ou WhatsApp + code. Profil en quelques étapes, sans test d\'admission.',
+    f6t: 'Onboarding express', f6d: 'Connexion email + code. Profil en quelques étapes, sans test d\'admission.',
 
     creditsT: 'Commence avec 20 crédits offerts',
     creditsD: 'Le tuteur coûte 0,25 crédit par question. Quiz, flashcards, diagrammes, recherche et candidatures sont gratuits. Recharge à ton rythme, sans abonnement.',
@@ -79,7 +79,7 @@ export const homeCopy = {
   },
   en: {
     heroTitle: 'Get ready for\ntomorrow\'s skills.',
-    heroSub: 'The only place where your digital skills turn directly into opportunities. An AI tutor to learn, an AI career guide to advance. In your pocket, at your pace.',
+    heroSub: 'Etudesk helps every talent discover, learn and showcase the digital skills that open local and international opportunities. An AI tutor to learn, an AI career guide to advance. In your pocket, at your pace.',
     heroExplore: 'See the referential',
     trust: '3,000,000+ trained  ·  53 countries  ·  since 2016',
 
@@ -117,7 +117,7 @@ export const homeCopy = {
 
     refEyebrow: 'The referential',
     refTitle: 'Not a frozen catalog. A living ecosystem.',
-    refDesc: 'The Etudesk referential is a proprietary map of digital skills, updated at market speed. Every skill knows what comes before, beside and after it: the app always gives you the next step.',
+    refDesc: 'Our proprietary referential aggregates the world\'s leading digital skills frameworks and real job-market signals. Every skill knows what comes before, beside and after it: the app always gives you the next step.',
     refSkills: 'skills', refFamilies: 'families', refRelations: 'typed links',
     refPoint1T: 'Knowledge that lasts',
     refPoint1B: '60% of the foundations',
@@ -132,7 +132,7 @@ export const homeCopy = {
     f3t: 'Your profile & career', f3d: 'Profile, documents (CV, certificates), applications, bookings, invitations.',
     f4t: 'Multimodal', f4d: 'Text, voice (transcription), attachments (PDF, images).',
     f5t: 'Multilingual', f5d: 'Several languages, written and voice.',
-    f6t: 'Express onboarding', f6d: 'Email or WhatsApp login + code. Profile in a few steps, no admission test.',
+    f6t: 'Express onboarding', f6d: 'Email login + code. Profile in a few steps, no admission test.',
 
     creditsT: 'Start with 20 free credits',
     creditsD: 'The tutor costs 0.25 credit per question. Quizzes, flashcards, diagrams, search and applications are free. Top up at your pace, no subscription.',

@@ -136,17 +136,6 @@ export const paystackWebhookLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// WhatsApp webhook limiter (external provider callbacks)
-export const whatsappWebhookLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100,
-  message: (_req: any, res: any) => {
-    return res.status(429).json({ error: _req.t('rateLimit:webhookRetryLimitExceeded'), retry_after: 60 });
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Export endpoint limiter
 export const exportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
