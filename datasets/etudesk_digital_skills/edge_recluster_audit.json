@@ -1,0 +1,575 @@
+{
+  "applied": true,
+  "competency_count": 1646,
+  "covered_family_pairs_after": 120,
+  "covered_family_pairs_before": 75,
+  "edge_count_after": 8735,
+  "edge_count_before": 7046,
+  "generated_by_reason": {
+    "inter_domain_recluster:accessibility_inclusion": 32,
+    "inter_domain_recluster:ai_education": 23,
+    "inter_domain_recluster:ai_governance_risk": 54,
+    "inter_domain_recluster:ai_health": 25,
+    "inter_domain_recluster:ai_product_growth": 46,
+    "inter_domain_recluster:ai_security": 34,
+    "inter_domain_recluster:ai_sustainability": 34,
+    "inter_domain_recluster:automation_operations": 68,
+    "inter_domain_recluster:cloud_security_devops": 43,
+    "inter_domain_recluster:communication_content_learning": 52,
+    "inter_domain_recluster:customer_growth_data": 33,
+    "inter_domain_recluster:data_governance_privacy": 83,
+    "inter_domain_recluster:energy_finance_climate": 28,
+    "inter_domain_recluster:finance_risk_fraud": 23,
+    "inter_domain_recluster:software_data_platforms": 68,
+    "inter_domain_recluster:supply_chain_industry_data": 36,
+    "inter_domain_recluster:web3_finance_security": 46,
+    "inter_family_recluster": 96,
+    "inter_type_recluster": 760,
+    "low_degree_recluster": 105
+  },
+  "generated_edge_count": 1689,
+  "low_degree_after": 132,
+  "low_degree_before": 173,
+  "relation_counts_before": {
+    "co_occurrence": 2500,
+    "prerequisite": 1778,
+    "sibling": 2768
+  },
+  "sample_generated_edges": [
+    {
+      "from_slug": "digital-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility-mindset"
+    },
+    {
+      "from_slug": "digital-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-collaboration"
+    },
+    {
+      "from_slug": "digital-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-education"
+    },
+    {
+      "from_slug": "digital-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-accessibility"
+    },
+    {
+      "from_slug": "digital-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "plain-language"
+    },
+    {
+      "from_slug": "digital-accessibility-mindset",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility"
+    },
+    {
+      "from_slug": "digital-accessibility-mindset",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-education"
+    },
+    {
+      "from_slug": "digital-accessibility-mindset",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-accessibility"
+    },
+    {
+      "from_slug": "digital-accessibility-mindset",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "wcag-accessibility-standards"
+    },
+    {
+      "from_slug": "inclusive-collaboration",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility"
+    },
+    {
+      "from_slug": "inclusive-collaboration",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-education"
+    },
+    {
+      "from_slug": "inclusive-collaboration",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-accessibility"
+    },
+    {
+      "from_slug": "inclusive-collaboration",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "wcag-accessibility-standards"
+    },
+    {
+      "from_slug": "inclusive-education",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility"
+    },
+    {
+      "from_slug": "inclusive-education",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility-mindset"
+    },
+    {
+      "from_slug": "inclusive-education",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-collaboration"
+    },
+    {
+      "from_slug": "inclusive-education",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "plain-language"
+    },
+    {
+      "from_slug": "inclusive-education",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "wcag-accessibility-standards"
+    },
+    {
+      "from_slug": "learning-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility"
+    },
+    {
+      "from_slug": "learning-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility-mindset"
+    },
+    {
+      "from_slug": "learning-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-collaboration"
+    },
+    {
+      "from_slug": "learning-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "plain-language"
+    },
+    {
+      "from_slug": "learning-accessibility",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "wcag-accessibility-standards"
+    },
+    {
+      "from_slug": "plain-language",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility"
+    },
+    {
+      "from_slug": "plain-language",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-education"
+    },
+    {
+      "from_slug": "plain-language",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-accessibility"
+    },
+    {
+      "from_slug": "plain-language",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "wcag-accessibility-standards"
+    },
+    {
+      "from_slug": "wcag-accessibility-standards",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "digital-accessibility-mindset"
+    },
+    {
+      "from_slug": "wcag-accessibility-standards",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-collaboration"
+    },
+    {
+      "from_slug": "wcag-accessibility-standards",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "inclusive-education"
+    },
+    {
+      "from_slug": "wcag-accessibility-standards",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-accessibility"
+    },
+    {
+      "from_slug": "wcag-accessibility-standards",
+      "reason": "inter_domain_recluster:accessibility_inclusion",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "plain-language"
+    },
+    {
+      "from_slug": "adaptive-learning-personalization",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "intelligent-tutoring-systems"
+    },
+    {
+      "from_slug": "adaptive-learning-personalization",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "knowledge-tracing"
+    },
+    {
+      "from_slug": "adaptive-learning-personalization",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "automated-assessment",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "intelligent-tutoring-systems"
+    },
+    {
+      "from_slug": "automated-assessment",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "knowledge-tracing"
+    },
+    {
+      "from_slug": "automated-assessment",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "generative-ai-in-education",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "knowledge-tracing"
+    },
+    {
+      "from_slug": "generative-ai-in-education",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "intelligent-tutoring-systems",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "automated-assessment"
+    },
+    {
+      "from_slug": "intelligent-tutoring-systems",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "learning-analytics"
+    },
+    {
+      "from_slug": "intelligent-tutoring-systems",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "knowledge-tracing",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "automated-assessment"
+    },
+    {
+      "from_slug": "knowledge-tracing",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "generative-ai-in-education"
+    },
+    {
+      "from_slug": "knowledge-tracing",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "learning-analytics",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "intelligent-tutoring-systems"
+    },
+    {
+      "from_slug": "learning-analytics",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "knowledge-tracing"
+    },
+    {
+      "from_slug": "learning-analytics",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "machine-learning-fundamentals"
+    },
+    {
+      "from_slug": "machine-learning-fundamentals",
+      "reason": "inter_domain_recluster:ai_education",
+      "relation": "co_occurrence",
+      "strength": "0.58",
+      "to_slug": "adaptive-learning-personalization"
+    }
+  ],
+  "skills_without_cross_type_after": 61,
+  "skills_without_cross_type_before": 204,
+  "zero_family_pairs_after": [],
+  "zero_family_pairs_before": [
+    [
+      "ai_ml_automation",
+      "education_learning_tech"
+    ],
+    [
+      "ai_ml_automation",
+      "finance_fintech_digital_assets"
+    ],
+    [
+      "ai_ml_automation",
+      "human_communication_languages"
+    ],
+    [
+      "ai_ml_automation",
+      "product_ux_design"
+    ],
+    [
+      "business_operations_management",
+      "cloud_devops_infrastructure"
+    ],
+    [
+      "business_operations_management",
+      "cybersecurity_digital_trust"
+    ],
+    [
+      "business_operations_management",
+      "data_analytics_bi"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "digital_foundations"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "education_learning_tech"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "finance_fintech_digital_assets"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "health_biotech_medtech"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "human_communication_languages"
+    ],
+    [
+      "cloud_devops_infrastructure",
+      "marketing_sales_content"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "digital_foundations"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "education_learning_tech"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "health_biotech_medtech"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "human_communication_languages"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "marketing_sales_content"
+    ],
+    [
+      "cybersecurity_digital_trust",
+      "product_ux_design"
+    ],
+    [
+      "data_analytics_bi",
+      "human_communication_languages"
+    ],
+    [
+      "digital_foundations",
+      "education_learning_tech"
+    ],
+    [
+      "digital_foundations",
+      "finance_fintech_digital_assets"
+    ],
+    [
+      "digital_foundations",
+      "health_biotech_medtech"
+    ],
+    [
+      "digital_foundations",
+      "human_communication_languages"
+    ],
+    [
+      "digital_foundations",
+      "industry_hardware_mobility"
+    ],
+    [
+      "digital_foundations",
+      "sustainability_climate_energy_agri"
+    ],
+    [
+      "education_learning_tech",
+      "finance_fintech_digital_assets"
+    ],
+    [
+      "education_learning_tech",
+      "health_biotech_medtech"
+    ],
+    [
+      "education_learning_tech",
+      "industry_hardware_mobility"
+    ],
+    [
+      "education_learning_tech",
+      "law_compliance_governance"
+    ],
+    [
+      "education_learning_tech",
+      "product_ux_design"
+    ],
+    [
+      "education_learning_tech",
+      "sustainability_climate_energy_agri"
+    ],
+    [
+      "finance_fintech_digital_assets",
+      "health_biotech_medtech"
+    ],
+    [
+      "finance_fintech_digital_assets",
+      "human_communication_languages"
+    ],
+    [
+      "finance_fintech_digital_assets",
+      "marketing_sales_content"
+    ],
+    [
+      "finance_fintech_digital_assets",
+      "product_ux_design"
+    ],
+    [
+      "health_biotech_medtech",
+      "human_communication_languages"
+    ],
+    [
+      "health_biotech_medtech",
+      "marketing_sales_content"
+    ],
+    [
+      "health_biotech_medtech",
+      "sustainability_climate_energy_agri"
+    ],
+    [
+      "human_communication_languages",
+      "industry_hardware_mobility"
+    ],
+    [
+      "human_communication_languages",
+      "law_compliance_governance"
+    ],
+    [
+      "human_communication_languages",
+      "software_engineering"
+    ],
+    [
+      "law_compliance_governance",
+      "product_ux_design"
+    ],
+    [
+      "marketing_sales_content",
+      "sustainability_climate_energy_agri"
+    ],
+    [
+      "product_ux_design",
+      "sustainability_climate_energy_agri"
+    ]
+  ]
+}

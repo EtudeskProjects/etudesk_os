@@ -2,7 +2,7 @@
 name: Skill Match (Actuel vs Cible)
 description: Analyse de couverture de competences vs un poste/objectif (talent ou cohorte) avec le block skill_match
 modes: explore, org
-tools: sql_query, smart_search
+tools: sql_query, smart_search, find_competency, competency_graph
 triggers: analyse mes competences, suis-je fait pour ce poste, suis-je fait pour cette offre, qu'est-ce qui me manque, competences manquantes, gap de competences, ecart de competences, pret pour ce job, match avec l'offre, mon profil correspond, devenir, me former pour, ma cohorte couvre, mon vivier couvre, mon equipe a-t-elle les competences, couverture de la cohorte, couverture des competences, besoins du poste couverts, skill gap, actuel vs cible
 priority: 8
 ---
@@ -18,9 +18,9 @@ Detecte le scope :
 ## Scope TALENT (mode Explorer)
 
 1. Identifie l'offre/le métier visé. Si une offre précise est mentionnée, obtiens son id via `smart_search` si besoin.
-2. CIBLES : `sql_query` intent `opportunity_skills` (params `{"opportunityId":"<id>"}`) → compétences requises (`requirement`, `min_level`). Si aucun poste précis (métier générique), déduis 5-8 compétences clés du référentiel pour ce métier.
+2. CIBLES : `sql_query` intent `opportunity_skills` (params `{"opportunityId":"<id>"}`) → compétences requises (`requirement`, `min_level`). Si aucun poste précis (métier générique), utilise `find_competency` pour valider les compétences candidates, puis `competency_graph` sur les 1-2 compétences pivots pour compléter avec prérequis / next steps. Ne déduis jamais une compétence hors référentiel.
 3. ACTUELS : les compétences du talent dans `<skills>` (NE PAS rappeler sql_query my_skills).
-4. Rends UN block `skill_match` scope "talent" : pour chaque compétence cible, `current` (niveau du talent ou null) + `target` (= `min_level`, sinon required→advanced / nice_to_have→intermediate). Ajoute des `insights` (forces, gaps prioritaires) et propose le mode Étudier pour combler les gaps.
+4. Rends UN block `skill_match` scope "talent" : pour chaque compétence cible, `current` (niveau du talent ou null) + `target` (= `min_level`, sinon required→advanced / nice_to_have→intermediate). Ajoute des `insights` graph-backed: prérequis déjà acquis, prérequis manquants, compétences voisines utiles. Propose le mode Étudier pour combler les gaps dans l'ordre du graphe.
 
 ## Scope COHORT (mode Gérer)
 

@@ -14,12 +14,13 @@ export type { ToolDefinition, AgentConfig } from './tools/tool-helper';
 export { smartSearchTool } from './tools/smart-search.tool';
 export { createSqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
-export { generateDocumentTool, createGenerateDocumentTool } from './tools/generate-document.tool';
+export { createGenerateDocumentTool } from './tools/generate-document.tool';
 export { generateImageTool, createGenerateImageTool } from './tools/generate-image.tool';
 export { generateDiagramTool } from './tools/generate-diagram.tool';
 export { createFileReaderTool } from './tools/file-read.tool';
 export { webSearchAgent, webSearchAsTool } from './tools/web-search.tool';
 export { createManageSkillsTool } from './tools/manage-skills.tool';
+export { createCompetencyGraphTool } from './tools/competency-graph.tool';
 export { createExecuteActionTool } from './tools/execute-action.tool';
 
 // Guardrails

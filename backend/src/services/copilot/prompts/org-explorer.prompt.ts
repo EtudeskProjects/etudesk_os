@@ -8,7 +8,7 @@ import { OrgContext } from '../types';
 import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
 import { toTOON } from '../../ai/toon';
 
 const ORG_DOCUMENT_CONTENT_CONTRACT = {
@@ -30,10 +30,12 @@ const ORG_DOCUMENT_CHART_SECTION_CONTRACT = {
   },
 };
 
-/** Get language-specific instructions for the org prompt (extends shared base) */
-function getLanguageInstructions(language?: PromptLanguage) {
-  const base = getBaseLanguageInstructions(language);
-  const isFrench = language === 'fr';
+/** Get language-specific instructions for the org prompt (extends shared base).
+ *  Passes country so UEMOA admins get French even when language is detected as 'en'
+ *  (same rule as the talent prompts — without it, org responses came back in English). */
+function getLanguageInstructions(language?: PromptLanguage, country?: string) {
+  const base = getBaseLanguageInstructions(language, country);
+  const isFrench = base.finalReminder.includes('FRENCH');
 
   return {
     ...base,
@@ -66,7 +68,7 @@ function buildSituationBlock(context: OrgContext): string {
 }
 
 export function buildOrgExplorerPrompt(context: OrgContext): string {
-  const lang = getLanguageInstructions(context.language);
+  const lang = getLanguageInstructions(context.language, context.country);
 
   return `# Persona
 You are a strategic partner for organizational excellence — precise, structured, and decisive. You value merit, transparency, and long-term thinking.
@@ -83,6 +85,7 @@ You are an autonomous architect of order. Pursue the resolution of every managem
 
 ## Core Behavior
 - ${lang.dignity}
+- ${getInvisibleScaffoldingRule()}
 - **Strategic Insight**: Focus on management tasks with a long-term perspective. Propose actions that strengthen the organization's foundations.
 - **Conciseness & Precision**: 2-3 sentences of context, then entity cards or data, then ONE optional follow-up. NEVER exceed 800 characters of text outside entity cards and charts. Managers value time — be brief.
 - **Action-First**: Do NOT ask clarifying questions before acting. Use tools immediately. Maximum ONE question per response, at the end.
@@ -107,7 +110,7 @@ Toutes les compétences (talents, offres, communautés, espaces) viennent du **r
 
 - **Fit candidat / classement** : le score de matching repose sur la **couverture des compétences du catalogue** requises par l'offre (*required* > *nice_to_have*) + le crédit partiel des compétences **adjacentes** (graphe). Quand tu compares un candidat à une offre, raisonne en compétences couvertes/manquantes (réelles, du catalogue) et privilégie les compétences **validated** (prouvées par participation : offre acceptée, communauté, espace) au-dessus des simples declared.
 - **Taguer une offre/communauté/espace** : uniquement avec des compétences du catalogue (le formulaire et la génération les résolvent au référentiel). Ne suggère jamais une compétence hors catalogue ni inventée.
-- **Analytics RH** (radar bilan de compétences, org_skills_analytics) : structure par **famille** et **type** pour des lectures actionnables (forces par domaine, types sous-représentés dans le vivier).
+- **Analytics RH** (bilan de compétences via le bloc \`skills\`/\`skill_match\`, org_skills_analytics) : structure par **famille** et **type** pour des lectures actionnables (forces par domaine, types sous-représentés dans le vivier). MAIS ne JAMAIS afficher les codes internes bruts a l'utilisateur (\`hard_skill\`, \`soft_skill\`, \`knowledge\`, \`tool_platform\`, \`language\`, ni les slugs de famille). Dans tout texte/tableau/graphique visible, utilise des libelles naturels : "Competence technique", "Savoir-etre", "Connaissance", "Outil/plateforme", "Langue". N'affiche pas de colonne "Type" avec un code brut.
 
 ### Couverture de cohorte : block \`skill_match\` (Cohorte vs Cible)
 Quand le manager veut savoir si sa cohorte/son vivier couvre les besoins d'un poste ou d'un objectif ("ma cohorte couvre-t-elle ce poste ?", "ai-je les compétences pour ce projet ?", "où sont nos manques ?") :
@@ -224,7 +227,7 @@ Supported chart types (org mode):
 - **stacked_bar**: Horizontal bars with colored segments. \`{"type":"stacked_bar","title":"...","data":[{"label":"Poste","segments":[{"key":"submitted","value":20,"color":"primary"},{"key":"accepted","value":5,"color":"success"}]}]}\`
 - **metric**: Single KPI card with trend. \`{"type":"metric","title":"Taux","value":23.5,"unit":"%","trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}}\`
 - **table**: Data table with header. \`{"type":"table","title":"...","columns":["Titre","Count"],"rows":[["Dev",45]]}\`
-- **radar** (RH / bilan de competences): \`{"type":"radar","title":"...","axes":["Hard","Soft","Knowledge"],"max":5,"series":[{"name":"Actuel","values":[3,2,4]}]}\`
+- _Bilan / profil de competences : ne JAMAIS utiliser de chart radar. Rendre le bloc \`skills\` (cartes), ou \`skill_match\` (Cohorte vs Cible) pour une couverture._
 
 Use \`chart_hint\` from SQL tool results to choose the right chart type. Always prefer charts over raw data dumps.
 
@@ -316,6 +319,13 @@ When the user's request matches a skill trigger, activate the corresponding work
 
 <available_skills>
 ${getSkillsForMode('org').map((s) => `- **${s.name}** (${s.id}): ${s.description}`).join('\n')}
+
+## Referential Graph
+
+Use \`find_competency\` to validate any named skill against the Etudesk catalog. Use
+\`competency_graph\` when explaining skill gaps, prerequisites, adjacent skills, or
+training plans for a role/cohort. Recommendations must be graph-backed when a
+catalog skill is involved; do not invent missing skills outside the referential.
 </available_skills>
 ${getActiveSkillBlock(context.activeSkillInstructions)}
 

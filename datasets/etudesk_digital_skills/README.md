@@ -12,6 +12,9 @@ This folder contains the Etudesk digital skills catalog and the evaluation asset
 | `SCHEMA.md` | Data model and versioning rules |
 | `EVALUATION_FRAMEWORK.md` | Runtime evaluation rules |
 | `validate_edges.py` | Validates `competency_edges.csv` and refreshes the manifest |
+| `recluster_edges.py` | Audits and appends deterministic inter-family / inter-type bridge edges |
+| `EDGE_RECLUSTER_AUDIT.md` | Latest human-readable reclustering audit summary |
+| `edge_recluster_audit.json` | Latest machine-readable reclustering audit metrics |
 
 Both data files are hand-maintained single sources of truth: `competency_catalog.csv`
 (including the `name_fr` column) and `competency_edges.csv` (the graph, with no
@@ -33,6 +36,15 @@ originally came from (rules, curation, or adversarial review); set `reason` to
 
 ```bash
 python3 validate_edges.py
+```
+
+For a broader graph audit and conservative enrichment of weak inter-family or
+inter-type coverage, run:
+
+```bash
+python3 recluster_edges.py          # dry-run audit
+python3 recluster_edges.py --apply  # append generated bridge edges
+python3 validate_edges.py           # refresh manifest after applying
 ```
 
 ## Runtime Rule

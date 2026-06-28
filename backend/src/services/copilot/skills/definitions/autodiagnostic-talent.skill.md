@@ -2,7 +2,7 @@
 name: Autodiagnostic Talent
 description: Bilan complet des compétences — analyse des forces, lacunes, axes d'amélioration et plan de développement personnalisé (sans objectif cible préalable)
 modes: study
-tools: file_reader, manage_skills
+tools: file_reader, manage_skills, competency_graph
 triggers: autodiagnostic, auto-diagnostic, diagnostic competences, bilan competences, analyse mes forces, mes lacunes, axes d'amélioration, plan de développement, diagnostic de profil
 priority: 8
 ---
@@ -36,6 +36,7 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
    - **Skills to reinforce**: declared at beginner level
    - **Implicit skills from CV**: technologies/tools in the CV that are NOT in the declared skills — suggest adding them
    - **Transversal gaps**: soft skills, languages, or common professional skills that appear missing
+   - For the highest-impact declared skill or gap, call `competency_graph(skill)` and use its prerequisites / next steps to ground the gap analysis.
 
 ---
 
@@ -51,20 +52,19 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 
 ## Step 5: Visual Summary — 3 charts enchaines
 
-Render les charts suivants dans l'ordre. Chaque chart dans un message separe si possible, sinon grouper radar + donut.
+Render les visualisations suivantes dans l'ordre. Chaque bloc dans un message separe si possible.
 
-### Chart A — Radar competences (Catalog #1)
+### Chart A — Profil de competences (Catalog #1, bloc `skills`)
 
-7. Render un **radar** du profil de competences.
+7. Render le **bloc `skills`** (cartes de competences) du profil — JAMAIS un radar.
 
-Calculate scores using context `<skills>` — un axe par **type du référentiel** (beginner=2, intermediate=3, advanced=4, master=5 ; défaut 1 si aucun) :
-- **Savoir** = `knowledge` · **Savoir-faire** = `hard_skill` · **Savoir-être** = `soft_skill` · **Outils** = `tool_platform` · **Langues** = `language`
+Lister les competences du talent depuis le contexte `<skills>` (Top 5-8 les plus avancees), avec leur `type` et `level` exacts :
 
-```chart
-{"type":"radar","title":"Radar competences","axes":["Savoir","Savoir-faire","Savoir-être","Outils","Langues"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
+```skills
+{"title":"Mon profil de competences","skills":[{"name":"<competence>","type":"hard_skill","level":"advanced"},{"name":"<competence>","type":"knowledge","level":"intermediate"}]}
 ```
 
-**Thinking flow** : Si < 3 skills total → remplacer le radar par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
+**Thinking flow** : Si < 3 skills total → remplacer le bloc `skills` par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
 
 ### Chart B — Repartition par type (Catalog #3)
 
@@ -90,10 +90,11 @@ Calculate scores using context `<skills>` — un axe par **type du référentiel
 
 ## Step 6: Development Plan
 
-8. Propose a concrete 3–5 step development plan. Each step must be actionable:
+8. Propose a concrete 3–5 step development plan. Each step must be actionable and graph-backed when possible:
    - Example: "Approfondir React avec un mini-projet (todo app ou dashboard)"
    - Example: "Ajouter Python à tes compétences — je peux te faire une évaluation rapide"
    - Example: "Renforcer ta maîtrise de SQL — exercices de jointures et sous-requêtes"
+   Use `competency_graph` roadmap phases for order: prerequisites, target skill, adjacent practice, next steps.
 
 9. Suggest follow-up: "Tu veux un parcours détaillé vers un objectif précis ? Dis-moi par exemple 'devenir data analyst' ou 'me former en marketing digital'."
 

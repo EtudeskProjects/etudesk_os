@@ -20,7 +20,9 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'generate_document',
     'file_reader',
     'web_search',
+    'find_competency',
     'execute_action',
+    'competency_graph',
   ],
   study: [
     'sql_query',
@@ -31,6 +33,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'web_search',
     'manage_skills',
     'find_competency',
+    'competency_graph',
     'execute_action',
   ],
   org: [
@@ -39,6 +42,8 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'generate_document',
     'file_reader',
     'web_search',
+    'find_competency',
+    'competency_graph',
     'execute_action',
   ],
 };

@@ -12,6 +12,8 @@ import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
 import { createOrgFileReaderTool } from '../tools/file-read.tool';
+import { createFindCompetencyTool } from '../tools/find-competency.tool';
+import { createCompetencyGraphTool } from '../tools/competency-graph.tool';
 import { buildOrgExplorerPrompt } from '../prompts/org-explorer.prompt';
 
 // Org agent only has access to org_* and search_* intents — NO personal talent data
@@ -55,6 +57,8 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
       secureSqlTool,
       createGenerateDocumentTool(context.talentId, undefined, context.organizationId, context.language),
       webSearchAsTool,
+      createFindCompetencyTool(),
+      createCompetencyGraphTool(context.talentId),
       createExecuteActionTool(context.talentId, context.language),
       orgFileReaderTool,
     ],

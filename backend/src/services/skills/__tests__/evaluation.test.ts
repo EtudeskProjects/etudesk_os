@@ -54,11 +54,11 @@ eq('no neighbors -> null', computePrior([]), null);
 console.log('decayStateFor');
 {
   const now = new Date();
-  eq('no evidence -> active', decayStateFor('ai_ml', 'hard_skill', null), 'active');
+  eq('no evidence -> active', decayStateFor('ai_ml_automation', 'hard_skill', null), 'active');
   const old = new Date(now.getTime() - 40 * 30.4375 * 24 * 3600 * 1000); // ~40 months
-  eq('fast cycle 40mo -> archived', decayStateFor('ai_ml', 'hard_skill', old), 'archived');
+  eq('fast cycle 40mo -> archived', decayStateFor('ai_ml_automation', 'hard_skill', old), 'archived');
   const recent = new Date(now.getTime() - 6 * 30.4375 * 24 * 3600 * 1000); // ~6 months
-  eq('fast cycle 6mo -> active', decayStateFor('ai_ml', 'hard_skill', recent), 'active');
+  eq('fast cycle 6mo -> active', decayStateFor('ai_ml_automation', 'hard_skill', recent), 'active');
 }
 
 console.log('capacity cap constants');
@@ -67,8 +67,8 @@ console.log('capacity cap constants');
   eq('master global cap', GLOBAL_ACTIVE_CAPS.master, 7);
   eq('advanced global cap', GLOBAL_ACTIVE_CAPS.advanced, 35);
   eq('master per-family cap', FAMILY_ACTIVE_CAPS.master, 3);
-  assert('ai_ml is a high-cap tech family', TECH_FAMILIES_HIGH_CAP.has('ai_ml'));
-  assert('human_skills is not a high-cap tech family', !TECH_FAMILIES_HIGH_CAP.has('human_skills'));
+  assert('ai_ml_automation is a high-cap tech family', TECH_FAMILIES_HIGH_CAP.has('ai_ml_automation'));
+  assert('human_communication_languages is not a high-cap tech family', !TECH_FAMILIES_HIGH_CAP.has('human_communication_languages'));
 }
 
 console.log('');

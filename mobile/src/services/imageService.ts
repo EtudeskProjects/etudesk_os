@@ -1,4 +1,4 @@
-import * as ImageManipulator from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 import { api } from './api';
@@ -17,7 +17,7 @@ interface ImageConfig {
   maxWidth: number;
   maxHeight: number;
   quality: number;  // 0-1 scale
-  format: ImageManipulator.SaveFormat;
+  format: SaveFormat;
 }
 
 const IMAGE_CONFIGS: Record<ImageType, ImageConfig> = {
@@ -25,37 +25,37 @@ const IMAGE_CONFIGS: Record<ImageType, ImageConfig> = {
     maxWidth: 512,
     maxHeight: 512,
     quality: 0.8, // 80% quality for avatars
-    format: ImageManipulator.SaveFormat.JPEG,
+    format: SaveFormat.JPEG,
   },
   logo: {
     maxWidth: 512,
     maxHeight: 512,
     quality: 0.8, // 80% quality for logos
-    format: ImageManipulator.SaveFormat.PNG, // PNG for logos to preserve transparency
+    format: SaveFormat.PNG, // PNG for logos to preserve transparency
   },
   illustration: {
     maxWidth: 1200,
     maxHeight: 900,
     quality: 0.8, // 80% quality for illustrations
-    format: ImageManipulator.SaveFormat.JPEG,
+    format: SaveFormat.JPEG,
   },
   document: {
     maxWidth: 2000,
     maxHeight: 2000,
     quality: 1.0, // Full quality for documents (no compression)
-    format: ImageManipulator.SaveFormat.JPEG,
+    format: SaveFormat.JPEG,
   },
   identity: {
     maxWidth: 1500,
     maxHeight: 1500,
     quality: 0.95, // Higher quality for identity documents
-    format: ImageManipulator.SaveFormat.JPEG,
+    format: SaveFormat.JPEG,
   },
   attachment: {
     maxWidth: 2000,
     maxHeight: 2000,
     quality: 1.0, // Full quality for copilot attachments (no compression)
-    format: ImageManipulator.SaveFormat.JPEG,
+    format: SaveFormat.JPEG,
   },
 };
 
@@ -122,40 +122,18 @@ export async function optimizeImage(
   const config = IMAGE_CONFIGS[type];
 
   try {
-    const actions: ImageManipulator.Action[] = [];
-
-    // For square types (avatar, logo), the ImagePicker's crop with aspect [1,1]
-    // already makes the image square. We only need to resize by width to maintain ratio.
-    // For other types, resize by width only to preserve aspect ratio.
-    // The image will be scaled down proportionally.
-    if (type === 'avatar' || type === 'logo') {
-      // Square images: resize to exact dimensions (image is already cropped square by picker)
-      actions.push({
-        resize: {
-          width: config.maxWidth,
-        },
-      });
-    } else {
-      // Non-square images: resize by width only to preserve aspect ratio
-      // If the image is portrait (taller than wide), we should resize by height instead
-      // But since we can't know dimensions here without reading the image first,
-      // we resize by width which works for most landscape/square images
-      actions.push({
-        resize: {
-          width: config.maxWidth,
-        },
-      });
-    }
-
-    const result = await ImageManipulator.manipulateAsync(
-      uri,
-      actions,
-      {
-        compress: config.quality,
-        format: config.format,
-        base64: includeBase64,
-      }
-    );
+    // Modern contextual API (expo-image-manipulator >= 13). The legacy
+    // `manipulateAsync` is deprecated and crashes natively on the New
+    // Architecture with large camera-roll images. Resize by width only to
+    // preserve the aspect ratio (square types are already cropped by the picker).
+    const context = ImageManipulator.manipulate(uri);
+    context.resize({ width: config.maxWidth });
+    const rendered = await context.renderAsync();
+    const result = await rendered.saveAsync({
+      compress: config.quality,
+      format: config.format,
+      base64: includeBase64,
+    });
 
     // Calculate approximate file size (base64 length / 1.37 gives approximate bytes)
     let fileSize: number | undefined;
@@ -272,8 +250,8 @@ export async function uploadImage(
 ): Promise<UploadedImage> {
   try {
     const config = IMAGE_CONFIGS[type];
-    const extension = config.format === ImageManipulator.SaveFormat.PNG ? 'png' : 'jpg';
-    const mimeType = config.format === ImageManipulator.SaveFormat.PNG ? 'image/png' : 'image/jpeg';
+    const extension = config.format === SaveFormat.PNG ? 'png' : 'jpg';
+    const mimeType = config.format === SaveFormat.PNG ? 'image/png' : 'image/jpeg';
     const filename = `${type}_${Date.now()}.${extension}`;
 
     const formData = new FormData();

@@ -9,6 +9,7 @@
 import PDFDocument from 'pdfkit';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
+import { canonicalCatalogType } from '../../../constants/skills';
 
 // --- Etudesk Design Tokens — Monochrome ---
 
@@ -38,10 +39,12 @@ const SKILL_TYPE_COLOR: Record<string, string> = {
   language: '#047857',        // Langue — emeraude
 };
 
-/** Couleur d'une competence selon son type (defaut: encre). */
+/** Couleur d'une competence selon son type catalogue (defaut: encre).
+ *  Tout libelle de type (legacy "hard"/"soft", variantes) est ramene aux 5
+ *  types du referentiel via canonicalCatalogType — source unique d'harmonisation. */
 function skillColor(type?: string): string {
-  const t = (type || '').toLowerCase().trim();
-  return SKILL_TYPE_COLOR[t] || C.ink;
+  const canonical = canonicalCatalogType(type);
+  return (canonical && SKILL_TYPE_COLOR[canonical]) || C.ink;
 }
 
 const F = {

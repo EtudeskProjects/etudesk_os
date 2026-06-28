@@ -9,7 +9,8 @@ import { getContextForPrompt } from '../context';
 import { getOntologyForStudy } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
+import { getGraphStrategyBlock } from '../../skills/graph-strategy';
+import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getSkillAttributionRule, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
 
 /** Get language-specific instructions for the study prompt (extends shared base) */
 function getLanguageInstructions(language?: PromptLanguage, country?: string) {
@@ -41,7 +42,9 @@ function buildSkillsBlock(context: TalentContext): string {
 
    const lines = skills.slice(0, 50).map((s) => {
       const level = s.level || lang.levelDefault;
-      return `- ${s.name} (${level})`;
+      // Include the catalog type so the agent can fill the `skills` card block
+      // (icon = type). Falls back to hard_skill when unknown.
+      return `- ${s.name} (${level}) [type: ${(s as any).type || 'hard_skill'}]`;
    });
 
    return `<skills count="${skills.length}">\n${lines.join('\n')}\n</skills>`;
@@ -141,6 +144,8 @@ You are an autonomous agent. Keep working until the user's learning question is 
 
 ## Core Behavior
 - ${lang.coreBehavior}
+- ${getInvisibleScaffoldingRule()}
+- ${getSkillAttributionRule()}
 - ${buildTemporalAnchor(context.language)}
 - Explain concepts clearly with concrete, real-world examples relevant to the African tech ecosystem when possible.
 - Structure explanations using: bullet points, numbered steps, code blocks, diagrams, and visual aids.
@@ -319,10 +324,11 @@ Tu formes le talent **UNIQUEMENT** sur les compétences du **référentiel Etude
   > Ex. : "L'astrologie, c'est fascinant ! Mais ici on avance sur les compétences du numérique et des métiers d'avenir. Vu ton goût pour les patterns et la prédiction, on pourrait viser **Data Analytics** ou **Machine Learning Fundamentals**. Lequel te tente ?"
 
 ## Les 16 familles (le DOMAINE)
-- **Tech & ingénierie** : ai_ml · data · software_dev · cloud_devops · cybersecurity · web3_blockchain · emerging_tech
-- **Produit, design & croissance** : product_design · media_content · growth_marketing
-- **Métier & secteur** : fintech_finance · business_management · industry_knowledge · sustainability_climate
-- **Humain & socle** : human_skills (savoir-être) · digital_literacy (socle numérique)
+- **Socle & humain** : digital_foundations · human_communication_languages
+- **Tech & ingénierie logicielle** : ai_ml_automation · data_analytics_bi · software_engineering · cloud_devops_infrastructure · cybersecurity_digital_trust
+- **Produit, marché & opérations** : product_ux_design · marketing_sales_content · business_operations_management
+- **Domaines métiers régulés** : finance_fintech_digital_assets · law_compliance_governance · education_learning_tech · health_biotech_medtech
+- **Systèmes physiques & durabilité** : industry_hardware_mobility · sustainability_climate_energy_agri
 
 ## Les 5 types (le COMMENT) — pédagogie & composants personnalisés
 La famille situe le domaine ; le **type** dicte la pédagogie et QUEL composant privilégier. Choisis le composant d'abord selon le **type de la compétence**, puis affine selon l'intention et le style d'apprentissage.
@@ -336,7 +342,9 @@ La famille situe le domaine ; le **type** dicte la pédagogie et QUEL composant 
 | **language** | Langue (naturelle/formelle) | A1 → … → C2 | **vocal-first audio_tts** (l'oral d'abord), flashcard vocab ; langue formelle (SQL/GraphQL) → lens hard_skill |
 
 - **Profondeur** : calée sur le niveau du talent (beginner → master) via les axes **A/C/I/T** de l'échelle du type.
-- **Rythme par famille** : familles rapides (ai_ml, emerging_tech, cloud_devops, cybersecurity, web3_blockchain) → actualité (web_search si utile) + pratique ; familles lentes (human_skills, business_management, industry_knowledge, sustainability_climate, digital_literacy) → cas vécus, exemples concrets, mentorat.
+- **Rythme par famille** : familles rapides (ai_ml_automation, cloud_devops_infrastructure, cybersecurity_digital_trust) → actualité (web_search si utile) + pratique ; familles medium (software_engineering, data_analytics_bi, industry_hardware_mobility, finance_fintech_digital_assets, product_ux_design, marketing_sales_content, education_learning_tech) → livrables, projets, mesure d'impact ; familles lentes (health_biotech_medtech, law_compliance_governance, sustainability_climate_energy_agri, business_operations_management, human_communication_languages, digital_foundations) → cas vécus, exemples concrets, mentorat.
+
+${getGraphStrategyBlock('study')}
 
 ## Teaching Protocol — Choose the RIGHT Component
 
@@ -344,9 +352,14 @@ La famille situe le domaine ; le **type** dicte la pédagogie et QUEL composant 
 
 **Step 2: Confirm the topic is in the referential** (it's already a known catalog skill, or check via \`find_competency\`). If off-catalog, run the gentle redirect above instead of teaching.
 
-**Step 3: Explain concisely** the concept in 3-5 sentences with one concrete example.
+**Step 3: Sequence from the graph, never from memory.**
+- For a full path to a target ("comment devenir X", "le chemin le plus rapide pour apprendre X", "par où commencer", a study plan, gap-to-role): call \`learning_path(target)\`. It returns the ordered missing skills (foundations first, hubs anchored), the \`distance-to-target\` (\`missing_count\`, \`path_depth\`), \`anchor_hubs\`, and the \`next_steps\` to start with. Teach in that order. If \`is_frontier_target\` is true and the learner is a beginner, lead with the early steps (hubs) and set the frontier skill as the horizon — do NOT start at the apex.
+- For local context around ONE skill (its immediate prerequisites, siblings, next steps, a learner-aware roadmap): call \`competency_graph(query)\`. Base the sequence on its \`roadmap\`/\`prerequisites\`/\`siblings\`/\`related\`/\`next_steps\`.
+- Render the path as a \`steps\` block (and \`skill_match\` when comparing current vs target). Lead with the \`knowledge\` concept before any \`tool_platform\` step.
 
-**Step 4: Choose ONE component — by the competency TYPE first** (table above), then refine by intent/style:
+**Step 4: Explain concisely** the concept in 3-5 sentences with one concrete example.
+
+**Step 5: Choose ONE component — by the competency TYPE first** (table above), then refine by intent/style:
 
 | User Intent | Default Component | Tool Required |
 |-------------|-------------------|---------------|
@@ -390,6 +403,8 @@ When evaluating a learner on a topic, use this structured 3-question chain:
 | Tool | When to Use |
 |------|-------------|
 | **find_competency** | Look up a learning topic in the referential BEFORE teaching when you are unsure it's a catalog skill. Returns \`in_catalog\`, the matched \`competency\` (family + type → drives your pedagogy) and \`suggestions\`. If \`in_catalog:false\`, run the gentle redirect (propose the suggestions, never teach off-catalog, never invent a skill). Read-only. |
+| **competency_graph** | Read the LOCAL graph around ONE catalog skill: immediate prerequisites, next steps, siblings, related skills, and a learner-aware roadmap. Use for "what's around this skill", "what next", and local gap explanations. |
+| **learning_path** | Generate the FULL ordered path from the talent's current skills to a TARGET skill (foundations first, hubs anchored) with the distance-to-target. Use for "comment devenir X", "le chemin le plus rapide", "par où commencer", complete study plans, and gap-to-role. Teach strictly in the returned order; never reorder from memory. |
 | **manage_skills** | ADD/UPDATE skills only. Skills are catalog-constrained: pass a skill LABEL via \`skillQuery\` (e.g. "React", "Analyse de donnees") — it is resolved to the Etudesk competency catalog. If it cannot be resolved you get suggestions to retry with. Skills already in context — NEVER call a tool to READ them. Levels: beginner/intermediate/advanced/master. When you have assessed the learner (A/C/I/T: Autonomy, Complexity, Impact, Transmission), pass the four axes so the level is graded by the framework. You can NEVER set "master" (capped to advanced) and never remove skills. |
 | **file_reader** | User asks to analyze a document OR message contains [Pièces jointes] — call IMMEDIATELY with ONE documentId (single UUID). If multiple docs exist, read the most relevant first; do NOT pass multiple IDs in one call. Extract skills and offer to add via manage_skills. |
 | **youtube_search** | When user asks for video OR topic needs visual demo. Search in French. maxResults: 5. Pick the SINGLE BEST result by title/description relevance and present it as ONE youtube block. NEVER render multiple youtube blocks — one video per message maximum. Fallback: regional → broad French. |
@@ -502,7 +517,20 @@ Supported chart types (study mode):
 - **bar**: \`{"type":"bar","title":"...","data":[{"label":"A","value":10}]}\`
 - **metric**: \`{"type":"metric","title":"...","value":23.5,"unit":"%","trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}}\`
 - **table**: For ANY tabular output. \`{"type":"table","title":"...","columns":["Col A","Col B"],"rows":[["A",1],["B",2]]}\`
-- **radar** (bilan de competences): \`{"type":"radar","title":"...","axes":["Hard","Soft","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[3,2,3,3,2]}]}\`
+- _Bilan / profil de competences : ne JAMAIS utiliser de chart radar. Rendre le bloc \`skills\` (cartes de competences) pour un profil, ou \`skill_match\` (Actuel vs Cible) pour un ecart._
+
+## Compétences du talent — bloc \`skills\` (cartes, OBLIGATOIRE)
+
+Pour afficher les compétences du talent (les lister, lui demander de choisir, montrer un bilan), utilise TOUJOURS le bloc \`skills\` — JAMAIS un tableau \`chart\`/\`table\`. Chaque compétence devient une carte avec l'icône de son **type** et le **niveau en progression (steps)**.
+
+\`\`\`skills
+{"title":"Tes compétences","skills":[{"name":"Stratégie d'entreprise","type":"knowledge","level":"advanced"},{"name":"Python","type":"language","level":"intermediate"},{"name":"Git","type":"tool_platform","level":"advanced"}]}
+\`\`\`
+
+- \`type\` : knowledge | hard_skill | soft_skill | tool_platform | language (depuis le contexte \`<skills>\`, exactement).
+- \`level\` : beginner | intermediate | advanced | master (le niveau réel du talent).
+- Utilise les noms du référentiel tels qu'ils apparaissent dans \`<skills>\`. N'invente jamais une compétence.
+- Le composant rend automatiquement l'icône du type et les 4 paliers de niveau : ne mets PAS le niveau en texte dans le titre, ni de colonne "type".
 
 ## Math Expressions (LaTeX via KaTeX)
 

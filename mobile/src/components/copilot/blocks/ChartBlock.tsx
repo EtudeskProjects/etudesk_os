@@ -9,7 +9,6 @@ import { DonutChart } from './charts/DonutChart';
 import { StackedBarChart } from './charts/StackedBarChart';
 import { MetricCard } from './charts/MetricCard';
 import { TableChart } from './charts/TableChart';
-import { RadarChart } from './charts/RadarChart';
 import { LineChart } from './charts/LineChart';
 
 interface ChartBlockProps {
@@ -112,35 +111,6 @@ function sanitizeTable(data: ChartBlockProps['data']) {
   };
 }
 
-function sanitizeRadar(data: ChartBlockProps['data']) {
-  const axes = Array.isArray(data.axes)
-    ? data.axes.map((axis, index) => sanitizeLabel(axis, `Axis ${index + 1}`)).slice(0, 8)
-    : [];
-  const max = toFiniteNumber(data.max);
-  const series = Array.isArray(data.series)
-    ? data.series
-        .map((serie: any, index) => {
-          const values = Array.isArray(serie?.values)
-            ? serie.values.slice(0, axes.length).map((value: unknown) => toFiniteNumber(value) ?? 0)
-            : [];
-          if (values.length === 0) return null;
-          return {
-            name: sanitizeLabel(serie?.name, `Series ${index + 1}`),
-            values,
-            color: typeof serie?.color === 'string' ? serie.color.trim() : undefined,
-          };
-        })
-        .filter(Boolean)
-    : [];
-  return {
-    ...data,
-    title: sanitizeLabel(data.title, 'Radar'),
-    axes,
-    series,
-    max: max && max > 0 ? max : 5,
-  };
-}
-
 function sanitizeChartData(data: ChartBlockProps['data']): ChartBlockProps['data'] | null {
   const chartType = typeof data?.type === 'string' ? data.type : 'bar';
 
@@ -162,8 +132,6 @@ function sanitizeChartData(data: ChartBlockProps['data']): ChartBlockProps['data
       return sanitizeMetric(data);
     case 'table':
       return sanitizeTable(data);
-    case 'radar':
-      return sanitizeRadar(data);
     case 'line':
       return {
         ...data,
@@ -224,9 +192,6 @@ export const ChartBlock: React.FC<ChartBlockProps> = ({ data }) => {
 
     case 'table':
       return <TableChart title={safeData.title} columns={safeData.columns} rows={safeData.rows} />;
-
-    case 'radar':
-      return <RadarChart title={safeData.title} axes={safeData.axes} series={safeData.series} max={safeData.max} />;
 
     case 'line':
       return <LineChart title={safeData.title} data={safeData.data} />;

@@ -137,6 +137,7 @@ export default function AssistantScreen() {
 
   const {
     abortControllerRef,
+    appendSuggestion,
     buildFollowUps,
     clearPendingVoiceNote,
     focusWithSuggestion,
@@ -386,6 +387,7 @@ export default function AssistantScreen() {
       handleRetry={(messageId) => handleRetry(messageId, sessionId)}
       handleSelectFollowUp={focusWithSuggestion}
       handleUserMessageLongPress={handleUserMessageLongPress}
+      onSkillPress={appendSuggestion}
       hasClearNextStep={hasClearNextStep}
       isOrganizationSpace={isOrganizationSpace}
       isSending={isSending}

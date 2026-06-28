@@ -2,7 +2,7 @@
 name: Weekly Recap
 description: Generate a weekly learning recap showing skills progress, topics studied, and recommendations for next week
 modes: study
-tools: manage_skills
+tools: manage_skills, competency_graph
 triggers: recap, recapitulatif, bilan semaine, weekly, resume de la semaine, ou j'en suis cette semaine, progression, suivi, mon avancement
 ---
 
@@ -78,7 +78,7 @@ Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
 
 ## Step 6: Recommendations
 
-10. Provide 3 concrete recommendations for next week:
+10. Provide 3 concrete recommendations for next week. For the main weak skill or the strongest active skill, call `competency_graph(skill)` and choose recommendations from graph-backed prerequisites, siblings, related skills, or next steps. Do not invent adjacent skills outside the graph.
 
 **Plan pour la semaine prochaine :**
 1. **Renforcer** : [Weakest skill] — "Une session de revision de 15 min suffirait."

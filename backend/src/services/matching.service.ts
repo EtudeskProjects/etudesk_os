@@ -213,15 +213,25 @@ async function calculateSkillsScore(talentId: string, opportunityId: string): Pr
         const need = levelScoreOf(s.min_level);
         coverage = Math.max(0.5, Math.min(1, direct / need)); // meeting min_level = full
       } else {
-        // graph partial credit: does the talent hold a prereq/sibling of this skill?
+        // Graph partial credit: does the talent hold a prerequisite, sibling, or
+        // weakly related co-occurring skill? Co-occurrence is intentionally
+        // capped lower, especially for required skills.
         const neighbors = await catalog.getNeighbors(s.competency_slug, {
-          relations: ['prerequisite', 'sibling'],
+          relations: ['prerequisite', 'sibling', 'co_occurrence'],
           limit: 8,
         });
         let best = 0;
         for (const n of neighbors) {
           if (talentScoreBySlug.has(n.slug)) {
-            best = Math.max(best, Math.min(0.6, 0.4 + n.strength * 0.2));
+            const relationCap =
+              n.relation === 'co_occurrence'
+                ? s.requirement === 'required' ? 0.35 : 0.45
+                : 0.6;
+            const base =
+              n.relation === 'co_occurrence'
+                ? 0.2 + n.strength * 0.2
+                : 0.4 + n.strength * 0.2;
+            best = Math.max(best, Math.min(relationCap, base));
           }
         }
         coverage = best;

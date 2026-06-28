@@ -144,8 +144,11 @@ app.use(i18nMiddleware);
 // Serve uploaded files — split into public and private directories
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 
-// Public directories: avatars, logos, illustrations (no auth required)
-const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations'];
+// Public directories: avatars, logos, illustrations, seed assets (no auth required).
+// `seed` holds shared sample covers (opportunities/communities/orgs) shown in cards,
+// which <img>/SVG fetches load WITHOUT a Bearer token — keeping it private caused 401s.
+// Private content (talent documents) lives elsewhere and stays behind the auth catch-all.
+const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations', 'seed'];
 for (const dir of PUBLIC_UPLOAD_DIRS) {
   app.use(`/uploads/${dir}`, express.static(path.join(uploadDir, dir)));
 }

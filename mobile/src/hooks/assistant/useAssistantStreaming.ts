@@ -725,8 +725,18 @@ export function useAssistantStreaming({
     setTimeout(() => inputRef.current?.focus(), 80);
   }, [inputRef, setHideFloatingSuggestions, setInputText]);
 
+  // Append text to the input WITHOUT submitting (e.g. tapping a skill card).
+  const appendSuggestion = useCallback((value: string) => {
+    const piece = (value || '').trim();
+    if (!piece) return;
+    setInputText((prev) => (prev && !prev.endsWith(' ') ? `${prev} ${piece}` : `${prev}${piece}`));
+    setHideFloatingSuggestions(true);
+    setTimeout(() => inputRef.current?.focus(), 80);
+  }, [inputRef, setHideFloatingSuggestions, setInputText]);
+
   return {
     abortControllerRef,
+    appendSuggestion,
     buildFollowUps,
     clearPendingVoiceNote,
     focusWithSuggestion,

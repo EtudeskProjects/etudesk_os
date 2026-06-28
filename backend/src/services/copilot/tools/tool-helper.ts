@@ -1,11 +1,13 @@
 /**
  * Tool Helper — Native Anthropic SDK tool definition
  * Replaces @openai/agents tool() with a format compatible with Anthropic messages API.
- * Zod schemas are converted to JSON Schema for Anthropic's input_schema field.
+ * Zod schemas are converted to JSON Schema for Anthropic's input_schema field via
+ * Zod v4's built-in `z.toJSONSchema` (the standalone `zod-to-json-schema` package
+ * is v3-only and silently collapses v4 schemas to `{type:'object'}`, stripping all
+ * parameters from the tool definition).
  */
 
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import type Anthropic from '@anthropic-ai/sdk';
 
 // ---------------------------------------------------------------------------
@@ -39,15 +41,15 @@ export function defineTool<T extends z.ZodType>(opts: {
   normalize?: (raw: Record<string, any>) => Record<string, any>;
   execute: (input: z.infer<T>) => Promise<any>;
 }): ToolDefinition {
-  // Convert Zod schema to JSON Schema (OpenAPI 3 target strips $schema key)
-  // Cast needed: zod-to-json-schema may expect Zod v3 types while we use Zod v4
-  const jsonSchema = zodToJsonSchema(opts.parameters as any, {
-    target: 'openApi3',
-    $refStrategy: 'none',
+  // Convert Zod schema to JSON Schema. `io: 'input'` makes fields with a default
+  // optional (the tool caller may omit them); `target: 'draft-7'` is the dialect
+  // Anthropic's input_schema expects. Strip `$schema` — Anthropic rejects it.
+  const { $schema, ...jsonSchema } = z.toJSONSchema(opts.parameters, {
+    target: 'draft-7',
+    io: 'input',
   }) as Record<string, any>;
 
-  // Anthropic REQUIRES type: 'object' at root of input_schema
-  // zodToJsonSchema may omit it depending on Zod version / target
+  // Anthropic REQUIRES type: 'object' at the root of input_schema.
   if (!jsonSchema.type) {
     jsonSchema.type = 'object';
   }

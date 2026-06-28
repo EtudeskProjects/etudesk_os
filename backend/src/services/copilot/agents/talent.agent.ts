@@ -17,6 +17,8 @@ import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
 import { createFindCompetencyTool } from '../tools/find-competency.tool';
+import { createCompetencyGraphTool } from '../tools/competency-graph.tool';
+import { createLearningPathTool } from '../tools/learning-path.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
@@ -55,6 +57,8 @@ export function createTalentAgent(
       fileReaderTool,
       webSearchAsTool,
       createFindCompetencyTool(),
+      createCompetencyGraphTool(context.profile.id),
+      createLearningPathTool(context.profile.id),
       createManageSkillsTool(context.profile.id, context.language),
       createExecuteActionTool(context.profile.id, context.language),
     ];
@@ -68,6 +72,8 @@ export function createTalentAgent(
       fileReaderTool,
       webSearchAsTool,
       createFindCompetencyTool(), // validate/resolve catalog skills for skill_match (Actuel vs Cible)
+      createCompetencyGraphTool(context.profile.id), // graph-backed roadmaps / gap explanations
+      createLearningPathTool(context.profile.id), // ordered gap-to-role path ("devenir X")
       createExecuteActionTool(context.profile.id, context.language),
     ];
     instructions = buildTalentExplorerPrompt(context);

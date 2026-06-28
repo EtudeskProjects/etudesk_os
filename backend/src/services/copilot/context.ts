@@ -31,6 +31,7 @@ export const TalentProfileSchema = z.object({
     z.object({
       name: z.string(),
       level: z.enum(['beginner', 'intermediate', 'advanced', 'master']).optional(),
+      type: z.enum(['knowledge', 'hard_skill', 'soft_skill', 'tool_platform', 'language']).optional(),
     })
   ).optional(),
 
@@ -579,7 +580,7 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   // Load skills + freshness + languages in parallel
   const [skillsResult, skillFreshnessResult, languagesResult] = await Promise.all([
     pool.query(
-      `SELECT c.name AS name, c.name_fr AS name_fr, ts.competency_slug AS slug,
+      `SELECT c.name AS name, c.name_fr AS name_fr, c.type AS type, ts.competency_slug AS slug,
               ts.level, ts.score
        FROM talent_skills ts
        JOIN competencies c ON c.slug = ts.competency_slug
@@ -603,6 +604,7 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const skills = skillsResult.rows.map((s) => ({
     name: s.name_fr || s.name,
     level: mapProficiencyLevel(s.level),
+    type: s.type,
   }));
 
   const languages = languagesResult.rows.map((l) => ({

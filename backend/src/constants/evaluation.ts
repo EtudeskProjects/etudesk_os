@@ -54,28 +54,30 @@ export interface FamilyProfile {
 }
 
 export const FAMILY_PROFILES: Record<string, FamilyProfile> = {
-  ai_ml: { cycle: 'fast', adjacency: 'strong' },
-  emerging_tech: { cycle: 'fast', adjacency: 'strong' },
-  web3_blockchain: { cycle: 'fast', adjacency: 'strong' },
-  cloud_devops: { cycle: 'fast', adjacency: 'strong' },
-  cybersecurity: { cycle: 'fast', adjacency: 'strong' },
-  software_dev: { cycle: 'medium', adjacency: 'strong' },
-  data: { cycle: 'medium', adjacency: 'strong' },
-  fintech_finance: { cycle: 'slow', adjacency: 'medium' },
-  industry_knowledge: { cycle: 'slow', adjacency: 'medium' },
-  sustainability_climate: { cycle: 'slow', adjacency: 'medium' },
-  growth_marketing: { cycle: 'medium', adjacency: 'medium' },
-  media_content: { cycle: 'medium', adjacency: 'medium' },
-  product_design: { cycle: 'medium', adjacency: 'medium' },
-  business_management: { cycle: 'slow', adjacency: 'weak' },
-  human_skills: { cycle: 'slow', adjacency: 'weak' },
-  digital_literacy: { cycle: 'slow', adjacency: 'weak' },
+  ai_ml_automation: { cycle: 'fast', adjacency: 'strong' },
+  cloud_devops_infrastructure: { cycle: 'fast', adjacency: 'strong' },
+  cybersecurity_digital_trust: { cycle: 'fast', adjacency: 'strong' },
+  software_engineering: { cycle: 'medium', adjacency: 'strong' },
+  data_analytics_bi: { cycle: 'medium', adjacency: 'strong' },
+  industry_hardware_mobility: { cycle: 'medium', adjacency: 'strong' },
+  finance_fintech_digital_assets: { cycle: 'medium', adjacency: 'medium' },
+  product_ux_design: { cycle: 'medium', adjacency: 'medium' },
+  marketing_sales_content: { cycle: 'medium', adjacency: 'medium' },
+  education_learning_tech: { cycle: 'medium', adjacency: 'medium' },
+  health_biotech_medtech: { cycle: 'slow', adjacency: 'medium' },
+  law_compliance_governance: { cycle: 'slow', adjacency: 'medium' },
+  sustainability_climate_energy_agri: { cycle: 'slow', adjacency: 'medium' },
+  business_operations_management: { cycle: 'slow', adjacency: 'weak' },
+  human_communication_languages: { cycle: 'slow', adjacency: 'weak' },
+  digital_foundations: { cycle: 'slow', adjacency: 'weak' },
 };
 
-export const DEFAULT_FAMILY_PROFILE: FamilyProfile = { cycle: 'medium', adjacency: 'medium' };
-
 export function getFamilyProfile(family: string): FamilyProfile {
-  return FAMILY_PROFILES[family] ?? DEFAULT_FAMILY_PROFILE;
+  const profile = FAMILY_PROFILES[family];
+  if (!profile) {
+    throw new Error(`Unknown competency family: ${family}`);
+  }
+  return profile;
 }
 
 // tool_platform always uses the fast cycle (framework §9). Natural languages use slow.
@@ -128,10 +130,15 @@ export const GLOBAL_ACTIVE_CAPS = {
 export const FAMILY_ACTIVE_CAPS = {
   master: 3,
   advanced: 12,
-  advancedTechFamilies: 16, // software_dev, data, ai_ml, cloud_devops
+  advancedTechFamilies: 16, // software_engineering, data_analytics_bi, ai_ml_automation, cloud_devops_infrastructure
 } as const;
 
-export const TECH_FAMILIES_HIGH_CAP = new Set(['software_dev', 'data', 'ai_ml', 'cloud_devops']);
+export const TECH_FAMILIES_HIGH_CAP = new Set([
+  'software_engineering',
+  'data_analytics_bi',
+  'ai_ml_automation',
+  'cloud_devops_infrastructure',
+]);
 
 // --- §7 Graph inference prior caps ---
 

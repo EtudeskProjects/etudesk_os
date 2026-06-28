@@ -24,6 +24,7 @@ import { ConfirmationBlock } from './blocks/ConfirmationBlock';
 import { MathBlock } from './blocks/MathBlock';
 import { StepSolverBlock } from './blocks/StepSolverBlock';
 import { SkillMatchBlock } from './blocks/SkillMatchBlock';
+import { SkillsBlock } from './blocks/SkillsBlock';
 import { ExerciseBlock } from './blocks/ExerciseBlock';
 import { CodePlaygroundBlock } from './blocks/CodePlaygroundBlock';
 import { CanvasBlock } from './blocks/CanvasBlock';
@@ -41,13 +42,14 @@ const MONO_FONT_FAMILY = Platform.select({
 interface MarkdownRendererProps {
   content: string;
   onQuizAnswer?: (answer: string) => void;
+  onSkillPress?: (name: string) => void;
   sessionId?: string;
   interactiveConfirmation?: boolean;
 }
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'audio' | 'skill_match' | 'loading';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'audio' | 'skill_match' | 'skills' | 'loading';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -151,7 +153,7 @@ function parseBlocks(content: string): Block[] {
       if (data) blocks.push({ type: 'image', content: body, data });
     }
     // Chart block — accept both ```chart and direct type tags (bar, donut, stacked_bar, table, line, radar, metric)
-    else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'radar', 'metric'].includes(tag)) {
+    else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'metric'].includes(tag)) {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
     }
@@ -160,6 +162,13 @@ function parseBlocks(content: string): Block[] {
       const data = tryParseJSON(body);
       if (data && Array.isArray(data.skills) && data.skills.length > 0) {
         blocks.push({ type: 'skill_match', content: body, data });
+      }
+    }
+    // Skills overview block — talent's own skills as cards (type icon + stepped level)
+    else if (tag === 'skills') {
+      const data = tryParseJSON(body);
+      if (data && Array.isArray(data.skills) && data.skills.length > 0) {
+        blocks.push({ type: 'skills', content: body, data });
       }
     }
     // Math block
@@ -574,7 +583,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
   return <View>{elements}</View>;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQuizAnswer, sessionId, interactiveConfirmation }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQuizAnswer, onSkillPress, sessionId, interactiveConfirmation }) => {
   const { colors } = useTheme();
 
   const blocks = useMemo(() => parseBlocks(content), [content]);
@@ -620,6 +629,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
             return <CanvasBlock key={index} data={block.data} />;
           case 'skill_match':
             return <SkillMatchBlock key={index} data={block.data} />;
+          case 'skills':
+            return <SkillsBlock key={index} data={block.data} onSkillPress={onSkillPress} />;
           case 'audio':
             return <AudioBlock key={index} url={block.data.url} duration={block.data.duration} autoPlay={block.data.autoPlay} />;
           case 'code':

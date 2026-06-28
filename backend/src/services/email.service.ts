@@ -326,10 +326,17 @@ ${t('emails:welcome.copyright', { year })}
  */
 export async function sendOTPEmail(email: string, code: string, language: EmailLanguage = 'en'): Promise<{ success: boolean; error?: string }> {
   const template = EmailTemplates.otpLogin(code, 10, language);
-  return sendEmail({
+  const result = await sendEmail({
     to: email,
     ...template,
   });
+  // DEV-only fallback: if delivery failed (no Mailhog/Resend locally), don't block
+  // login — log the code so it can be used directly. NEVER active in production.
+  if (!result.success && process.env.NODE_ENV !== 'production') {
+    logger.warn(`🔑 [DEV OTP] ${email} -> code ${code} (email delivery unavailable; use this code to sign in)`);
+    return { success: true };
+  }
+  return result;
 }
 
 /**

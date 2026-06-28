@@ -160,6 +160,12 @@ export function generateToolSummary(
         return 'Recherche référentiel';
       }
 
+      case 'competency_graph': {
+        const name = outputObj?.competency?.name as string | undefined;
+        const q = args?.query as string | undefined;
+        return name ? `Graphe compétences · ${name}` : q ? `Graphe compétences · ${q}` : 'Graphe compétences';
+      }
+
       case 'manage_skills': {
         // Prefer the resolved catalog skill name from the result; fall back to the query label.
         const resolvedName = outputObj?.skill?.name as string | undefined;

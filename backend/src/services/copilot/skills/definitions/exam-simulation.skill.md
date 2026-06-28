@@ -187,14 +187,14 @@ Calculer le % de reussite par bloc de questions. Exclure les blocs a 0% si un se
 
 **Thinking flow** : Rappel = (correct Q1-3 / 3) * 100. Application = (correct Q4-6 / 3) * 100. Analyse = (correct Q7-9 / 3) * 100. Synthese = Q10 correct ? 100 : 0. Si seulement 1 categorie a un score non-zero → metric : `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
 
-**Chart B — Radar avant/apres (Catalog #8) — optionnel, si le skill existait deja:**
-Si le talent avait deja cette skill declaree, montrer l'evolution :
+**Chart B — Niveau atteint par sous-domaine (Catalog #8) — bar, JAMAIS un radar:**
+Le bar du Chart A (#9) suffit pour le resultat. Si tu veux detailler par sous-domaine de la skill, rends un second `bar` (jamais de radar) :
 
 ```chart
-{"type":"radar","title":"Evaluation — [Topic]","axes":["Rappel","Application","Analyse","Synthese","Profondeur"],"max":5,"series":[{"name":"Avant","values":[2,1,1,1,2]},{"name":"Apres","values":[4,3,2,3,3]}]}
+{"type":"bar","title":"Evaluation — [Topic]","data":[{"label":"Rappel","value":80},{"label":"Application","value":60},{"label":"Analyse","value":40},{"label":"Synthese","value":100}]}
 ```
 
-**Thinking flow** : "Avant" = proficiency actuelle mappee sur 5 axes (utiliser le level declare comme baseline uniforme). "Apres" = score quiz mappe par categorie (0-1 correct→1, 2→3, 3→4, full→5). Ne montrer ce radar QUE si le talent avait deja la skill — sinon le bar chart #9 suffit.
+**Thinking flow** : valeurs = % reussite par sous-domaine, score quiz mappe par categorie. Ne pas dupliquer le Chart A — n'ajouter ce detail que s'il apporte une lecture differente.
 
 | Score | Verdict | Skill Level |
 |-------|---------|-------------|

@@ -13,13 +13,19 @@ import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify/sync';
 import { uploadFile } from '../../storage.service';
 import { pool } from '../../database';
-import { processDocumentExtraction } from '../../documents/document.service';
 import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
 import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData, ChartData } from './org-document-pdf-generator';
 import { toTOON } from '../../ai/toon';
 import { debitWalletForAction } from '../../billing/credit.service';
+import { canonicalCatalogType, CATALOG_TYPES } from '../../../constants/skills';
+
+/** Resolve any incoming skill type label to a catalog type, or undefined when
+ *  it cannot be mapped (the CV renderer then uses neutral ink — never a wrong color). */
+function skillType(raw?: string): string | undefined {
+  return canonicalCatalogType(raw);
+}
 
 // Content JSON structure types
 interface SectionContent {
@@ -125,7 +131,7 @@ function normalizeJsonResume(data: any, language?: string): CVData {
       if (Array.isArray(s.keywords)) {
         for (const kw of s.keywords) {
           if (kw && !skills.some((sk) => sk.name.toLowerCase() === kw.toLowerCase())) {
-            skills.push({ name: kw, type: 'hard' });
+            skills.push({ name: kw, type: CATALOG_TYPES.HARD_SKILL });
           }
         }
       }
@@ -252,8 +258,9 @@ function normalizeCVData(data: any, language?: string): CVData {
       skills = skills.map((s: any) => {
         if (typeof s === 'string') return { name: s };
         if (s.category && Array.isArray(s.items)) {
-          return s.items.map((item: string) => ({ name: item, type: s.category.toLowerCase().includes('soft') ? 'soft' : 'hard' }));
+          return s.items.map((item: string) => ({ name: item, type: skillType(s.category) }));
         }
+        if (s && typeof s === 'object' && s.name) return { ...s, type: skillType(s.type) };
         return s;
       }).flat();
     }
@@ -325,11 +332,11 @@ function normalizeCVData(data: any, language?: string): CVData {
       if (s.category && Array.isArray(s.items)) {
         // Grouped format: {category: "Tech", items: ["Python", "Node.js"]}
         for (const item of s.items) {
-          flatSkills.push({ name: item, type: s.category.toLowerCase().includes('soft') ? 'soft' : 'hard' });
+          flatSkills.push({ name: item, type: skillType(s.category) });
         }
       } else if (s.name) {
-        // Already flat format
-        flatSkills.push(s);
+        // Already flat format — canonicalize the type label
+        flatSkills.push({ ...s, type: skillType(s.type) });
       }
     }
   } else if (data.skills && typeof data.skills === 'object' && !Array.isArray(data.skills)) {
@@ -338,9 +345,9 @@ function normalizeCVData(data: any, language?: string): CVData {
       if (Array.isArray(items)) {
         for (const item of items) {
           if (typeof item === 'string') {
-            flatSkills.push({ name: item, type: type.toLowerCase().includes('soft') ? 'soft' : 'hard' });
+            flatSkills.push({ name: item, type: skillType(type) });
           } else if (item && typeof item === 'object' && item.name) {
-            flatSkills.push({ name: item.name, type: item.type || type, level: item.level });
+            flatSkills.push({ name: item.name, type: skillType(item.type || type), level: item.level });
           }
         }
       }
@@ -679,7 +686,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
     'Content as JSON object or JSON string.',
     'STRICT CV/resume canonical contract (root fields only, no wrappers):',
     toTOON(CV_CONTENT_CONTRACT),
-    'IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages.',
+    'IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages. Each skill MUST carry its catalog "type" (one of: knowledge, hard_skill, soft_skill, tool_platform, language) and "level" (one of: beginner, intermediate, advanced, master) exactly as returned by sql_query(my_skills) — these drive the CV color coding and proficiency bars. Do NOT invent a type or use legacy labels like "hard"/"soft".',
     '(b) Use ONLY real data from sql_query/file_reader — NEVER invent or modify personal info. If email is null in profile (WhatsApp signup), OMIT the email field. If no LinkedIn in source data, OMIT it. NEVER fabricate emails, URLs, certifications, or dates.',
     '(c) Do NOT wrap in {type:"cv", profile:{...}} — put fields at root level.',
     'Other supported contracts:',
@@ -860,19 +867,16 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
             ]
           );
 
-          // Trigger extraction + skill merge pipeline (async, non-blocking)
-          // Only for extractable formats (PDF, DOCX) — skip CSV/TXT/XLS
-          if (['PDF', 'DOCX'].includes(format)) {
-            processDocumentExtraction(documentId, fileUrl, mimeType).catch((err) =>
-              logger.error(`[generate_document] Extraction failed for ${documentId}:`, err)
-            );
-          } else {
-            // Mark non-extractable formats as processed immediately
-            pool.query(
-              `UPDATE talent_documents SET status = 'PROCESSED', processed_at = CURRENT_TIMESTAMP WHERE id = $1`,
-              [documentId]
-            ).catch(() => {});
-          }
+          // Copilot-GENERATED documents are derived from the talent's existing
+          // profile, not new evidence — do NOT run skill extraction on them. Doing
+          // so inflated the profile with whatever the agent wrote (e.g. tools named
+          // in an interview guide became "skills"). Just mark processed so the file
+          // stays available to file_reader and downloads. Skill extraction remains
+          // for genuinely user-uploaded documents (separate upload pipeline).
+          pool.query(
+            `UPDATE talent_documents SET status = 'PROCESSED', processed_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [documentId]
+          ).catch(() => {});
         }
 
         logger.info(`[generate_document] Generated & saved ${format} document: ${filename} (${buffer.length} bytes) → ${documentId}`);
@@ -899,96 +903,3 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
     },
   });
 }
-
-// Keep backward-compatible static export (no auto-save, for non-authenticated contexts)
-export const generateDocumentTool = defineTool({
-  name: 'generate_document',
-  description:
-    'Generate a downloadable document (CV, report, job description, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL.',
-  parameters: z.object({
-    format: z
-      .string()
-      .default('PDF')
-      .describe('Output format: PDF (default, good for CVs/reports), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
-    title: z.string().describe('Document title displayed at the top of the generated file'),
-    contentJson: z
-      .union([z.string(), z.record(z.string(), z.unknown())])
-      .describe([
-        'Content as JSON string or object.',
-        'Sections contract:',
-        toTOON(SECTIONS_CONTRACT),
-        'Table contract:',
-        toTOON(TABLE_CONTRACT),
-      ].join('\n')),
-    instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
-  }),
-  execute: async ({ format: rawFormat, title, contentJson, instructions }) => {
-    const tr = (key: string, options?: Record<string, any>) => i18next.t(key, options);
-    try {
-      const format = typeof rawFormat === 'string' ? rawFormat.toUpperCase() : 'PDF';
-      if (!FORMAT_EXTENSIONS[format]) {
-        return { success: false, error: tr('copilot:toolFormatUnsupported', { format: rawFormat }) };
-      }
-      let data: any;
-        try {
-          data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
-        } catch (parseErr) {
-          return { success: false, error: tr('copilot:toolInvalidContentJson') };
-        }
-      const timestamp = Date.now();
-      const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
-      const extension = FORMAT_EXTENSIONS[format];
-      const mimeType = FORMAT_MIMETYPES[format];
-      const filename = `${safeTitle}-${timestamp}.${extension}`;
-      const storagePath = `generated/${filename}`;
-
-      let buffer: Buffer;
-
-      switch (format) {
-        case 'PDF':
-          buffer = await generatePDF(title, data);
-          break;
-        case 'DOCX':
-          buffer = await generateDOCX(title, data);
-          break;
-        case 'XLS':
-          buffer = await generateXLSX(title, data);
-          break;
-        case 'CSV': {
-          const csv = generateCSV(data);
-          buffer = Buffer.from(csv, 'utf-8');
-          break;
-        }
-        case 'TXT': {
-          const txt = generateTXT(title, data);
-          buffer = Buffer.from(txt, 'utf-8');
-          break;
-        }
-        default:
-          return { success: false, error: tr('copilot:toolFormatUnsupported', { format }) };
-      }
-
-      const downloadUrl = await uploadFile(buffer, storagePath, mimeType);
-
-      logger.info(`[generate_document] Generated ${format} document: ${filename} (${buffer.length} bytes)`);
-
-      return {
-        success: true,
-        documentType: format,
-        downloadUrl,
-        filename,
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          sizeBytes: buffer.length,
-          title,
-        },
-      };
-    } catch (error: any) {
-      logger.error(`[generate_document] Error: ${error.message}`);
-      return {
-        success: false,
-        error: tr('copilot:toolDocumentGenerationError', { error: error.message }),
-      };
-    }
-  },
-});
