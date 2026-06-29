@@ -27,7 +27,9 @@ async function executeWebSearch(query: string): Promise<Array<{ title: string; u
   const url = new URL('https://api.search.brave.com/res/v1/web/search');
   url.searchParams.set('q', query);
   url.searchParams.set('count', '5');
-  url.searchParams.set('country', 'CI');
+  // Brave Search only accepts a limited country enum; CI is not currently valid.
+  // Keep UEMOA/Cote d'Ivoire context in the query text and use FR for francophone ranking.
+  url.searchParams.set('country', process.env.BRAVE_SEARCH_COUNTRY || 'FR');
   url.searchParams.set('search_lang', 'fr');
 
   const response = await fetch(url, {
