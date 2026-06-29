@@ -297,8 +297,8 @@ export async function generateOpportunitySuggestion(
   });
 
   try {
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildOpportunityGenSystemPrompt(languageName) },

@@ -1,8 +1,6 @@
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
 import { ModerationStatus } from '../types/community-activity.types';
-import { recordUsage } from './ai/usage.service';
-import { getChatClient } from './ai/provider';
-import { MODEL_FAST } from './ai/models';
 
 import { logger } from '../utils';
 dotenv.config();
@@ -35,8 +33,15 @@ const FIELD_LABELS: Record<string, string> = {
     'nice_to_have': 'atouts',
     'rules': 'règles',
     'content': 'contenu',
+    'poll_options': 'options du sondage',
+    'event_location': 'lieu de l’événement',
     'notes': 'notes',
     'answers': 'réponses',
+    'application_questions': 'questions de candidature',
+    'accessibility_notes': 'notes d’accessibilité',
+    'booking_rules': 'règles de réservation',
+    'questions': 'questions',
+    'payment_collection_info': 'instructions de paiement',
 };
 
 export interface ModerationResult {
@@ -46,18 +51,26 @@ export interface ModerationResult {
 }
 
 export class AutoModerationService {
+    private readonly client: OpenAI | null;
+    private readonly model: string;
+
     constructor() {
-        if (!process.env.AI_API_KEY) {
-            logger.warn('AI_API_KEY is not set. Auto-moderation will be disabled (always APPROVED).');
+        this.model = process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest';
+        this.client = process.env.OPENAI_API_KEY
+            ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+            : null;
+
+        if (!this.client) {
+            logger.warn('OPENAI_API_KEY is not set. Optional content moderation is disabled (always APPROVED).');
         }
     }
 
     /**
-     * Screen content using a chat classifier.
+     * Screen content using OpenAI's free moderation endpoint.
      * - Timeout: 3 seconds (fails open on timeout)
      */
     async screenContent(content: string): Promise<ModerationResult> {
-        if (!process.env.AI_API_KEY) {
+        if (!this.client) {
             return { status: 'APPROVED' };
         }
 
@@ -75,29 +88,18 @@ export class AutoModerationService {
                 }, MODERATION_TIMEOUT_MS);
             });
 
-            const moderationPromise = getChatClient().chat.completions.create({
-                model: MODEL_FAST,
-                max_tokens: 120,
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Classify user-submitted platform content for safety. Return strict JSON only: {"flagged":boolean,"categories":["hate|harassment|self-harm|sexual|sexual/minors|violence|violence/graphic|other"]}. Flag only clearly harmful, illegal, sexually explicit, hateful, harassing, or graphic violent content.',
-                    },
-                    { role: 'user', content: content.slice(0, 4000) },
-                ],
-                response_format: { type: 'json_object' } as any,
+            const moderationPromise = this.client.moderations.create({
+                model: this.model,
+                input: content.slice(0, 12000),
             }).then(response => {
-                void recordUsage({ feature: 'moderation', model: MODEL_FAST, usage: response.usage });
-
-                const raw = response.choices[0]?.message?.content || '{}';
-                const result = JSON.parse(raw);
+                const result = response.results[0];
                 if (result.flagged) {
-                    const flaggedCategories = Array.isArray(result.categories)
-                        ? result.categories.map((category: string) => CATEGORY_LABELS[category] || category)
-                        : [];
+                    const categories = Object.entries(result.categories || {})
+                        .filter(([, flagged]) => flagged)
+                        .map(([category]) => CATEGORY_LABELS[category] || category);
 
-                    const reason = flaggedCategories.length > 0
-                        ? `Contenu inapproprié détecté: ${flaggedCategories.join(', ')}`
+                    const reason = categories.length > 0
+                        ? `Contenu inapproprié détecté: ${categories.join(', ')}`
                         : 'Contenu inapproprié détecté';
 
                     logger.info(`[Moderation] FLAGGED: "${content.substring(0, 50)}..." - ${reason}`);
@@ -133,7 +135,7 @@ export class AutoModerationService {
      * @returns ModerationResult with flaggedField if any field is flagged
      */
     async screenMultipleFields(fields: Record<string, string | undefined | null>): Promise<ModerationResult> {
-        if (!process.env.AI_API_KEY) {
+        if (!this.client) {
             return { status: 'APPROVED' };
         }
 

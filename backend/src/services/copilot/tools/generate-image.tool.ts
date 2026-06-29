@@ -13,7 +13,7 @@ import { uploadFile } from '../../storage.service';
 import { logger } from '../../../utils';
 import { debitWalletForAction } from '../../billing/credit.service';
 
-const openai = getImageClient();
+const imageClient = getImageClient();
 
 export function createGenerateImageTool(talentId: string) {
   return defineTool({
@@ -79,7 +79,7 @@ export function createGenerateImageTool(talentId: string) {
       }
 
       try {
-        const response = await openai.images.generate({
+        const response = await imageClient.images.generate({
           model: MODEL_IMAGE,
           prompt,
           size,

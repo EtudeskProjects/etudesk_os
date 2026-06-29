@@ -38,8 +38,12 @@ export class CommunityActivityService {
             throw new Error('User does not have permission to post in this community');
         }
 
-        // 4. Auto-moderation - reject if flagged
-        const moderation = await autoModerationService.screenContent(dto.content);
+        // 4. Auto-moderation - reject if text content or poll/event metadata is flagged.
+        const moderation = await autoModerationService.screenMultipleFields({
+            content: dto.content,
+            poll_options: dto.metadata?.options?.join('\n'),
+            event_location: dto.metadata?.location,
+        });
         if (moderation.status === 'FLAGGED') {
             throw new Error(`Votre publication a été rejetée: ${moderation.reason || 'contenu inapproprié détecté'}`);
         }
@@ -166,9 +170,18 @@ export class CommunityActivityService {
             throw new Error(`Le contenu ne peut pas dépasser ${ACTIVITY_VALIDATION.MAX_CONTENT_LENGTH} caractères`);
         }
 
-        // Moderate content if changed
-        if (dto.content) {
-            const moderation = await autoModerationService.screenContent(dto.content);
+        // Moderate text content and poll/event metadata if changed.
+        const hasModeratableUpdate =
+            dto.content !== undefined ||
+            dto.metadata?.options !== undefined ||
+            dto.metadata?.location !== undefined;
+
+        if (hasModeratableUpdate) {
+            const moderation = await autoModerationService.screenMultipleFields({
+                content: dto.content,
+                poll_options: dto.metadata?.options?.join('\n'),
+                event_location: dto.metadata?.location,
+            });
             if (moderation.status === 'FLAGGED') {
                 throw new Error(`Votre modification a été rejetée: ${moderation.reason || 'contenu inapproprié détecté'}`);
             }

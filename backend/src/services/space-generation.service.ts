@@ -128,8 +128,8 @@ export async function generateSpaceSuggestion(
     logger.info('[SpaceGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildSpaceGenSystemPrompt(languageName) },

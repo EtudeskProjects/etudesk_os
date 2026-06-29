@@ -53,7 +53,7 @@ export async function analyzeAudio(
   mimeType: string,
   mode: 'study' | 'explore' | 'org'
 ): Promise<string> {
-  const openai = getAIClient();
+  const aiClient = getAIClient();
 
   logger.info(`[AudioAnalysis] Analyzing audio (${mimeType}, mode=${mode}) via AI provider`);
 
@@ -93,7 +93,7 @@ export async function analyzeAudio(
   // Step 2: Analyze transcription
   const prompt = mode === 'study' ? STUDY_PROMPT : DEFAULT_PROMPT;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await aiClient.chat.completions.create({
     model: MODEL_SUGGESTION,
     messages: [
       { role: 'system', content: prompt },

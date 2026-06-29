@@ -23,6 +23,7 @@ import { generateSpaceSuggestion } from '../../services/space-generation.service
 import { upsertSpaceEmbedding, deletePgVector } from '../../services/embedding.service';
 import { setSpaceSkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
+import { autoModerationService } from '../../services/auto-moderation.service';
 
 const router = Router();
 
@@ -114,6 +115,26 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     );
     if (orgCheck.rows.length === 0) {
       throw createForbiddenError(req.t('spaces:notAuthorized'));
+    }
+
+    try {
+      await autoModerationService.assertContentApproved({
+        name: input.name,
+        description: input.description,
+        address: input.address,
+        accessibility_notes: input.accessibility_notes,
+        booking_rules: input.booking_rules?.join('\n'),
+        questions: input.questions?.join('\n'),
+        payment_collection_info: input.payment_collection_info,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Space creation rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
     }
 
     const id = uuidv4();

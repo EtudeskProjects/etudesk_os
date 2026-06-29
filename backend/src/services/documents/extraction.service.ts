@@ -188,7 +188,7 @@ export async function extractDocumentMetadata(
     }
 
     const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills);
-    const openai = getAIClient();
+    const aiClient = getAIClient();
 
     // Build content parts
     const contentParts: OpenAI.ChatCompletionContentPart[] = [
@@ -203,13 +203,13 @@ export async function extractDocumentMetadata(
         image_url: { url: fileUrl, detail: 'high' },
       });
     } else if (isPdf) {
-      // Upload PDF to OpenAI Files API, then reference by file_id
+      // Upload PDF through the compatible Files API, then reference by file_id.
       const base64Match = fileUrl.match(/^data:[^;]+;base64,(.+)$/);
       if (!base64Match) {
         return { success: false, error: 'Format PDF invalide' };
       }
       const pdfBuffer = Buffer.from(base64Match[1], 'base64');
-      const file = await openai.files.create({
+      const file = await aiClient.files.create({
         file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
         purpose: 'assistants',
       });
@@ -220,7 +220,7 @@ export async function extractDocumentMetadata(
       } as any);
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
@@ -237,9 +237,9 @@ export async function extractDocumentMetadata(
       billedActionCode: 'TALENT_DOCUMENT_UPLOAD',
     });
 
-    // Cleanup: delete uploaded file from OpenAI
+    // Cleanup: delete uploaded file from the compatible provider.
     if (uploadedFileId) {
-      openai.files.delete(uploadedFileId).catch(() => {});
+      aiClient.files.delete(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

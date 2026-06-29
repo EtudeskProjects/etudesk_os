@@ -113,7 +113,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://api.paystack.co", "https://api.openai.com"],
+      connectSrc: ["'self'", "https://api.paystack.co"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],

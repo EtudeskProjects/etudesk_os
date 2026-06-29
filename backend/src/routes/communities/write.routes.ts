@@ -16,6 +16,7 @@ import { handleRouteError, createNotFoundError, createForbiddenError, logger } f
 import { upsertCommunityEmbedding, deletePgVector } from '../../services/embedding.service';
 import { setCommunitySkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
+import { autoModerationService } from '../../services/auto-moderation.service';
 
 const router = Router();
 
@@ -99,6 +100,23 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
 
     if (memberCheck.rows.length === 0) {
       throw createForbiddenError(req.t('common:mustBeOrgMember'));
+    }
+
+    try {
+      await autoModerationService.assertContentApproved({
+        name,
+        description,
+        rules,
+        application_questions: Array.isArray(application_questions) ? application_questions.join('\n') : application_questions,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Community creation rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
     }
 
     // Generate unique slug

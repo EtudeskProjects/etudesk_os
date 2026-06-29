@@ -324,8 +324,8 @@ export async function verifyKYCDocument(
   try {
     logger.info(`Calling configured vision model for document analysis...`);
 
-    const openai = getAIClient();
-    const completion = await openai.chat.completions.create({
+    const aiClient = getAIClient();
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
@@ -513,8 +513,8 @@ export async function quickDocumentCheck(
       return { valid: false, document_type: 'UNKNOWN', message: 'Image not accessible' };
     }
 
-    const openai = getAIClient();
-    const completion = await openai.chat.completions.create({
+    const aiClient = getAIClient();
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },

@@ -276,8 +276,8 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
 
     const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const languageName = getLanguageDisplayName(language);
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildBioGenSystemPrompt(languageName) },
