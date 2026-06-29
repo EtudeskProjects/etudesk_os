@@ -6,6 +6,13 @@
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
+DROP VIEW IF EXISTS active_talents;
+DROP VIEW IF EXISTS active_organizations;
+DROP VIEW IF EXISTS active_communities;
+DROP VIEW IF EXISTS active_opportunities;
+DROP VIEW IF EXISTS active_spaces;
+DROP VIEW IF EXISTS open_opportunities;
+
 DROP INDEX IF EXISTS idx_talents_embedding;
 DROP INDEX IF EXISTS idx_organizations_embedding;
 DROP INDEX IF EXISTS idx_opportunities_embedding;
@@ -43,3 +50,35 @@ CREATE INDEX IF NOT EXISTS idx_spaces_embedding
 CREATE INDEX IF NOT EXISTS idx_competencies_embedding
   ON competencies USING hnsw (embedding vector_cosine_ops)
   WHERE embedding IS NOT NULL;
+
+CREATE VIEW active_talents AS
+SELECT *
+FROM talents
+WHERE deleted_at IS NULL;
+
+CREATE VIEW active_organizations AS
+SELECT *
+FROM organizations
+WHERE deleted_at IS NULL;
+
+CREATE VIEW active_communities AS
+SELECT *
+FROM communities
+WHERE deleted_at IS NULL;
+
+CREATE VIEW active_opportunities AS
+SELECT *
+FROM opportunities
+WHERE deleted_at IS NULL;
+
+CREATE VIEW active_spaces AS
+SELECT *
+FROM spaces
+WHERE deleted_at IS NULL;
+
+CREATE VIEW open_opportunities AS
+SELECT *
+FROM opportunities
+WHERE deleted_at IS NULL
+  AND status = 'OPEN'
+  AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP);

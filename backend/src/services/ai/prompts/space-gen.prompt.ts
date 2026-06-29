@@ -31,6 +31,7 @@ interface SpacePromptContext {
   orgLocation: string;
   sectorsList: string;
   languageName: string;
+  existingDataContext?: string;
 }
 
 export function buildSpaceGenPrompt(ctx: SpacePromptContext): string {
@@ -41,9 +42,10 @@ Organisation : ${ctx.orgName} (${ctx.orgType})
 Secteurs : ${ctx.orgSectors}
 Localisation : ${ctx.orgLocation}${ctx.orgDescription ? `\nDescription : ${ctx.orgDescription}` : ''}
 Espace demandé : "${ctx.spaceName}" de type ${ctx.spaceTypeLabel}
+${ctx.existingDataContext || ''}
 </context>
 
-<task>Génère des suggestions complètes pour cet espace réservable.</task>
+<task>Génère des suggestions complètes pour cet espace réservable. Si des données existantes sont fournies, améliore-les et complète les champs faibles sans ignorer le contexte déjà saisi.</task>
 
 <output_format>
 Retourne un JSON valide.

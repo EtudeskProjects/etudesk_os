@@ -13,6 +13,7 @@ import {
 } from '../types/models';
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
 import { buildSpaceGenPrompt, buildSpaceGenSystemPrompt } from './ai/prompts/space-gen.prompt';
+import { toTOON } from './ai/toon';
 import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -112,6 +113,9 @@ export async function generateSpaceSuggestion(
   const languageName = getLanguageDisplayName(language);
   const spaceTypeLabel = input.type.replace(/_/g, ' ').toLowerCase();
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
+  const existingDataContext = input.existing_data
+    ? `\nDonnées existantes (format TOON) :\n${toTOON(input.existing_data)}`
+    : '';
   const prompt = buildSpaceGenPrompt({
     spaceName: input.name,
     spaceTypeLabel,
@@ -122,6 +126,7 @@ export async function generateSpaceSuggestion(
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
     languageName,
+    existingDataContext,
   });
 
   try {
@@ -147,7 +152,11 @@ export async function generateSpaceSuggestion(
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedSpace = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedSpace = (parsedData?.['@object'] || parsedData) as GeneratedSpace;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure sectors are valid
     if (generatedData.sectors) {

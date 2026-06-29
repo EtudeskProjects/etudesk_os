@@ -314,7 +314,11 @@ export async function generateOpportunitySuggestion(
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedOpportunity = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedOpportunity = (parsedData?.['@object'] || parsedData) as GeneratedOpportunity;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure application_questions have unique IDs
     if (generatedData.application_questions) {

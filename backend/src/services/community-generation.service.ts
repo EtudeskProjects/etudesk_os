@@ -16,6 +16,7 @@ import {
   SECTORS,
 } from '../types/models';
 import { buildCommunityGenPrompt, buildCommunityGenSystemPrompt } from './ai/prompts/community-gen.prompt';
+import { toTOON } from './ai/toon';
 import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -105,6 +106,9 @@ export async function generateCommunitySuggestion(
   const language = input.language || FALLBACK_LANGUAGE;
   const languageName = getLanguageDisplayName(language);
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
+  const existingDataContext = input.existing_data
+    ? `\nDonnées existantes (format TOON) :\n${toTOON(input.existing_data)}`
+    : '';
   const prompt = buildCommunityGenPrompt({
     communityName: input.name,
     orgName: organization.name,
@@ -114,6 +118,7 @@ export async function generateCommunitySuggestion(
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
     languageName,
+    existingDataContext,
   });
 
   try {
@@ -139,7 +144,11 @@ export async function generateCommunitySuggestion(
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedCommunity = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedCommunity = (parsedData?.['@object'] || parsedData) as GeneratedCommunity;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure sectors are valid enum values; fallback to org sectors
     if (generatedData.sectors) {

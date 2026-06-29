@@ -26,6 +26,7 @@ interface CommunityPromptContext {
   orgLocation: string;
   sectorsList: string;
   languageName: string;
+  existingDataContext?: string;
 }
 
 export function buildCommunityGenPrompt(ctx: CommunityPromptContext): string {
@@ -36,9 +37,10 @@ Organisation : ${ctx.orgName} (${ctx.orgType})
 Secteurs : ${ctx.orgSectors}
 Localisation : ${ctx.orgLocation}${ctx.orgDescription ? `\nDescription : ${ctx.orgDescription}` : ''}
 Communauté demandée : "${ctx.communityName}"
+${ctx.existingDataContext || ''}
 </context>
 
-<task>Génère des suggestions complètes pour cette communauté.</task>
+<task>Génère des suggestions complètes pour cette communauté. Si des données existantes sont fournies, améliore-les et complète les champs faibles sans ignorer le contexte déjà saisi.</task>
 
 <output_format>
 Retourne un JSON valide.
