@@ -143,6 +143,29 @@ export function buildSpaceEmbeddingText(space: {
   return parts.join('. ').slice(0, 800);
 }
 
+export function buildOrganizationEmbeddingText(organization: {
+  name?: string;
+  description?: string | null;
+  culture_summary?: string | null;
+  types?: string[];
+  sectors?: string[];
+  goals?: string[];
+  headquarters_city?: string | null;
+  headquarters_country?: string | null;
+}): string {
+  const parts: string[] = [];
+  if (organization.name) parts.push(organization.name);
+  if (organization.types?.length) parts.push(`Types: ${organization.types.join(', ')}`);
+  if (organization.sectors?.length) parts.push(`Secteurs: ${organization.sectors.slice(0, 6).join(', ')}`);
+  if (organization.headquarters_city || organization.headquarters_country) {
+    parts.push(`Lieu: ${[organization.headquarters_city, organization.headquarters_country].filter(Boolean).join(', ')}`);
+  }
+  if (organization.goals?.length) parts.push(`Objectifs: ${organization.goals.slice(0, 6).join(', ')}`);
+  if (organization.description) parts.push(organization.description.slice(0, 300));
+  if (organization.culture_summary) parts.push(organization.culture_summary.slice(0, 240));
+  return parts.join('. ').slice(0, 900);
+}
+
 export async function generateEmbedding(text: string): Promise<number[]> {
   const cacheKey = `emb:${EMBEDDING_MODEL}:${EMBEDDING_DIMENSION}:${Buffer.from(text).toString('base64').slice(0, 80)}`;
   const cached = embeddingCache.get(cacheKey);
@@ -212,6 +235,17 @@ export async function upsertSpaceEmbedding(
     await upsertEntityEmbedding('space', spaceId, buildSpaceEmbeddingText(space));
   } catch (error) {
     logger.error('Error upserting space embedding:', error);
+  }
+}
+
+export async function upsertOrganizationEmbedding(
+  organizationId: string,
+  organization: Parameters<typeof buildOrganizationEmbeddingText>[0]
+): Promise<void> {
+  try {
+    await upsertEntityEmbedding('organization', organizationId, buildOrganizationEmbeddingText(organization));
+  } catch (error) {
+    logger.error('Error upserting organization embedding:', error);
   }
 }
 
@@ -366,7 +400,19 @@ export async function batchUpdateOpportunityEmbeddings(limit = 100): Promise<num
 export async function batchUpdateCommunityEmbeddings(limit = 100): Promise<number> {
   const result = await pool.query(`
     SELECT c.id, c.name, c.description, c.type, c.access_type,
-           c.city, c.country, c.is_paid, c.sectors, c.tags
+           c.city, c.country, c.is_paid, c.sectors,
+           ARRAY(
+             SELECT comp.name FROM community_skills cs
+             JOIN competencies comp ON comp.slug = cs.competency_slug
+             WHERE cs.community_id = c.id
+             ORDER BY cs.role, comp.name
+           ) AS tags,
+           ARRAY(
+             SELECT ca.content FROM community_activities ca
+             WHERE ca.community_id = c.id AND ca.status = 'PUBLISHED' AND ca.deleted_at IS NULL
+             ORDER BY ca.published_at DESC NULLS LAST
+             LIMIT 5
+           ) AS recent_activities
     FROM communities c
     WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
     ORDER BY c.updated_at DESC NULLS LAST
@@ -375,7 +421,29 @@ export async function batchUpdateCommunityEmbeddings(limit = 100): Promise<numbe
 
   let updated = 0;
   for (const community of result.rows) {
-    await upsertCommunityEmbedding(community.id, community);
+    await upsertCommunityEmbedding(community.id, {
+      ...community,
+      description: [community.description, ...(community.recent_activities || [])].filter(Boolean).join(' | '),
+    });
+    updated++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return updated;
+}
+
+export async function batchUpdateOrganizationEmbeddings(limit = 100): Promise<number> {
+  const result = await pool.query(`
+    SELECT id, name, description, culture_summary, types, sectors, goals,
+           headquarters_city, headquarters_country
+    FROM organizations
+    WHERE deleted_at IS NULL AND is_visible = TRUE
+    ORDER BY updated_at DESC NULLS LAST
+    LIMIT $1
+  `, [limit]);
+
+  let updated = 0;
+  for (const organization of result.rows) {
+    await upsertOrganizationEmbedding(organization.id, organization);
     updated++;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }

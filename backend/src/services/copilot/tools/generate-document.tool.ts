@@ -73,6 +73,20 @@ function isSectionContent(data: any): data is SectionContent {
   return data && Array.isArray(data.sections);
 }
 
+function normalizeSectionContent(data: any): any {
+  if (!isSectionContent(data)) return data;
+  return {
+    ...data,
+    sections: data.sections
+      .filter((section: any) => section && typeof section === 'object')
+      .map((section: any) => ({
+        ...section,
+        heading: String(section.heading || section.title || 'Section'),
+        body: String(section.body ?? section.content ?? section.text ?? ''),
+      })),
+  };
+}
+
 function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
 }
@@ -759,6 +773,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
         } catch (parseErr) {
           return { success: false, error: tr('copilot:toolInvalidContentJson') };
         }
+        data = normalizeSectionContent(data);
         const documentId = uuidv4();
         const extension = FORMAT_EXTENSIONS[format];
         const mimeType = FORMAT_MIMETYPES[format];

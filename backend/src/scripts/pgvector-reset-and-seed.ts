@@ -3,7 +3,7 @@
  *
  * Usage:
  *   npx tsx src/scripts/pgvector-reset-and-seed.ts
- *   npx tsx src/scripts/pgvector-reset-and-seed.ts --only talents|opportunities|communities|spaces
+ *   npx tsx src/scripts/pgvector-reset-and-seed.ts --only talents|organizations|opportunities|communities|spaces
  */
 
 import dotenv from 'dotenv';
@@ -12,6 +12,7 @@ dotenv.config();
 import { pool } from '../services/database';
 import {
   batchUpdateTalentEmbeddings,
+  batchUpdateOrganizationEmbeddings,
   batchUpdateOpportunityEmbeddings,
   batchUpdateCommunityEmbeddings,
   batchUpdateSpaceEmbeddings,
@@ -20,6 +21,7 @@ import { EMBEDDING_DIMENSION, MODEL_EMBEDDING } from '../services/ai/models';
 
 const RESET_SQL: Record<string, string> = {
   talents: 'UPDATE talents SET embedding = NULL WHERE embedding IS NOT NULL',
+  organizations: 'UPDATE organizations SET embedding = NULL WHERE embedding IS NOT NULL',
   opportunities: 'UPDATE opportunities SET embedding = NULL WHERE embedding IS NOT NULL',
   communities: 'UPDATE communities SET embedding = NULL WHERE embedding IS NOT NULL',
   spaces: 'UPDATE spaces SET embedding = NULL WHERE embedding IS NOT NULL',
@@ -34,6 +36,7 @@ function parseOnlyArg(): string | null {
 async function countRows(target: string): Promise<number> {
   const sql: Record<string, string> = {
     talents: 'SELECT COUNT(*) FROM talents WHERE deleted_at IS NULL',
+    organizations: 'SELECT COUNT(*) FROM organizations WHERE deleted_at IS NULL AND is_visible = TRUE',
     opportunities: 'SELECT COUNT(*) FROM opportunities WHERE deleted_at IS NULL',
     communities: "SELECT COUNT(*) FROM communities WHERE deleted_at IS NULL AND status = 'ACTIVE'",
     spaces: "SELECT COUNT(*) FROM spaces WHERE deleted_at IS NULL AND status = 'ACTIVE'",
@@ -46,7 +49,7 @@ async function main(): Promise<void> {
   if (!process.env.AI_API_KEY) throw new Error('AI_API_KEY not set');
 
   const only = parseOnlyArg();
-  const targets = only ? [only] : ['talents', 'opportunities', 'communities', 'spaces'];
+  const targets = only ? [only] : ['talents', 'organizations', 'opportunities', 'communities', 'spaces'];
 
   console.log('═══════════════════════════════════════════════');
   console.log(' pgvector RESET + Vectorization');
@@ -68,6 +71,9 @@ async function main(): Promise<void> {
     switch (target) {
       case 'talents':
         results.talents = await batchUpdateTalentEmbeddings(limit);
+        break;
+      case 'organizations':
+        results.organizations = await batchUpdateOrganizationEmbeddings(limit);
         break;
       case 'opportunities':
         results.opportunities = await batchUpdateOpportunityEmbeddings(limit);

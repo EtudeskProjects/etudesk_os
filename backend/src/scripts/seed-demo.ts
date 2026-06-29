@@ -95,19 +95,34 @@ async function main() {
   );
   const orgId = (await pool.query(`SELECT id FROM organizations WHERE slug=$1`, [ORG_SLUG])).rows[0].id;
 
-  // --- Demo account (app-review) skills (founder / product) ---
-  const appReview = await pool.query(`SELECT id FROM talents WHERE slug='app-review'`);
-  if (appReview.rows.length) {
-    await addSkills(appReview.rows[0].id, [
-      ['Product Management', 'advanced'],
-      ['Leadership', 'advanced'],
-      ['Project Management', 'advanced'],
-      ['Public Speaking', 'intermediate'],
-      ['AI Governance', 'intermediate'],
-      ['Communication', 'advanced'],
-    ]);
-    console.log('  app-review skills seeded');
-  }
+  // --- Primary demo user (realistic operational account) ---
+  const primaryDemo = await upsertTalent({
+    slug: 'app-review',
+    first: 'Lamine',
+    last: 'Barro',
+    email: DEMO_EMAIL,
+    city: 'New York',
+    tags: ['ENTREPRENEUR', 'MANAGER'],
+    sectors: ['DIGITAL', 'EDUCATION'],
+    bio: 'Founder/operator building Etudesk OS. Product, data, communities, hiring and learning operations.',
+  });
+  await addSkills(primaryDemo.talentId, [
+    ['Product Management', 'advanced'],
+    ['Leadership', 'advanced'],
+    ['Project Management', 'advanced'],
+    ['Public Speaking', 'intermediate'],
+    ['AI Governance', 'intermediate'],
+    ['Communication', 'advanced'],
+    ['Data Analytics', 'intermediate'],
+    ['SQL', 'intermediate'],
+  ]);
+  await pool.query(
+    `INSERT INTO talent_credit_wallets (talent_id, balance_credits, updated_at)
+     VALUES ($1, 100, NOW())
+     ON CONFLICT (talent_id) DO UPDATE SET balance_credits = 100, updated_at = NOW()`,
+    [primaryDemo.talentId]
+  );
+  console.log('  app-review operational user seeded');
 
   // --- Talents ---
   const talents = [
@@ -121,7 +136,9 @@ async function main() {
     { slug: 'demo-yao', first: 'Yao', last: 'Kouassi', email: 'demo.yao@etudesk.dev', city: 'New York', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'DevOps / cloud.', skills: [['Docker', 'advanced'], ['Kubernetes', 'intermediate'], ['Cloud Computing', 'intermediate'], ['Git', 'advanced']] },
   ];
 
-  const talentMap: Record<string, { talentId: string; userId: string }> = {};
+  const talentMap: Record<string, { talentId: string; userId: string }> = {
+    'app-review': primaryDemo,
+  };
   for (const tt of talents) {
     const ids = await upsertTalent(tt);
     talentMap[tt.slug] = ids;
@@ -130,7 +147,7 @@ async function main() {
   }
 
   // --- Org memberships (a couple of talents) ---
-  const memberRoles: Array<[string, string]> = [['demo-fatou', 'MANAGER'], ['demo-aminata', 'MEMBER'], ['demo-ibrahim', 'MEMBER']];
+  const memberRoles: Array<[string, string]> = [['app-review', 'OWNER'], ['demo-fatou', 'MANAGER'], ['demo-aminata', 'MEMBER'], ['demo-ibrahim', 'MEMBER']];
   for (const [slug, role] of memberRoles) {
     await pool.query(
       `INSERT INTO organization_members (organization_id, talent_id, role, status)
@@ -199,7 +216,7 @@ async function main() {
   const communities = [
     { slug: 'demo-dev-community', name: 'Dev Community New York', desc: 'Communauté des développeurs web & mobile.', validates: ['Communication', 'Teamwork', 'Leadership'], topic: [], members: ['demo-aminata', 'demo-ibrahim', 'demo-yao', 'demo-moussa'] },
     { slug: 'demo-data-community', name: 'Data & IA New York', desc: 'Praticiens data science et IA.', validates: ['Teamwork'], topic: ['Machine Learning', 'Data Analytics'], members: ['demo-moussa', 'demo-mariam', 'demo-yao'] },
-    { slug: 'demo-design-community', name: 'Design CI', desc: 'Designers produit UI/UX.', validates: ['Communication'], topic: ['UI Design', 'UX Design'], members: ['demo-awa', 'demo-fatou'] },
+    { slug: 'demo-design-community', name: 'Design Produit', desc: 'Designers produit UI/UX.', validates: ['Communication'], topic: ['UI Design', 'UX Design'], members: ['demo-awa', 'demo-fatou'] },
   ];
   const commIds: Record<string, string> = {};
   for (const c of communities) {
@@ -351,6 +368,146 @@ async function main() {
     );
   }
   console.log(`  ${bookings.length} bookings`);
+
+  // --- Primary user's operational history (non-referential, realistic app state) ---
+  const primaryTalentId = talentMap['app-review'].talentId;
+
+  // Clean only deterministic seed-owned operational rows.
+  await pool.query(`DELETE FROM talent_documents WHERE talent_id=$1 AND original_filename LIKE 'seed-ops-%'`, [primaryTalentId]);
+  await pool.query(`DELETE FROM notifications WHERE talent_id=$1 AND data->>'seed' = 'ops-demo'`, [primaryTalentId]);
+  await pool.query(`DELETE FROM agenda_triggers WHERE talent_id=$1 AND metadata->>'seed' = 'ops-demo'`, [primaryTalentId]);
+  await pool.query(`DELETE FROM opportunity_bookmarks WHERE talent_id=$1`, [primaryTalentId]);
+  await pool.query(`DELETE FROM community_bookmarks WHERE talent_id=$1`, [primaryTalentId]);
+  await pool.query(`DELETE FROM space_bookmarks WHERE talent_id=$1`, [primaryTalentId]);
+  await pool.query(
+    `DELETE FROM space_bookings
+     WHERE talent_id=$1 AND internal_notes='seed-ops-demo'`,
+    [primaryTalentId]
+  );
+
+  // Applications across different states: what Explorer/application-tracker should see.
+  const primaryApps: Array<[string, string, string]> = [
+    ['demo-product-manager', 'IN_REVIEW', 'Operator/product profile. Interested in roadmap, partnerships and growth.'],
+    ['demo-data-analyst', 'SUBMITTED', 'Strong SQL/product analytics background; looking for a hands-on data role.'],
+    ['demo-ux-designer', 'REJECTED', 'Applied to benchmark design expectations and UX process.'],
+  ];
+  for (const [oslug, status, cover] of primaryApps) {
+    await pool.query(
+      `INSERT INTO opportunity_applications (id, talent_id, opportunity_id, status, cover_letter, applied_at, viewed_at, internal_notes)
+       VALUES (uuid_generate_v4(),$1,$2,$3,$4,NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day','seed-ops-demo')
+       ON CONFLICT (talent_id, opportunity_id)
+       DO UPDATE SET status=EXCLUDED.status, cover_letter=EXCLUDED.cover_letter, viewed_at=EXCLUDED.viewed_at, internal_notes=EXCLUDED.internal_notes`,
+      [primaryTalentId, oppIds[oslug], status, cover]
+    );
+  }
+
+  // Memberships: user has joined communities and should see real feed/news.
+  const primaryCommunities: Array<[string, string]> = [
+    ['demo-dev-community', 'ADMIN'],
+    ['demo-data-community', 'MEMBER'],
+    ['demo-design-community', 'MEMBER'],
+  ];
+  for (const [cslug, role] of primaryCommunities) {
+    await pool.query(
+      `INSERT INTO community_members (id, community_id, talent_id, role, status, accepted_rules, joined_at)
+       VALUES (uuid_generate_v4(),$1,$2,$3,'ACTIVE',true,NOW() - INTERVAL '21 days')
+       ON CONFLICT (talent_id, community_id)
+       DO UPDATE SET role=EXCLUDED.role, status='ACTIVE', accepted_rules=true`,
+      [commIds[cslug], primaryTalentId, role]
+    );
+  }
+
+  // User-authored community activity + comments/reactions/bookmark.
+  const primaryPost = await addActivity(
+    devCid,
+    'app-review',
+    'POST',
+    'Cette semaine je cherche des retours sur les meilleurs workflows pour connecter profils, compétences et opportunités.'
+  );
+  await addComment(primaryPost, 'demo-aminata', 'On pourrait tester un template de fiche de poste relié aux compétences requises.');
+  await addComment(primaryPost, 'demo-mariam', 'Côté data, un dashboard gaps de compétences aiderait beaucoup.');
+  await addReaction(primaryPost, 'demo-ibrahim');
+  await pool.query(
+    `INSERT INTO community_activity_bookmarks (activity_id, user_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+    [d1, primaryTalentId]
+  );
+
+  // Bookmarks across all supported entity families.
+  await pool.query(
+    `INSERT INTO opportunity_bookmarks (talent_id, opportunity_id, notes)
+     VALUES ($1,$2,'Prioritaire: bon fit product/data'), ($1,$3,'À comparer avec profil analytics')
+     ON CONFLICT (talent_id, opportunity_id) DO UPDATE SET notes=EXCLUDED.notes`,
+    [primaryTalentId, oppIds['demo-product-manager'], oppIds['demo-data-analyst']]
+  );
+  await pool.query(
+    `INSERT INTO community_bookmarks (talent_id, community_id, notes)
+     VALUES ($1,$2,'Communauté stratégique pour animation tech'), ($1,$3,'Source de veille data/IA')
+     ON CONFLICT (talent_id, community_id) DO UPDATE SET notes=EXCLUDED.notes`,
+    [primaryTalentId, commIds['demo-dev-community'], commIds['demo-data-community']]
+  );
+  await pool.query(
+    `INSERT INTO space_bookmarks (talent_id, space_id, notes)
+     VALUES ($1,$2,'Espace idéal pour ateliers produit'), ($1,$3,'Bon pour enregistrement contenus')
+     ON CONFLICT (talent_id, space_id) DO UPDATE SET notes=EXCLUDED.notes`,
+    [primaryTalentId, spaceIds['demo-coworking'], spaceIds['demo-media-studio']]
+  );
+
+  // Upcoming reservation and agenda triggers: what Calendar/recap should see.
+  const primaryBookingStart = new Date(Date.now() + 5 * 24 * 3600 * 1000);
+  primaryBookingStart.setHours(14, 0, 0, 0);
+  const primaryBookingEnd = new Date(primaryBookingStart.getTime() + 2 * 3600 * 1000);
+  const primaryRate = Number((await pool.query(`SELECT hourly_rate FROM spaces WHERE id=$1`, [spaceIds['demo-coworking']])).rows[0].hourly_rate || 0);
+  await pool.query(
+    `INSERT INTO space_bookings (id, space_id, organization_id, talent_id, start_datetime, end_datetime, purpose,
+       pricing_type, unit_price, units_count, subtotal, total_amount, status, confirmed_at, payment_status, internal_notes)
+     VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,'Atelier stratégie produit','HOURLY',$6,2,$7,$7,'CONFIRMED',NOW(),'PAID','seed-ops-demo')`,
+    [spaceIds['demo-coworking'], orgId, primaryTalentId, primaryBookingStart.toISOString(), primaryBookingEnd.toISOString(), primaryRate, primaryRate * 2]
+  );
+
+  const triggerRows: Array<[string, string, string, number, string, any]> = [
+    ['FOLLOW_UP_PM', 'Relancer candidature Product Manager', 'Envoyer un message de suivi personnalisé.', 2, 'HIGH', { entity_type: 'opportunity', entity_id: oppIds['demo-product-manager'] }],
+    ['COMMUNITY_RECAP', 'Publier le recap Tech & Data', 'Synthétiser les discussions de la semaine.', 4, 'NORMAL', { entity_type: 'community', entity_id: commIds['demo-dev-community'] }],
+    ['PORTFOLIO_REFRESH', 'Mettre à jour portfolio produit', 'Ajouter cas d’usage Etudesk OS et métriques.', 9, 'NORMAL', { entity_type: 'document', entity_id: null }],
+  ];
+  for (const [code, title, description, days, priority, metadata] of triggerRows) {
+    await pool.query(
+      `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, priority, metadata, created_by)
+       VALUES ('TALENT',$1,$2,$3,$4,NOW() + ($5 || ' days')::interval,$6,$7,$1)`,
+      [primaryTalentId, code, title, description, days, priority, JSON.stringify({ ...metadata, seed: 'ops-demo' })]
+    );
+  }
+
+  // Documents: no real files needed for context/listing, but realistic metadata.
+  const docs = [
+    ['seed-ops-cv.pdf', 'CV', 'PROFESSIONAL', 'CV opérateur produit', 'Résumé product/data/communities, dernières missions et compétences clés.', ['Product Management', 'SQL', 'Leadership']],
+    ['seed-ops-portfolio.pdf', 'PORTFOLIO', 'PROFESSIONAL', 'Portfolio Etudesk OS', 'Cas produit: communauté, recrutement et apprentissage assistés par IA.', ['Product Management', 'Data Analytics']],
+    ['seed-ops-cert-data.pdf', 'CERTIFICATE', 'ACADEMIC', 'Certificat Data Analytics', 'Certificat court orienté SQL, métriques et dashboarding.', ['SQL', 'Data Analytics']],
+  ];
+  for (const [filename, type, category, title, description, tags] of docs) {
+    await pool.query(
+      `INSERT INTO talent_documents (talent_id, original_filename, stored_filename, mime_type, file_size, file_url,
+        document_type, category, status, processed_at, tags, title, description, is_public)
+       VALUES ($1,$2::varchar,$2::varchar,'application/pdf',20480,'/uploads/seed/' || $2::text,$3::document_type,$4::document_category,'PROCESSED',NOW(),$5,$6,$7,true)`,
+      [primaryTalentId, filename, type, category, tags, title, description]
+    );
+  }
+
+  // Notifications: unread + read, with references the agent can reason about.
+  const notifications = [
+    ['APPLICATION_STATUS_CHANGED', 'Candidature en revue', 'Votre candidature Product Manager est passée en revue.', 'opportunity', oppIds['demo-product-manager'], false],
+    ['NEW_ACTIVITY', 'Nouveau commentaire dans Dev Community', 'Aminata a répondu à votre discussion workflow compétences.', 'community_activity', primaryPost, false],
+    ['BOOKING_REMINDER', 'Réservation à venir', 'Atelier stratégie produit dans 5 jours.', 'space_booking', null, false],
+    ['SYSTEM', 'Profil à rafraîchir', 'Votre portfolio produit date de plus de 30 jours.', 'document', null, true],
+  ];
+  for (const [type, title, body, refType, refId, isRead] of notifications) {
+    await pool.query(
+      `INSERT INTO notifications (talent_id, type, title, body, reference_type, reference_id, data, is_read, read_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CASE WHEN $8 THEN NOW() ELSE NULL END)`,
+      [primaryTalentId, type, title, body, refType, refId, JSON.stringify({ seed: 'ops-demo' }), isRead]
+    );
+  }
+
+  console.log('  primary user operations seeded (apps, memberships, bookmarks, docs, agenda, notifications)');
 
   // --- Participation validation (showcase origin='validated') ---
   // Accepted applications -> validate the opportunity's skills.

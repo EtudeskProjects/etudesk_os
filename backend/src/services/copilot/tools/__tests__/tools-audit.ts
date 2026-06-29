@@ -5,6 +5,7 @@
  */
 
 import 'dotenv/config';
+import * as path from 'path';
 import { pool } from '../../../database';
 import { smartSearchTool } from '../smart-search.tool';
 import { createSqlQueryTool } from '../sql-query.tool';
@@ -17,7 +18,7 @@ import { createExecuteActionTool } from '../execute-action.tool';
 import { generateToolSummary } from '../../stream/tool-summary';
 
 // Test constants (resolved dynamically from DB at runtime)
-const TALENT_ID = '689f7929-7c13-4103-b119-09a806836347'; // Lamine
+const PREFERRED_TALENT_SLUG = process.env.COPILOT_AUDIT_TALENT_SLUG || 'app-review';
 
 interface FixtureIds {
   talentId: string;
@@ -37,9 +38,19 @@ interface TestResult {
   duration: number;
   status: 'PASS' | 'FAIL' | 'SKIP';
   error?: string;
+  outputBytes?: number;
+  outputKeys?: string[];
 }
 
 const results: TestResult[] = [];
+const AUDIT_DOCUMENT_TITLES = [
+  'Rapport de Competences',
+  'Export Talents',
+  'Export CSV',
+  'Stats Opportunites',
+  'Notes reunion',
+  'CV Lamine Barro',
+];
 
 /**
  * Provider-neutral ToolDefinition pattern: toolObj.execute(params)
@@ -63,6 +74,9 @@ async function runTest(
     const duration = Date.now() - start;
     const sArgs = summaryArgs || { toolName: tool };
     const summary = generateToolSummary(sArgs.toolName, output, false, sArgs.args || params);
+    const outputJson = JSON.stringify(output);
+    const outputBytes = Buffer.byteLength(outputJson || '', 'utf8');
+    const outputKeys = output && typeof output === 'object' ? Object.keys(output).slice(0, 12) : [];
     const expectSuccess = options?.expectSuccess ?? true;
     const isBusinessFailure =
       expectSuccess &&
@@ -73,13 +87,13 @@ async function runTest(
 
     if (isBusinessFailure) {
       const errMsg = String((output as any).error || (output as any).message || 'Tool returned success=false');
-      results.push({ tool, test, input: params, output, summary, duration, status: 'FAIL', error: errMsg });
+      results.push({ tool, test, input: params, output, summary, duration, status: 'FAIL', error: errMsg, outputBytes, outputKeys });
       console.log(`  ✗ ${test} (${duration}ms) → ERROR: ${errMsg.slice(0, 150)}`);
       return;
     }
 
-    results.push({ tool, test, input: params, output, summary, duration, status: 'PASS' });
-    console.log(`  ✓ ${test} (${duration}ms) → summary: "${summary}"`);
+    results.push({ tool, test, input: params, output, summary, duration, status: 'PASS', outputBytes, outputKeys });
+    console.log(`  ✓ ${test} (${duration}ms, ${outputBytes}B) → summary: "${summary}"`);
   } catch (err: any) {
     const duration = Date.now() - start;
     const summary = generateToolSummary(tool, err.message, true);
@@ -93,9 +107,9 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
     `SELECT id
      FROM talents
      WHERE deleted_at IS NULL
-       AND id = $1
+       AND slug = $1
      LIMIT 1`,
-    [TALENT_ID]
+    [PREFERRED_TALENT_SLUG]
   );
   let activeTalentId = talentRes.rows[0]?.id as string | undefined;
   if (!activeTalentId) {
@@ -103,7 +117,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
       `SELECT id
        FROM talents
        WHERE deleted_at IS NULL
-       ORDER BY created_at DESC
+       ORDER BY (slug = 'app-review') DESC, created_at DESC
        LIMIT 1`
     );
     activeTalentId = fallbackTalentRes.rows[0]?.id;
@@ -125,7 +139,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
       `SELECT id
        FROM talent_documents
        WHERE talent_id = $1 AND deleted_at IS NULL
-       ORDER BY created_at DESC
+       ORDER BY (original_filename LIKE 'seed-ops-%') DESC, created_at DESC
        LIMIT 1`,
       [activeTalentId]
     ),
@@ -162,12 +176,22 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   };
 }
 
+async function cleanupAuditGeneratedDocuments(talentId: string): Promise<void> {
+  await pool.query(
+    `DELETE FROM talent_documents
+     WHERE talent_id = $1
+       AND title = ANY($2::text[])`,
+    [talentId, AUDIT_DOCUMENT_TITLES]
+  );
+}
+
 (async function main() {
   console.log('\n╔══════════════════════════════════════════════════════╗');
   console.log('║         ETUDESK COPILOT TOOLS — AUDIT RÉEL          ║');
   console.log('╚══════════════════════════════════════════════════════╝\n');
 
   const fixtures = await resolveFixtureIds();
+  await cleanupAuditGeneratedDocuments(fixtures.talentId);
   console.log(`ℹ Talent audit utilisé: ${fixtures.talentId}`);
 
   // ═══════════════════════════════════════════
@@ -175,8 +199,8 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   // ═══════════════════════════════════════════
   console.log('┌─ 1. smart_search ──────────────────────────────────');
 
-  await runTest('smart_search', 'Recherche opportunités dev React Abidjan',
-    { query: 'développeur React Node.js Abidjan', entity: 'opportunities', topK: 5, filtersJson: null },
+  await runTest('smart_search', 'Recherche opportunités dev React remote',
+    { query: 'développeur React Node.js remote', entity: 'opportunities', topK: 5, filtersJson: null },
     smartSearchTool,
     { toolName: 'smart_search', args: { entity: 'opportunities' } }
   );
@@ -213,7 +237,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
 
   // Entity inference test — NO entity param, should infer from query
   await runTest('smart_search', 'Entity inference (communauté sans entity param)',
-    { query: 'communauté tech innovation Abidjan', topK: 5 },
+    { query: 'communauté tech innovation remote', topK: 5 },
     smartSearchTool,
     { toolName: 'smart_search', args: { entity: 'communities' } }
   );
@@ -299,14 +323,14 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
     { toolName: 'youtube_search' }
   );
 
-  await runTest('youtube_search', 'Entrepreneuriat Afrique',
-    { query: 'entrepreneuriat startup Afrique francophone', maxResults: 2 },
+  await runTest('youtube_search', 'Entrepreneuriat startup',
+    { query: 'entrepreneuriat startup numérique', maxResults: 2 },
     youtubeSearchTool,
     { toolName: 'youtube_search' }
   );
 
-  await runTest('youtube_search', 'Sujet niche UEMOA',
-    { query: 'mobile money API integration UEMOA', maxResults: 1 },
+  await runTest('youtube_search', 'Sujet niche fintech',
+    { query: 'mobile money API integration fintech', maxResults: 1 },
     youtubeSearchTool,
     { toolName: 'youtube_search' }
   );
@@ -327,7 +351,7 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   );
 
   await runTest('generate_document', 'DOCX Table (export données)',
-    { format: 'DOCX', title: 'Export Talents', contentJson: '{"headers":["Nom","Ville","Compétence"],"rows":[["Lamine Barro","Abidjan","React"],["Estelle Traoré","Abidjan","Python"]]}', instructions: 'Export tableau des talents' },
+    { format: 'DOCX', title: 'Export Talents', contentJson: '{"headers":["Nom","Ville","Compétence"],"rows":[["Lamine Barro","Remote","React"],["Estelle Traoré","Remote","Python"]]}', instructions: 'Export tableau des talents' },
     genDocTool,
     { toolName: 'generate_document' }
   );
@@ -352,12 +376,12 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
 
   await runTest('generate_document', 'PDF CV (format structuré)',
     { format: 'PDF', title: 'CV Lamine Barro', contentJson: JSON.stringify({
-      firstName: 'Lamine', lastName: 'Barro', email: 'lamine@etudesk.com', phone: '+225 07 00 00 00',
-      city: 'Abidjan', country: 'Cote d\'Ivoire', bio: 'Fondateur & CEO Etudesk.',
+      firstName: 'Lamine', lastName: 'Barro', email: 'lamine@etudesk.com', phone: '+33 6 00 00 00 00',
+      city: 'Remote', country: 'Global', bio: 'Fondateur & CEO Etudesk.',
       skills: [{ name: 'React', type: 'hard', level: 'expert' }, { name: 'Node.js', type: 'hard', level: 'advanced' }],
       languages: [{ language: 'Francais', level: 'native' }],
-      experiences: [{ title: 'CEO', company: 'Etudesk', location: 'Abidjan', period: '2020 - Present', description: 'Direction plateforme.' }],
-      education: [{ degree: 'Master Informatique', institution: 'ESATIC', location: 'Abidjan', period: '2016 - 2018' }]
+      experiences: [{ title: 'CEO', company: 'Etudesk', location: 'Remote', period: '2020 - Present', description: 'Direction plateforme.' }],
+      education: [{ degree: 'Master Informatique', institution: 'Université numérique', location: 'Remote', period: '2016 - 2018' }]
     }), instructions: 'CV professionnel' },
     genDocTool,
     { toolName: 'generate_document' }
@@ -618,8 +642,22 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   // Write full results JSON
   const outputPath = `${__dirname}/tools-audit-results.json`;
   const fs = await import('fs');
+  const slow = results.filter(r => r.duration > 1000).sort((a, b) => b.duration - a.duration).slice(0, 10);
+  const heavy = results.filter(r => (r.outputBytes || 0) > 6000).sort((a, b) => (b.outputBytes || 0) - (a.outputBytes || 0)).slice(0, 10);
+  const byTool = new Map<string, { count: number; failed: number; skipped: number; duration: number; bytes: number }>();
+  for (const r of results) {
+    const current = byTool.get(r.tool) || { count: 0, failed: 0, skipped: 0, duration: 0, bytes: 0 };
+    current.count++;
+    if (r.status === 'FAIL') current.failed++;
+    if (r.status === 'SKIP') current.skipped++;
+    current.duration += r.duration;
+    current.bytes += r.outputBytes || 0;
+    byTool.set(r.tool, current);
+  }
+
   fs.writeFileSync(outputPath, JSON.stringify({
     auditDate: new Date().toISOString(),
+    fixture: fixtures,
     summary: { total, passed, failed, skipped },
     results: results.map(r => ({
       ...r,
@@ -628,6 +666,40 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   }, null, 2));
   console.log(`\n📄 Full results: ${outputPath}`);
 
+  const mdPath = path.resolve(__dirname, '../../../../../../docs/copilot-tools-audit.md');
+  let md = `# Copilot Tools Audit\n\n`;
+  md += `Generated: ${new Date().toISOString()}\n\n`;
+  md += `Fixture talent: \`${fixtures.talentId}\` (preferred slug: \`${PREFERRED_TALENT_SLUG}\`)\n\n`;
+  md += `## Summary\n\n`;
+  md += `| Total | Passed | Failed | Skipped |\n|---:|---:|---:|---:|\n| ${total} | ${passed} | ${failed} | ${skipped} |\n\n`;
+  md += `## By Tool\n\n`;
+  md += `| Tool | Tests | Failed | Skipped | Total ms | Avg ms | Output KB |\n|---|---:|---:|---:|---:|---:|---:|\n`;
+  for (const [tool, s] of [...byTool.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    md += `| ${tool} | ${s.count} | ${s.failed} | ${s.skipped} | ${s.duration} | ${Math.round(s.duration / Math.max(s.count, 1))} | ${(s.bytes / 1024).toFixed(1)} |\n`;
+  }
+  md += `\n## Slowest Calls\n\n`;
+  md += `| Tool | Test | Status | Duration ms | Output KB | Summary |\n|---|---|---|---:|---:|---|\n`;
+  for (const r of slow) {
+    md += `| ${r.tool} | ${r.test.replace(/\|/g, '/')} | ${r.status} | ${r.duration} | ${((r.outputBytes || 0) / 1024).toFixed(1)} | ${r.summary.replace(/\|/g, '/')} |\n`;
+  }
+  md += `\n## Heaviest Outputs\n\n`;
+  md += `| Tool | Test | Status | Output KB | Keys |\n|---|---|---|---:|---|\n`;
+  for (const r of heavy) {
+    md += `| ${r.tool} | ${r.test.replace(/\|/g, '/')} | ${r.status} | ${((r.outputBytes || 0) / 1024).toFixed(1)} | ${(r.outputKeys || []).join(', ')} |\n`;
+  }
+  md += `\n## Failed Tests\n\n`;
+  const failedRows = results.filter(r => r.status === 'FAIL');
+  if (failedRows.length === 0) {
+    md += `No failing tool tests.\n`;
+  } else {
+    for (const r of failedRows) {
+      md += `- **${r.tool} / ${r.test}**: ${r.error || 'failed'}\n`;
+    }
+  }
+  fs.writeFileSync(mdPath, md);
+  console.log(`📄 Markdown report: ${mdPath}`);
+
+  await cleanupAuditGeneratedDocuments(fixtures.talentId);
   await pool.end();
   process.exit(failed > 0 ? 1 : 0);
 })();

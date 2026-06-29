@@ -23,6 +23,17 @@ const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-au
 // CLI args: pass test names as arguments to run only specific tests
 // Usage: npx tsx src/tests/copilot-agents.test.ts "Espaces coworking" "Generer CV"
 const FILTER_ARGS = process.argv.slice(2).map(a => a.toLowerCase());
+const AUDIT_15 = process.env.COPILOT_AUDIT_15 === '1';
+const AUDIT_10 = process.env.COPILOT_AUDIT_10 === '1';
+const PER_TOOL_CALL_LIMITS: Record<string, number> = {
+  smart_search: 2,
+  web_search: 1,
+  find_competency: 3,
+};
+const SQL_INTENT_CALL_LIMITS: Record<string, number> = {
+  org_talent_profile: 3,
+};
+const MAX_COMPLETION_TOKENS = Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1600);
 
 const C = {
   reset: '\x1b[0m',
@@ -223,6 +234,12 @@ interface TestResult {
   duration: number;
   errors: string[];
   calibration: CalibrationMetrics;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedTokens: number;
+    requests: number;
+  };
 }
 
 function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBeforeFirstTool: string = ''): CalibrationMetrics {
@@ -297,6 +314,14 @@ async function runAgentTest(
   let currentToolStart = 0;
   let textBeforeFirstTool = '';
   let firstToolSeen = false;
+  const usage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cachedTokens: 0,
+    requests: 0,
+  };
+  const perToolCounts = new Map<string, number>();
+  const sqlIntentCounts = new Map<string, number>();
 
   section(`TEST: ${testName}`);
   log('dim', `Agent: ${agentType} | Message: "${message}"`);
@@ -320,8 +345,12 @@ async function runAgentTest(
         model: agent.model,
         messages: [{ role: 'system' as const, content: agent.systemPrompt }, ...messages],
         tools: toolDefs,
-        max_tokens: 4096,
+        max_tokens: MAX_COMPLETION_TOKENS,
       });
+      usage.requests++;
+      usage.inputTokens += response.usage?.prompt_tokens || 0;
+      usage.outputTokens += response.usage?.completion_tokens || 0;
+      usage.cachedTokens += (response.usage as any)?.prompt_tokens_details?.cached_tokens || 0;
 
       const responseMessage = response.choices[0]?.message;
       const responseText = responseMessage?.content || '';
@@ -342,6 +371,8 @@ async function runAgentTest(
         currentToolStart = Date.now();
         const toolName = (toolUse as any).function?.name;
         const toolArgs = JSON.parse((toolUse as any).function?.arguments || '{}');
+        const toolNameCount = (perToolCounts.get(toolName) || 0) + 1;
+        perToolCounts.set(toolName, toolNameCount);
 
         log('blue', `  Tool: ${toolName}`);
         log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
@@ -350,7 +381,30 @@ async function runAgentTest(
         const toolDef = agent.tools.find(t => t.definition.name === toolName);
         let result: any;
         try {
-          result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+          const perToolLimit = PER_TOOL_CALL_LIMITS[toolName];
+          if (perToolLimit && toolNameCount > perToolLimit) {
+            result = {
+              _tool_limit: true,
+              _cached: true,
+              message: `${toolName} call limit reached for this run. Synthesize the answer from previous tool results and do not call this tool again.`,
+            };
+          } else if (toolName === 'sql_query') {
+            const sqlIntent = toolArgs?.intent;
+            const sqlIntentLimit = sqlIntent ? SQL_INTENT_CALL_LIMITS[sqlIntent] : undefined;
+            const sqlIntentCount = sqlIntent ? (sqlIntentCounts.get(sqlIntent) || 0) + 1 : 0;
+            if (sqlIntent) sqlIntentCounts.set(sqlIntent, sqlIntentCount);
+            if (sqlIntentLimit && sqlIntentCount > sqlIntentLimit) {
+              result = {
+                _tool_limit: true,
+                _cached: true,
+                message: `${sqlIntent} call limit reached for this run. Rank/synthesize from org_talents and the profiles already loaded; do not inspect more profiles.`,
+              };
+            } else {
+              result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+            }
+          } else {
+            result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+          }
         } catch (err: any) {
           result = { error: err.message };
         }
@@ -393,7 +447,7 @@ async function runAgentTest(
   const calibration = analyzeCalibration(output, toolCalls, textBeforeFirstTool);
 
   // Print output
-  log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms):`);
+  log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms, tokens in/out/cached: ${usage.inputTokens}/${usage.outputTokens}/${usage.cachedTokens}):`);
   console.log(output);
 
   // Calibration summary
@@ -418,7 +472,7 @@ async function runAgentTest(
     errors.forEach(e => log('red', `     - ${e}`));
   }
 
-  return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration };
+  return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration, usage };
 }
 
 // --- Test Definitions ---
@@ -572,15 +626,15 @@ function writeCalibrationReport(results: TestResult[]) {
 
   // --- Calibration Summary Table ---
   md += `## Calibration Summary\n\n`;
-  md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Quick Ack | Cards |\n`;
-  md += `|------|-------|-------|-----------|-------|-----------|-------------|-----------|-------|\n`;
+  md += `| Test | Agent | Chars | Questions | Tools | Tokens In | Tokens Out | Cached | Verbosity | Proactivity | Quick Ack | Cards |\n`;
+  md += `|------|-------|-------|-----------|-------|-----------|------------|--------|-----------|-------------|-----------|-------|\n`;
 
   for (const r of results) {
     const c = r.calibration;
     const status = r.success ? '✅' : '❌';
     const cardsInfo = c.entityCardsWithScore > 0 ? `${c.entityCardCount} (⚠️ ${c.entityCardsWithScore} with matchScore)` : `${c.entityCardCount}`;
     const ackInfo = c.toolCallCount > 0 ? (c.hasQuickAck ? '✅' : '❌') : 'N/A';
-    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
+    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${r.usage.inputTokens} | ${r.usage.outputTokens} | ${r.usage.cachedTokens} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
   }
 
   // --- Calibration Issues ---
@@ -642,6 +696,7 @@ function writeCalibrationReport(results: TestResult[]) {
       // Calibration
       md += `**Calibration:** Verbosity=${r.calibration.verbosityRating}, Proactivity=${r.calibration.proactivityRating}, `;
       md += `Chars=${r.calibration.charCount}, Questions=${r.calibration.questionCount}, Tools=${r.calibration.toolCallCount}\n\n`;
+      md += `**Usage:** Requests=${r.usage.requests}, Input=${r.usage.inputTokens}, Output=${r.usage.outputTokens}, Cached=${r.usage.cachedTokens}\n\n`;
 
       // Tool calls
       for (const tc of r.toolCalls) {
@@ -671,10 +726,14 @@ function writeCalibrationReport(results: TestResult[]) {
   const avgChars = results.reduce((sum, r) => sum + r.calibration.charCount, 0) / results.length;
   const avgQuestions = results.reduce((sum, r) => sum + r.calibration.questionCount, 0) / results.length;
   const avgTools = results.reduce((sum, r) => sum + r.calibration.toolCallCount, 0) / results.length;
+  const totalInputTokens = results.reduce((sum, r) => sum + r.usage.inputTokens, 0);
+  const totalOutputTokens = results.reduce((sum, r) => sum + r.usage.outputTokens, 0);
+  const totalCachedTokens = results.reduce((sum, r) => sum + r.usage.cachedTokens, 0);
 
   md += `- **Average response length:** ${Math.round(avgChars)} chars (target: 300-800)\n`;
   md += `- **Average questions per response:** ${avgQuestions.toFixed(1)} (target: 0-1)\n`;
   md += `- **Average tool calls per response:** ${avgTools.toFixed(1)} (target: 1-3)\n\n`;
+  md += `- **Total tokens:** input=${totalInputTokens}, output=${totalOutputTokens}, cached=${totalCachedTokens}\n\n`;
 
   if (avgChars > 1200) {
     md += `> **ACTION: Reduce verbosity.** Add explicit length constraint to prompts: "Keep responses between 3-5 sentences plus entity cards."\n\n`;
@@ -724,9 +783,15 @@ async function main() {
     }
 
     // Group tests by agent type
-    const explorerTests = filteredTests.filter(t => t.agentType === 'explorer');
-    const studyTests = filteredTests.filter(t => t.agentType === 'study');
-    const orgTests = filteredTests.filter(t => t.agentType === 'org');
+    const explorerTests = filteredTests.filter(t => t.agentType === 'explorer').slice(0, (AUDIT_15 || AUDIT_10) ? 5 : undefined);
+    const studyTests = AUDIT_10 ? [] : filteredTests.filter(t => t.agentType === 'study').slice(0, AUDIT_15 ? 5 : undefined);
+    const orgTests = filteredTests.filter(t => t.agentType === 'org').slice(0, (AUDIT_15 || AUDIT_10) ? 5 : undefined);
+    if (AUDIT_15) {
+      log('cyan', `  Running audit-15 mode: ${explorerTests.length} career/explorer + ${studyTests.length} study + ${orgTests.length} org`);
+    }
+    if (AUDIT_10) {
+      log('cyan', `  Running audit-10 mode: ${explorerTests.length} career/explorer + ${orgTests.length} org`);
+    }
 
     // --- Explorer Tests ---
     if (explorerTests.length > 0) {
@@ -746,6 +811,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -769,6 +835,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -792,6 +859,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -830,7 +898,7 @@ async function main() {
       const vFlag = (r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose') ? ' [VERBOSE]' : '';
       const pFlag = r.calibration.proactivityRating === 'passive' ? ' [PASSIVE]' : '';
       const aFlag = (r.calibration.toolCallCount > 0 && !r.calibration.hasQuickAck) ? ' [NO ACK]' : '';
-      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q${vFlag}${pFlag}${aFlag}`);
+      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q, tokens ${r.usage.inputTokens}/${r.usage.outputTokens}/${r.usage.cachedTokens}${vFlag}${pFlag}${aFlag}`);
     }
 
     // Tool usage

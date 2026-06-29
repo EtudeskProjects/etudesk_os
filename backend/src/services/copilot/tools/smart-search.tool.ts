@@ -15,6 +15,23 @@ import { logger } from '../../../utils';
 
 const SEMANTIC_THRESHOLD = 0.35;
 const KEYWORD_FALLBACK_THRESHOLD = 3;
+const STOPWORDS = new Set([
+  'avec', 'pour', 'dans', 'des', 'les', 'une', 'un', 'the', 'and', 'for', 'with',
+  'remote', 'travail', 'cherche', 'recherche', 'profil', 'profils', 'actives',
+]);
+
+function keywordTokens(query: string): string[] {
+  return [...new Set(
+    query
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9+#.]+/i)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 3 && !STOPWORDS.has(t))
+      .slice(0, 8)
+  )];
+}
 
 /**
  * Infer entity type from query text when the LLM omits the entity param.
@@ -226,6 +243,7 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
   opportunities: (query, filters, limit) => {
     const p: any[] = [];
     let idx = 1;
+    const tokens = keywordTokens(query);
     let sql = `
       SELECT o.id, o.title, o.summary, o.type, o.contract_type, o.location_type,
              o.locations, o.status, o.deadline, o.slug,
@@ -235,7 +253,21 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
       LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
       LEFT JOIN organizations org ON op.poster_organization_id = org.id
       WHERE o.status = 'OPEN' AND o.deleted_at IS NULL`;
-    if (query) { sql += ` AND (o.title ILIKE '%' || $${idx}::text || '%' OR o.summary ILIKE '%' || $${idx}::text || '%')`; p.push(query); idx++; }
+    if (tokens.length) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM unnest($${idx}::text[]) term
+        WHERE o.title ILIKE '%' || term || '%'
+           OR o.summary ILIKE '%' || term || '%'
+           OR org.name ILIKE '%' || term || '%'
+           OR EXISTS (
+             SELECT 1 FROM opportunity_skills os
+             JOIN competencies c ON c.slug = os.competency_slug
+             WHERE os.opportunity_id = o.id
+               AND (c.name ILIKE '%' || term || '%' OR c.name_fr ILIKE '%' || term || '%' OR os.competency_slug ILIKE '%' || term || '%')
+           )
+      )`;
+      p.push(tokens); idx++;
+    }
     if (filters.type) { sql += ` AND o.type = $${idx}::text`; p.push(filters.type); idx++; }
     if (filters.contractType || filters.contract_type) { sql += ` AND o.contract_type = $${idx}::text`; p.push(filters.contractType || filters.contract_type); idx++; }
     if (filters.location) { sql += ` AND o.locations::text ILIKE '%' || $${idx}::text || '%'`; p.push(filters.location); idx++; }
@@ -246,6 +278,7 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
   communities: (query, filters, limit) => {
     const p: any[] = [];
     let idx = 1;
+    const tokens = keywordTokens(query);
     let sql = `
       SELECT c.id, c.name, c.description, c.type, c.slug, c.is_paid, c.city,
              org.name as org_name,
@@ -253,7 +286,21 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
       FROM communities c
       LEFT JOIN organizations org ON c.organization_id = org.id
       WHERE c.status = 'ACTIVE' AND c.deleted_at IS NULL`;
-    if (query) { sql += ` AND (c.name ILIKE '%' || $${idx} || '%' OR c.description ILIKE '%' || $${idx} || '%')`; p.push(query); idx++; }
+    if (tokens.length) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM unnest($${idx}::text[]) term
+        WHERE c.name ILIKE '%' || term || '%'
+           OR c.description ILIKE '%' || term || '%'
+           OR org.name ILIKE '%' || term || '%'
+           OR EXISTS (
+             SELECT 1 FROM community_skills cs
+             JOIN competencies comp ON comp.slug = cs.competency_slug
+             WHERE cs.community_id = c.id
+               AND (comp.name ILIKE '%' || term || '%' OR comp.name_fr ILIKE '%' || term || '%' OR cs.competency_slug ILIKE '%' || term || '%')
+           )
+      )`;
+      p.push(tokens); idx++;
+    }
     if (filters.type) { sql += ` AND c.type = $${idx}`; p.push(filters.type); idx++; }
     sql += ` ORDER BY member_count DESC LIMIT $${idx}`;
     p.push(limit);
@@ -262,6 +309,7 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
   spaces: (query, filters, limit) => {
     const p: any[] = [];
     let idx = 1;
+    const tokens = keywordTokens(query);
     let sql = `
       SELECT s.id, s.name, s.description, s.type, s.slug, s.capacity,
              s.hourly_rate, s.city,
@@ -269,7 +317,17 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
       FROM spaces s
       LEFT JOIN organizations org ON s.organization_id = org.id
       WHERE s.status = 'ACTIVE' AND s.deleted_at IS NULL`;
-    if (query) { sql += ` AND (s.name ILIKE '%' || $${idx} || '%' OR s.description ILIKE '%' || $${idx} || '%')`; p.push(query); idx++; }
+    if (tokens.length) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM unnest($${idx}::text[]) term
+        WHERE s.name ILIKE '%' || term || '%'
+           OR s.description ILIKE '%' || term || '%'
+           OR s.type ILIKE '%' || term || '%'
+           OR s.equipment::text ILIKE '%' || term || '%'
+           OR org.name ILIKE '%' || term || '%'
+      )`;
+      p.push(tokens); idx++;
+    }
     if (filters.type) { sql += ` AND s.type = $${idx}`; p.push(filters.type); idx++; }
     if (filters.location) { sql += ` AND s.city ILIKE '%' || $${idx} || '%'`; p.push(filters.location); idx++; }
     sql += ` ORDER BY s.created_at DESC NULLS LAST LIMIT $${idx}`;
@@ -279,12 +337,21 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
   organizations: (query, filters, limit) => {
     const p: any[] = [];
     let idx = 1;
+    const tokens = keywordTokens(query);
     let sql = `
       SELECT o.id, o.name, o.description, o.sectors, o.slug,
              o.headquarters_city as city, o.headquarters_country as country
       FROM organizations o
       WHERE o.deleted_at IS NULL AND o.verification_status IN ('VERIFIED', 'OFFICIAL') AND o.is_visible = TRUE`;
-    if (query) { sql += ` AND (o.name ILIKE '%' || $${idx} || '%' OR o.description ILIKE '%' || $${idx} || '%')`; p.push(query); idx++; }
+    if (tokens.length) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM unnest($${idx}::text[]) term
+        WHERE o.name ILIKE '%' || term || '%'
+           OR o.description ILIKE '%' || term || '%'
+           OR o.sectors::text ILIKE '%' || term || '%'
+      )`;
+      p.push(tokens); idx++;
+    }
     if (filters.sectors) { sql += ` AND o.sectors && $${idx}::text[]`; p.push(filters.sectors); idx++; }
     sql += ` ORDER BY o.name LIMIT $${idx}`;
     p.push(limit);
@@ -293,6 +360,7 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
   talents: (query, filters, limit) => {
     const p: any[] = [];
     let idx = 1;
+    const tokens = keywordTokens(query);
     let sql = `
       SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
              t.bio, t.city, t.country,
@@ -300,7 +368,20 @@ const KEYWORD_QUERIES: Record<string, (query: string, filters: Record<string, un
               FROM (SELECT c.name AS name, sk.level AS level FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state = 'active' ORDER BY sk.score DESC LIMIT 5) ts) as top_skills
       FROM talents t
       WHERE t.deleted_at IS NULL AND t.is_visible = TRUE`;
-    if (query) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(query); idx++; }
+    if (tokens.length) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM unnest($${idx}::text[]) term
+        WHERE COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || term || '%'
+           OR t.bio ILIKE '%' || term || '%'
+           OR EXISTS (
+             SELECT 1 FROM talent_skills ts
+             JOIN competencies c ON c.slug = ts.competency_slug
+             WHERE ts.talent_id = t.id
+               AND (c.name ILIKE '%' || term || '%' OR c.name_fr ILIKE '%' || term || '%' OR ts.competency_slug ILIKE '%' || term || '%')
+           )
+      )`;
+      p.push(tokens); idx++;
+    }
     if (filters.skills && Array.isArray(filters.skills) && filters.skills.length > 0) {
       sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts JOIN competencies c ON c.slug = ts.competency_slug WHERE ts.talent_id = t.id AND (LOWER(c.name) = ANY($${idx}::text[]) OR LOWER(c.name_fr) = ANY($${idx}::text[]) OR ts.competency_slug = ANY($${idx}::text[])))`;
       p.push((filters.skills as string[]).map((s: string) => s.toLowerCase()));
@@ -418,7 +499,7 @@ export const smartSearchTool = defineTool({
     return {
       ...raw,
       entity,
-      topK: raw.topK ?? raw.top_k,
+      topK: Math.min(Number(raw.topK ?? raw.top_k ?? 10), 8),
     };
   },
   execute: async ({ query, entity, topK, filters: rawFilters }): Promise<any> => {

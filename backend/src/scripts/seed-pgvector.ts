@@ -1,7 +1,7 @@
 /**
  * Seed pgvector — vectorize platform entities into local PostgreSQL.
  *
- * Usage: npx tsx src/scripts/seed-pgvector.ts [--only talents|opportunities|communities|spaces]
+ * Usage: npx tsx src/scripts/seed-pgvector.ts [--only talents|organizations|opportunities|communities|spaces]
  */
 
 import dotenv from 'dotenv';
@@ -10,6 +10,7 @@ dotenv.config();
 import { pool } from '../services/database';
 import {
   batchUpdateTalentEmbeddings,
+  batchUpdateOrganizationEmbeddings,
   batchUpdateOpportunityEmbeddings,
   batchUpdateCommunityEmbeddings,
   batchUpdateSpaceEmbeddings,
@@ -26,7 +27,7 @@ function parseOnlyArg(): string | null {
 
 async function seedPgvector() {
   const only = parseOnlyArg();
-  const targets = only ? [only] : ['talents', 'opportunities', 'communities', 'spaces'];
+  const targets = only ? [only] : ['talents', 'organizations', 'opportunities', 'communities', 'spaces'];
 
   console.log('═══════════════════════════════════════════════');
   console.log(' Seed pgvector — Vectorization');
@@ -45,6 +46,10 @@ async function seedPgvector() {
       case 'talents':
         console.log('── Talents ──');
         results.talents = await batchUpdateTalentEmbeddings(BATCH_LIMIT);
+        break;
+      case 'organizations':
+        console.log('── Organizations ──');
+        results.organizations = await batchUpdateOrganizationEmbeddings(BATCH_LIMIT);
         break;
       case 'opportunities':
         console.log('── Opportunities ──');

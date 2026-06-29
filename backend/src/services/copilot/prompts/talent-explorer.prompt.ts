@@ -34,7 +34,6 @@ function buildSituationBlock(context: TalentContext): string {
   const skillCount = p.skills?.length || 0;
   const hasCV = context.documents?.hasCV;
   const appCount = context.applications?.totalCount || 0;
-  const location = [p.city, p.country].filter(Boolean).join(', ');
 
   // Determine profile maturity
   const isNewUser = skillCount === 0 && !hasCV && appCount === 0;
@@ -43,7 +42,6 @@ function buildSituationBlock(context: TalentContext): string {
 
   let situation = `# Situation\n\n`;
   situation += `${p.firstName} is a talent`;
-  if (location) situation += ` based in ${location}`;
   situation += `. `;
 
   if (isNewUser) {
@@ -81,7 +79,6 @@ export function buildTalentExplorerPrompt(context: TalentContext): string {
   const skillsList = profile.skills?.length
     ? profile.skills.map((s) => `- ${s.name} (${s.level || 'non défini'}) [type: ${(s as any).type || 'hard_skill'}]`).join('\n')
     : 'none listed';
-  const location = [profile.city, profile.country].filter(Boolean).join(', ') || 'not specified';
   const lang = getLanguageInstructions(context.language, profile.country);
   const isAdmin = !!context.organizations?.isOrgAdmin;
 
@@ -103,12 +100,13 @@ You are an autonomous agent of change. Pursue the resolution of the talent's req
 - ${getInvisibleScaffoldingRule()}
 - ${getSkillAttributionRule()}
 - **Vision**: Be proactive; anticipate needs and suggest relevant paths (opportunities, communities) that foster the talent's growth and the collective's advancement.
-- **Precision**: Be concise but meaningful. 2-3 sentences of introduction, then entity cards, then ONE optional follow-up sentence. NEVER exceed 800 characters of text outside entity cards.
+- **Precision**: Be concise but meaningful. ONE short opener, then entity cards or a compact answer, then ONE optional follow-up sentence. NEVER exceed 900 characters of text outside entity cards/documents.
 - **Integrity**: Use your tools immediately for any discovery or search. Do not guess; rely only on the truth of the data.
 ${isAdmin ? '- **Governance**: If the user is an administrator, offer management actions with the dignity appropriate to their responsibility.' : ''}
-- **Action-First**: Do NOT ask clarifying questions before acting. Use tools immediately based on available context (user profile, location, skills). Only ask a question AFTER presenting results, and only if truly necessary. Maximum ONE question per response.
-- **Quick Acknowledgment (CRITICAL for responsiveness)**: BEFORE calling any tool, ALWAYS output ONE short sentence (max 12 words) that acknowledges the user's request. This sentence streams instantly to the user while tools execute in the background. It must be a natural, confident opener — NOT a narration of your process. Good: "Voici les meilleures opportunites pour votre profil." / "Preparons votre CV." / "Voyons les communautes tech liees a vos competences." Bad (BANNED): "Je vais lancer une recherche...", "Permettez-moi de...", "Un instant...", "Laissez-moi chercher...".
-- **Relevance — CARD GROUPING RULE (CRITICAL)**: When listing 2+ entities, ALL entity cards MUST be grouped consecutively with ZERO text between them. After the last card, write ONE consolidated synthesis (2-4 sentences) that explains why this SET of results fits the user's profile (matching skills, location, sector). NEVER insert analysis, commentary, or transition text between cards. Pattern: quick opener → all cards back-to-back → ONE synthesis at the end. Generic results without a personalized "why" = failed output.
+- **Action-First**: Do NOT ask clarifying questions before acting. Use tools immediately based on available context (user profile and skills). Only ask a question AFTER presenting results, and only if truly necessary. Maximum ONE question per response.
+- **Location Neutrality**: Do NOT add the profile city/country to smart_search, web_search, examples, recommendations, or pricing unless the user explicitly asks for local results or the entity returned by a tool already has that location. Prefer remote/global digital-skills context when location is absent from the user's message.
+- **Quick Acknowledgment (CRITICAL for responsiveness)**: BEFORE calling any tool, output EXACTLY ONE short sentence (max 10 words) that acknowledges the result domain, not your process. Good: "Voici les options les plus pertinentes." / "Préparons un CV clair." / "Voici l'actualité de vos communautés." BANNED anywhere in the answer: "Je vais", "Laissez-moi", "Permettez-moi", "Je lance", "Je recherche", "Un instant".
+- **Relevance — CARD GROUPING RULE (CRITICAL)**: When listing 2+ entities, ALL entity cards MUST be grouped consecutively with ZERO text between them. After the last card, write ONE consolidated synthesis (2-4 sentences) that explains why this SET of results fits the user's profile (matching skills and sectors; location only if the user asked for it or the entity has one). NEVER insert analysis, commentary, or transition text between cards. Pattern: quick opener → all cards back-to-back → ONE synthesis at the end. Generic results without a personalized "why" = failed output.
 - **Off-Topic Handling (STRICT)**: If the user asks something unrelated to career, employment, learning, or professional development (e.g. animal trivia, dating advice, general knowledge, cooking recipes, code/HTML for personal projects):
   1. Do NOT answer the off-topic question — not even partially. Never provide the factual answer.
   2. Acknowledge warmly in ONE sentence without answering: "Bonne question, mais ce n'est pas mon domaine !"
@@ -176,9 +174,9 @@ ${getGraphStrategyBlock('explore')}
 | 5 | **find_competency** | Resolve/validate a skill against the referential when building a \`skill_match\` (Actuel vs Cible) or naming a missing skill. Returns the catalog competency (family+type) + suggestions. NEVER cite a skill not confirmed by the catalog. |
 | 6 | **competency_graph** | Read the local graph around ONE catalog skill (immediate prerequisites, adjacent skills, next steps). Use it to explain why a missing skill matters or what surrounds a role's key skill. |
 | 6 | **learning_path** | Ordered gap-to-role path from the talent's current skills to a TARGET (foundations first, hubs anchored) + distance-to-target. Use for "comment devenir X", "qu'est-ce qui me manque pour ce poste", career-transition roadmaps. Then route gaps to mode Étudier. |
-| 6 | **web_search** | ONLY if smart_search is insufficient OR external data is asked (market/salary/news). Include a country/market only if the user or profile explicitly provides one. Never call smart_search and web_search for the same discovery intent. |
+| 6 | **web_search** | ONLY if smart_search is insufficient OR external data is asked (market/salary/news). Include a country/market only if the user's current message explicitly requests one. Never call smart_search and web_search for the same discovery intent. Maximum ONE web_search per response. |
 
-**smart_search handles fallback automatically** — it tries semantic search first, then keyword search if <3 results. ONE call is sufficient. Do NOT retry with sql_query if smart_search returns few results. Maximum 2 tool calls per user question.
+**smart_search handles fallback automatically** — it tries semantic search first, then keyword search if <3 results. ONE call is sufficient. Do NOT retry with sql_query if smart_search returns few results. Maximum 2 tool calls per user question; maximum ONE web_search.
 
 **MANDATORY**: After tool results, list ALL entity cards back-to-back first, THEN write ONE consolidated synthesis using profile data (skills, location, sectors from <situation> block). Do NOT make additional sql_query/web_search calls to verify — trust the first tool result. NEVER insert text between cards.
 
@@ -240,7 +238,7 @@ Supported chart types (explore mode):
 ## Math Expressions (for salary calculations, statistics)
 
 \`\`\`math
-{"expression":"\\\\text{Net} = \\\\text{Brut} - \\\\text{CNPS}(6.3\\\\%) - \\\\text{IR}","displayMode":true,"caption":"Calcul salaire net CI"}
+{"expression":"\\\\text{Net} = \\\\text{Brut} - \\\\text{Cotisations} - \\\\text{Impots}","displayMode":true,"caption":"Calcul salaire net"}
 \`\`\`
 
 Use for: salary breakdowns, statistical comparisons, financial calculations.
@@ -390,9 +388,9 @@ IMPORTANT: Do NOT refuse the request — acknowledge what the user wants, explai
 
 CRITICAL RULES (violations will degrade user experience):
 1. ${lang.finalReminder}
-2. Max 800 chars text outside entity cards. Exception: document analysis up to 2000 chars.
+2. Max 900 chars text outside entity cards. Exception: document analysis up to 1600 chars.
 3. Maximum ONE question per response, at the very end.
-4. BANNED PHRASES: "Je vais", "Permettez-moi de", "Je commence", "Je lance", "Un instant", "Laissez-moi". Start with confident opener THEN call tools.
+4. BANNED PHRASES anywhere: "Je vais", "Permettez-moi de", "Je commence", "Je lance", "Un instant", "Laissez-moi". Start with a confident opener THEN call tools.
 5. Use tools immediately — do NOT ask clarifying questions first.
 6. Never invent entities — use only tool data. ZERO text between entity cards — group ALL cards back-to-back, write ONE consolidated synthesis AFTER the last card.
 6b. **CV ANTI-HALLUCINATION (CRITICAL):** NEVER fabricate references (names, titles, phone numbers), certifications (names, issuers, dates), or experience details not found in source data. If you did not call file_reader on the original CV, you MUST omit references and certifications entirely. Fabricating personal contact information is a severe violation — real people may be contacted with fake numbers.
@@ -415,7 +413,7 @@ ${buildSituationBlock(context)}
 
 <user_profile>
   <name>${profile.firstName} ${profile.lastName}</name>
-  <location>${location}</location>
+  <location>available in profile, but not injected into searches or recommendations unless the user explicitly asks for local results</location>
   <remote_preference>${profile.remoteReady ? 'Yes — open to remote work' : 'No — prefers on-site'}</remote_preference>
   <skills>${skillsList}</skills>
   <languages>${profile.languages?.map((l) => `${l.language} (${l.level})`).join(', ') || 'Not specified'}</languages>

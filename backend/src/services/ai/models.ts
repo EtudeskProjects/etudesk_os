@@ -11,8 +11,8 @@
 // --- Main copilot agent (best open reasoning + tool use) ---
 
 /** Main copilot agents: talent explorer, org explorer, study mode.
- *  Default Qwen3-235B-A22B-Instruct (frontier-class, strong FR + tool calling). */
-export const MODEL_AGENT = process.env.AI_MODEL_AGENT || 'Qwen/Qwen3-235B-A22B-Instruct-2507';
+ *  Default GLM-5.2 (long-horizon reasoning, 1M context, prompt cache). */
+export const MODEL_AGENT = process.env.AI_MODEL_AGENT || 'zai-org/GLM-5.2';
 
 /** Fast tasks: summaries, titles, guardrails, intent suggestions. */
 export const MODEL_FAST = process.env.AI_MODEL_FAST || 'meta-llama/Llama-4-Scout-17B-16E-Instruct';

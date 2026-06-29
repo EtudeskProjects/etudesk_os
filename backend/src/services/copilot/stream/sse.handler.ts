@@ -21,12 +21,21 @@ import { getLanguageDisplayName } from '../../language-preference.service';
 const MAX_TURNS = 15;
 const MAX_TOOL_CALLS = 20;
 const MAX_SAME_TOOL_CALLS = 3;
+const PER_TOOL_CALL_LIMITS: Record<string, number> = {
+  smart_search: 2,
+  web_search: 1,
+  find_competency: 3,
+};
+const SQL_INTENT_CALL_LIMITS: Record<string, number> = {
+  org_talent_profile: 3,
+};
 const MAX_TURN_DURATION_MS = 120_000;
 // Margin guardrail: a single billed query must not exceed its credit's worth of
 // compute. Output tokens are the expensive part ($15/1M on Sonnet). Capping
 // cumulative output bounds the blast radius of a runaway tool loop behind the
 // fixed credit price. Tunable via env without a deploy.
 const MAX_OUTPUT_TOKENS_PER_QUERY = Number(process.env.COPILOT_MAX_OUTPUT_TOKENS || 12_000);
+const MAX_COMPLETION_TOKENS = Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1600);
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const SSE_BUFFER_FLUSH_MS = 50; // Buffer text deltas and flush every 50ms
 const MAX_PROVIDER_RETRIES = 2;
@@ -266,6 +275,8 @@ export async function runAgentWithSSE(
   let totalCacheReadTokens = 0;
   let totalCacheCreationTokens = 0;
   const sameToolCounts = new Map<string, number>();
+  const perToolCounts = new Map<string, number>();
+  const sqlIntentCounts = new Map<string, number>();
   let consecutiveEmptyResults = 0;
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
@@ -391,7 +402,7 @@ export async function runAgentWithSSE(
             model: agentConfig.model,
             messages: [{ role: 'system', content: systemText }, ...messages],
             tools: toolDefs.length > 0 ? toolDefs : undefined,
-            max_tokens: 4096,
+            max_tokens: MAX_COMPLETION_TOKENS,
             stream: true,
             stream_options: { include_usage: true },
           });
@@ -511,6 +522,8 @@ export async function runAgentWithSSE(
 
       for (const toolUse of toolUseBlocks) {
         toolCallCounter++;
+        const toolNameCount = (perToolCounts.get(toolUse.name) || 0) + 1;
+        perToolCounts.set(toolUse.name, toolNameCount);
 
         // Log text generated before this tool call
         if (currentTurnText.trim()) {
@@ -576,11 +589,38 @@ export async function runAgentWithSSE(
         let output: any;
         let isError = false;
         try {
-          const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
-          if (!toolDef) {
-            throw new Error(`Unknown tool: ${toolUse.name}`);
+          const perToolLimit = PER_TOOL_CALL_LIMITS[toolUse.name];
+          if (perToolLimit && toolNameCount > perToolLimit) {
+            output = {
+              _tool_limit: true,
+              _cached: true,
+              message: `${toolUse.name} call limit reached for this run. Synthesize the answer from previous tool results and do not call this tool again.`,
+            };
+          } else if (toolUse.name === 'sql_query') {
+            const sqlIntent = toolUse.input?.intent;
+            const sqlIntentLimit = sqlIntent ? SQL_INTENT_CALL_LIMITS[sqlIntent] : undefined;
+            const sqlIntentCount = sqlIntent ? (sqlIntentCounts.get(sqlIntent) || 0) + 1 : 0;
+            if (sqlIntent) sqlIntentCounts.set(sqlIntent, sqlIntentCount);
+            if (sqlIntentLimit && sqlIntentCount > sqlIntentLimit) {
+              output = {
+                _tool_limit: true,
+                _cached: true,
+                message: `${sqlIntent} call limit reached for this run. Rank/synthesize from org_talents and the profiles already loaded; do not inspect more profiles.`,
+              };
+            } else {
+              const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
+              if (!toolDef) {
+                throw new Error(`Unknown tool: ${toolUse.name}`);
+              }
+              output = await toolDef.execute(toolUse.input);
+            }
+          } else {
+            const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
+            if (!toolDef) {
+              throw new Error(`Unknown tool: ${toolUse.name}`);
+            }
+            output = await toolDef.execute(toolUse.input);
           }
-          output = await toolDef.execute(toolUse.input);
           isError = !!(output?.error || output?.isError);
         } catch (err: any) {
           output = { error: err.message };
