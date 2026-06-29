@@ -66,7 +66,7 @@ async function upsertTalent(t: {
 }): Promise<{ talentId: string; userId: string }> {
   await pool.query(
     `INSERT INTO talents (id, slug, first_name, last_name, email, city, country, sectors, profile_tags, bio, remote_ready, is_visible)
-     VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,'CI',$6,$7,$8,true,true)
+     VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,'US',$6,$7,$8,true,true)
      ON CONFLICT (slug) DO UPDATE SET first_name=EXCLUDED.first_name, last_name=EXCLUDED.last_name, bio=EXCLUDED.bio`,
     [t.slug, t.first, t.last, t.email, t.city, t.sectors, t.tags, t.bio]
   );
@@ -89,9 +89,9 @@ async function main() {
   // --- Organization ---
   await pool.query(
     `INSERT INTO organizations (id, name, slug, types, sectors, description, headquarters_city, headquarters_country, is_visible, verification_status)
-     VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,'Abidjan','CI',true,'VERIFIED')
+     VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,'New York','US',true,'VERIFIED')
      ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, sectors=EXCLUDED.sectors, description=EXCLUDED.description`,
-    ['Etudesk Demo Org', ORG_SLUG, ['STARTUP'], ['DIGITAL', 'EDUCATION'], "Studio EdTech & data/IA basé à Abidjan — démonstration."]
+    ['Etudesk Demo Org', ORG_SLUG, ['STARTUP'], ['DIGITAL', 'EDUCATION'], "Studio EdTech & data/IA basé à New York — démonstration."]
   );
   const orgId = (await pool.query(`SELECT id FROM organizations WHERE slug=$1`, [ORG_SLUG])).rows[0].id;
 
@@ -111,14 +111,14 @@ async function main() {
 
   // --- Talents ---
   const talents = [
-    { slug: 'demo-aminata', first: 'Aminata', last: 'Koné', email: 'demo.aminata@etudesk.dev', city: 'Abidjan', tags: ['JOB_SEEKER'], sectors: ['DIGITAL'], bio: 'Développeuse frontend React passionnée par les produits éducatifs.', skills: [['React', 'advanced'], ['JavaScript', 'advanced'], ['Node.js', 'intermediate'], ['Communication', 'advanced']] },
+    { slug: 'demo-aminata', first: 'Aminata', last: 'Koné', email: 'demo.aminata@etudesk.dev', city: 'New York', tags: ['JOB_SEEKER'], sectors: ['DIGITAL'], bio: 'Développeuse frontend React passionnée par les produits éducatifs.', skills: [['React', 'advanced'], ['JavaScript', 'advanced'], ['Node.js', 'intermediate'], ['Communication', 'advanced']] },
     { slug: 'demo-moussa', first: 'Moussa', last: 'Traoré', email: 'demo.moussa@etudesk.dev', city: 'Bouaké', tags: ['STUDENT'], sectors: ['DIGITAL'], bio: 'Étudiant en data, féru de dashboards et de SQL.', skills: [['Python', 'intermediate'], ['Data Analytics', 'beginner'], ['SQL', 'intermediate'], ['Teamwork', 'intermediate']] },
-    { slug: 'demo-fatou', first: 'Fatou', last: 'Diallo', email: 'demo.fatou@etudesk.dev', city: 'Abidjan', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'Product manager orientée impact et exécution.', skills: [['Project Management', 'advanced'], ['Leadership', 'advanced'], ['Figma', 'intermediate']] },
-    { slug: 'demo-ibrahim', first: 'Ibrahim', last: 'Bamba', email: 'demo.ibrahim@etudesk.dev', city: 'Abidjan', tags: ['JOB_SEEKER'], sectors: ['DIGITAL'], bio: 'Ingénieur backend Node/PostgreSQL.', skills: [['Node.js', 'advanced'], ['PostgreSQL', 'advanced'], ['Docker', 'intermediate'], ['Git', 'advanced']] },
-    { slug: 'demo-awa', first: 'Awa', last: 'Sangaré', email: 'demo.awa@etudesk.dev', city: 'Abidjan', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'Designer produit UI/UX.', skills: [['UI Design', 'advanced'], ['UX Design', 'advanced'], ['Figma', 'advanced'], ['Prototyping', 'intermediate']] },
-    { slug: 'demo-kofi', first: 'Kofi', last: 'Mensah', email: 'demo.kofi@etudesk.dev', city: 'Abidjan', tags: ['ENTREPRENEUR'], sectors: ['MEDIA'], bio: 'Growth & contenu pour startups africaines.', skills: [['Digital Marketing', 'advanced'], ['SEO', 'intermediate'], ['Content Marketing', 'advanced'], ['Copywriting', 'intermediate']] },
+    { slug: 'demo-fatou', first: 'Fatou', last: 'Diallo', email: 'demo.fatou@etudesk.dev', city: 'New York', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'Product manager orientée impact et exécution.', skills: [['Project Management', 'advanced'], ['Leadership', 'advanced'], ['Figma', 'intermediate']] },
+    { slug: 'demo-ibrahim', first: 'Ibrahim', last: 'Bamba', email: 'demo.ibrahim@etudesk.dev', city: 'New York', tags: ['JOB_SEEKER'], sectors: ['DIGITAL'], bio: 'Ingénieur backend Node/PostgreSQL.', skills: [['Node.js', 'advanced'], ['PostgreSQL', 'advanced'], ['Docker', 'intermediate'], ['Git', 'advanced']] },
+    { slug: 'demo-awa', first: 'Awa', last: 'Sangaré', email: 'demo.awa@etudesk.dev', city: 'New York', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'Designer produit UI/UX.', skills: [['UI Design', 'advanced'], ['UX Design', 'advanced'], ['Figma', 'advanced'], ['Prototyping', 'intermediate']] },
+    { slug: 'demo-kofi', first: 'Kofi', last: 'Mensah', email: 'demo.kofi@etudesk.dev', city: 'New York', tags: ['ENTREPRENEUR'], sectors: ['MEDIA'], bio: 'Growth & contenu pour startups africaines.', skills: [['Digital Marketing', 'advanced'], ['SEO', 'intermediate'], ['Content Marketing', 'advanced'], ['Copywriting', 'intermediate']] },
     { slug: 'demo-mariam', first: 'Mariam', last: 'Cissé', email: 'demo.mariam@etudesk.dev', city: 'Yamoussoukro', tags: ['JOB_SEEKER'], sectors: ['DIGITAL'], bio: 'Data scientist (ML, visualisation).', skills: [['Machine Learning', 'intermediate'], ['Python', 'advanced'], ['Data Visualization', 'intermediate'], ['Statistics', 'intermediate']] },
-    { slug: 'demo-yao', first: 'Yao', last: 'Kouassi', email: 'demo.yao@etudesk.dev', city: 'Abidjan', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'DevOps / cloud.', skills: [['Docker', 'advanced'], ['Kubernetes', 'intermediate'], ['Cloud Computing', 'intermediate'], ['Git', 'advanced']] },
+    { slug: 'demo-yao', first: 'Yao', last: 'Kouassi', email: 'demo.yao@etudesk.dev', city: 'New York', tags: ['SALARIED'], sectors: ['DIGITAL'], bio: 'DevOps / cloud.', skills: [['Docker', 'advanced'], ['Kubernetes', 'intermediate'], ['Cloud Computing', 'intermediate'], ['Git', 'advanced']] },
   ];
 
   const talentMap: Record<string, { talentId: string; userId: string }> = {};
@@ -154,7 +154,7 @@ async function main() {
       `INSERT INTO opportunities (id, title, slug, type, contract_type, summary, sectors, location_type, locations, status, visibility, organization_id, posted_at)
        VALUES (uuid_generate_v4(),$1,$2,'JOB',$3,$4,$5,'ON_SITE',$6,'OPEN','PUBLIC',$7,NOW())
        ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, summary=EXCLUDED.summary, status='OPEN'`,
-      [op.title, op.slug, op.contract, op.summary, ['DIGITAL'], JSON.stringify([{ city: 'Abidjan', country: 'CI' }]), orgId]
+      [op.title, op.slug, op.contract, op.summary, ['DIGITAL'], JSON.stringify([{ city: 'New York', country: 'US' }]), orgId]
     );
     const oid = (await pool.query(`SELECT id FROM opportunities WHERE slug=$1`, [op.slug])).rows[0].id;
     oppIds[op.slug] = oid;
@@ -197,15 +197,15 @@ async function main() {
 
   // --- Communities (catalog-tagged) + members + activities ---
   const communities = [
-    { slug: 'demo-dev-community', name: 'Dev Community Abidjan', desc: 'Communauté des développeurs web & mobile.', validates: ['Communication', 'Teamwork', 'Leadership'], topic: [], members: ['demo-aminata', 'demo-ibrahim', 'demo-yao', 'demo-moussa'] },
-    { slug: 'demo-data-community', name: 'Data & IA Abidjan', desc: 'Praticiens data science et IA.', validates: ['Teamwork'], topic: ['Machine Learning', 'Data Analytics'], members: ['demo-moussa', 'demo-mariam', 'demo-yao'] },
+    { slug: 'demo-dev-community', name: 'Dev Community New York', desc: 'Communauté des développeurs web & mobile.', validates: ['Communication', 'Teamwork', 'Leadership'], topic: [], members: ['demo-aminata', 'demo-ibrahim', 'demo-yao', 'demo-moussa'] },
+    { slug: 'demo-data-community', name: 'Data & IA New York', desc: 'Praticiens data science et IA.', validates: ['Teamwork'], topic: ['Machine Learning', 'Data Analytics'], members: ['demo-moussa', 'demo-mariam', 'demo-yao'] },
     { slug: 'demo-design-community', name: 'Design CI', desc: 'Designers produit UI/UX.', validates: ['Communication'], topic: ['UI Design', 'UX Design'], members: ['demo-awa', 'demo-fatou'] },
   ];
   const commIds: Record<string, string> = {};
   for (const c of communities) {
     await pool.query(
       `INSERT INTO communities (id, name, slug, type, description, access_type, visibility, sectors, city, country, status, organization_id, created_by)
-       VALUES (uuid_generate_v4(),$1,$2,'PROFESSIONAL',$3,'OPEN','PUBLIC',$4,'Abidjan','CI','ACTIVE',$5,NULL)
+       VALUES (uuid_generate_v4(),$1,$2,'PROFESSIONAL',$3,'OPEN','PUBLIC',$4,'New York','US','ACTIVE',$5,NULL)
        ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description`,
       [c.name, c.slug, c.desc, JSON.stringify(['DIGITAL']), orgId]
     );
@@ -299,7 +299,7 @@ async function main() {
   const d1 = await addActivity(dataCid, 'demo-mariam', 'POST', 'Partage : un notebook sur la détection d’anomalies (scikit-learn).');
   await addComment(d1, 'demo-moussa', 'Super, je regarde ça ce week-end.');
   await addReaction(d1, 'demo-moussa');
-  await addActivity(dataCid, 'demo-mariam', 'EVENT', 'Meetup Data & IA — jeudi 18h au FabLab.', { start_date: '2026-07-02T18:00:00.000Z', location: 'FabLab Abidjan' });
+  await addActivity(dataCid, 'demo-mariam', 'EVENT', 'Meetup Data & IA — jeudi 18h au FabLab.', { start_date: '2026-07-02T18:00:00.000Z', location: 'FabLab New York' });
   console.log('  activities (posts, poll, event, comments, reactions) seeded');
 
   // --- Spaces (catalog-tagged) + bookings ---
@@ -312,7 +312,7 @@ async function main() {
   for (const s of spaces) {
     await pool.query(
       `INSERT INTO spaces (id, name, slug, type, surface_m2, capacity, description, city, country, sectors, equipment, hourly_rate, is_bookable, visibility, status, organization_id)
-       VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,$6,'Abidjan','CI',$7,$8,$9,true,'PUBLIC','ACTIVE',$10)
+       VALUES (uuid_generate_v4(),$1,$2,$3,$4,$5,$6,'New York','US',$7,$8,$9,true,'PUBLIC','ACTIVE',$10)
        ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, hourly_rate=EXCLUDED.hourly_rate`,
       [s.name, s.slug, s.type, s.surface, s.capacity, s.desc, ['DIGITAL'], s.equipment, s.rate, orgId]
     );

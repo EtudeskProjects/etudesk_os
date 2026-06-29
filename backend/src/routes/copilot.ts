@@ -44,7 +44,6 @@ import {
   ORG_CONTEXT_OPTIONS,
 } from '../services/copilot/context-options';
 import { detectSkillFromMessage } from '../services/copilot/skills/skill.loader';
-import { isUEMOACountry, shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
 import { getWinningTrajectories, invalidateTrajectoryCache } from '../services/copilot/trace.service';
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
@@ -56,6 +55,7 @@ import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
 const router = Router();
+const COPILOT_TIMEZONE = process.env.COPILOT_TIMEZONE || 'UTC';
 
 function buildDeterministicSessionTitle(
   message: string,
@@ -267,9 +267,9 @@ interface ConfirmationBlockPayload {
   [key: string]: unknown;
 }
 
-function formatYmdInAbidjan(value: Date): string {
+function formatYmdForCopilot(value: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Abidjan',
+    timeZone: COPILOT_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -297,8 +297,8 @@ function normalizeAgendaTriggerDueAtFromUserMessage(
   if (Number.isNaN(dueAt.getTime())) return payload;
 
   const now = new Date();
-  const dueYmd = formatYmdInAbidjan(dueAt);
-  const todayYmd = formatYmdInAbidjan(now);
+  const dueYmd = formatYmdForCopilot(dueAt);
+  const todayYmd = formatYmdForCopilot(now);
   if (dueYmd !== todayYmd) return payload;
 
   const shifted = new Date(dueAt.getTime());
@@ -796,9 +796,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       }
     }
 
-    // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
-    const injectUEMOA = isUEMOACountry(userCountry) && shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
-
     // Build agent context (CPU only, instant)
     let agent: any;
 
@@ -846,7 +843,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         orgCity,
         orgCountry,
         activeSkillInstructions,
-        injectUEMOA,
       };
       agent = createOrgAgent(orgCtx);
     } else {
@@ -856,7 +852,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
         language: userLanguage,
         activeSkillInstructions,
-        injectUEMOA,
         session: {
           currentMode: session.mode === COPILOT_MODES.STUDY ? COPILOT_MODES.STUDY : COPILOT_MODES.EXPLORE,
           conversationTopic: session.title,

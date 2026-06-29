@@ -73,8 +73,6 @@ export { getOntology, reloadOntology } from './ontology.cache';
 export { loadAllSkillMetadata, getSkillsForMode, getSkillBody, detectSkillFromMessage, reloadSkills } from './skills/skill.loader';
 export type { SkillDefinition, SkillMetadata } from './skills/skill.types';
 
-// UEMOA Knowledge
-export { getUEMOAKnowledgeBlock, isUEMOACountry, shouldInjectUEMOA } from './uemoa-knowledge';
 
 // DPO Trace Service
 export { getWinningTrajectories, invalidateTrajectoryCache } from './trace.service';

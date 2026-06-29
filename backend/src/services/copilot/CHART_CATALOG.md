@@ -8,7 +8,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - Exclure les valeurs a 0 — pas de barres vides
 - Labels lisibles — jamais d'enums bruts ou d'IDs
 - Values = quantites uniquement (counts, %, montants) — pas de niveaux ordinaux dans bar/donut
-- Currency FCFA (XOF) par defaut en zone UEMOA
+- Use explicit source currency only; no default country or currency
 - Nombres formates locale FR (espace milliers, virgule decimales)
 
 ---
@@ -59,11 +59,11 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 ### #5 Grille salariale marche
 - **Skill** : career-compensation-guide
 - **Quand** : salary-analysis, "combien gagne un..."
-- **Source** : UEMOA knowledge block + `smart_search(opportunities)` compensation_min/max + web_search
-- **Intelligence** : Adapter au pays/ville detecte. FCFA par defaut UEMOA. Contexte CDI/CDD/Freelance.
+- **Source** : `smart_search(opportunities)` compensation_min/max + web_search
+- **Intelligence** : Adapt to the requested market when provided. Do not assume country, region, or currency.
 - **Format** :
 ```json
-{"type":"table","title":"Grille salariale — Developpeur Web, Abidjan","columns":["Niveau","Min (FCFA)","Max (FCFA)","Mediane"],"rows":[{"Niveau":"Junior (0-2 ans)","Min (FCFA)":"150 000","Max (FCFA)":"300 000","Mediane":"200 000"},{"Niveau":"Confirme (3-5 ans)","Min (FCFA)":"350 000","Max (FCFA)":"600 000","Mediane":"450 000"},{"Niveau":"Senior (5+ ans)","Min (FCFA)":"600 000","Max (FCFA)":"1 200 000","Mediane":"800 000"}]}
+{"type":"table","title":"Grille salariale - Developpeur Web, marche explicite","columns":["Niveau","Min","Max","Mediane"],"rows":[{"Niveau":"Junior (0-2 ans)","Min":"market min","Max":"market max","Mediane":"market median"},{"Niveau":"Confirme (3-5 ans)","Min":"market min","Max":"market max","Mediane":"market median"},{"Niveau":"Senior (5+ ans)","Min":"market max","Max":"1 market median","Mediane":"market max"}]}
 ```
 
 ### #6 Opportunites par contrat
@@ -172,7 +172,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Si > 80% un seul pays → suggerer diversification. Grouper les < 3% en "Autres".
 - **Format** :
 ```json
-{"type":"donut","title":"Talents par pays","data":[{"label":"Cote d'Ivoire","value":45},{"label":"Senegal","value":12},{"label":"Cameroun","value":8},{"label":"Mali","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
+{"type":"donut","title":"Talents par pays","data":[{"label":"Market A","value":45},{"label":"Market B","value":12},{"label":"Market C","value":8},{"label":"Market D","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
 ```
 
 ### #16 Top skills vivier talents
@@ -202,7 +202,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Calculer taux activite = actifs_30j/total_members. Trier par taux decroissant. Alerter si < 20%.
 - **Format** :
 ```json
-{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Abidjan","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
+{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Community","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
 ```
 
 ### #19 Classement candidats — scoring
@@ -212,7 +212,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Score = skills matchees (40%) + experience (30%) + education (15%) + cultural fit (15%). Top 5 max.
 - **Format** :
 ```json
-{"type":"table","title":"Classement — Dev Backend Senior","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Abidjan"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Dakar"}]}
+{"type":"table","title":"Classement — Dev Backend Senior","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Remote"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Hybrid"}]}
 ```
 
 ### #20 Dashboard KPI organisation

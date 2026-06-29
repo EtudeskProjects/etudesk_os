@@ -88,7 +88,7 @@ export function createSqlQueryTool(
       paramsJson: z.string().optional().describe('Optional JSON string with extra filters. Examples: \'{"status":"PENDING"}\', \'{"organizationId":"uuid"}\'. Do NOT include talentId — it is injected automatically.'),
       params: z.record(z.string(), z.unknown()).optional().describe('Optional parameters as an object. Alternative to paramsJson. Example: {"organizationId":"uuid","status":"PENDING"}. Do NOT include talentId.'),
       query: z.string().optional().describe('Text query for filtering results (rarely needed).'),
-      country: z.string().optional().describe('Country code filter (e.g., "CI" for Côte d\'Ivoire).'),
+      country: z.string().optional().describe('Country code filter (e.g., "US", "FR", "BR").'),
     }),
     execute: async ({ intent, paramsJson, params: paramsObj, query, country }) => {
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });

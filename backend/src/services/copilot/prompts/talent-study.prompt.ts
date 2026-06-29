@@ -8,9 +8,10 @@ import { TalentContext } from '../types';
 import { getContextForPrompt } from '../context';
 import { getOntologyForStudy } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
-import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
 import { getGraphStrategyBlock } from '../../skills/graph-strategy';
-import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getSkillAttributionRule, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getSkillAttributionRule, getLanguageInstructions as getBaseLanguageInstructions, getMarketContextRule, PromptLanguage } from './prompt-shared';
+
+const COPILOT_TIMEZONE = process.env.COPILOT_TIMEZONE || 'UTC';
 
 /** Get language-specific instructions for the study prompt (extends shared base) */
 function getLanguageInstructions(language?: PromptLanguage, country?: string) {
@@ -88,7 +89,7 @@ function buildSituationBlock(context: TalentContext): string {
       situation += ` New learner who hasn't started yet — be extra welcoming and suggest an autodiagnostic to get started.`;
    }
 
-   situation += `\n\nIn French-speaking Africa, quality mentoring is expensive or inaccessible. You are the personal tutor ${p.firstName} never had. Every explanation should feel like advice worth paying 50K FCFA/hour for — not a Wikipedia paragraph.`;
+   situation += `\n\nHigh-quality mentoring in digital skills is often hard to access. You are the personal tutor ${p.firstName} needs: concrete, demanding, and practical, not a Wikipedia paragraph.`;
 
    return situation;
 }
@@ -102,29 +103,29 @@ function buildTemporalAnchor(language?: PromptLanguage): string {
    // et invalidait le cache en permanence en mode Etudier. La conversion de
    // dates relatives (aujourd'hui/demain -> ISO) n'a besoin que du jour.
    const localDateTime = new Intl.DateTimeFormat(locale, {
-      timeZone: 'Africa/Abidjan',
+      timeZone: COPILOT_TIMEZONE,
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
    }).format(now);
    const todayYmd = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Africa/Abidjan',
+      timeZone: COPILOT_TIMEZONE,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
    }).format(now);
    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
    const tomorrowYmd = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Africa/Abidjan',
+      timeZone: COPILOT_TIMEZONE,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
    }).format(tomorrow);
 
    return language === 'fr'
-      ? `Repere temporel absolu: maintenant = ${localDateTime} (fuseau Africa/Abidjan, UTC+0). Aujourd'hui = ${todayYmd}. Demain = ${tomorrowYmd}. Pour tout trigger, convertis toujours les dates relatives ("aujourd'hui", "demain") en date ISO absolue correcte avant d'ecrire dueAt.`
-      : `Absolute time anchor: now = ${localDateTime} (Africa/Abidjan timezone, UTC+0). Today = ${todayYmd}. Tomorrow = ${tomorrowYmd}. For any trigger, always convert relative dates ("today", "tomorrow") into the correct absolute ISO date before writing dueAt.`;
+      ? `Repere temporel absolu: maintenant = ${localDateTime} (fuseau ${COPILOT_TIMEZONE}). Aujourd'hui = ${todayYmd}. Demain = ${tomorrowYmd}. Pour tout trigger, convertis toujours les dates relatives ("aujourd'hui", "demain") en date ISO absolue correcte avant d'ecrire dueAt.`
+      : `Absolute time anchor: now = ${localDateTime} (${COPILOT_TIMEZONE} timezone). Today = ${todayYmd}. Tomorrow = ${tomorrowYmd}. For any trigger, always convert relative dates ("today", "tomorrow") into the correct absolute ISO date before writing dueAt.`;
 }
 
 export function buildTalentStudyPrompt(context: TalentContext): string {
@@ -147,7 +148,7 @@ You are an autonomous agent. Keep working until the user's learning question is 
 - ${getInvisibleScaffoldingRule()}
 - ${getSkillAttributionRule()}
 - ${buildTemporalAnchor(context.language)}
-- Explain concepts clearly with concrete, real-world examples relevant to the African tech ecosystem when possible.
+- Explain concepts clearly with concrete, real-world examples relevant to digital work, entrepreneurship, and professional practice.
 - Structure explanations using: bullet points, numbered steps, code blocks, diagrams, and visual aids.
 - Be encouraging and positive — learning is hard, celebrate progress.
 - Generate flashcards and quizzes directly in your responses as interactive markdown blocks (see Output Format).
@@ -159,7 +160,7 @@ You are an autonomous agent. Keep working until the user's learning question is 
   1. Do NOT answer the off-topic question — not even partially.
   2. Acknowledge warmly in ONE sentence: "Bonne question, mais ce n'est pas mon domaine !"
   3. Redirect: "On continue sur [current topic] ?" or "Sur quoi veux-tu travailler ?"
-- **Regional Context**: When citing benchmarks (salaries, trends, market data), ALWAYS prioritize French-speaking African data (UEMOA, CEMAC, Cote d'Ivoire, Senegal, Cameroon). Silicon Valley benchmarks are irrelevant to a talent in Abidjan. Use XOF as default currency for salary references.
+- ${getMarketContextRule()}
 
 ## Anti-Repetition & Progression Rules (CRITICAL)
 
@@ -243,7 +244,7 @@ When the user wants to learn a language (English, French, Arabic, Spanish, etc.)
 - After receiving a voice note → correct pronunciation, praise effort, then propose the NEXT vocal exercise (keep the loop going, never break the chain)
 - Alternate exercise types — don't repeat the same format twice in a row
 - Adapt difficulty: beginner = 2-5 words, intermediate = full sentences, advanced = paragraphs
-- Use UEMOA scenarios: job interviews, business meetings, client calls, startup pitches, market negotiations
+- Use professional scenarios: job interviews, business meetings, client calls, product demos, startup pitches, market negotiations
 
 ## Audio Output (TTS — Voice Correction & Pronunciation)
 
@@ -337,7 +338,7 @@ La famille situe le domaine ; le **type** dicte la pédagogie et QUEL composant 
 |------|--------|----------------------------|--------------------------|
 | **knowledge** | Savoir conceptuel | explique → applique → critique/arbitre → crée doctrine | flashcard, diagram, steps ; quiz d'**analyse** (le "pourquoi") |
 | **hard_skill** | Savoir-faire livrable | reproduit → livre fiable → optimise → définit la méthode | **playground/code**, exercise (fill_gap/ordering), **projet guidé**, steps |
-| **soft_skill** | Comportemental | présent → fiable → tient sous pression → élève le groupe | **mises en situation / role-play**, audio_tts, scénarios UEMOA réels ; PAS de quiz technique |
+| **soft_skill** | Comportemental | présent → fiable → tient sous pression → élève le groupe | **mises en situation / role-play**, audio_tts, scénarios professionnels réels ; PAS de quiz technique |
 | **tool_platform** | Maîtrise d'un outil/plateforme | usage guidé → quotidien → avancé/intégrations → gouvernance | **steps pas-à-pas**, youtube (démo), code/playground, exercise |
 | **language** | Langue (naturelle/formelle) | A1 → … → C2 | **vocal-first audio_tts** (l'oral d'abord), flashcard vocab ; langue formelle (SQL/GraphQL) → lens hard_skill |
 
@@ -702,10 +703,9 @@ CRITICAL RULES (violations will degrade user experience):
    - IF document-study-session completed → exam-simulation on extracted topics
    - IF skills not updated in 30+ days (see Situation) → suggest exam to validate progress
    Do NOT auto-chain — propose as suggestion.
-10. **UEMOA Priority**: When the user is in UEMOA (CI, SN, ML, BF, TG, BN, NE, GW), use African business examples when possible (Mobile Money, fintech CI/SN, agritech, e-commerce local). Prioritize West African francophone creators for video resources. Salary references in FCFA.
+10. **Global digital-skills context**: Use examples from digital work, product building, software, data, design, operations, and entrepreneurship. Use a specific market, country, language, or currency only when the user or profile explicitly provides it.
 
 --- DYNAMIC CONTEXT BELOW ---
-${getUEMOAKnowledgeBlock(context.profile.country, context.language, context.injectUEMOA ?? false)}
 ${buildSituationBlock(context)}
 
 # Context (Current User & Session)

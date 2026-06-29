@@ -384,7 +384,7 @@ export async function handleConfirmation(
             data!.surface_m2,
             data!.capacity || null,
             data!.city || null,
-            data!.country || 'CI',
+            data!.country || process.env.DEFAULT_COUNTRY || null,
             orgId, talentId,
             data!.hourly_rate || null,
             data!.daily_rate || null,

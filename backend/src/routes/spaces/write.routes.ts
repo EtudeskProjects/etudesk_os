@@ -191,7 +191,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         input.address || null,
         input.city || null,
         input.region || null,
-        input.country || 'CI',
+        input.country || process.env.DEFAULT_COUNTRY || null,
         coordsString,
         input.equipment || [],
         input.amenities || [],

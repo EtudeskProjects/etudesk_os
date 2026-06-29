@@ -60,9 +60,9 @@ export function getOffTopicRule(): string {
   return `**Off-Topic Warmth**: If the user sends an off-topic message, acknowledge briefly with warmth (1 sentence), then naturally redirect to platform capabilities.`;
 }
 
-/** Regional context rule */
-export function getRegionalContextRule(): string {
-  return `**Regional Context**: For benchmarks (salaries, trends, market data), ALWAYS prioritize French-speaking African data (UEMOA, CEMAC). Use XOF as default currency. Silicon Valley benchmarks are irrelevant to users in Abidjan.`;
+/** Market context rule */
+export function getMarketContextRule(): string {
+  return `**Market Context**: For benchmarks (salaries, trends, market data), use the user's explicitly requested country/market when provided. If no market is specified, use global digital-skills benchmarks and state the assumption. Do not inject a default country, region, or currency.`;
 }
 
 /**
@@ -102,14 +102,10 @@ export function getTypographyRule(): string {
   return `**Typography (ABSOLUTE, all modes)**: NEVER use the em-dash "—" or en-dash "–" in any output. Use a simple hyphen "-", a comma, parentheses, a colon, or split into two sentences instead. This applies to every word you write: prose, lists, titles, chart labels, summaries, confirmations, generated documents.`;
 }
 
-/** Get language-specific instructions for any supported language.
- *  Accepts optional country to force French for UEMOA countries even if language was detected as 'en'. */
-export function getLanguageInstructions(language?: PromptLanguage, country?: string) {
+/** Get language-specific instructions for any supported language. */
+export function getLanguageInstructions(language?: PromptLanguage, _country?: string) {
   const typographyRule = 'TYPOGRAPHIE (REGLE ABSOLUE): n\'utilise JAMAIS le tiret cadratin "—" ni le demi-cadratin "–". Toujours un trait d\'union simple "-", une virgule, des parentheses, deux points, ou deux phrases. Vaut pour TOUT: texte, listes, titres, labels de graphiques, documents generes.';
-  // UEMOA countries default to French regardless of detected language
-  const UEMOA_COUNTRIES = ['Côte d\'Ivoire', 'Cote d\'Ivoire', 'Ivory Coast', 'CI', 'Senegal', 'Sénégal', 'SN', 'Mali', 'ML', 'Burkina Faso', 'BF', 'Togo', 'TG', 'Benin', 'Bénin', 'BN', 'Niger', 'NE', 'Guinée-Bissau', 'Guinea-Bissau', 'GW', 'Cameroon', 'Cameroun', 'CM', 'Congo', 'CG', 'Gabon', 'GA', 'Guinée', 'Guinea', 'GN', 'Tchad', 'Chad', 'TD'];
-  const isUEMOA = country && UEMOA_COUNTRIES.some(c => c.toLowerCase() === country.toLowerCase());
-  const normalized = isUEMOA ? 'fr' : (language || 'en');
+  const normalized = language || 'en';
   const langName = LANGUAGE_NAMES[normalized] || 'English';
   const isFrench = normalized === 'fr';
 

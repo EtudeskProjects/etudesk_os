@@ -3,7 +3,7 @@ name: Talent Outreach
 description: Search, compare, and invite talents for opportunities — unified sourcing-to-invitation workflow
 modes: org
 tools: sql_query, smart_search
-triggers: trouver talents, sourcing, recruter, chercher candidats, outreach, trouver des profils, identifier talents, invitation talent, talents Abidjan, profils Dakar, sourcing CI, dev disponible, chercher un dev, profils tech, talents fintech
+triggers: trouver talents, sourcing, recruter, chercher candidats, outreach, trouver des profils, identifier talents, invitation talent, dev disponible, chercher un dev, profils tech, talents fintech
 ---
 
 # Talent Outreach Workflow
@@ -32,7 +32,7 @@ You are now in Talent Outreach mode. Your goal: help the org manager find, compa
 
 **Chart A — Distribution geographique (Catalog #15):**
 ```chart
-{"type":"donut","title":"Talents trouves par pays","data":[{"label":"Cote d'Ivoire","value":8},{"label":"Senegal","value":3},{"label":"Cameroun","value":2}],"total_label":"13 talents"}
+{"type":"donut","title":"Talents trouves par pays","data":[{"label":"Market A","value":8},{"label":"Market B","value":3},{"label":"Market C","value":2}],"total_label":"13 talents"}
 ```
 
 **Chart B — Top skills du vivier (Catalog #16):**

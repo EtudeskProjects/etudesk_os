@@ -33,7 +33,7 @@ You are now in Candidate Ranking mode. Follow these steps precisely:
 6. Render un **table** chart avec le classement detaille AVANT les entity cards :
 
 ```chart
-{"type":"table","title":"Classement — [Titre opportunite]","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Abidjan"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Dakar"},{"Rang":3,"Candidat":"Traore S.","Score":"72%","Skills matchees":"3/6","Experience":"3 ans","Localisation":"Abidjan"}]}
+{"type":"table","title":"Classement — [Titre opportunite]","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Remote"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Hybrid"},{"Rang":3,"Candidat":"Traore S.","Score":"72%","Skills matchees":"3/6","Experience":"3 ans","Localisation":"Remote"}]}
 ```
 
 **Thinking flow** :

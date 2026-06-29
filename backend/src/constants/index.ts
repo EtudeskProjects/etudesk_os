@@ -84,7 +84,7 @@ export function isSupportedCurrency(value: unknown): value is SupportedCurrency 
 export const SUBSCRIPTION = {
   MAX_RETRY_COUNT: 3,
   TRIAL_PERIOD_OPTIONS: [0, 1, 3, 7, 30] as const,
-  DEFAULT_CURRENCY: 'XOF' as SupportedCurrency,
+  DEFAULT_CURRENCY: 'USD' as SupportedCurrency,
   NOTIFICATION_DAYS_BEFORE_EXPIRY: 7,
   OLD_NOTIFICATIONS_DAYS: 90,
 } as const;
@@ -159,4 +159,3 @@ export const ORGANIZATION_ROLE = {
   MANAGER: 'MANAGER',
   MEMBER: 'MEMBER',
 } as const;
-

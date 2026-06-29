@@ -16,8 +16,6 @@ export interface TalentContext extends BaseTalentContext {
   language?: SupportedLanguage;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
-  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
-  injectUEMOA?: boolean;
 }
 
 export interface OrgContext {
@@ -35,12 +33,10 @@ export interface OrgContext {
   logoUrl?: string;
   orgCity?: string;
   orgCountry?: string;
-  /** Admin's country — used for UEMOA knowledge injection */
+  /** Admin's country, used only as explicit organization context */
   country?: string;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
-  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
-  injectUEMOA?: boolean;
 }
 
 // --- Message Segments Ordered Text/Tool Blocks For Inline Rendering ---

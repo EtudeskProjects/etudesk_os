@@ -30,7 +30,7 @@ interface CommunityPromptContext {
 }
 
 export function buildCommunityGenPrompt(ctx: CommunityPromptContext): string {
-  return `<role>Expert en création et gestion de communautés en ligne en Afrique francophone</role>
+  return `<role>Expert en création et gestion de communautés en ligne</role>
 
 <context>
 Organisation : ${ctx.orgName} (${ctx.orgType})
@@ -51,7 +51,7 @@ ${toTOON(COMMUNITY_OUTPUT_CONTRACT)}
 <rules>
 1. Tags valides : PROFESSIONAL, STUDENT, ENTREPRENEUR, TECH, CREATIVE, SOCIAL_IMPACT, ALUMNI, WOMEN, YOUTH, CLUB_ASSOCIATION
 2. Secteurs OBLIGATOIRES — choisis 1 à 5 valeurs EXACTES parmi : [${ctx.sectorsList}]. Privilégie les secteurs de l'organisation (${ctx.orgSectors}) puis ajoute ceux pertinents pour la communauté.
-3. Si is_paid est true, monthly_price entre 5000-50000 XOF
+3. Si is_paid est true, monthly_price doit être cohérent avec la devise et le marché explicitement fournis; sinon reste conservateur et ne suppose aucun pays.
 4. Content in ${ctx.languageName}, concise and professional
 5. Visibilité généralement PUBLIC sauf contexte spécifique
 </rules>`;

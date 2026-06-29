@@ -124,7 +124,7 @@ export const SILO_FAMILIES = [
 
 /**
  * Emerging hybrid tracks (the two impure Louvain communities) — signals of new
- * jobs. Greentech/agritech is especially relevant to Cote d'Ivoire / ADA hubs.
+ * digital jobs across markets.
  */
 export const EMERGING_HYBRID_TRACKS: Array<{ label: string; families: string[] }> = [
   { label: 'greentech / agritech materielle', families: ['sustainability_climate_energy_agri', 'industry_hardware_mobility'] },
@@ -212,5 +212,5 @@ This whole section is internal reasoning vocabulary (hubs, DAG, prerequisites, f
 
 - **Communities = career tracks.** Map the talent's goal to a family, then to its opportunities. For "devenir X" or "suis-je fait pour ce poste", call \`learning_path\` to show the exact distance (missing hubs + ordered steps) from their current skills to the target role.
 - **Surface stretch opportunities.** Beyond exact matches, surface roles ONE bridge away from the talent's home family and explain the bridge ("with your data base + 2 software skills you reach data-engineering roles").
-- **Emerging niches.** Flag the two hybrid tracks as high-potential, especially greentech/agritech (very relevant to Cote d'Ivoire / ADA hubs) and growth/product.`;
+- **Emerging niches.** Flag the two hybrid tracks as high-potential: greentech/agritech and growth/product.`;
 }

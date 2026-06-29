@@ -27,9 +27,6 @@ async function executeWebSearch(query: string): Promise<Array<{ title: string; u
   const url = new URL('https://api.search.brave.com/res/v1/web/search');
   url.searchParams.set('q', query);
   url.searchParams.set('count', '5');
-  // Brave Search only accepts a limited country enum; CI is not currently valid.
-  // Keep UEMOA/Cote d'Ivoire context in the query text and use FR for francophone ranking.
-  url.searchParams.set('country', process.env.BRAVE_SEARCH_COUNTRY || 'FR');
   url.searchParams.set('search_lang', 'fr');
 
   const response = await fetch(url, {
@@ -57,7 +54,7 @@ export const webSearchAsTool = defineTool({
   description:
     'Search the web for current information (salary benchmarks, company info, market trends, training resources). Use ONLY when internal data is insufficient.',
   parameters: z.object({
-    query: z.string().describe('The search query in natural language. Be specific and include context (e.g., "salaire moyen développeur React Côte d\'Ivoire 2026").'),
+    query: z.string().describe('The search query in natural language. Be specific and include the user-requested role, market, language, period, or domain when relevant.'),
   }),
   normalize: (raw) => ({
     ...raw,

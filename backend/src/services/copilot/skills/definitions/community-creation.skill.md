@@ -20,7 +20,7 @@ From the user's request, extract as many fields as possible:
 - **visibility**: PUBLIC, PRIVATE (default: PUBLIC)
 - **sectors**: Array of relevant sectors (infer from the topic)
 - **city**: Use org's city if known, or omit
-- **country**: CI (default)
+- **country**: Use org's country if known, or omit
 
 **CRITICAL:** NEVER write "a confirmer/valider/definir". Use concrete values or omit the field.
 
@@ -36,7 +36,7 @@ From the user's request, extract as many fields as possible:
 Then IMMEDIATELY the confirmation block:
 
 ```confirmation
-{"action":"create_community","entity_id":"<org-id>","title":"Creer cette communaute ?","description":"[Name] - [type]","confirm_label":"Creer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","description":"...","type":"PROFESSIONAL","access_type":"OPEN","visibility":"PUBLIC","sectors":[...],"city":"...","country":"CI"}}
+{"action":"create_community","entity_id":"<org-id>","title":"Creer cette communaute ?","description":"[Name] - [type]","confirm_label":"Creer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","description":"...","type":"PROFESSIONAL","access_type":"OPEN","visibility":"PUBLIC","sectors":[...],"city":"..."}}
 ```
 
 ## Rules

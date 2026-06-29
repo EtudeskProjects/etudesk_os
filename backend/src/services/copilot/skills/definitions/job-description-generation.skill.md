@@ -25,7 +25,7 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
    - **Nice-to-have skills**
    - **Compensation range** (only if mentioned)
 3. If the user referenced an existing opportunity, call `sql_query` with `org_opportunities` to get its details.
-4. Optionally call `web_search` for market benchmarks on the role (salary ranges, typical requirements in UEMOA region).
+4. Optionally call `web_search` for market benchmarks on the role when a market is specified (salary ranges, typical requirements).
 
 ## Step 2: Draft & Confirm
 5. Present a structured preview of the fiche de poste content:
@@ -55,7 +55,7 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
     {"heading": "Missions Principales", "body": "- Mission 1\n- Mission 2\n- Mission 3\n- Mission 4\n- Mission 5"},
     {"heading": "Profil Recherché", "body": "- Qualification 1\n- Qualification 2\n- Qualification 3\n- Qualification 4"},
     {"heading": "Atouts Appréciés", "body": "- Atout 1\n- Atout 2"},
-    {"heading": "Conditions", "body": "- Type de contrat : CDI\n- Lieu : Abidjan\n- Rémunération : selon profil"},
+    {"heading": "Conditions", "body": "- Type de contrat : CDI\n- Lieu : selon contexte\n- Rémunération : selon profil"},
     {"heading": "Comment Postuler", "body": "Envoyez votre candidature via la plateforme Etudesk."}
   ]
 }
@@ -77,8 +77,8 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
 - **Separation from opportunity-publishing**: "generer une fiche de poste" / "fiche PDF" = this skill (PDF output). "publier une offre" / "creer une offre" = opportunity-publishing (platform publish). Never confuse the two.
 - ALWAYS use the Org Document JSON format for PDF generation — never the plain sections format
 - Use logo_url, city, country from `<organization>` context (pre-loaded, no org_stats call needed)
-- Write content in professional French appropriate for the UEMOA job market
+- Write content in professional language appropriate for the requested market
 - Use bullet points for responsibilities and qualifications
 - Never invent salary data — only include if the user mentioned it
-- Default currency: XOF, default compensation_frequency: mensuel
+- Default currency: explicit offer or organization currency, default compensation_frequency: mensuel
 - If logo_url is null, still use the Org Document format (the generator handles missing logos gracefully)

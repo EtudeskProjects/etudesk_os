@@ -393,9 +393,9 @@ function setCache(key: string, data: any): void {
 export const smartSearchTool = defineTool({
   name: 'smart_search',
   description:
-    'Semantic DISCOVERY search (vector ranking + keyword fallback) for open-ended, natural-language requests to FIND opportunities, communities, spaces, talents, or organizations (e.g. "React developers in Abidjan", "tech communities Dakar"). Put ALL criteria in the query text. For structured/personal data you already know the shape of (my_profile, my_applications, org_stats…), use sql_query instead. The entity param is optional (inferred from the query when omitted).',
+    'Semantic DISCOVERY search (vector ranking + keyword fallback) for open-ended, natural-language requests to FIND opportunities, communities, spaces, talents, or organizations (e.g. "React developers remote", "data communities for beginners"). Put ALL criteria in the query text. For structured/personal data you already know the shape of (my_profile, my_applications, org_stats…), use sql_query instead. The entity param is optional (inferred from the query when omitted).',
   parameters: z.object({
-    query: z.string().describe('Natural language search query. Include location, domain, skills, and any other criteria directly in the text. Example: "developpement web React Node.js Abidjan" or "communaute tech entrepreneuriat Dakar"'),
+    query: z.string().describe('Natural language search query. Include location, domain, skills, and any other criteria directly in the text. Example: "developpement web React Node.js remote" or "communaute tech entrepreneuriat"'),
     entity: z.enum([
       'opportunities',
       'communities',

@@ -3,7 +3,7 @@ name: Space Creation
 description: Create a workspace or venue for the organization directly on the platform
 modes: org
 tools: execute_action
-triggers: creer un espace, nouvel espace, create space, ajouter un espace, enregistrer un espace, coworking, salle de reunion, espace de travail, bureau partage, coworking Abidjan, espace Dakar, salle Cotonou
+triggers: creer un espace, nouvel espace, create space, ajouter un espace, enregistrer un espace, coworking, salle de reunion, espace de travail, bureau partage
 ---
 
 # Space Creation Workflow
@@ -19,7 +19,7 @@ From the user's request, extract as many fields as possible:
 - **description**: Write 1-2 professional sentences
 - **capacity**: Maximum number of people (infer from surface if not given: ~1 person per 3-4m2)
 - **city**: Use org's city if known, or omit
-- **country**: CI (default)
+- **country**: Use org's country if known, or omit
 - **equipment**: Array of equipment — infer basics from type (e.g., MEETING_ROOM → ["Wifi", "Ecran", "Tableau blanc"])
 - **amenities**: Array of amenities — infer basics (e.g., ["Climatisation"])
 - **hourly_rate**: Only include if user mentioned it
@@ -37,7 +37,7 @@ From the user's request, extract as many fields as possible:
 - **Type** : [type] | **Surface** : [surface_m2] m2
 - **Capacite** : [capacity] personnes
 - **Equipement** : [equipment list]
-- **Tarifs** : [hourly_rate] XOF/h | [daily_rate] XOF/jour
+- **Tarifs** : [hourly_rate] [currency]/h | [daily_rate] [currency]/jour
 - **Description** : [description — 1-2 sentences]
 
 Omit any line where the value is unknown. No placeholders.
@@ -45,7 +45,7 @@ Omit any line where the value is unknown. No placeholders.
 Then IMMEDIATELY the confirmation block:
 
 ```confirmation
-{"action":"create_space","entity_id":"<org-id>","title":"Creer cet espace ?","description":"[Name] - [type] - [surface]m2","confirm_label":"Creer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","type":"...","surface_m2":...,"capacity":...,"description":"...","city":"...","country":"CI","equipment":[...],"amenities":[...],"is_bookable":true,"visibility":"PUBLIC"}}
+{"action":"create_space","entity_id":"<org-id>","title":"Creer cet espace ?","description":"[Name] - [type] - [surface]m2","confirm_label":"Creer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","type":"...","surface_m2":...,"capacity":...,"description":"...","city":"...","equipment":[...],"amenities":[...],"is_bookable":true,"visibility":"PUBLIC"}}
 ```
 
 ## Rules
@@ -53,4 +53,4 @@ Then IMMEDIATELY the confirmation block:
 - NEVER generate a PDF document when the user asks to "creer" a space — use the confirmation block
 - Always set `organization_id` in the data to the current organization's ID
 - The `entity_id` in the confirmation block = organization ID
-- Default to country=CI, is_bookable=true, visibility=PUBLIC
+- is_bookable=true, visibility=PUBLIC

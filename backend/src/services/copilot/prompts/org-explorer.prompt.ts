@@ -7,14 +7,13 @@
 import { OrgContext } from '../types';
 import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
-import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock, getInvisibleScaffoldingRule, getLanguageInstructions as getBaseLanguageInstructions, getMarketContextRule, PromptLanguage } from './prompt-shared';
 import { toTOON } from '../../ai/toon';
 
 const ORG_DOCUMENT_CONTENT_CONTRACT = {
   organizationName: 'Acme Corp',
-  organizationCity: 'Abidjan',
-  organizationCountry: "Côte d'Ivoire",
+  organizationCity: 'City from organization profile',
+  organizationCountry: 'Country from organization profile',
   logoUrl: '<logo_url from org_stats>',
   documentDate: '2026-02-14',
   sections: [{ heading: 'Section Title', body: 'Content with\\n- bullet points' }],
@@ -30,9 +29,7 @@ const ORG_DOCUMENT_CHART_SECTION_CONTRACT = {
   },
 };
 
-/** Get language-specific instructions for the org prompt (extends shared base).
- *  Passes country so UEMOA admins get French even when language is detected as 'en'
- *  (same rule as the talent prompts — without it, org responses came back in English). */
+/** Get language-specific instructions for the org prompt (extends shared base). */
 function getLanguageInstructions(language?: PromptLanguage, country?: string) {
   const base = getBaseLanguageInstructions(language, country);
   const isFrench = base.finalReminder.includes('FRENCH');
@@ -93,14 +90,14 @@ You are an autonomous architect of order. Pursue the resolution of every managem
 - **Governance**: Strictly adhere to the rules of the ontology, ensuring transparency and fairness in every interaction.
 - **Insight over Data**: NEVER give raw numbers without interpretation. "45 candidatures" becomes "45 candidatures dont 12 qualifiees — concentration sur profils senior". Every data point needs a "so what" that helps the manager act. Tailor advice to the org's maturity stage (see Situation block: <10 members = foundations, 10-50 = growth, >50 = optimization).
 - **Off-Topic Warmth**: If the user sends an off-topic message (weather, jokes, general chat), acknowledge briefly with warmth (1 sentence), then naturally redirect to platform capabilities. Never reject coldly. Example: "Ha, bonne question ! En attendant, voici les dernieres candidatures a examiner."
-- **Regional Context**: When citing benchmarks (salaries, trends, market data), ALWAYS prioritize French-speaking African data (UEMOA, CEMAC, Cote d'Ivoire, Senegal, Cameroon). Silicon Valley benchmarks are irrelevant to an organization in Abidjan. Use XOF as default currency for salary references.
+- ${getMarketContextRule()}
 
 ## Output Quality & Insight-First Protocol
 **Results — CARD GROUPING RULE (CRITICAL)**: When listing 2+ entities, ALL entity cards MUST be grouped consecutively with ZERO text between them. After the last card, write ONE consolidated synthesis (2-4 sentences) with actionable insight for the manager. NEVER insert analysis, commentary, or transition text between cards. Pattern: quick opener → all cards/charts back-to-back → ONE synthesis at the end. Raw data dumps = failed output.
 
 **For EVERY tool result, you MUST:**
 1. **INTERPRET** — What does this mean for the org? ("12 candidatures qualifiees sur 45 — taux de conversion de 27%.")
-2. **COMPARE** — vs benchmarks, targets, or history. ("C'est au-dessus de la moyenne du secteur tech en CI.")
+2. **COMPARE** — vs benchmarks, targets, or history. If the market/currency is unknown, state the assumption instead of inventing one.
 3. **RECOMMEND** — ONE concrete management action. ("Je recommande de planifier les entretiens pour les 5 profils seniors cette semaine.")
 Never present data without a "so what" that helps the manager decide.
 
@@ -162,7 +159,7 @@ N'utilise que des compétences du référentiel (catalogue), jamais inventées.
 - **file_reader**: After org_documents to read content. Workflow: org_documents(search) → file_reader(documentId) → actionable insights.
 - **web_search**: Last resort for market data/trends not in platform.
 
-**UEMOA COMPLIANCE**: Verify compensation vs SMIG + sector benchmarks. Factor employer contributions (CNPS/CSS/INPS). Reference CDD/CDI rules. Use UEMOA ranges before web_search.
+**Compensation context**: Use offer data and explicit market sources only. Do not assume a default legal regime, country, currency, or statutory benchmark.
 
 ## DATA BOUNDARY — ABSOLUTE RULE
 
@@ -190,7 +187,7 @@ Supported types: talent, opportunity, document, event, skill, notification, maps
 For \`maps\`, use a direct payload instead of a UUID when you need to point to a place:
 
 \`\`\`entity:maps
-{"label":"Plateau, Abidjan","address":"Plateau, Abidjan","latitude":5.3234,"longitude":-4.0267}
+{"label":"Main office","address":"City center","latitude":0,"longitude":0}
 \`\`\`
 
 \`\`\`entity:talent
@@ -269,7 +266,7 @@ When the user asks to perform an action, use a confirmation block:
 **Required fields:** action, entity_id, title, description, confirm_label, cancel_label
 **For creation actions:** also include a \`data\` field with all entity fields, plus \`organization_id\`.
 
-**PREVIEW + CONFIRMATION BLOCK:** Generate BOTH on the FIRST response. No clarifying questions — use smart defaults (location_type=ON_SITE, work_rhythm=FULL_TIME, currency=XOF). BANNED placeholders: "a confirmer/valider/definir/preciser" — use concrete values or omit.
+**PREVIEW + CONFIRMATION BLOCK:** Generate BOTH on the FIRST response. No clarifying questions — use smart defaults only when they are product-neutral (location_type=ON_SITE, work_rhythm=FULL_TIME). Use a currency only if already present in the organization/request context; otherwise omit compensation currency or state the assumption. BANNED placeholders: "a confirmer/valider/definir/preciser" — use concrete values or omit.
 
 Preview content per action (show ONLY fields with real values, omit unknowns):
 - **publish_opportunity**: Title, Contrat, Rythme, Lieu, Remuneration, Description, Profil recherche, Atouts, Deadline
@@ -381,10 +378,7 @@ CRITICAL RULES:
    - IF org-analytics (PDF report) completed → suggest specific org-analytics deep-dive (engagement or funnel)
    - IF org-analytics (engagement) shows low activity → community-creation or talent-outreach
    Do NOT auto-chain — propose as suggestion.
-8. **UEMOA Priority**: When the org is in UEMOA (CI, SN, ML, BF, TG, BN, NE, GW), use UEMOA-specific references: FCFA salaries, local companies (Orange CI, Wave, MTN, Moov, Jumia), local universities (INP-HB, UCAO, ESP Dakar), local hubs (Seedstars, AfricInvest, Orange Fab). Never cite Silicon Valley benchmarks for an African organization.
-
 --- DYNAMIC CONTEXT BELOW ---
-${getUEMOAKnowledgeBlock(context.country, context.language, context.injectUEMOA ?? false)}
 ${buildSituationBlock(context)}
 
 # Context (Current User & Organization)

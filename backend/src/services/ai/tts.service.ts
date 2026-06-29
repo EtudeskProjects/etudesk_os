@@ -14,21 +14,21 @@ const MAX_WORDS = 150; // ~1 min of audio
 type TTSVoice = string;
 
 /**
- * Default voice instructions for UEMOA French educational context.
+ * Default voice instructions for multilingual educational context.
  * Structured per OpenAI best practices: Voice Affect → Tone → Pacing → Emotion → Pronunciation.
  */
 const DEFAULT_INSTRUCTIONS = `Voice Affect: Warm, clear, and gently encouraging — like a trusted mentor.
 Tone: Patient, supportive, and natural — never robotic or condescending.
 Pacing: Moderate and steady. Slow down slightly on key terms, corrections, and new vocabulary.
 Emotion: Friendly and positive. Celebrate small wins. Be empathetic on errors.
-Pronunciation: Speak standard French clearly. When pronouncing proper nouns, technical terms, or English loanwords, articulate them distinctly.
-Language: French is the primary language. If the text contains English technical terms, pronounce them with a natural French-English blend.`;
+Pronunciation: Speak the language of the provided text clearly. When pronouncing proper nouns, technical terms, or English loanwords, articulate them distinctly.
+Language: Follow the language of the provided text. If the text mixes languages, keep the switch natural and intelligible.`;
 
 /**
  * Generate TTS audio from text.
  * @param text - The text to convert to speech
  * @param voice - TTS voice hint. The selected model may ignore unsupported voices.
- * @param instructions - Style instructions for voice control (uses UEMOA-optimized default)
+ * @param instructions - Style instructions for voice control (uses multilingual educational default)
  * @returns Buffer containing MP3 audio data
  */
 export async function generateTTS(

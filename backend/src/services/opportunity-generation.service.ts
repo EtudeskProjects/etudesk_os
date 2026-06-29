@@ -333,7 +333,7 @@ export async function generateOpportunitySuggestion(
 
     // Set default currency if not provided
     if (!generatedData.currency) {
-      generatedData.currency = 'XOF';
+      generatedData.currency = input.existing_data?.currency || process.env.DEFAULT_CURRENCY || 'USD';
     }
 
     // Resolve suggested skills to the catalog (referential = single source of truth).

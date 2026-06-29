@@ -439,16 +439,16 @@ const TESTS: TestDef[] = [
     message: 'Quels postes correspondent a mon profil en ce moment ?',
   },
   {
-    name: 'Explorer — Espaces coworking Abidjan',
+    name: 'Explorer — Espaces coworking remote',
     agentType: 'explorer',
     targetTool: 'smart_search',
-    message: 'Je cherche un espace de travail calme sur Abidjan avec wifi',
+    message: 'Je cherche un espace de travail calme avec wifi',
   },
   {
     name: 'Explorer — Communautes tech',
     agentType: 'explorer',
     targetTool: 'smart_search',
-    message: 'Quelles communautes tech actives existent a Abidjan ?',
+    message: 'Quelles communautes tech actives existent dans mon secteur ?',
   },
   {
     name: 'Explorer — Generer CV a jour',
@@ -498,7 +498,7 @@ const TESTS: TestDef[] = [
     name: 'Org — Recruter profils marketing',
     agentType: 'org',
     targetTool: 'smart_search',
-    message: 'Trouve-moi 5 profils marketing digital seniors disponibles sur Abidjan',
+    message: 'Trouve-moi 5 profils marketing digital seniors disponibles en remote',
   },
   {
     name: 'Org — Dashboard organisation',
@@ -516,7 +516,7 @@ const TESTS: TestDef[] = [
     name: 'Org — Publier offre stage',
     agentType: 'org',
     targetTool: 'none',
-    message: 'Publie une offre de stage en communication digitale a Abidjan, 3 mois',
+    message: 'Publie une offre de stage en communication digitale remote, 3 mois',
   },
   // --- New Intent Tests (Phase Renforcement) ---
   {

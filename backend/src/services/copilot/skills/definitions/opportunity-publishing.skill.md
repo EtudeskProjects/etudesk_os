@@ -3,7 +3,7 @@ name: Opportunity Publishing
 description: Create and publish a job opportunity directly on the platform from a conversation
 modes: org
 tools: sql_query
-triggers: publier une offre, creer une offre, poster un emploi, publish opportunity, creer un poste, publier un poste, recruter, CDI, CDD, stage, alternance, offre emploi, poste Abidjan, poste Dakar, recruter un dev, recruter un stagiaire, recruter CI, recruter SN, offre UEMOA, salaire FCFA
+triggers: publier une offre, creer une offre, poster un emploi, publish opportunity, creer un poste, publier un poste, recruter, CDI, CDD, stage, alternance, offre emploi, recruter un dev, recruter un stagiaire
 priority: 8
 ---
 
@@ -26,7 +26,7 @@ From the user's message, extract everything you can:
 - **requirements**: Write 3-5 bullet points of realistic qualifications based on the role
 - **nice_to_have**: Write 2-3 bonus qualifications if relevant
 - **compensation_min/max**: ONLY include if the user mentioned it. Do NOT invent or guess.
-- **currency**: XOF (default)
+- **currency**: devise explicite de l'offre ou de l'organisation (sinon omit)
 - **compensation_frequency**: MONTHLY (default)
 - **deadline**: ONLY include if the user mentioned it
 
@@ -44,7 +44,7 @@ Show the structured preview, then IMMEDIATELY the confirmation block. Do NOT ask
 **[Title]**
 - **Contrat** : [contract_type] | **Rythme** : Temps plein
 - **Lieu** : [city], [country] ([location_type])
-- **Remuneration** : [min] - [max] XOF/mois
+- **Remuneration** : [min] - [max] [currency]/mois
 - **Description** : [summary — 2-3 sentences]
 - **Profil recherche** : [requirements — 3-5 points]
 - **Atouts** : [nice_to_have — if any]
@@ -63,6 +63,6 @@ Then:
 - "generer une fiche de poste" = PDF, "creer/publier une offre" = confirmation block
 - Always set `organization_id` in the data to the current organization's ID
 - The `entity_id` in the confirmation block = organization ID
-- Default values: currency=XOF, location_type=ON_SITE, work_rhythm=FULL_TIME, type=JOB
+- Default values: location_type=ON_SITE, work_rhythm=FULL_TIME, type=JOB
 - Write the summary and requirements in professional language. Be specific to the role, not generic.
 - The cancel_label should be "Modifier" (not "Annuler") — the user can request changes before confirming

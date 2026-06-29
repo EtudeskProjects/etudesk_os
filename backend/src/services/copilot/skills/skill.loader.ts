@@ -191,18 +191,6 @@ export function getSkillBody(skillId: string): string | null {
  * Checks if any trigger keyword appears in the normalized message.
  * If multiple skills match: (1) pick the one with the most trigger hits, (2) on tie, pick the one with highest priority.
  */
-/** Country-specific bonus triggers — boost skill matching when user is in a specific country */
-const COUNTRY_BONUS_TRIGGERS: Record<string, string[]> = {
-  CI: ['abidjan', 'cnps', 'cote d\'ivoire', 'yamoussoukro', 'fdfp', 'orange ci'],
-  SN: ['dakar', 'css', 'ipres', 'senegal', 'thies'],
-  ML: ['bamako', 'inps', 'mali'],
-  BF: ['ouagadougou', 'burkina', 'bobo-dioulasso', 'cnss bf'],
-  TG: ['lome', 'togo', 'cnss togo'],
-  BN: ['cotonou', 'benin', 'porto-novo'],
-  NE: ['niamey', 'niger'],
-  GW: ['bissau', 'guinee-bissau'],
-};
-
 export function detectSkillFromMessageStatic(
   message: string,
   mode: 'explore' | 'study' | 'org',
@@ -225,16 +213,6 @@ export function detectSkillFromMessageStatic(
         hits++;
       }
     }
-    // Country bonus: if user is in a UEMOA country and message mentions their country-specific terms,
-    // give an extra hit to skills that deal with regional topics (salary, legal, etc.)
-    if (hits > 0 && country) {
-      const countryCode = country.trim().toUpperCase();
-      const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
-      if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
-        hits += 1; // Regional relevance boost
-      }
-    }
-
     if (hits === 0) continue;
 
     const priority = skill.priority ?? 0;
@@ -305,23 +283,12 @@ export async function detectSkillFromMessage(
     let bestMatch: SkillDefinition | null = null;
     let bestScore = -1;
 
-    const normalizedMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
     for (const skill of skills) {
       if (!skill.embedding) continue;
 
       const similarity = cosineSimilarity(messageEmbedding, skill.embedding);
       // Small priority boost for tie-breaking (priority 8 → +0.04)
       let score = similarity + (skill.priority ?? 0) * 0.005;
-
-      // Country relevance boost (parity with static matching path)
-      if (country) {
-        const countryCode = country.trim().toUpperCase();
-        const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
-        if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
-          score += 0.05;
-        }
-      }
 
       if (score > bestScore) {
         bestScore = score;

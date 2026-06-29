@@ -35,7 +35,7 @@ interface SpacePromptContext {
 }
 
 export function buildSpaceGenPrompt(ctx: SpacePromptContext): string {
-  return `<role>Expert en gestion d'espaces réservables en Afrique francophone</role>
+  return `<role>Expert en gestion d'espaces réservables</role>
 
 <context>
 Organisation : ${ctx.orgName} (${ctx.orgType})
@@ -57,7 +57,7 @@ ${toTOON(SPACE_OUTPUT_CONTRACT)}
 1. Secteurs valides : [${ctx.sectorsList}]
 2. Équipements : VIDEOPROJECTOR, WHITEBOARD, SCREEN, MICROPHONE, SPEAKER, COMPUTER, PRINTER, WEBCAM, WIFI, AIR_CONDITIONING, HEATING
 3. Commodités : WIFI, PARKING, CAFETERIA, RESTROOM, ELEVATOR, SECURITY
-4. Tarifs en XOF, adaptés au type d'espace et à la localisation
+4. Tarifs adaptés au type d'espace, à la localisation et à la devise explicitement fournie; ne suppose aucun pays ni devise par défaut dans le contenu généré
 5. Content in ${ctx.languageName}, concise and professional
 6. Règlements avec "• " comme puce, séparés par \\n (max 1000 caractères)
 </rules>`;
