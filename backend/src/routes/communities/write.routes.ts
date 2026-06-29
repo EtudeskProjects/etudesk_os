@@ -197,6 +197,23 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       city, region, country, cover_image_url, images, status
     } = req.body;
 
+    try {
+      await autoModerationService.assertContentApproved({
+        name,
+        description,
+        rules,
+        application_questions: Array.isArray(application_questions) ? application_questions.join('\n') : application_questions,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Community update rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
+    }
+
     const result = await pool.query(`
       UPDATE communities SET
         name = COALESCE($1, name),

@@ -289,6 +289,26 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       }
     }
 
+    try {
+      await autoModerationService.assertContentApproved({
+        name: input.name,
+        description: input.description,
+        address: input.address,
+        accessibility_notes: input.accessibility_notes,
+        booking_rules: input.booking_rules?.join('\n'),
+        questions: input.questions?.join('\n'),
+        payment_collection_info: input.payment_collection_info,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Space update rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
+    }
+
     // Recalculate capacity if surface or type changed
     let capacity = input.capacity;
     if (input.surface_m2 || input.type) {
