@@ -561,8 +561,10 @@ export async function runAgentWithSSE(
         continue;
       }
 
-      // If no tool_use blocks, we're done
-      if (toolUseBlocks.length === 0 || response.stopReason === 'stop') {
+      // If no tool_use blocks, we're done. Some OpenAI-compatible providers
+      // still report finish_reason=stop while streaming tool_calls, so the
+      // presence of tool calls is authoritative here.
+      if (toolUseBlocks.length === 0) {
         break;
       }
 
