@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
 import { CopilotMode } from '../../services/copilotService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, withOpacity } from '../../constants/theme';
@@ -29,6 +28,7 @@ interface SuggestionsTooltipProps {
     mode: CopilotMode;
     sessionId?: string | null;
     anchorPosition?: { x: number; y: number };
+    isOrganizationSpace?: boolean;
 }
 
 export function SuggestionsTooltip({
@@ -38,11 +38,10 @@ export function SuggestionsTooltip({
     mode,
     sessionId,
     anchorPosition,
+    isOrganizationSpace = false,
 }: SuggestionsTooltipProps) {
     const { colors } = useTheme();
-    const { user } = useAuth();
     const { t } = useI18n();
-    const isOrg = !!user?.organizationMemberships && user.organizationMemberships.length > 0;
 
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [fadeAnim] = useState(new Animated.Value(0));
@@ -50,15 +49,15 @@ export function SuggestionsTooltip({
     // Get default suggestions based on mode and user type
     const getDefaultSuggestions = useCallback(() => {
         if (mode === 'study') {
-            return isOrg
+            return isOrganizationSpace
                 ? (t('copilot.suggestions.orgStudy') as unknown as string[])
                 : (t('copilot.suggestions.talentStudy') as unknown as string[]);
         } else {
-            return isOrg
+            return isOrganizationSpace
                 ? (t('copilot.suggestions.orgExplore') as unknown as string[])
                 : (t('copilot.suggestions.talentExplore') as unknown as string[]);
         }
-    }, [mode, isOrg, t]);
+    }, [mode, isOrganizationSpace, t]);
 
     // Initial load: show defaults when visible
     useEffect(() => {
