@@ -617,13 +617,13 @@ INSERT INTO communities (
 ) VALUES
   (
     '11000000-0000-4000-8000-000000000001',
-    'Etudesk OS: Tech & Data CI',
-    'etudesk-os-tech-data-ci',
+    'Etudesk OS: Tech & Data',
+    'etudesk-os-tech-data',
     'LEARNING',
     'Groupe pour apprendre, partager et trouver des opportunités (dev, data, produit). Discussions techniques, ressources, entraide.',
     'Respect, pas de spam, partage de sources. Les offres doivent être précises (mission, stack, rémunération).',
     'OPEN', 'PUBLIC',
-    '["tech","data","mentorat","abidjan"]'::jsonb,
+    '["tech","data","mentorat","remote"]'::jsonb,
     '["TECH","FINANCE","EDUCATION"]'::jsonb,
     'New York','New York','US',
     'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop',
@@ -635,8 +635,8 @@ INSERT INTO communities (
   ),
   (
     '11000000-0000-4000-8000-000000000002',
-    'Etudesk OS: Entrepreneurs CI',
-    'etudesk-os-entrepreneurs-ci',
+    'Etudesk OS: Entrepreneurs',
+    'etudesk-os-entrepreneurs',
     'PROFESSIONAL',
     'Groupe pour entrepreneurs (retail, services, agro). Conseils opérationnels, ventes, financement, recrutement.',
     'On est direct et concret. Pas de promesses vagues. Partagez vos chiffres, vos contraintes, vos prochaines actions.',
@@ -853,7 +853,7 @@ INSERT INTO community_activities (
       'starts_at', (NOW() + INTERVAL '8 days'),
       'duration_minutes', 120,
       'city', 'New York',
-      'space', 'Salle Formation Plateau'
+      'space', 'Salle Formation Digitale'
     ),
     '[]'::jsonb,
     false,
@@ -1197,12 +1197,12 @@ INSERT INTO spaces (
 ) VALUES
   (
     '30000000-0000-4000-8000-000000000001',
-    'Salle Formation Plateau',
-    'salle-formation-plateau',
+    'Salle Formation Digitale',
+    'salle-formation-digitale',
     'Salle équipée pour formation (vidéoprojecteur, tableau blanc). Idéale pour ateliers CV, data, orientation.',
     'SALLE_FORMATION',
     78.0, 24, 2,
-    'Plateau, Avenue Chardy (proche transports)',
+    'Central business district, transit-friendly',
     'New York','New York','US',
     ARRAY['VIDEOPROJECTOR','WHITEBOARD','SCREEN','SOUND_SYSTEM','MICROPHONE'],
     ARRAY['WIFI','AIR_CONDITIONING','PARKING','RECEPTION','RESTROOMS','SECURITY','NATURAL_LIGHT'],
@@ -1218,7 +1218,7 @@ INSERT INTO spaces (
     'PUBLIC',
     ARRAY['Respect du matériel','Arriver 10 min avant','Finir et ranger la salle'],
     false,
-    'Etudesk SAS', '+2250574631148', 'etudesksas@gmail.com',
+    'Etudesk SAS', NULL, 'etudesksas@gmail.com',
     '10000000-0000-4000-8000-000000000001',
     '90000000-0000-4000-8000-000000000001',
     'ACTIVE'
@@ -1230,7 +1230,7 @@ INSERT INTO spaces (
     'Studio compact pour captation (podcast, interviews, mini-cours).',
     'STUDIO',
     22.0, 6, 0,
-    'Cocody Angré, accès facile',
+    'Creative district, easy access',
     'New York','New York','US',
     ARRAY['SOUND_SYSTEM','MICROPHONE','WEBCAM','TV_SCREEN','VIDEO_CONFERENCE'],
     ARRAY['WIFI','AIR_CONDITIONING','SECURITY','SOUNDPROOF','RECEPTION'],

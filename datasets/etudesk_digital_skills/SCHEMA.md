@@ -1,7 +1,7 @@
 # Etudesk Digital Skills Schema
 
 > Data model for the skill catalog, the adjacency graph, and talent skill evaluations.
-> Current catalog: `competency_catalog.csv` (1687 active skills, 16 families, 5 types, English and French labels).
+> Current catalog: `competency_catalog.csv` (1687 active skills, 16 families, 5 types, English/French labels, short descriptions, and conservative official URLs).
 > Adjacency graph: `competency_edges.csv` (8892 edges, generated + curated, adversarially reviewed).
 > Release manifest: `competency_manifest.json` (`catalog_version`: `2026-Q2`).
 > Last updated: June 27, 2026.
@@ -19,10 +19,13 @@ Competency {
   type:   enum     # knowledge | hard_skill | soft_skill | tool_platform | language
   name:    string   # English display name
   name_fr: string   # French display name
+  description_en: string # English sentence-case description, max 50 words
+  description_fr: string # French sentence-case description, max 50 words
+  official_url:   string # official URL when locally verified; otherwise empty
 }
 ```
 
-CSV columns: `slug,family,type,name,name_fr`.
+CSV columns: `slug,family,type,name,name_fr,description_en,description_fr,official_url`.
 
 Families:
 `digital_foundations`, `human_communication_languages`, `ai_ml_automation`,
@@ -46,6 +49,11 @@ Types:
 Stability rules:
 - `slug` is the canonical identifier stored in talent history.
 - Changing `name` or `name_fr` must never change `slug`.
+- `description_en` and `description_fr` are pedagogical display fields. They
+  must stay concise, sentence case, and no longer than 50 words each.
+- `official_url` must contain only a conservative official source. Leave it
+  empty when local enrichment cannot verify the source, especially for generic
+  concepts or ambiguous tools.
 - To retire a skill, remove its catalog row and every edge that references its
   slug (validated by `validate_edges.py`). Product databases keep history through
   `catalog_version`, `framework_version`, and timestamps.

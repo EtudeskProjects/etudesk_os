@@ -17,6 +17,7 @@ import {
   PhoneCountry,
   PHONE_COUNTRIES,
   FAVORITE_COUNTRIES,
+  DEFAULT_COUNTRY_CODE,
   getCountryByCode,
   parseE164,
 } from '../../constants/phone-countries';
@@ -25,7 +26,7 @@ interface PhoneInputProps {
   label?: string;
   value: string;                        // E.164 complet "+2250700000000"
   onChangeValue: (e164: string) => void;
-  defaultCountryCode?: string;          // 'CI' par defaut
+  defaultCountryCode?: string;
   error?: string;
   hint?: string;
   editable?: boolean;
@@ -35,7 +36,7 @@ export function PhoneInput({
   label,
   value,
   onChangeValue,
-  defaultCountryCode = 'CI',
+  defaultCountryCode = DEFAULT_COUNTRY_CODE,
   error,
   hint,
   editable = true,

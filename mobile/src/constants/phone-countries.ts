@@ -5,8 +5,7 @@ export interface PhoneCountry {
   flag: string;      // Emoji drapeau
 }
 
-/** Codes ISO des pays UEMOA (favoris) */
-const UEMOA_CODES = new Set(['CI', 'SN', 'ML', 'BF', 'NE', 'TG', 'BJ', 'GW']);
+export const DEFAULT_COUNTRY_CODE = process.env.EXPO_PUBLIC_DEFAULT_COUNTRY_CODE || 'US';
 
 /** Liste complete des pays avec indicatifs telephoniques */
 export const PHONE_COUNTRIES: PhoneCountry[] = [
@@ -197,9 +196,14 @@ export const PHONE_COUNTRIES: PhoneCountry[] = [
   { code: 'ZW', dialCode: '+263', name: 'Zimbabwe', flag: '\u{1F1FF}\u{1F1FC}' },
 ].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
-/** Pays UEMOA (favoris, affiches en premier dans le selecteur) */
+/** Pays favoris affiches en premier dans le selecteur, configurables par environnement. */
+const FAVORITE_COUNTRY_CODES = (process.env.EXPO_PUBLIC_FAVORITE_COUNTRY_CODES || '')
+  .split(',')
+  .map((code) => code.trim().toUpperCase())
+  .filter(Boolean);
+
 export const FAVORITE_COUNTRIES: PhoneCountry[] = PHONE_COUNTRIES.filter(
-  (c) => UEMOA_CODES.has(c.code)
+  (c) => FAVORITE_COUNTRY_CODES.includes(c.code)
 ).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
 /** Recherche par code ISO */
@@ -216,7 +220,7 @@ export function getCountryByDialCode(dialCode: string): PhoneCountry | undefined
  * Parse une valeur E.164 en { country, localNumber }.
  * Trie par longueur de dialCode decroissante pour matcher le plus specifique d'abord.
  */
-export function parseE164(value: string, defaultCountryCode: string = 'CI'): { country: PhoneCountry; localNumber: string } {
+export function parseE164(value: string, defaultCountryCode: string = DEFAULT_COUNTRY_CODE): { country: PhoneCountry; localNumber: string } {
   const defaultCountry = getCountryByCode(defaultCountryCode) || PHONE_COUNTRIES[0];
 
   if (!value || !value.startsWith('+')) {

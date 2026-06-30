@@ -34,6 +34,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { Input, Button, CheckboxRow, Chip, IconButton, SelectCard, Toggle, StepIndicator, useToast, Tap } from '../../../src/components/ui';
 import MapLocationPicker from '../../../src/components/MapLocationPicker';
+import { DEFAULT_COUNTRY_CODE } from '../../../src/constants/phone-countries';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
@@ -243,7 +244,7 @@ export default function CreateSpaceScreen() {
     address: values.address || undefined,
     city: values.city || undefined,
     region: values.region || undefined,
-    country: values.country || 'CI',
+    country: values.country || DEFAULT_COUNTRY_CODE,
     surface_m2: parseFloat(values.surfaceM2),
     capacity: parseInt(values.capacity),
     equipment: values.selectedEquipment,
@@ -279,7 +280,7 @@ export default function CreateSpaceScreen() {
       selectedSectors: { initialValue: [] },
       // Location
       address: { initialValue: '' },
-      country: { initialValue: 'CI' },
+      country: { initialValue: DEFAULT_COUNTRY_CODE },
       region: { initialValue: '' },
       city: { initialValue: '' },
       coordinates: { initialValue: null },
@@ -391,13 +392,13 @@ export default function CreateSpaceScreen() {
           const org = response.data;
           if (org) {
             form.setValues({
-              country: org.headquarters_country || 'CI',
+              country: org.headquarters_country || DEFAULT_COUNTRY_CODE,
               region: org.headquarters_region || '',
               city: org.headquarters_city || '',
             });
           }
         } catch (error) {
-          form.setValue('country', 'CI');
+          form.setValue('country', DEFAULT_COUNTRY_CODE);
         }
         setOrgLocationLoaded(true);
       }

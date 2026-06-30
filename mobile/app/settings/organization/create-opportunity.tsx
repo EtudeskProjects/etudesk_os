@@ -40,6 +40,7 @@ import { Input, Button, Toggle, StepIndicator, Chip, KeyboardAwareScrollView, Ic
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../../src/constants/phone-countries';
 import {
   getOpportunityTypeData,
   getContractTypeData,
@@ -273,8 +274,7 @@ export default function CreateOpportunityScreen() {
             });
           }
         } catch (error) {
-          // Fallback to CI if org not found
-          form.setValue('country', 'CI');
+          form.setValue('country', DEFAULT_COUNTRY_CODE);
         }
         setOrgLocationLoaded(true);
       }

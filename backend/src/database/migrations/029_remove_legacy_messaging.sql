@@ -1,5 +1,5 @@
--- 029_remove_whatsapp_ultramsg.sql
--- Remove WhatsApp/UltraMsg support. Authentication is email OTP only.
+-- 029_remove_legacy_messaging.sql
+-- Remove legacy messaging support. Authentication is email OTP only.
 
 DROP TABLE IF EXISTS whatsapp_support_reports;
 DROP TABLE IF EXISTS whatsapp_support_messages;

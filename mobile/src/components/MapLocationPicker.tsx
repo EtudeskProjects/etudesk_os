@@ -218,10 +218,10 @@ export function MapLocationPicker({
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  // Default center (Abidjan, Cote d'Ivoire)
+  // Default center
   const defaultCenter: Coordinates = {
-    latitude: 5.3600,
-    longitude: -4.0083,
+    latitude: 0,
+    longitude: 0,
   };
 
   const centerCoords = initialCoordinates || defaultCenter;

@@ -18,11 +18,15 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, withOpacity } from '../../../constants/theme';
 import { getSkillTypeConfig, skillDisplayName } from '../../../constants/skills';
 import { SkillLevelSteps } from '../../SkillLevelSteps';
+
+const PREVIEW_LIMIT = 10;
 
 interface SkillItem {
   name: string;
@@ -34,14 +38,33 @@ interface SkillItem {
 interface SkillsData {
   title?: string;
   skills: SkillItem[];
+  talentId?: string | null;
+  talent_id?: string | null;
 }
 
 export function SkillsBlock({ data, onSkillPress }: { data: SkillsData; onSkillPress?: (name: string) => void }) {
   const { colors } = useTheme();
   const { language } = useI18n();
+  const router = useRouter();
 
   const skills = Array.isArray(data?.skills) ? data.skills : [];
   if (skills.length === 0) return null;
+  const talentId = data?.talentId || data?.talent_id;
+  const hasMore = skills.length > PREVIEW_LIMIT;
+  const visibleSkills = hasMore ? skills.slice(0, PREVIEW_LIMIT) : skills;
+  const remaining = Math.max(0, skills.length - PREVIEW_LIMIT);
+  const seeMoreLabel = language === 'fr'
+    ? talentId ? 'Voir le profil du talent' : `Voir plus (${remaining})`
+    : talentId ? 'View talent profile' : `See more (${remaining})`;
+
+  const handleSeeMore = () => {
+    if (talentId) {
+      router.push(`/details/talent/${talentId}` as any);
+      return;
+    }
+
+    router.push('/settings/skills' as any);
+  };
 
   return (
     <View style={styles.wrap}>
@@ -49,7 +72,7 @@ export function SkillsBlock({ data, onSkillPress }: { data: SkillsData; onSkillP
         <Text style={[styles.title, { color: colors.textPrimary }]}>{data.title}</Text>
       ) : null}
       <View style={styles.grid}>
-        {skills.map((s, i) => {
+        {visibleSkills.map((s, i) => {
           const cfg = getSkillTypeConfig(s.type, colors);
           const label = skillDisplayName(s, language);
           return (
@@ -74,6 +97,18 @@ export function SkillsBlock({ data, onSkillPress }: { data: SkillsData; onSkillP
           );
         })}
       </View>
+      {hasMore ? (
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={handleSeeMore}
+          style={[styles.moreButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        >
+          <Text style={[styles.moreText, { color: colors.primary }]} numberOfLines={1}>
+            {seeMoreLabel}
+          </Text>
+          <ChevronRight size={16} color={colors.primary} strokeWidth={1.75} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -93,4 +128,16 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   iconWrap: { width: 28, height: 28, borderRadius: BORDER.radius.md, alignItems: 'center', justifyContent: 'center' },
   name: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+  moreButton: {
+    marginTop: SPACING.sm,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+  },
+  moreText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold },
 });

@@ -4,7 +4,7 @@
       "code": "BJ",
       "name": "Bénin",
       "nameEn": "Benin",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+229",
       "flag": "🇧🇯"
@@ -13,7 +13,7 @@
       "code": "BF",
       "name": "Burkina Faso",
       "nameEn": "Burkina Faso",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+226",
       "flag": "🇧🇫"
@@ -22,7 +22,7 @@
       "code": "CI",
       "name": "Côte d'Ivoire",
       "nameEn": "Ivory Coast",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+225",
       "flag": "🇨🇮"
@@ -31,7 +31,7 @@
       "code": "GW",
       "name": "Guinée-Bissau",
       "nameEn": "Guinea-Bissau",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+245",
       "flag": "🇬🇼"
@@ -40,7 +40,7 @@
       "code": "ML",
       "name": "Mali",
       "nameEn": "Mali",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+223",
       "flag": "🇲🇱"
@@ -49,7 +49,7 @@
       "code": "NE",
       "name": "Niger",
       "nameEn": "Niger",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+227",
       "flag": "🇳🇪"
@@ -58,7 +58,7 @@
       "code": "SN",
       "name": "Sénégal",
       "nameEn": "Senegal",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+221",
       "flag": "🇸🇳"
@@ -67,7 +67,7 @@
       "code": "TG",
       "name": "Togo",
       "nameEn": "Togo",
-      "zone": "UEMOA",
+      "zone": "WEST_AFRICA",
       "currency": "XOF",
       "dialCode": "+228",
       "flag": "🇹🇬"

@@ -39,7 +39,7 @@ Depuis **2016**, Etudesk a forme **plus de 50 000 personnes dans plus de 17 pays
 
 ### Le talent vise
 
-Jeunes d'Afrique de l'Ouest francophone (Cote d'Ivoire et UEMOA en priorite) : etudiants, jeunes professionnels, autodidactes. Ambitieux, connectes via mobile, sensibles au cout de la data, francophones, en quete d'employabilite concrete. Ton attendu : **tutoiement**, direct, fier, aspirationnel. **Eviter** le registre ONG / charite : parler reussite, autonomie, vitesse, opportunite.
+Talents francophones et internationaux qui veulent progresser dans les competences numeriques : etudiants, jeunes professionnels, autodidactes et personnes en reconversion. Ambitieux, mobiles, sensibles a la valeur concrete des apprentissages, en quete d'employabilite mesurable. Ton attendu : **tutoiement**, direct, fier, aspirationnel. **Eviter** le registre ONG / charite : parler reussite, autonomie, vitesse, opportunite.
 
 ### Les frictions reelles a lever
 
@@ -277,10 +277,10 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 
 **Objectif** : incarner la marque et creer la confiance par l'heritage.
 
-1. **Manifeste** : democratiser les competences du digital en Afrique de l'Ouest ; mettre un tuteur et un guide carriere dans la poche de chaque talent.
+1. **Manifeste** : democratiser les competences numeriques ; mettre un tuteur et un guide carriere dans la poche de chaque talent.
 2. **Notre histoire** : depuis 2016, "l'universite des entreprises" ; 50 000+ personnes formees, 400+ organisations, 17 pays ; aujourd'hui une plateforme de competences et d'employabilite augmentee par l'IA.
 3. **Notre approche** : le referentiel vivant comme socle, les agents IA comme experience.
-4. **Reconnaissance** (a verifier avant publication) : Seedstars Abidjan (2016), Digital Africa (2017), finaliste du Next Billion EdTech Prize (Dubai, 2019), societe en portefeuille I&P, etude EdTech UEMOA avec la Fondation Mastercard. **Mention "finaliste"** pour le Next Billion, pas "laureat".
+4. **Reconnaissance** (a verifier avant publication) : Seedstars (2016), Digital Africa (2017), finaliste du Next Billion EdTech Prize (Dubai, 2019), societe en portefeuille I&P, collaborations avec la Fondation Mastercard. **Mention "finaliste"** pour le Next Billion, pas "laureat".
 5. **Equipe** : grille de 4 cartes (photo, nom, role, bio courte, lien LinkedIn).
 
 | Nom | Role | Bio courte (site) | LinkedIn |
@@ -389,7 +389,7 @@ Accroches et formulations qui resonnent avec la cible. A piocher selon l'emplace
 
 **Cible / aspiration**
 - "De l'autodidacte au talent recherche."
-- "Des competences numeriques aux vraies opportunites, a Abidjan et au-dela."
+- "Des competences numeriques aux vraies opportunites, partout."
 - "Pas de test d'admission. Pas de cohorte. Juste toi et ton prochain pas."
 
 **Preuve / confiance**

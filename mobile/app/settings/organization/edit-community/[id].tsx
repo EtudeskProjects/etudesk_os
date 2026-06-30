@@ -35,6 +35,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from 
 import { Input, Button, IconButton, Toggle, Chip, SelectCard, useToast, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../../../src/constants/phone-countries';
 import {
   getCommunityTypeData,
   getVisibilityData,
@@ -195,7 +196,7 @@ export default function EditCommunityScreen() {
         })));
       }
       
-      setCountry(comm.country || 'CI');
+      setCountry(comm.country || DEFAULT_COUNTRY_CODE);
       setRegion(comm.region || '');
       setCity(comm.city || '');
       setStatus((comm as any).status || 'INACTIVE');

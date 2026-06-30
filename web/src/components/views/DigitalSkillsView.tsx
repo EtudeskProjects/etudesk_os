@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useContext } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { Search, X, ArrowRight } from 'lucide-react';
+import { ExternalLink, Search, X } from 'lucide-react';
 import SiteHeader from '@/components/SiteHeader';
 import StoreButtons from '@/components/StoreButtons';
 import { ThemeContext } from '@/contexts/ThemeContext';
@@ -38,6 +37,7 @@ export default function DigitalSkillsView({ lang }: { lang: Lang }) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const label = useCallback((c: Competency) => (lang === 'fr' ? c.name_fr : c.name), [lang]);
+  const description = useCallback((c: Competency) => (lang === 'fr' ? c.description_fr : c.description_en) || c.description_en || c.description_fr, [lang]);
   const q = norm(query.trim());
   const searching = q.length >= 2;
 
@@ -177,9 +177,16 @@ export default function DigitalSkillsView({ lang }: { lang: Lang }) {
                 <span className="d-fam">{lang === 'fr' ? FAMILY_MAP[sel.family].fr : FAMILY_MAP[sel.family].en}</span>
               </span>
               <h2 className="d-title">{label(sel)}</h2>
-              <Link href={`/${lang}/digital-skills/${sel.slug}`} className="d-page-link">
-                {lang === 'fr' ? 'Voir la page de la compétence' : 'View the skill page'}<ArrowRight size={14} strokeWidth={1.25} />
-              </Link>
+              {(description(sel) || sel.official_url) && (
+                <section className="d-info" aria-label={lang === 'fr' ? 'Description de la compétence' : 'Skill description'}>
+                  {description(sel) && <p className="d-desc">{description(sel)}</p>}
+                  {sel.official_url && (
+                    <a className="d-official" href={sel.official_url} target="_blank" rel="noreferrer">
+                      {lang === 'fr' ? 'Source officielle' : 'Official source'}<ExternalLink size={13} strokeWidth={1.5} />
+                    </a>
+                  )}
+                </section>
+              )}
               <div className="rels">
                 {relGroups.map((g, gi) => {
                   const items = resolve(g.slugs);
@@ -325,8 +332,10 @@ export default function DigitalSkillsView({ lang }: { lang: Lang }) {
         .type-chip { display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--font-size-xxs); font-weight: var(--font-weight-semibold); padding: 0.18rem 0.5rem; border-radius: var(--radius-xs); }
         .d-fam { font-size: var(--font-size-xxs); color: var(--text-tertiary); }
         .d-title { font-size: var(--font-size-xxl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin: 0.5rem 0 0.85rem; line-height: 1.15; }
-        :global(.d-page-link) { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 1.25rem; font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--primary); text-decoration: none; }
-        :global(.d-page-link:hover) { text-decoration: underline; }
+        .d-info { margin: 0 0 1.35rem; padding: 0.85rem 0 1rem; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .d-desc { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+        .d-official { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem; color: var(--primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); text-decoration: none; overflow-wrap: anywhere; }
+        .d-official:hover { text-decoration: underline; }
         .rels { display: flex; flex-direction: column; gap: 1.4rem; }
         .relg-t { display: flex; align-items: center; gap: 0.45rem; font-size: var(--font-size-xxs); font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); margin-bottom: 0.7rem; }
         .relg-bar { width: 0.9rem; height: 0.2rem; border-radius: var(--radius-xs); flex: none; }

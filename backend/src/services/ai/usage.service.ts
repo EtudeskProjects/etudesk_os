@@ -11,6 +11,7 @@
 
 import { pool } from '../database';
 import { logger } from '../../utils';
+import { MODEL_AGENT } from './models';
 
 export type AIProvider = 'ai';
 
@@ -29,7 +30,7 @@ interface TokenPricing {
  */
 export const PRICING: Record<string, TokenPricing> = {
   // --- Current provider models ---
-  'zai-org/GLM-5.2': { provider: 'ai', input: 0.95, output: 3.0, cacheRead: 0.18 },
+  [MODEL_AGENT]: { provider: 'ai', input: 0.95, output: 3.0, cacheRead: 0.18 },
   'Qwen/Qwen3-235B-A22B-Instruct-2507': { provider: 'ai', input: 0.09, output: 0.10 },
   'deepseek-ai/DeepSeek-V3.2': { provider: 'ai', input: 0.26, output: 0.38, cacheRead: 0.13 },
   'deepseek-ai/DeepSeek-V4-Flash': { provider: 'ai', input: 0.10, output: 0.20 },

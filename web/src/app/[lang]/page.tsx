@@ -19,6 +19,7 @@ const META: Record<Locale, { title: string; description: string }> = {
       'Etudesk helps every talent discover, learn and showcase the digital skills that open local and international opportunities.',
   },
 };
+const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -26,6 +27,19 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return {
     title: { absolute: META[l].title },
     description: META[l].description,
+    openGraph: {
+      title: META[l].title,
+      description: META[l].description,
+      url: `https://etudesk.com/${l}`,
+      type: 'website',
+      images: [{ url: SKILLS_GRAPH_IMAGE, width: 1252, height: 1148, alt: l === 'fr' ? 'Carte des compétences digitales Etudesk' : 'Etudesk digital skills map' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: META[l].title,
+      description: META[l].description,
+      images: [SKILLS_GRAPH_IMAGE],
+    },
     alternates: {
       canonical: `/${l}`,
       languages: { fr: '/fr', en: '/en', 'x-default': '/fr' },

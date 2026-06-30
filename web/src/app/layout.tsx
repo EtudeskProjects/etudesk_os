@@ -7,6 +7,7 @@ const BASE = 'https://etudesk.com';
 const TITLE = 'Etudesk - Les compétences du digital, à la vitesse du marché';
 const DESC =
   'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales.';
+const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
@@ -50,12 +51,14 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Etudesk',
     locale: 'fr_FR',
+    images: [{ url: SKILLS_GRAPH_IMAGE, width: 1252, height: 1148, alt: 'Carte des compétences digitales Etudesk' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
     description:
       'Découvre, apprends et valorise les compétences numériques qui ouvrent des opportunités locales et internationales.',
+    images: [SKILLS_GRAPH_IMAGE],
     site: '@etudesk',
     creator: '@etudesk',
   },

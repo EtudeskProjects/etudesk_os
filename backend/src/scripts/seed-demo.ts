@@ -15,6 +15,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import fs from 'fs/promises';
+import path from 'path';
 import { pool } from '../services/database';
 import { v4 as uuidv4 } from 'uuid';
 import { resolveLabel, getCatalogVersion } from '../services/skills/catalog.service';
@@ -27,6 +29,53 @@ import {
 
 const ORG_SLUG = 'etudesk-demo-org';
 const DEMO_EMAIL = 'etd-app-review@etudesk.com';
+
+const SEED_DOC_FIXTURES: Record<string, string> = {
+  'seed-ops-cv.txt': `CV operateur produit
+
+Profil: fondateur et operateur produit, specialise dans les plateformes de developpement de talents, les communautes numeriques et les workflows data.
+
+Forces principales:
+- Product Management: cadrage produit, priorisation, roadmap, coordination execution.
+- Data Analytics: lecture de funnels, KPI, tableaux de bord et decisions basees sur les donnees.
+- Leadership et communication: animation d'equipes, restitution claire, prise de parole.
+- SQL: exploration de donnees operationnelles et analyse de performance.
+
+Experience recente:
+- Construction d'une plateforme qui relie profils, competences, communautes, opportunites et espaces de travail.
+- Mise en place de workflows copilote pour explorer des opportunites, generer des documents et aider les organisations a piloter leur vivier.
+- Coordination produit entre besoins utilisateurs, donnees operationnelles et automatisation IA.
+`,
+  'seed-ops-portfolio.txt': `Portfolio Etudesk OS
+
+Cas 1: communaute numerique
+Objectif: aider les talents a apprendre, partager des ressources et rejoindre des groupes utiles.
+Actions: modelisation des communautes, activites, polls, events, commentaires et moderation.
+Impact attendu: meilleure activation des membres et plus de signaux de competences observes.
+
+Cas 2: recrutement et vivier
+Objectif: aider les organisations a comprendre les candidatures, profils et besoins de recrutement.
+Actions: structuration des opportunites, candidatures, membres, documents et analytics.
+Impact attendu: decisions plus rapides et meilleurs matching entre besoins et competences.
+
+Cas 3: apprentissage assiste
+Objectif: accompagner les talents dans leur progression sur les competences numeriques.
+Actions: copilote d'etude, generation de quiz, parcours, schemas et suivi des competences.
+`,
+  'seed-ops-cert-data.txt': `Certificat Data Analytics
+
+Parcours court oriente analyse de donnees operationnelles.
+
+Modules couverts:
+- SQL pour selectionner, filtrer, agreger et comparer des donnees.
+- Construction de KPI: taux de conversion, volume, evolution, segmentation.
+- Dashboarding: choix des visualisations, tableaux de bord simples, lecture actionnable.
+- Qualite de donnees: valeurs manquantes, doublons, coherence des definitions.
+
+Projet final:
+Analyser un funnel de candidatures, identifier les points de blocage et recommander trois actions prioritaires.
+`,
+};
 
 let CATALOG_VERSION = '2026-Q2';
 
@@ -322,7 +371,7 @@ async function main() {
   // --- Spaces (catalog-tagged) + bookings ---
   const spaces = [
     { slug: 'demo-fablab', name: 'Atelier Fabrication Numérique', type: 'WORKSHOP', surface: 80, capacity: 20, desc: 'Prototypage et fabrication numérique.', equipment: ['Wifi', 'Imprimante 3D', 'Ordinateurs'], rate: 5000, skills: ['Prototyping', 'CAD Modeling', 'Robotics Integration'] },
-    { slug: 'demo-coworking', name: 'Espace Coworking Plateau', type: 'COWORKING', surface: 200, capacity: 50, desc: 'Espace de coworking au Plateau.', equipment: ['Wifi', 'Salles de réunion', 'Café'], rate: 3000, skills: ['Git', 'Docker'] },
+    { slug: 'demo-coworking', name: 'Quiet Coworking Hub', type: 'COWORKING', surface: 200, capacity: 50, desc: 'Espace de coworking calme pour travail individuel et sessions equipe.', equipment: ['Wifi', 'Salles de réunion', 'Café'], rate: 3000, skills: ['Git', 'Docker'] },
     { slug: 'demo-media-studio', name: 'Studio Média', type: 'STUDIO', surface: 60, capacity: 10, desc: 'Studio audio/vidéo pour créateurs.', equipment: ['Caméras', 'Micros', 'Éclairage'], rate: 8000, skills: ['Video Editing', 'Photography', 'AI Image Generation'] },
   ];
   const spaceIds: Record<string, string> = {};
@@ -477,17 +526,23 @@ async function main() {
     );
   }
 
-  // Documents: no real files needed for context/listing, but realistic metadata.
+  // Documents: local text fixtures so file_reader can read them during audits.
+  const seedDir = path.resolve(process.cwd(), 'uploads/seed');
+  await fs.mkdir(seedDir, { recursive: true });
+  for (const [filename, content] of Object.entries(SEED_DOC_FIXTURES)) {
+    await fs.writeFile(path.join(seedDir, filename), content, 'utf8');
+  }
+
   const docs = [
-    ['seed-ops-cv.pdf', 'CV', 'PROFESSIONAL', 'CV opérateur produit', 'Résumé product/data/communities, dernières missions et compétences clés.', ['Product Management', 'SQL', 'Leadership']],
-    ['seed-ops-portfolio.pdf', 'PORTFOLIO', 'PROFESSIONAL', 'Portfolio Etudesk OS', 'Cas produit: communauté, recrutement et apprentissage assistés par IA.', ['Product Management', 'Data Analytics']],
-    ['seed-ops-cert-data.pdf', 'CERTIFICATE', 'ACADEMIC', 'Certificat Data Analytics', 'Certificat court orienté SQL, métriques et dashboarding.', ['SQL', 'Data Analytics']],
+    ['seed-ops-cv.txt', 'CV', 'PROFESSIONAL', 'CV opérateur produit', 'Résumé product/data/communities, dernières missions et compétences clés.', ['Product Management', 'SQL', 'Leadership']],
+    ['seed-ops-portfolio.txt', 'PORTFOLIO', 'PROFESSIONAL', 'Portfolio Etudesk OS', 'Cas produit: communauté, recrutement et apprentissage assistés par IA.', ['Product Management', 'Data Analytics']],
+    ['seed-ops-cert-data.txt', 'CERTIFICATE', 'ACADEMIC', 'Certificat Data Analytics', 'Certificat court orienté SQL, métriques et dashboarding.', ['SQL', 'Data Analytics']],
   ];
   for (const [filename, type, category, title, description, tags] of docs) {
     await pool.query(
       `INSERT INTO talent_documents (talent_id, original_filename, stored_filename, mime_type, file_size, file_url,
         document_type, category, status, processed_at, tags, title, description, is_public)
-       VALUES ($1,$2::varchar,$2::varchar,'application/pdf',20480,'/uploads/seed/' || $2::text,$3::document_type,$4::document_category,'PROCESSED',NOW(),$5,$6,$7,true)`,
+       VALUES ($1,$2::varchar,$2::varchar,'text/plain',20480,'/uploads/seed/' || $2::text,$3::document_type,$4::document_category,'PROCESSED',NOW(),$5,$6,$7,true)`,
       [primaryTalentId, filename, type, category, tags, title, description]
     );
   }

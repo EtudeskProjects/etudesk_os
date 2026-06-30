@@ -24,6 +24,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../src/constants/phone-countries';
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
 import { imageService } from '../../src/services';
@@ -59,7 +60,7 @@ export default function CreateProfileScreen() {
       firstName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.firstNameRequired') },
       lastName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.lastNameRequired') },
       gender: { initialValue: '' },
-      country: { initialValue: 'CI' },
+      country: { initialValue: DEFAULT_COUNTRY_CODE },
       region: { initialValue: '' },
       commune: { initialValue: '' },
       phone: { initialValue: '', required: false },

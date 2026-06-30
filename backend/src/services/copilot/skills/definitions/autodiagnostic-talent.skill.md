@@ -84,7 +84,7 @@ Lister les competences du talent depuis le contexte `<skills>` (Top 5-8 les plus
 {"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
 ```
 
-**Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer exam pour viser master.
+**Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer un dossier de preuves ou une evaluation verifiee, pas une promotion automatique vers master.
 
 ---
 

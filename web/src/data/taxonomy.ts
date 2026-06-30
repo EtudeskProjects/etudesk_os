@@ -35,6 +35,9 @@ export interface Competency {
   type: CompetencyType;
   name: string;
   name_fr: string;
+  description_en: string;
+  description_fr: string;
+  official_url: string;
 }
 
 export const competencies = competenciesRaw as Competency[];

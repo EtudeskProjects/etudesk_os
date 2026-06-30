@@ -15,6 +15,17 @@ import { createOrgAgent } from '../services/copilot/agents/organization.agent';
 import type { AgentConfig } from '../services/copilot/tools/tool-helper';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
 import { getChatClient } from '../services/ai/provider';
+import {
+  AGENTIC_LIMITS,
+  buildAgentSystemText,
+  buildChatCompletionTools,
+  buildMissingRequiredToolMessage,
+  buildToolPreface,
+  enforceToolCallLimit,
+  getAgentCompletionOptions,
+  inferInitialToolChoice,
+  inferRequiredCompletionTool,
+} from '../services/copilot/agentic-policy';
 
 // --- Config ---
 
@@ -25,16 +36,6 @@ const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-au
 const FILTER_ARGS = process.argv.slice(2).map(a => a.toLowerCase());
 const AUDIT_15 = process.env.COPILOT_AUDIT_15 === '1';
 const AUDIT_10 = process.env.COPILOT_AUDIT_10 === '1';
-const PER_TOOL_CALL_LIMITS: Record<string, number> = {
-  smart_search: 2,
-  web_search: 1,
-  find_competency: 3,
-};
-const SQL_INTENT_CALL_LIMITS: Record<string, number> = {
-  org_talent_profile: 3,
-};
-const MAX_COMPLETION_TOKENS = Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1600);
-
 const C = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
@@ -69,9 +70,10 @@ async function findTestTalent(): Promise<{ id: string; name: string }> {
     SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
     FROM talents t
     WHERE t.deleted_at IS NULL
-    ORDER BY (SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id) DESC
+    ORDER BY (t.slug = COALESCE($1, 'app-review')) DESC,
+             (SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id) DESC
     LIMIT 1
-  `);
+  `, [process.env.COPILOT_AUDIT_TALENT_SLUG || 'app-review']);
 
   if (existing.rows.length > 0) {
     const t = existing.rows[0];
@@ -183,6 +185,7 @@ async function buildTestContext(talentId: string, mode: 'explore' | 'study'): Pr
       currentMode: mode,
       conversationTopic: mode === 'study' ? 'General learning' : undefined,
     },
+    language: 'fr',
     contextLoadedAt: new Date().toISOString(),
     contextVersion: '1.0',
   };
@@ -195,6 +198,7 @@ function buildOrgTestContext(talentId: string, talentName: string, org: { id: st
     organizationId: org.id,
     organizationName: org.name,
     role: org.role,
+    language: 'fr',
   };
 }
 
@@ -243,14 +247,14 @@ interface TestResult {
 }
 
 function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBeforeFirstTool: string = ''): CalibrationMetrics {
-  const charCount = output.length;
+  const textOnly = output.replace(/`{2,}[\s\S]*?`{2,}/g, ''); // strip fenced structural blocks
+  const charCount = textOnly.length;
 
   // Count sentences (split on period/exclamation/question mark followed by space or end)
-  const sentences = output.split(/[.!?]+\s/).filter(s => s.trim().length > 5);
+  const sentences = textOnly.split(/[.!?]+\s/).filter(s => s.trim().length > 5);
   const sentenceCount = sentences.length;
 
   // Check if agent asks unnecessary questions — exclude ? inside code blocks
-  const textOnly = output.replace(/`{2,}[\s\S]*?`{2,}/g, ''); // strip fenced blocks
   const questionMatches = textOnly.match(/\?/g) || [];
   const questionCount = questionMatches.length;
   const asksQuestion = questionCount > 0;
@@ -268,6 +272,7 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
   // Tool usage
   const toolCallCount = toolCalls.length;
   const usedToolsImmediately = toolCallCount > 0;
+  const hasConfirmationAction = /`{3}confirmation\s*\n/i.test(output);
 
   // Verbosity rating
   let verbosityRating: CalibrationMetrics['verbosityRating'] = 'ok';
@@ -277,8 +282,8 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
 
   // Proactivity rating
   let proactivityRating: CalibrationMetrics['proactivityRating'] = 'ok';
-  if (usedToolsImmediately && questionCount <= 1) proactivityRating = 'proactive';
-  if (!usedToolsImmediately || questionCount > 2) proactivityRating = 'passive';
+  if ((usedToolsImmediately || hasConfirmationAction) && questionCount <= 1) proactivityRating = 'proactive';
+  if ((!usedToolsImmediately && !hasConfirmationAction) || questionCount > 2) proactivityRating = 'passive';
 
   // Quick ack: agent output text before first tool call (for streaming responsiveness)
   const ackTrimmed = textBeforeFirstTool.trim();
@@ -298,6 +303,62 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
     hasQuickAck,
     quickAckText: ackTrimmed.slice(0, 80),
   };
+}
+
+const ENTITY_CARD_ID_REGEX = /```entity:(?!maps)(\w+)\s*\n\s*\{\s*"id"\s*:\s*"([^"]+)"/g;
+const UUID_VALUE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function collectToolResultIds(value: unknown): Set<string> {
+  const ids = new Set<string>();
+  const serialized = JSON.stringify(value) || '';
+  for (const match of serialized.matchAll(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi)) {
+    if (UUID_VALUE_REGEX.test(match[0])) ids.add(match[0]);
+  }
+  return ids;
+}
+
+async function validateEntityCardsComeFromTools(output: string, toolCalls: ToolCallCapture[]): Promise<string[]> {
+  const allowedIds = collectToolResultIds(toolCalls.map((tc) => tc.output));
+  const errors: string[] = [];
+  for (const match of output.matchAll(ENTITY_CARD_ID_REGEX)) {
+    const entityType = match[1];
+    const id = match[2];
+    if (toolCalls.length === 0) {
+      errors.push(`Entity card id ${id} was produced without any tool call`);
+      continue;
+    }
+    if (!allowedIds.has(id) && !(await entityExists(entityType, id))) {
+      errors.push(`Entity card id ${id} was not present in any tool result`);
+    }
+  }
+  return errors;
+}
+
+async function entityExists(entityType: string, id: string): Promise<boolean> {
+  if (entityType === 'document') {
+    const res = await pool.query(
+      `SELECT 1 FROM talent_documents WHERE id = $1 AND deleted_at IS NULL
+       UNION ALL
+       SELECT 1 FROM organization_documents WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [id]
+    );
+    return (res.rowCount || 0) > 0;
+  }
+
+  const tableByType: Record<string, string> = {
+    opportunity: 'opportunities',
+    community: 'communities',
+    space: 'spaces',
+    organization: 'organizations',
+    talent: 'talents',
+    event: 'community_activities',
+    notification: 'notifications',
+  };
+  const table = tableByType[entityType];
+  if (!table) return false;
+  const res = await pool.query(`SELECT 1 FROM ${table} WHERE id = $1 LIMIT 1`, [id]);
+  return (res.rowCount || 0) > 0;
 }
 
 async function runAgentTest(
@@ -329,23 +390,30 @@ async function runAgentTest(
   try {
     const client = getChatClient();
     const messages: any[] = [{ role: 'user' as const, content: message }];
-    const toolDefs = agent.tools.map(t => ({
-      type: 'function' as const,
-      function: {
-        name: t.definition.name,
-        description: t.definition.description,
-        parameters: t.definition.input_schema,
-      },
-    }));
+    const toolDefs = buildChatCompletionTools(agent.tools);
+    const completionOptions = getAgentCompletionOptions();
+    const systemText = buildAgentSystemText(agent);
+    const initialToolChoice = inferInitialToolChoice(agent.mode, message);
+    const requiredCompletionTool = inferRequiredCompletionTool(agent.mode, message);
+    let requiredToolRetryUsed = false;
+    if (
+      initialToolChoice &&
+      typeof initialToolChoice === 'object' &&
+      initialToolChoice.type === 'function'
+    ) {
+      const preface = buildToolPreface(initialToolChoice.function.name);
+      output += preface;
+      textBeforeFirstTool += preface;
+    }
     let turnCount = 0;
-    const MAX_TURNS = 15;
 
-    while (turnCount < MAX_TURNS) {
+    while (turnCount < AGENTIC_LIMITS.maxTurns) {
       const response = await client.chat.completions.create({
         model: agent.model,
-        messages: [{ role: 'system' as const, content: agent.systemPrompt }, ...messages],
+        messages: [{ role: 'system' as const, content: systemText }, ...messages],
         tools: toolDefs,
-        max_tokens: MAX_COMPLETION_TOKENS,
+        tool_choice: turnCount === 0 ? initialToolChoice || 'auto' : 'auto',
+        ...completionOptions,
       });
       usage.requests++;
       usage.inputTokens += response.usage?.prompt_tokens || 0;
@@ -359,6 +427,18 @@ async function runAgentTest(
 
       // Check for tool_use blocks
       const toolUseBlocks = responseMessage?.tool_calls || [];
+
+      if (
+        toolUseBlocks.length === 0 &&
+        requiredCompletionTool &&
+        !requiredToolRetryUsed &&
+        !toolCalls.some((tc) => tc.name === requiredCompletionTool)
+      ) {
+        requiredToolRetryUsed = true;
+        messages.push(responseMessage);
+        messages.push({ role: 'user' as const, content: buildMissingRequiredToolMessage(requiredCompletionTool) });
+        continue;
+      }
 
       if (toolUseBlocks.length === 0) break; // No tools → done
 
@@ -381,27 +461,14 @@ async function runAgentTest(
         const toolDef = agent.tools.find(t => t.definition.name === toolName);
         let result: any;
         try {
-          const perToolLimit = PER_TOOL_CALL_LIMITS[toolName];
-          if (perToolLimit && toolNameCount > perToolLimit) {
-            result = {
-              _tool_limit: true,
-              _cached: true,
-              message: `${toolName} call limit reached for this run. Synthesize the answer from previous tool results and do not call this tool again.`,
-            };
-          } else if (toolName === 'sql_query') {
-            const sqlIntent = toolArgs?.intent;
-            const sqlIntentLimit = sqlIntent ? SQL_INTENT_CALL_LIMITS[sqlIntent] : undefined;
-            const sqlIntentCount = sqlIntent ? (sqlIntentCounts.get(sqlIntent) || 0) + 1 : 0;
-            if (sqlIntent) sqlIntentCounts.set(sqlIntent, sqlIntentCount);
-            if (sqlIntentLimit && sqlIntentCount > sqlIntentLimit) {
-              result = {
-                _tool_limit: true,
-                _cached: true,
-                message: `${sqlIntent} call limit reached for this run. Rank/synthesize from org_talents and the profiles already loaded; do not inspect more profiles.`,
-              };
-            } else {
-              result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
-            }
+          const limit = enforceToolCallLimit({
+            toolName,
+            toolInput: toolArgs,
+            toolNameCount,
+            sqlIntentCounts,
+          });
+          if (limit.limited) {
+            result = limit.output;
           } else {
             result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
           }
@@ -445,6 +512,10 @@ async function runAgentTest(
 
   const duration = Date.now() - start;
   const calibration = analyzeCalibration(output, toolCalls, textBeforeFirstTool);
+  if (targetTool !== 'none' && !toolCalls.some((tc) => tc.name === targetTool)) {
+    errors.push(`Expected tool "${targetTool}" was not called`);
+  }
+  errors.push(...await validateEntityCardsComeFromTools(output, toolCalls));
 
   // Print output
   log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms, tokens in/out/cached: ${usage.inputTokens}/${usage.outputTokens}/${usage.cachedTokens}):`);
@@ -551,7 +622,7 @@ const TESTS: TestDef[] = [
   {
     name: 'Org — Recruter profils marketing',
     agentType: 'org',
-    targetTool: 'smart_search',
+    targetTool: 'sql_query',
     message: 'Trouve-moi 5 profils marketing digital seniors disponibles en remote',
   },
   {

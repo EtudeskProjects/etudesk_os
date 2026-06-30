@@ -71,12 +71,20 @@ function readCsvObjects(file) {
   return rows.map((row) => Object.fromEntries(header.map((key, i) => [key, row[i] ?? ''])));
 }
 
-const competencies = readCsvObjects(CATALOG).map(({ slug, family, type, name, name_fr }) => ({
+const cleanUrl = (url) => {
+  const value = (url || '').trim();
+  return value.toLowerCase() === 'pas sur' ? '' : value;
+};
+
+const competencies = readCsvObjects(CATALOG).map(({ slug, family, type, name, name_fr, description_en, description_fr, official_url }) => ({
   slug,
   family,
   type,
   name,
   name_fr,
+  description_en: description_en || '',
+  description_fr: description_fr || '',
+  official_url: cleanUrl(official_url),
 }));
 
 const bySlug = new Set(competencies.map((c) => c.slug));

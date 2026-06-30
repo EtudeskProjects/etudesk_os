@@ -102,6 +102,7 @@ export function createSqlQueryTool(
       }
       // Merge top-level query/country into params (agent may send them at root level)
       if (query && !params.query) params.query = query;
+      if (query && intent === 'org_talents' && !params.search) params.search = query;
       if (country && !params.country) params.country = country;
 
       // Cap limit to prevent LLM from requesting excessive rows

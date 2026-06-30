@@ -5,6 +5,7 @@ import { getSkillContent, allSkillSlugs } from '@/lib/skill-content';
 import SkillView from '@/components/views/SkillView';
 
 const BASE = 'https://etudesk.com';
+const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';
 
 // Toutes les compétences sont pré-générées pour les 2 langues : chaque page doit
 // être indexable (le segment parent [lang] impose dynamicParams=false).
@@ -38,6 +39,13 @@ export async function generateMetadata(
       description: content.metaDescription,
       url: `${BASE}${path}`,
       type: 'article',
+      images: [{ url: SKILLS_GRAPH_IMAGE, width: 1252, height: 1148, alt: l === 'fr' ? 'Carte du référentiel des compétences digitales Etudesk' : 'Etudesk digital skills referential map' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.metaTitle,
+      description: content.metaDescription,
+      images: [SKILLS_GRAPH_IMAGE],
     },
   };
 }

@@ -19,6 +19,7 @@ const META: Record<Locale, { title: string; description: string }> = {
       'A proprietary referential aggregating the world\'s leading digital skills frameworks and real job-market signals.',
   },
 };
+const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -26,6 +27,19 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return {
     title: META[l].title,
     description: META[l].description,
+    openGraph: {
+      title: META[l].title,
+      description: META[l].description,
+      url: `https://etudesk.com/${l}/digital-skills`,
+      type: 'website',
+      images: [{ url: SKILLS_GRAPH_IMAGE, width: 1252, height: 1148, alt: l === 'fr' ? 'Carte du référentiel des compétences digitales Etudesk' : 'Etudesk digital skills referential map' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: META[l].title,
+      description: META[l].description,
+      images: [SKILLS_GRAPH_IMAGE],
+    },
     alternates: {
       canonical: `/${l}/digital-skills`,
       languages: { fr: '/fr/digital-skills', en: '/en/digital-skills', 'x-default': '/fr/digital-skills' },

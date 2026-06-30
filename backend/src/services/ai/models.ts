@@ -10,9 +10,8 @@
 
 // --- Main copilot agent (best open reasoning + tool use) ---
 
-/** Main copilot agents: talent explorer, org explorer, study mode.
- *  Default GLM-5.2 (long-horizon reasoning, 1M context, prompt cache). */
-export const MODEL_AGENT = process.env.AI_MODEL_AGENT || 'zai-org/GLM-5.2';
+/** Main copilot agents: talent explorer, org explorer, study mode. */
+export const MODEL_AGENT = process.env.AI_MODEL_AGENT || 'provider/agent-model';
 
 /** Fast tasks: summaries, titles, guardrails, intent suggestions. */
 export const MODEL_FAST = process.env.AI_MODEL_FAST || 'meta-llama/Llama-4-Scout-17B-16E-Instruct';

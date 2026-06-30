@@ -12,30 +12,23 @@ import { runInputGuardrail } from '../guardrails/input.guardrail';
 import { getChatClient } from '../../ai/provider';
 import { recordUsage } from '../../ai/usage.service';
 import { generateToolSummary } from './tool-summary';
-import { sanitizeOutput } from '../guardrails/output.guardrail';
+import { sanitizeEntityCardsByAllowedIds, sanitizeOutput } from '../guardrails/output.guardrail';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 import { SupportedLanguage } from '../../../i18n';
 import { getLanguageDisplayName } from '../../language-preference.service';
+import {
+  AGENTIC_LIMITS,
+  buildAgentSystemText,
+  buildChatCompletionTools,
+  buildMissingRequiredToolMessage,
+  buildToolPreface,
+  enforceToolCallLimit,
+  getAgentCompletionOptions,
+  inferInitialToolChoice,
+  inferRequiredCompletionTool,
+} from '../agentic-policy';
 
-const MAX_TURNS = 15;
-const MAX_TOOL_CALLS = 20;
-const MAX_SAME_TOOL_CALLS = 3;
-const PER_TOOL_CALL_LIMITS: Record<string, number> = {
-  smart_search: 2,
-  web_search: 1,
-  find_competency: 3,
-};
-const SQL_INTENT_CALL_LIMITS: Record<string, number> = {
-  org_talent_profile: 3,
-};
-const MAX_TURN_DURATION_MS = 120_000;
-// Margin guardrail: a single billed query must not exceed its credit's worth of
-// compute. Output tokens are the expensive part ($15/1M on Sonnet). Capping
-// cumulative output bounds the blast radius of a runaway tool loop behind the
-// fixed credit price. Tunable via env without a deploy.
-const MAX_OUTPUT_TOKENS_PER_QUERY = Number(process.env.COPILOT_MAX_OUTPUT_TOKENS || 12_000);
-const MAX_COMPLETION_TOKENS = Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1600);
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const SSE_BUFFER_FLUSH_MS = 50; // Buffer text deltas and flush every 50ms
 const MAX_PROVIDER_RETRIES = 2;
@@ -91,6 +84,17 @@ const TOOL_RESULT_TEXT_KEYS = [
   'summary',
   '_note',
 ];
+
+const UUID_VALUE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function collectEntityIds(value: unknown): Set<string> {
+  const ids = new Set<string>();
+  const serialized = JSON.stringify(value) || '';
+  for (const match of serialized.matchAll(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi)) {
+    if (UUID_VALUE_REGEX.test(match[0])) ids.add(match[0]);
+  }
+  return ids;
+}
 
 function hasMeaningfulToolText(value: unknown): boolean {
   if (typeof value === 'string') {
@@ -332,21 +336,19 @@ export async function runAgentWithSSE(
     const client = getChatClient();
     // Convert internal tool defs (name/description/input_schema) to chat-completion tools
     // function-tool format (type:function, function:{name,description,parameters}).
-    const toolDefs: OpenAI.Chat.ChatCompletionTool[] = agentConfig.tools.map((t) => ({
-      type: 'function' as const,
-      function: {
-        name: t.definition.name,
-        description: t.definition.description,
-        parameters: (t.definition.input_schema as Record<string, unknown>) ?? { type: 'object', properties: {} },
-      },
-    }));
+    const toolDefs = buildChatCompletionTools(agentConfig.tools);
+    const completionOptions = getAgentCompletionOptions();
+    const initialToolChoice = inferInitialToolChoice(agentConfig.mode, message);
+    const requiredCompletionTool = inferRequiredCompletionTool(agentConfig.mode, message);
+    let sentToolPreface = false;
+    let requiredToolRetryUsed = false;
 
-    while (turnCount < MAX_TURNS) {
+    while (turnCount < AGENTIC_LIMITS.maxTurns) {
       turnCount++;
-      if (turnCount >= MAX_TURNS) hitTurnLimit = true;
+      if (turnCount >= AGENTIC_LIMITS.maxTurns) hitTurnLimit = true;
 
       // Check duration limit
-      if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
+      if (!limitReached && Date.now() - turnStart > AGENTIC_LIMITS.maxTurnDurationMs) {
         limitReached = true;
         const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
         sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
@@ -355,10 +357,10 @@ export async function runAgentWithSSE(
 
       // Margin guardrail: stop before another expensive model round-trip once the
       // query has already consumed its token budget. Protects the fixed credit price.
-      if (!limitReached && totalOutputTokens >= MAX_OUTPUT_TOKENS_PER_QUERY) {
+      if (!limitReached && totalOutputTokens >= AGENTIC_LIMITS.maxOutputTokensPerQuery) {
         limitReached = true;
         const limitMsg = 'Budget de calcul de la requête atteint. Voici les résultats disponibles.';
-        logger.warn(`[copilot] Output token budget reached (${totalOutputTokens}/${MAX_OUTPUT_TOKENS_PER_QUERY}). Stopping run.`);
+        logger.warn(`[copilot] Output token budget reached (${totalOutputTokens}/${AGENTIC_LIMITS.maxOutputTokensPerQuery}). Stopping run.`);
         sendSSE(res, { type: 'limit_reached', reason: 'max_tokens', message: limitMsg });
         break;
       }
@@ -369,11 +371,7 @@ export async function runAgentWithSSE(
       let toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
       const maxAttempts = MAX_PROVIDER_RETRIES + 1;
 
-      // System prompt: static (shared) + dynamic (per-user). Open models take a
-      // single system message; we concatenate the two halves (no reordering).
-      const systemText = agentConfig.systemPromptStatic
-        ? `${agentConfig.systemPromptStatic}\n\n${agentConfig.systemPrompt}`
-        : agentConfig.systemPrompt;
+      const systemText = buildAgentSystemText(agentConfig);
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         let attemptProducedOutput = false;
@@ -384,6 +382,21 @@ export async function runAgentWithSSE(
         let finishReason: string | null = null;
         let textBuffer = '';
         let bufferTimer: ReturnType<typeof setTimeout> | null = null;
+
+        if (
+          !sentToolPreface &&
+          turnCount === 1 &&
+          initialToolChoice &&
+          typeof initialToolChoice === 'object' &&
+          initialToolChoice.type === 'function'
+        ) {
+          const preface = buildToolPreface(initialToolChoice.function.name);
+          finalOutput += preface;
+          currentTurnText += preface;
+          segments.push({ type: 'text', content: preface });
+          sendSSE(res, { type: 'text_delta', delta: preface });
+          sentToolPreface = true;
+        }
 
         const flushTextBuffer = () => {
           if (textBuffer) {
@@ -402,7 +415,8 @@ export async function runAgentWithSSE(
             model: agentConfig.model,
             messages: [{ role: 'system', content: systemText }, ...messages],
             tools: toolDefs.length > 0 ? toolDefs : undefined,
-            max_tokens: MAX_COMPLETION_TOKENS,
+            tool_choice: turnCount === 1 ? initialToolChoice || 'auto' : 'auto',
+            ...completionOptions,
             stream: true,
             stream_options: { include_usage: true },
           });
@@ -509,6 +523,21 @@ export async function runAgentWithSSE(
         break;
       }
 
+      // If a task requires a finalizing tool, do not stop on an incomplete
+      // "I will generate..." answer. Some open models occasionally end the turn
+      // just before the required function call; one corrective continuation fixes it.
+      if (
+        toolUseBlocks.length === 0 &&
+        requiredCompletionTool &&
+        !requiredToolRetryUsed &&
+        !toolTrace.some((t) => t.name === requiredCompletionTool)
+      ) {
+        requiredToolRetryUsed = true;
+        messages.push(response.assistantMessage);
+        messages.push({ role: 'user', content: buildMissingRequiredToolMessage(requiredCompletionTool) });
+        continue;
+      }
+
       // If no tool_use blocks, we're done
       if (toolUseBlocks.length === 0 || response.stopReason === 'stop') {
         break;
@@ -540,7 +569,7 @@ export async function runAgentWithSSE(
         const sameCount = (sameToolCounts.get(loopKey) || 0) + 1;
         sameToolCounts.set(loopKey, sameCount);
 
-        if (!limitReached && sameCount > MAX_SAME_TOOL_CALLS) {
+        if (!limitReached && sameCount > AGENTIC_LIMITS.maxSameToolCalls) {
           limitReached = true;
           hitLoopDetection = true;
           const limitMsg = `Boucle d'outils detectee (${toolUse.name} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits.`;
@@ -558,9 +587,9 @@ export async function runAgentWithSSE(
         }
 
         // Check tool count limit
-        if (!limitReached && toolCallCounter > MAX_TOOL_CALLS) {
+        if (!limitReached && toolCallCounter > AGENTIC_LIMITS.maxToolCalls) {
           limitReached = true;
-          const limitMsg = `Limite de ${MAX_TOOL_CALLS} outils atteinte. Voici les résultats disponibles.`;
+          const limitMsg = `Limite de ${AGENTIC_LIMITS.maxToolCalls} outils atteinte. Voici les résultats disponibles.`;
           sendSSE(res, { type: 'limit_reached', reason: 'max_tools', message: limitMsg });
         }
 
@@ -589,31 +618,14 @@ export async function runAgentWithSSE(
         let output: any;
         let isError = false;
         try {
-          const perToolLimit = PER_TOOL_CALL_LIMITS[toolUse.name];
-          if (perToolLimit && toolNameCount > perToolLimit) {
-            output = {
-              _tool_limit: true,
-              _cached: true,
-              message: `${toolUse.name} call limit reached for this run. Synthesize the answer from previous tool results and do not call this tool again.`,
-            };
-          } else if (toolUse.name === 'sql_query') {
-            const sqlIntent = toolUse.input?.intent;
-            const sqlIntentLimit = sqlIntent ? SQL_INTENT_CALL_LIMITS[sqlIntent] : undefined;
-            const sqlIntentCount = sqlIntent ? (sqlIntentCounts.get(sqlIntent) || 0) + 1 : 0;
-            if (sqlIntent) sqlIntentCounts.set(sqlIntent, sqlIntentCount);
-            if (sqlIntentLimit && sqlIntentCount > sqlIntentLimit) {
-              output = {
-                _tool_limit: true,
-                _cached: true,
-                message: `${sqlIntent} call limit reached for this run. Rank/synthesize from org_talents and the profiles already loaded; do not inspect more profiles.`,
-              };
-            } else {
-              const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
-              if (!toolDef) {
-                throw new Error(`Unknown tool: ${toolUse.name}`);
-              }
-              output = await toolDef.execute(toolUse.input);
-            }
+          const limit = enforceToolCallLimit({
+            toolName: toolUse.name,
+            toolInput: toolUse.input,
+            toolNameCount,
+            sqlIntentCounts,
+          });
+          if (limit.limited) {
+            output = limit.output;
           } else {
             const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
             if (!toolDef) {
@@ -750,6 +762,18 @@ export async function runAgentWithSSE(
     for (const seg of segments) {
       if (seg.type === 'text') {
         seg.content = sanitizeOutput(seg.content || '', agentMode);
+      }
+    }
+  }
+
+  const allowedEntityIds = collectEntityIds(toolTrace.map((t) => t.result));
+  const sanitized3 = sanitizeEntityCardsByAllowedIds(finalOutput, allowedEntityIds);
+  if (sanitized3 !== finalOutput) {
+    finalOutput = sanitized3;
+    sendSSE(res, { type: 'content_corrected', content: sanitized3 });
+    for (const seg of segments) {
+      if (seg.type === 'text') {
+        seg.content = sanitizeEntityCardsByAllowedIds(seg.content || '', allowedEntityIds);
       }
     }
   }

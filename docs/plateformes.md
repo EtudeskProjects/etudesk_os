@@ -54,7 +54,7 @@
 | Account Type | Organization |
 | Developer Name | ETUDESK |
 | Email compte | hello@etudesk.org |
-| Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire (CI) |
+| Adresse | Adresse legale du compte |
 | Website | https://etudesk.com/ |
 | Statut | **ACTIF** |
 
@@ -67,7 +67,7 @@
 | D-U-N-S | 851758402 |
 | Email | hello@etudesk.org |
 | Legal Entity | ETUDESK |
-| Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire |
+| Adresse | Adresse legale du compte |
 | Statut | **ACTIF** — Agreement signe le 02/04/2026 |
 
 ### Expo
