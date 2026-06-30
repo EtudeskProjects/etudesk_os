@@ -154,17 +154,20 @@
   "docColumnSection": "Section",
   "docColumnContent": "Content",
   "docLabelData": "Data",
+  "suggestionsOrgFallback": [
+    "Rank candidates from my latest opportunity.",
+    "Does my talent pool cover a Data role?",
+    "Find talents skilled in Agentic AI."
+  ],
   "suggestionsStudyFallback": [
-    "Démarrons par les fondamentaux du numérique",
-    "Je veux me former en Python",
-    "Par où commencer pour devenir Expert IA",
-    "Which future-ready skills should I learn?"
+    "What is AI?",
+    "Assess my Python level.",
+    "Let’s start with core digital skills."
   ],
   "suggestionsExploreFallback": [
+    "The most in-demand skills on the market.",
     "Which opportunities match my skills?",
-    "Compétences du numérique les plus recherchées par le marché",
-    "What skills am I missing for my goal?",
-    "Generate my CV as PDF"
+    "What am I missing to become a Data Analyst?"
   ],
   "memoryRoleAssistant": "Assistant",
   "memoryRoleUser": "User",

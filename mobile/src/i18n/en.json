@@ -2066,28 +2066,24 @@
     },
     "suggestions": {
       "orgExplore": [
-        "Rank candidates for an opportunity",
-        "Does my talent pool cover this role?",
-        "Find talents skilled in Agentic AI",
-        "Generate a job description"
+        "Rank candidates from my latest opportunity.",
+        "Does my talent pool cover a Data role?",
+        "Find talents skilled in Agentic AI."
       ],
       "orgStudy": [
-        "Which skills are missing in my talent pool?",
-        "Evaluate the candidates I received",
-        "Digital skills trends in my sector",
-        "Summarize this document"
+        "Rank candidates from my latest opportunity.",
+        "Does my talent pool cover a Data role?",
+        "Find talents skilled in Agentic AI."
       ],
       "talentStudy": [
-        "Train me on a digital skill",
-        "Assess my level on a skill",
-        "Create a hands-on coding exercise",
-        "Which future-ready skills should I learn?"
+        "What is AI?",
+        "Assess my Python level.",
+        "Let’s start with core digital skills."
       ],
       "talentExplore": [
+        "The most in-demand skills on the market.",
         "Which opportunities match my skills?",
-        "Analyze my skills for a job I want",
-        "What skills am I missing for my goal?",
-        "Generate my CV as PDF"
+        "What am I missing to become a Data Analyst?"
       ]
     },
     "skillMatch": {
@@ -2662,13 +2658,13 @@
       "stopGeneration": "Stop generation",
       "send": "Send",
       "voiceNote": "Voice note",
-      "orgSuggestion1": "Rank the candidates for my latest opportunity.",
+      "orgSuggestion1": "Rank candidates from my latest opportunity.",
       "orgSuggestion2": "Does my talent pool cover a Data role?",
-      "orgSuggestion3": "Find talents skilled in Agentic AI",
-      "studySuggestion1": "Train me on a digital skill of my choice.",
-      "studySuggestion2": "Assess my level on a skill with a quick quiz.",
-      "studySuggestion3": "Create a hands-on exercise on a skill.",
-      "exploreSuggestion1": "Analyze my skills against an opportunity.",
+      "orgSuggestion3": "Find talents skilled in Agentic AI.",
+      "studySuggestion1": "What is AI?",
+      "studySuggestion2": "Assess my Python level.",
+      "studySuggestion3": "Let’s start with core digital skills.",
+      "exploreSuggestion1": "The most in-demand skills on the market.",
       "exploreSuggestion2": "Which opportunities match my skills?",
       "exploreSuggestion3": "What am I missing to become a Data Analyst?",
       "followUp": {

@@ -154,17 +154,20 @@
   "docColumnSection": "Section",
   "docColumnContent": "Contenu",
   "docLabelData": "Données",
+  "suggestionsOrgFallback": [
+    "Classe les candidats de ma dernière offre.",
+    "Mon vivier couvre-t-il un poste Data ?",
+    "Trouve des talents maîtrisant l’IA agentique."
+  ],
   "suggestionsStudyFallback": [
-    "Démarrons par les fondamentaux du numérique",
-    "Je veux me former en Python",
-    "Par où commencer pour devenir Expert IA",
-    "Quelles compétences d'avenir apprendre ?"
+    "C’est quoi l’IA ?",
+    "Évalue mon niveau en Python.",
+    "Démarrons sur les compétences de base du numérique."
   ],
   "suggestionsExploreFallback": [
+    "Les compétences les plus recherchées sur le marché.",
     "Quelles offres correspondent à mes compétences ?",
-    "Compétences du numérique les plus recherchées par le marché",
-    "Quelles compétences me manquent pour mon objectif ?",
-    "Génère mon CV en PDF"
+    "Qu’est-ce qui me manque pour devenir Data Analyst ?"
   ],
   "memoryRoleAssistant": "Assistant",
   "memoryRoleUser": "Utilisateur",

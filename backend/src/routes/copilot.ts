@@ -1495,6 +1495,22 @@ interface CacheEntry {
 const suggestionsCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
+function getDeterministicSuggestionKey(mode: string, hasOrganizationContext: boolean): string {
+  if (hasOrganizationContext || mode === 'org') {
+    return 'suggestionsOrgFallback';
+  }
+  return mode === 'study' ? 'suggestionsStudyFallback' : 'suggestionsExploreFallback';
+}
+
+function getDeterministicSuggestions(mode: string, hasOrganizationContext: boolean, language: SupportedLanguage): string[] {
+  const key = getDeterministicSuggestionKey(mode, hasOrganizationContext);
+  const suggestions = i18next.t(`copilot:${key}`, {
+    lng: language,
+    returnObjects: true,
+  });
+  return Array.isArray(suggestions) ? suggestions.slice(0, 3) : [];
+}
+
 router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
@@ -1517,66 +1533,8 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
     }
 
     const userLanguage = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
-    const languageName = getLanguageDisplayName(userLanguage);
-
-    // 2. Cache miss — lightweight parallel data fetch (NO loadTalentContext)
-    const { pool: dbPool } = await import('../services/database');
-
-    const [historyRows, profileRow] = await Promise.all([
-      sessionId
-        ? dbPool.query(
-            `SELECT role, content FROM copilot_messages
-             WHERE session_id = $1 ORDER BY created_at DESC LIMIT 4`,
-            [sessionId]
-          ).then(r => r.rows.reverse()).catch(() => [])
-        : Promise.resolve([]),
-      dbPool.query(
-        `SELECT first_name, goals, sectors FROM talents WHERE id = $1`,
-        [talentId]
-      ).then(r => r.rows[0]).catch(() => null)
-    ]);
-
-    const talentContext = profileRow ? {
-      firstName: profileRow.first_name,
-      goals: profileRow.goals,
-      sectors: profileRow.sectors,
-    } : undefined;
-
-    // 3. Generate suggestions
-    const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
-    const { getSuggestionClient } = await import('../services/ai/provider');
-    const { MODEL_SUGGESTION } = await import('../services/ai/models');
-    const { recordUsage } = await import('../services/ai/usage.service');
-
-    const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext, languageName);
-
-    let suggestions: string[] = [];
-    try {
-      const client = getSuggestionClient();
-      const completion = await client.chat.completions.create({
-        model: MODEL_SUGGESTION,
-        max_tokens: 180,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Generate 4 suggestions in ${languageName}.` },
-        ],
-      });
-      void recordUsage({ feature: 'intent_suggestions', model: MODEL_SUGGESTION, usage: completion.usage as any });
-      const text = completion.choices[0]?.message?.content?.trim() || '[]';
-      suggestions = JSON.parse(text);
-
-      if (!Array.isArray(suggestions) || suggestions.length < 4) {
-        throw new Error('Invalid format');
-      }
-      suggestions = suggestions.slice(0, 4);
-
-      // Update cache
-      suggestionsCache.set(cacheKey, { suggestions, timestamp: Date.now() });
-    } catch {
-      suggestions = mode === 'study'
-        ? req.t('copilot:suggestionsStudyFallback', { returnObjects: true }) as string[]
-        : req.t('copilot:suggestionsExploreFallback', { returnObjects: true }) as string[];
-    }
+    const suggestions = getDeterministicSuggestions(mode, Boolean(organizationId), userLanguage);
+    suggestionsCache.set(cacheKey, { suggestions, timestamp: Date.now() });
 
     res.json({
       success: true,
@@ -1584,10 +1542,15 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
     });
   } catch (error) {
     logger.error('Error in suggestions:', error);
+    const fallbackLanguage = resolveLanguageFromHeader(req.headers['accept-language'], 'en');
     res.json({
       success: true,
       data: {
-        suggestions: req.t('copilot:suggestionsExploreFallback', { returnObjects: true }) as string[],
+        suggestions: getDeterministicSuggestions(
+          (req.query.mode as string) || 'explore',
+          Boolean(req.query.organizationId),
+          fallbackLanguage,
+        ),
       },
     });
   }
