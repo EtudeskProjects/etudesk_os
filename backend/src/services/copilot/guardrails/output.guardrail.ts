@@ -6,7 +6,7 @@
 
 import { logger } from '../../../utils';
 
-/** Local OutputGuardrail type (replaces @openai/agents import) */
+/** Local OutputGuardrail type */
 interface OutputGuardrail {
   name: string;
   execute: (params: { agentOutput: any; agent: any }) => Promise<{
@@ -164,6 +164,24 @@ export function sanitizeOutput(text: string, mode?: string): string {
   result = result.replace(/\n{3,}/g, '\n\n');
 
   return result;
+}
+
+export function sanitizeEntityCardsByAllowedIds(text: string, allowedIds: Set<string>): string {
+  if (!text || allowedIds.size === 0) {
+    return text.replace(/```entity:(?!maps)\w+\s*\n\s*\{[^}]*\}\s*\n\s*```/g, '');
+  }
+
+  return text
+    .replace(/```entity:(\w+)\s*\n\s*(\{[^}]*\})\s*\n\s*```/g, (fullMatch, entityType, jsonStr) => {
+      if (entityType === 'maps') return fullMatch;
+      try {
+        const json = JSON.parse(jsonStr);
+        return json.id && allowedIds.has(json.id) ? fullMatch : '';
+      } catch {
+        return '';
+      }
+    })
+    .replace(/\n{3,}/g, '\n\n');
 }
 
 export const outputFormatGuardrail: OutputGuardrail = {

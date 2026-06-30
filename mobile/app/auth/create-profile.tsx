@@ -24,6 +24,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../src/constants/phone-countries';
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
 import { imageService } from '../../src/services';
@@ -59,7 +60,7 @@ export default function CreateProfileScreen() {
       firstName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.firstNameRequired') },
       lastName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.lastNameRequired') },
       gender: { initialValue: '' },
-      country: { initialValue: 'CI' },
+      country: { initialValue: DEFAULT_COUNTRY_CODE },
       region: { initialValue: '' },
       commune: { initialValue: '' },
       phone: { initialValue: '', required: false },
@@ -128,9 +129,6 @@ export default function CreateProfileScreen() {
     }, delay);
   }, []);
 
-  // Track if user signed up via WhatsApp (phone becomes mandatory + locked)
-  const [isWhatsAppSignup, setIsWhatsAppSignup] = useState(false);
-
   const loadAuthData = useCallback(async () => {
     try {
       const user = await otpService.getUser();
@@ -149,9 +147,6 @@ export default function CreateProfileScreen() {
           form.setValues({ phone: user.phone });
         }
 
-        if (user.authMethod === 'whatsapp') {
-          setIsWhatsAppSignup(true);
-        }
       }
     } catch {
     }
@@ -317,10 +312,7 @@ export default function CreateProfileScreen() {
   };
 
   const canProceed = () => {
-    const baseValid = firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
-    // WhatsApp signup requires phone
-    if (isWhatsAppSignup && !phone.trim()) return false;
-    return baseValid;
+    return firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
   };
 
   return (
@@ -559,12 +551,11 @@ export default function CreateProfileScreen() {
 
                 {/* Téléphone */}
                 <PhoneInput
-                  label={isWhatsAppSignup ? `${t('auth.createProfile.phone')} *` : t('auth.createProfile.phone')}
+                  label={t('auth.createProfile.phone')}
                   value={phone}
                   onChangeValue={(e164) => form.setValue('phone', e164)}
                   defaultCountryCode={country}
-                  editable={!isWhatsAppSignup}
-                  hint={isWhatsAppSignup ? t('auth.createProfile.whatsappVerified') : t('common.optional')}
+                  hint={t('common.optional')}
                 />
 
                 {/* Email */}

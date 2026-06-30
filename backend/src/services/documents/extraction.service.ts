@@ -1,11 +1,12 @@
 /**
  * Document Extraction Service
- * Uses OpenAI gpt-5-mini vision for structured metadata extraction from documents
+ * Uses the configured vision model for structured metadata extraction from documents
  */
 
 import OpenAI from 'openai';
 import { MODEL_SEARCH } from '../ai/models';
-import { getOpenAIClient } from '../ai/provider';
+import { deleteAIFile, getAIClient } from '../ai/provider';
+import { recordUsage } from '../ai/usage.service';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -149,7 +150,7 @@ function parseExtractionPayload(content: string): Partial<ExtractedDocumentData>
 // --- Extraction Functions ---
 
 /**
- * Extract metadata from a document using gpt-5-mini vision
+ * Extract metadata from a document using the configured vision model
  */
 export async function extractDocumentMetadata(
   fileUrl: string,
@@ -187,7 +188,7 @@ export async function extractDocumentMetadata(
     }
 
     const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills);
-    const openai = getOpenAIClient();
+    const aiClient = getAIClient();
 
     // Build content parts
     const contentParts: OpenAI.ChatCompletionContentPart[] = [
@@ -202,13 +203,13 @@ export async function extractDocumentMetadata(
         image_url: { url: fileUrl, detail: 'high' },
       });
     } else if (isPdf) {
-      // Upload PDF to OpenAI Files API, then reference by file_id
+      // Upload PDF through the compatible Files API, then reference by file_id.
       const base64Match = fileUrl.match(/^data:[^;]+;base64,(.+)$/);
       if (!base64Match) {
         return { success: false, error: 'Format PDF invalide' };
       }
       const pdfBuffer = Buffer.from(base64Match[1], 'base64');
-      const file = await openai.files.create({
+      const file = await aiClient.files.create({
         file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
         purpose: 'assistants',
       });
@@ -219,7 +220,7 @@ export async function extractDocumentMetadata(
       } as any);
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
@@ -228,9 +229,17 @@ export async function extractDocumentMetadata(
       response_format: { type: 'json_object' },
     });
 
-    // Cleanup: delete uploaded file from OpenAI
+    void recordUsage({
+      feature: 'document_extraction',
+      model: MODEL_SEARCH,
+      usage: completion.usage,
+      scopeTalentId: talentId ?? null,
+      billedActionCode: 'TALENT_DOCUMENT_UPLOAD',
+    });
+
+    // Cleanup: delete uploaded file from the compatible provider.
     if (uploadedFileId) {
-      openai.files.delete(uploadedFileId).catch(() => {});
+      deleteAIFile(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

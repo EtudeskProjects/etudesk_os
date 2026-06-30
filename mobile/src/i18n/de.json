@@ -129,7 +129,7 @@
       "gender": "Geschlecht",
       "yourProfile": "Dein Profil",
       "bio": "Über mich",
-      "bioPlaceholder": "Z.B.: Webentwickler mit 2 Jahren Erfahrung, begeistert von Fintech. Ich suche eine Festanstellung in Abidjan.",
+      "bioPlaceholder": "Z.B.: Webentwickler mit 2 Jahren Erfahrung, begeistert von Fintech. Ich suche eine Remote-Festanstellung.",
       "country": "Land",
       "region": "Region / Bezirk",
       "city": "Stadt / Gemeinde",
@@ -173,17 +173,7 @@
       "verifyError": "Bestätigungsfehler. Versuche es erneut.",
       "codeSent": "Neuer Code gesendet!",
       "verified": "E-Mail bestätigt!",
-      "redirecting": "Anmeldung läuft...",
-      "titleWhatsApp": "Bestätige dein WhatsApp",
-      "subtitleWhatsApp": "Gib den Code ein, der an die Nummer gesendet wurde"
-    },
-    "whatsappLogin": {
-      "title": "Anmeldung per WhatsApp",
-      "subtitle": "Gib deine Nummer ein, um einen Code per WhatsApp zu erhalten",
-      "phoneLabel": "WhatsApp-Nummer",
-      "sendCode": "Code erhalten",
-      "infoText": "Du erhältst einen 6-stelligen Code per WhatsApp",
-      "sendError": "WhatsApp-Code konnte nicht gesendet werden. Überprüfe deine Nummer."
+      "redirecting": "Anmeldung läuft..."
     }
   },
   "tabs": {
@@ -498,7 +488,7 @@
     "contact": "Support kontaktieren",
     "email": "E-Mail",
     "phone": "Telefon",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "Rechtliche Informationen",

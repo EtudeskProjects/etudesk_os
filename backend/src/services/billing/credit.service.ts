@@ -66,7 +66,9 @@ async function ensureWalletExists(
 ): Promise<void> {
   const executor = client ?? pool;
   const { table, ownerColumn } = getWalletConfig(scope);
-  const WELCOME_CREDITS = 20;
+  // Free credits granted once per wallet on first touch. Tunable via env.
+  // Lowered from 20 -> 10 to cut the multi-account faucet (each credit is real compute).
+  const WELCOME_CREDITS = Number(process.env.WELCOME_CREDITS ?? 10);
   await executor.query(
     `INSERT INTO ${table} (${ownerColumn}, balance_credits, updated_at)
      VALUES ($1, ${WELCOME_CREDITS}, NOW())

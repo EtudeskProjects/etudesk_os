@@ -13,7 +13,7 @@ import {
   canGenerate,
   GenerationInput,
 } from '../../services/opportunity-generation.service';
-import { onOpportunityUpdate, deletePineconeVector } from '../../services/embedding.service';
+import { onOpportunityUpdate, deletePgVector } from '../../services/embedding.service';
 import { setOpportunitySkills } from '../../services/skills/entity-skills.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
@@ -137,6 +137,11 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       start_date,
       duration,
       status = 'DRAFT',
+      application_mode = 'IN_APP',
+      external_apply_email,
+      external_apply_url,
+      source_url,
+      source_name,
       organization_id,
       cover_image_url,
       cv_required,
@@ -149,6 +154,10 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
 
     if (!title) {
       return res.status(400).json({ error: req.t('opportunities:titleRequired') });
+    }
+
+    if (application_mode === 'EMAIL' && !external_apply_email) {
+      return res.status(400).json({ error: req.t('opportunities:externalApplyEmailRequired') });
     }
 
     // Content moderation
@@ -187,10 +196,11 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
         compensation_min, compensation_max, currency, compensation_frequency,
         location_type, locations, posted_at, deadline, start_date, duration,
         status, cover_image_url, cv_required, application_questions, sectors, images, attachments,
-        organization_id, visibility, created_at, updated_at
+        organization_id, visibility, application_mode, external_apply_email, external_apply_url, source_url, source_name,
+        created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26, $27, $28, NOW(), NOW()
+        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, NOW(), NOW()
       ) RETURNING *
     `, [
       id, title, slug, type || null, contract_type || null, work_rhythm || null,
@@ -201,7 +211,8 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       status, cover_image_url || null, cv_required || false,
       application_questions?.length > 0 ? JSON.stringify(application_questions) : null,
       sectors || null, images || null, attachments ? JSON.stringify(attachments) : null,
-      organization_id || null, visibility || 'PUBLIC'
+      organization_id || null, visibility || 'PUBLIC',
+      application_mode || 'IN_APP', external_apply_email || null, external_apply_url || null, source_url || null, source_name || null
     ]);
 
     // Link to organization or talent
@@ -247,7 +258,7 @@ router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req
       compensation_min, compensation_max, currency, compensation_frequency,
       location_type, locations, deadline, start_date, duration, status,
       cover_image_url, cv_required, application_questions, sectors, images, attachments,
-      visibility,
+      visibility, application_mode, external_apply_email, external_apply_url, source_url, source_name,
     } = req.body;
 
     // Check if opportunity exists
@@ -287,6 +298,11 @@ router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req
 
     const existing = existingResult.rows[0];
     const newStatus = status || existing.status;
+    const newApplicationMode = application_mode || existing.application_mode || 'IN_APP';
+    const newExternalApplyEmail = external_apply_email !== undefined ? external_apply_email : existing.external_apply_email;
+    if (newApplicationMode === 'EMAIL' && !newExternalApplyEmail) {
+      return res.status(400).json({ error: req.t('opportunities:externalApplyEmailRequired') });
+    }
     const postedAt = newStatus === 'OPEN' && existing.status !== 'OPEN' ? new Date() : existing.posted_at;
 
     const safeStringify = (val: unknown) => typeof val === 'string' ? val : JSON.stringify(val);
@@ -323,15 +339,21 @@ router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req
         images = $23,
         attachments = $24,
         visibility = COALESCE($25, visibility),
+        application_mode = COALESCE($26, application_mode),
+        external_apply_email = COALESCE($27, external_apply_email),
+        external_apply_url = COALESCE($28, external_apply_url),
+        source_url = COALESCE($29, source_url),
+        source_name = COALESCE($30, source_name),
         updated_at = NOW()
-      WHERE id = $26 AND deleted_at IS NULL
+      WHERE id = $31 AND deleted_at IS NULL
       RETURNING *
     `, [
       title, type, contract_type, work_rhythm, summary, requirements, nice_to_have,
       compensation_min, compensation_max, currency, compensation_frequency,
       location_type, finalLocations, postedAt, deadline, start_date, normalizeDurationToInterval(duration),
       newStatus, cover_image_url, cv_required, finalQuestions,
-      finalSectors, finalImages, finalAttachments, visibility, id
+      finalSectors, finalImages, finalAttachments, visibility,
+      application_mode, external_apply_email, external_apply_url, source_url, source_name, id
     ]);
 
     // Update catalog skill tags only when provided (await before embedding).
@@ -383,8 +405,8 @@ router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async
       throw createNotFoundError('Opportunity');
     }
 
-    // Remove Pinecone vector (fire-and-forget)
-    deletePineconeVector('opportunity', id).catch(err => logger.error('[opportunities] Error deleting Pinecone vector:', err));
+    // Remove local pgvector embedding (fire-and-forget)
+    deletePgVector('opportunity', id).catch(err => logger.error('[opportunities] Error clearing pgvector:', err));
 
     res.json({ success: true, message: req.t('opportunities:deleted') });
   } catch (error) {

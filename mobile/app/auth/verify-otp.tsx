@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, MessageCircle, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, Mail, CheckCircle } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
@@ -23,13 +23,12 @@ const RESEND_COOLDOWN = 60;
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
-  const { email, phone, channel } = useLocalSearchParams<{ email?: string; phone?: string; channel?: string }>();
+  const { email } = useLocalSearchParams<{ email?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const { signIn, signInWhatsApp } = useAuth();
-  const isWhatsAppFlow = channel === 'whatsapp';
-  const identifier = isWhatsAppFlow ? (phone || '') : (email || '');
+  const { signIn } = useAuth();
+  const identifier = email || '';
 
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -98,9 +97,7 @@ export default function VerifyOTPScreen() {
     try {
       // Use AuthContext signIn which properly updates auth state
       // Navigation will be handled automatically by AuthContext's navigation guard
-      const success = isWhatsAppFlow
-        ? await signInWhatsApp(phone || '', otpCode)
-        : await signIn(email || '', otpCode);
+      const success = await signIn(email || '', otpCode);
 
       if (success) {
         setIsVerified(true);
@@ -123,17 +120,13 @@ export default function VerifyOTPScreen() {
 
     setIsLoading(true);
     try {
-      if (isWhatsAppFlow) {
-        await otpService.sendWhatsAppOTP(phone || '');
-      } else {
-        await otpService.sendOTP(email || '');
-      }
+      await otpService.sendOTP(email || '');
       setResendCooldown(RESEND_COOLDOWN);
       setOtp(new Array(OTP_LENGTH).fill(''));
       setError('');
       void alerts.showAlert({ title: t('common.success'), message: t('auth.verifyOtp.codeSent'), buttons: [{ text: t('common.close') }] });
     } catch (err) {
-      void alerts.showAlert({ title: t('common.error'), message: isWhatsAppFlow ? t('auth.whatsappLogin.sendError') : t('auth.emailLogin.sendError'), buttons: [{ text: t('common.close') }] });
+      void alerts.showAlert({ title: t('common.error'), message: t('auth.emailLogin.sendError'), buttons: [{ text: t('common.close') }] });
     } finally {
       setIsLoading(false);
     }
@@ -178,19 +171,15 @@ export default function VerifyOTPScreen() {
 
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-            {isWhatsAppFlow ? (
-              <MessageCircle size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            )}
+            <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           </View>
 
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {isWhatsAppFlow ? t('auth.verifyOtp.titleWhatsApp') : t('auth.verifyOtp.title')}
+            {t('auth.verifyOtp.title')}
           </Text>
 
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {isWhatsAppFlow ? t('auth.verifyOtp.subtitleWhatsApp') : t('auth.verifyOtp.subtitle')}
+            {t('auth.verifyOtp.subtitle')}
           </Text>
 
           <Text style={[styles.emailText, { color: colors.primary }]}>

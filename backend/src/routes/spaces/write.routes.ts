@@ -20,9 +20,10 @@ import {
   calculateCapacity,
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
-import { upsertSpaceEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { upsertSpaceEmbedding, deletePgVector } from '../../services/embedding.service';
 import { setSpaceSkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
+import { autoModerationService } from '../../services/auto-moderation.service';
 
 const router = Router();
 
@@ -116,6 +117,26 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       throw createForbiddenError(req.t('spaces:notAuthorized'));
     }
 
+    try {
+      await autoModerationService.assertContentApproved({
+        name: input.name,
+        description: input.description,
+        address: input.address,
+        accessibility_notes: input.accessibility_notes,
+        booking_rules: input.booking_rules?.join('\n'),
+        questions: input.questions?.join('\n'),
+        payment_collection_info: input.payment_collection_info,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Space creation rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
+    }
+
     const id = uuidv4();
     const slug = generateSlug(input.name) + '-' + id.slice(0, 8);
 
@@ -170,7 +191,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         input.address || null,
         input.city || null,
         input.region || null,
-        input.country || 'CI',
+        input.country || process.env.DEFAULT_COUNTRY || null,
         coordsString,
         input.equipment || [],
         input.amenities || [],
@@ -266,6 +287,26 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       if (memberCheck.rows.length === 0) {
         throw createForbiddenError(req.t('spaces:notAuthorized'));
       }
+    }
+
+    try {
+      await autoModerationService.assertContentApproved({
+        name: input.name,
+        description: input.description,
+        address: input.address,
+        accessibility_notes: input.accessibility_notes,
+        booking_rules: input.booking_rules?.join('\n'),
+        questions: input.questions?.join('\n'),
+        payment_collection_info: input.payment_collection_info,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Space update rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
     }
 
     // Recalculate capacity if surface or type changed
@@ -371,7 +412,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    // Update Pinecone embedding (fire-and-forget)
+    // Update local pgvector embedding (fire-and-forget)
     const updated = result.rows[0];
     upsertSpaceEmbedding(id, {
       name: updated.name, description: updated.description, type: updated.type,
@@ -379,7 +420,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       hourly_rate: updated.hourly_rate, is_bookable: updated.is_bookable,
       equipment: updated.equipment, amenities: updated.amenities,
       sectors: updated.sectors, address: updated.address,
-    }).catch(err => logger.error('[spaces] Error updating Pinecone embedding:', err));
+    }).catch(err => logger.error('[spaces] Error updating pgvector embedding:', err));
 
     // Update catalog skill tags only when provided
     let skillTags = null;
@@ -544,8 +585,8 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       [id]
     );
 
-    // Remove Pinecone vector (fire-and-forget)
-    deletePineconeVector('space', id).catch(err => logger.error('[spaces] Error deleting Pinecone vector:', err));
+    // Remove local pgvector embedding (fire-and-forget)
+    deletePgVector('space', id).catch(err => logger.error('[spaces] Error clearing pgvector:', err));
 
     res.json({ success: true, message: req.t('spaces:deleted') });
   } catch (error) {

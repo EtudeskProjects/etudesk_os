@@ -64,7 +64,7 @@ Une skill ne doit declarer que des tools disponibles dans son mode.
 - Une seule composante par message (flashcard OU quiz, jamais les deux)
 - Referencer les blocs de contexte existants : `<skills>`, `<user_profile>`, `<profile_completeness>`
 - Limiter la longueur des reponses (ex. 800-1200 caracteres selon le type)
-- Contexte UEMOA : salaires XOF, entreprises locales (Orange, Wave, MTN, Jumia)
+- Conserver un contexte global centre sur les competences numeriques, sans biais geographique par defaut
 
 ---
 
@@ -93,10 +93,10 @@ Une skill ne doit declarer que des tools disponibles dans son mode.
 ## 7. Triggers
 
 - Privilegier des triggers discriminants (eviter les mots trop generiques, min 3 chars)
-- Eviter les triggers geographiques trop specifiques ("formation Abidjan") — risque de faux positifs
+- Eviter les triggers geographiques trop specifiques — risque de faux positifs
 - En cas de chevauchement entre skills : utiliser `priority` pour desambiguiser
 - Ajouter des triggers en anglais si la plateforme est bilingue
-- Les triggers UEMOA (Abidjan, Dakar, FCFA, Wave, etc.) donnent un bonus +1 dans le matching statique
+- Les triggers geographiques ne doivent pas recevoir de bonus statique sauf besoin produit explicite
 
 ---
 

@@ -1,10 +1,10 @@
 /**
  * Organization Agent — Explorer mode only
- * Returns AgentConfig for native Anthropic SDK execution
+ * Returns AgentConfig for provider-neutral tool execution
  */
 
 import { MODEL_AGENT } from '../../ai/models';
-import { AgentConfig } from '../tools/tool-helper';
+import { AgentConfig, splitSystemPrompt } from '../tools/tool-helper';
 import { OrgContext } from '../types';
 import { smartSearchTool } from '../tools/smart-search.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
@@ -12,6 +12,8 @@ import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
 import { createOrgFileReaderTool } from '../tools/file-read.tool';
+import { createFindCompetencyTool } from '../tools/find-competency.tool';
+import { createCompetencyGraphTool } from '../tools/competency-graph.tool';
 import { buildOrgExplorerPrompt } from '../prompts/org-explorer.prompt';
 
 // Org agent only has access to org_* and search_* intents — NO personal talent data
@@ -45,16 +47,21 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
 
   const orgFileReaderTool = createOrgFileReaderTool(context.organizationId);
 
+  const { staticPrompt, dynamicPrompt } = splitSystemPrompt(buildOrgExplorerPrompt(context));
+
   return {
     name: 'Organization Explorer',
     mode: 'org' as const,
     model: MODEL_AGENT,
-    systemPrompt: buildOrgExplorerPrompt(context),
+    systemPrompt: dynamicPrompt,
+    systemPromptStatic: staticPrompt,
     tools: [
       smartSearchTool,
       secureSqlTool,
       createGenerateDocumentTool(context.talentId, undefined, context.organizationId, context.language),
       webSearchAsTool,
+      createFindCompetencyTool(),
+      createCompetencyGraphTool(context.talentId),
       createExecuteActionTool(context.talentId, context.language),
       orgFileReaderTool,
     ],

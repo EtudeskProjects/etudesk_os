@@ -40,6 +40,7 @@ import { Input, Button, Toggle, StepIndicator, Chip, IconButton, SelectCard, use
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../../src/constants/phone-countries';
 import {
   getCommunityTypeData,
   getVisibilityData,
@@ -221,7 +222,7 @@ export default function CreateCommunityScreen() {
             });
           }
         } catch (error) {
-          form.setValue('country', 'CI');
+          form.setValue('country', DEFAULT_COUNTRY_CODE);
         }
         setOrgLocationLoaded(true);
       }

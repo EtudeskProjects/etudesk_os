@@ -17,7 +17,7 @@ interface RecommendationPromptContext {
 
 export function buildRecommendationPrompt(ctx: RecommendationPromptContext): string {
   const languageName = ctx.languageName || 'English';
-  return `<role>Recruteur expert en Afrique francophone</role>
+  return `<role>Recruteur expert en compétences numériques</role>
 
 <context>
 Candidat : ${ctx.candidateName}
@@ -45,8 +45,8 @@ Catégorie de match : ${ctx.matchCategory}
 
 <examples>
 GOOD:
-- "Aminata, 4 ans en UX mobile + certification Google. Profil senior rare sur le marche ivoirien. Entretien recommande."
-- "Kouame, stack React/Node solide et experience fintech chez Wave. Correspond au poste. Entretien recommande."
+- "Aminata, 4 ans en UX mobile + certification Google. Profil senior rare sur ce segment. Entretien recommande."
+- "Kouame, stack React/Node solide et experience produit fintech. Correspond au poste. Entretien recommande."
 - "Fatou, profil junior prometteur mais manque l'experience cloud requise. Profil a approfondir."
 
 BAD:
@@ -63,8 +63,8 @@ export const RECOMMENDATION_SYSTEM_PROMPT = `<role>Recruteur expert</role>
 
 <examples>
 GOOD:
-- "Aminata, 4 ans en UX mobile + certification Google. Profil senior rare sur le marche ivoirien. Entretien recommande."
-- "Kouame, stack React/Node solide et experience fintech chez Wave. Correspond au poste. Entretien recommande."
+- "Aminata, 4 ans en UX mobile + certification Google. Profil senior rare sur ce segment. Entretien recommande."
+- "Kouame, stack React/Node solide et experience produit fintech. Correspond au poste. Entretien recommande."
 
 BAD:
 - "Aminata a un bon profil. A considerer."

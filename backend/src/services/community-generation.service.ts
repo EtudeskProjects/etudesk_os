@@ -5,6 +5,7 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import {
   CommunityType,
@@ -15,6 +16,7 @@ import {
   SECTORS,
 } from '../types/models';
 import { buildCommunityGenPrompt, buildCommunityGenSystemPrompt } from './ai/prompts/community-gen.prompt';
+import { toTOON } from './ai/toon';
 import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -85,8 +87,8 @@ export async function generateCommunitySuggestion(
   data?: GeneratedCommunity;
   error?: string;
 }> {
-  if (!process.env.OPENAI_API_KEY) {
-    return { success: false, error: 'OPENAI_API_KEY not configured' };
+  if (!process.env.AI_API_KEY) {
+    return { success: false, error: 'AI_API_KEY not configured' };
   }
 
   // Validate required fields
@@ -104,6 +106,9 @@ export async function generateCommunitySuggestion(
   const language = input.language || FALLBACK_LANGUAGE;
   const languageName = getLanguageDisplayName(language);
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
+  const existingDataContext = input.existing_data
+    ? `\nDonnées existantes (format TOON) :\n${toTOON(input.existing_data)}`
+    : '';
   const prompt = buildCommunityGenPrompt({
     communityName: input.name,
     orgName: organization.name,
@@ -113,14 +118,15 @@ export async function generateCommunitySuggestion(
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
     languageName,
+    existingDataContext,
   });
 
   try {
     logger.info('[CommunityGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildCommunityGenSystemPrompt(languageName) },
@@ -131,12 +137,18 @@ export async function generateCommunitySuggestion(
 
     logger.info(`[CommunityGeneration] Completed in ${Date.now() - startTime}ms`);
 
+    void recordUsage({ feature: 'form_suggestion', model: MODEL_SUGGESTION, usage: completion.usage, scopeOrganizationId: input.organization_id });
+
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedCommunity = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedCommunity = (parsedData?.['@object'] || parsedData) as GeneratedCommunity;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure sectors are valid enum values; fallback to org sectors
     if (generatedData.sectors) {

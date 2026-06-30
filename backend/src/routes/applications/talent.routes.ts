@@ -36,7 +36,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     const applicationAnswers = custom_answers || answers;
 
     const oppResult = await pool.query(
-      'SELECT id, status, deadline FROM opportunities WHERE id = $1 AND deleted_at IS NULL',
+      'SELECT id, status, deadline, application_mode, external_apply_email FROM opportunities WHERE id = $1 AND deleted_at IS NULL',
       [opportunity_id]
     );
 
@@ -45,6 +45,10 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     }
 
     const opportunity = oppResult.rows[0];
+    if (opportunity.application_mode === 'EMAIL') {
+      return res.status(400).json({ error: req.t('applications:externalOpportunityEmailOnly') });
+    }
+
     if (opportunity.status !== 'OPEN') {
       return res.status(400).json({ error: req.t('applications:opportunityClosed') });
     }
@@ -126,6 +130,11 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
         o.cover_image_url as opportunity_cover_image_url,
         o.images as opportunity_images,
         o.contract_type as opportunity_contract_type,
+        o.application_mode as opportunity_application_mode,
+        o.external_apply_email as opportunity_external_apply_email,
+        o.external_apply_url as opportunity_external_apply_url,
+        o.source_url as opportunity_source_url,
+        o.source_name as opportunity_source_name,
         COALESCE(
           (SELECT json_agg(json_build_object('id', org.id, 'name', org.name, 'logo_url', org.logo_url))
            FROM opportunity_posters op
@@ -183,6 +192,11 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
         cover_image_url: row.opportunity_cover_image_url,
         images: row.opportunity_images,
         contract_type: row.opportunity_contract_type,
+        application_mode: row.opportunity_application_mode,
+        external_apply_email: row.opportunity_external_apply_email,
+        external_apply_url: row.opportunity_external_apply_url,
+        source_url: row.opportunity_source_url,
+        source_name: row.opportunity_source_name,
         organizations: row.organizations,
         organization: row.organizations && row.organizations.length > 0 ? row.organizations[0] : null,
       },
@@ -205,6 +219,15 @@ router.get('/check/:opportunityId', authMiddleware, requireTalentProfile, async 
   try {
     const talentId = req.talentId;
     const { opportunityId } = req.params;
+
+    const opportunityResult = await pool.query(
+      `SELECT application_mode, external_apply_email, external_apply_url FROM opportunities WHERE id = $1 AND deleted_at IS NULL`,
+      [opportunityId]
+    );
+    if (opportunityResult.rows.length === 0) {
+      return res.status(404).json({ error: req.t('applications:opportunityNotFound') });
+    }
+    const opportunity = opportunityResult.rows[0];
 
     const applicationResult = await pool.query(
       'SELECT id, status, applied_at FROM opportunity_applications WHERE talent_id = $1 AND opportunity_id = $2',
@@ -230,6 +253,9 @@ router.get('/check/:opportunityId', authMiddleware, requireTalentProfile, async 
         application_status: applicationResult.rows[0]?.status || null,
         applied_at: applicationResult.rows[0]?.applied_at || null,
         is_owner: isOwner,
+        application_mode: opportunity.application_mode || 'IN_APP',
+        external_apply_email: opportunity.external_apply_email || null,
+        external_apply_url: opportunity.external_apply_url || null,
         can_apply: !isOwner && !hasApplied
       }
     });

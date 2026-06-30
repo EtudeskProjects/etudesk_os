@@ -2,11 +2,17 @@
   "name": "etudesk-web",
   "version": "1.0.0",
   "scripts": {
+    "data:skills": "node scripts/gen-skills-data.mjs && node scripts/gen-graph.mjs",
+    "prebuild": "npm run data:skills",
+    "predev": "rm -rf .next",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "@types/d3-force": "^3.0.10",
+    "d3-force": "^3.0.0",
+    "lucide-react": "^1.21.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

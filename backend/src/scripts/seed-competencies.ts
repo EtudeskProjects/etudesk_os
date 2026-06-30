@@ -119,7 +119,11 @@ async function main() {
   // Parse catalog
   const catalogRows = parseCsv(fs.readFileSync(CATALOG_CSV, 'utf8'));
   const catalogHeader = catalogRows.shift();
-  if (!catalogHeader || catalogHeader.join(',') !== 'slug,family,type,name,name_fr') {
+  const requiredCatalogHeader = ['slug', 'family', 'type', 'name', 'name_fr'];
+  if (
+    !catalogHeader ||
+    requiredCatalogHeader.some((column, index) => catalogHeader[index] !== column)
+  ) {
     throw new Error(`Unexpected catalog header: ${catalogHeader?.join(',')}`);
   }
   const competencies = catalogRows.map(([slug, family, type, name, name_fr]) => ({

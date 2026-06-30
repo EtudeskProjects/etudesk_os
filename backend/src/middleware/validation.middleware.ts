@@ -139,6 +139,11 @@ const baseOpportunitySchema = z.object({
   start_date: z.string().optional(),
   duration: z.string().max(100).optional(),
   status: z.enum(['DRAFT', 'OPEN', 'PAUSED', 'FILLED', 'EXPIRED']).optional(),
+  application_mode: z.enum(['IN_APP', 'EMAIL']).optional(),
+  external_apply_email: z.string().email().optional(),
+  external_apply_url: z.string().url().max(2000).optional(),
+  source_url: z.string().url().max(2000).optional(),
+  source_name: z.string().max(255).optional(),
   cv_required: z.boolean().optional(),
   application_questions: z.array(customQuestionSchema).max(10, 'validation:opportunity.maxQuestions').optional(),
   organization_id: z.string().uuid('validation:common.invalidOrgId').optional(),
@@ -196,27 +201,10 @@ export const requestOtpSchema = z.object({
     .transform((v) => v.toLowerCase().trim())
 });
 
-export const requestWhatsAppOtpSchema = z.object({
-  phone: z.string()
-    .min(8, 'validation:auth.invalidPhone')
-    .max(30, 'validation:auth.invalidPhone')
-    .transform((v) => v.trim())
-});
-
 export const verifyOtpSchema = z.object({
   email: z.string()
     .email('validation:auth.invalidEmail')
     .transform((v) => v.toLowerCase().trim()),
-  code: z.string()
-    .length(6, 'validation:auth.codeLength')
-    .regex(/^\d{6}$/, 'validation:auth.codeDigits')
-});
-
-export const verifyWhatsAppOtpSchema = z.object({
-  phone: z.string()
-    .min(8, 'validation:auth.invalidPhone')
-    .max(30, 'validation:auth.invalidPhone')
-    .transform((v) => v.trim()),
   code: z.string()
     .length(6, 'validation:auth.codeLength')
     .regex(/^\d{6}$/, 'validation:auth.codeDigits')

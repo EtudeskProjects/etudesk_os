@@ -1,13 +1,12 @@
 /**
  * Recommendation Service - AI-powered candidate recommendations
- * Uses Agents SDK with GPT-4.1-nano for cost-effective inference
  */
 
-import { Runner } from '@openai/agents';
 import { pool } from './database';
-import { createRecommendationAgent } from './ai/agent-factory';
-import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
-import { openaiProvider } from './ai/provider';
+import { getSuggestionClient } from './ai/provider';
+import { MODEL_MATCH } from './ai/models';
+import { buildRecommendationPrompt, RECOMMENDATION_SYSTEM_PROMPT } from './ai/prompts/recommendation.prompt';
+import { recordUsage } from './ai/usage.service';
 import { getLanguageDisplayName, resolveTalentLanguage } from './language-preference.service';
 import { SupportedLanguage } from '../i18n';
 
@@ -98,11 +97,19 @@ export async function generateRecommendation(
   });
 
   try {
-    const agent = createRecommendationAgent();
-    const openaiRunner = new Runner({ modelProvider: openaiProvider });
-    const result = await openaiRunner.run(agent, prompt);
+    const client = getSuggestionClient();
+    const completion = await client.chat.completions.create({
+      model: MODEL_MATCH,
+      max_tokens: 120,
+      messages: [
+        { role: 'system', content: RECOMMENDATION_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+    });
 
-    let text = result.finalOutput?.trim() || '';
+    void recordUsage({ feature: 'recommendation', model: MODEL_MATCH, usage: completion.usage as any });
+
+    let text = completion.choices[0]?.message?.content?.trim() || '';
 
     // Ensure it's not too long (max ~40 words for safety)
     const words = text.split(/\s+/);

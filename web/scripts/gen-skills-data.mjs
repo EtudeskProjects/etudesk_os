@@ -1,0 +1,141 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const DATA = path.join(ROOT, 'src/data');
+const DATASET = path.resolve(ROOT, '../datasets/etudesk_digital_skills');
+const CATALOG = path.join(DATASET, 'competency_catalog.csv');
+const EDGES = path.join(DATASET, 'competency_edges.csv');
+
+function parseCSV(text) {
+  const rows = [];
+  let i = 0;
+  let field = '';
+  let row = [];
+  let quoted = false;
+  while (i < text.length) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        quoted = false;
+        i++;
+        continue;
+      }
+      field += ch;
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      quoted = true;
+      i++;
+      continue;
+    }
+    if (ch === ',') {
+      row.push(field);
+      field = '';
+      i++;
+      continue;
+    }
+    if (ch === '\n') {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+      i++;
+      continue;
+    }
+    if (ch === '\r') {
+      i++;
+      continue;
+    }
+    field += ch;
+    i++;
+  }
+  if (field.length || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.length > 1 || r[0]);
+}
+
+function readCsvObjects(file) {
+  const rows = parseCSV(fs.readFileSync(file, 'utf8'));
+  const header = rows.shift();
+  return rows.map((row) => Object.fromEntries(header.map((key, i) => [key, row[i] ?? ''])));
+}
+
+const cleanUrl = (url) => {
+  const value = (url || '').trim();
+  return value.toLowerCase() === 'pas sur' ? '' : value;
+};
+
+const competencies = readCsvObjects(CATALOG).map(({ slug, family, type, name, name_fr, description_en, description_fr, official_url }) => ({
+  slug,
+  family,
+  type,
+  name,
+  name_fr,
+  description_en: description_en || '',
+  description_fr: description_fr || '',
+  official_url: cleanUrl(official_url),
+}));
+
+const bySlug = new Set(competencies.map((c) => c.slug));
+const edges = readCsvObjects(EDGES)
+  .map(({ from_slug, to_slug, relation, strength }) => ({
+    from: from_slug,
+    to: to_slug,
+    relation,
+    strength: Number(strength),
+  }))
+  .filter((e) => bySlug.has(e.from) && bySlug.has(e.to));
+
+const relations = Object.fromEntries(
+  competencies.map((c) => [c.slug, { pre: [], leads: [], sib: [], rel: [], d: 0 }])
+);
+
+function pushSorted(list, slug, strength) {
+  list.push([slug, strength]);
+}
+
+for (const edge of edges) {
+  const source = relations[edge.from];
+  const target = relations[edge.to];
+  source.d++;
+  target.d++;
+
+  if (edge.relation === 'prerequisite') {
+    pushSorted(source.pre, edge.to, edge.strength);
+    pushSorted(target.leads, edge.from, edge.strength);
+  } else if (edge.relation === 'sibling') {
+    pushSorted(source.sib, edge.to, edge.strength);
+  } else if (edge.relation === 'co_occurrence') {
+    pushSorted(source.rel, edge.to, edge.strength);
+  }
+}
+
+for (const r of Object.values(relations)) {
+  for (const key of ['pre', 'leads', 'sib', 'rel']) {
+    r[key] = r[key]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 12)
+      .map(([slug]) => slug);
+  }
+}
+
+fs.writeFileSync(path.join(DATA, 'competencies.json'), JSON.stringify(competencies));
+fs.writeFileSync(path.join(DATA, 'edges.json'), JSON.stringify(relations));
+
+console.log(
+  'skills data:',
+  'competencies=', competencies.length,
+  'edges=', edges.length,
+  'relationsKB=', Math.round(fs.statSync(path.join(DATA, 'edges.json')).size / 1024)
+);

@@ -254,7 +254,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       await client.query('COMMIT');
 
-      // Send welcome email (async, don't wait) — skip for WhatsApp-only users
+      // Send welcome email (async, don't wait)
       const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Talent';
       if (finalEmail) {
         sendWelcomeEmail(finalEmail, fullName, toEmailLanguage(normalizeLanguage(user.preferred_language))).catch(err => {

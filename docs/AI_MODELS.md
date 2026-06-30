@@ -28,7 +28,7 @@ Etudesk OS utilise **2 providers AI simultanement**, chacun pour ses forces :
 | Provider | Role | Modeles en prod | Pourquoi |
 |----------|------|-----------------|----------|
 | **Anthropic Claude** | Agents copilot, guardrails, summaries, titres, file reader | Sonnet 4.6, Haiku 4.5 | Meilleur suivi d'instructions, tool calling fiable, francais natif |
-| **OpenAI** | Suggestions formulaires, objectifs quotidiens, bio, images, STT, TTS, web search, embeddings, vision/extraction, recommendations | gpt-5.4-nano, gpt-5.4-mini, gpt-image-2, gpt-4o-mini-transcribe, gpt-4o-mini-tts, text-embedding-3-small (web search agent: gpt-4.1-mini) | Couverture large, capabilities uniques (image gen, STT, Responses API web search), cout maitrise |
+| **OpenAI** | Suggestions formulaires, objectifs quotidiens, bio, images, STT, TTS, web search, embeddings, vision/extraction, recommendations | gpt-4.1-nano, gpt-4.1-mini, gpt-image-1, gpt-4o-mini-transcribe, gpt-4o-mini-tts, text-embedding-3-small | Couverture large, capabilities uniques (image gen, STT, Responses API web search), cout maitrise |
 
 ### Modeles en production (Juin 2026)
 
@@ -36,10 +36,10 @@ Etudesk OS utilise **2 providers AI simultanement**, chacun pour ses forces :
 |-----------|--------|----------|-------------|-------------------------------|
 | `MODEL_AGENT` | claude-sonnet-4-6 | Anthropic | Agents Copilot principaux | $3.00 / $15.00 |
 | `MODEL_FAST` | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file reader | $1.00 / $5.00 |
-| `MODEL_SUGGESTION` | gpt-5.4-nano | OpenAI | Suggestions, objectifs, bio | voir tarifs OpenAI |
-| `MODEL_MATCH` | gpt-5.4-nano | OpenAI | Recommendations candidats | voir tarifs OpenAI |
-| `MODEL_SEARCH` | gpt-5.4-mini | OpenAI | Vision/extraction, KYC | voir tarifs OpenAI |
-| `MODEL_IMAGE` | gpt-image-2 | OpenAI | Generation d'images (tuteur) | voir tarifs OpenAI |
+| `MODEL_SUGGESTION` | gpt-4.1-nano | OpenAI | Suggestions, objectifs, bio | $0.10 / $0.40 |
+| `MODEL_MATCH` | gpt-4.1-nano | OpenAI | Recommendations candidats | $0.10 / $0.40 |
+| `MODEL_SEARCH` | gpt-4.1-mini | OpenAI | Vision/extraction, web search agent | $0.40 / $1.60 |
+| `MODEL_IMAGE` | gpt-image-1 | OpenAI | Generation d'images | $0.02-$0.19/image |
 | `MODEL_STT` | gpt-4o-mini-transcribe | OpenAI | Transcription audio | $0.006/min |
 | `MODEL_TTS` | gpt-4o-mini-tts | OpenAI | Synthese vocale (steerable) | ~$0.015/min |
 | `MODEL_EMBEDDING` | text-embedding-3-small | OpenAI | Embeddings vectoriels | $0.02/1M tokens |
@@ -78,13 +78,13 @@ YOUTUBE_API_KEY=AIza...         # YouTube Data API v3 (search)
 +-----------------------------------------------------------------------------+
 |  ┌────────────────┐  ┌────────────────┐  ┌─────────────────────────────┐    |
 |  │ WebSearchAgent │  │ Recommendation │  │ Vision/Extraction           │    |
-|  │ gpt-4.1-mini   │  │ gpt-5.4-nano  │  │ gpt-5.4-mini               │    |
+|  │ gpt-4.1-mini   │  │ gpt-4.1-nano  │  │ gpt-4.1-mini               │    |
 |  │ Responses API  │  │ openaiProvider │  │ KYC, docs, org-docs         │    |
 |  └────────────────┘  └────────────────┘  └─────────────────────────────┘    |
 |                                                                               |
 |  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                 |
 |  │ Image Gen      │  │ STT + TTS      │  │ Embedding Svc  │                 |
-|  │ gpt-image-2    │  │ 4o-mini-transc │  │ emb-3-small    │                 |
+|  │ gpt-image-1    │  │ 4o-mini-transc │  │ emb-3-small    │                 |
 |  └────────────────┘  │ gpt-4o-mini-tts│  │ → Pinecone     │                 |
 |                       └────────────────┘  └────────────────┘                 |
 |                                                                               |

@@ -24,8 +24,7 @@
     "codeLength": "El código debe contener 6 dígitos",
     "codeDigits": "El código debe estar compuesto por 6 dígitos",
     "refreshTokenRequired": "Token de actualización requerido",
-    "invalidPhone": "Número de teléfono inválido",
-    "invalidWhatsApp": "Número de WhatsApp inválido"
+    "invalidPhone": "Número de teléfono inválido"
   },
   "opportunity": {
     "titleMinLength": "El título debe contener al menos 3 caracteres",

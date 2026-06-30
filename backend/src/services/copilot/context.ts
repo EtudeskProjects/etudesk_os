@@ -31,6 +31,8 @@ export const TalentProfileSchema = z.object({
     z.object({
       name: z.string(),
       level: z.enum(['beginner', 'intermediate', 'advanced', 'master']).optional(),
+      type: z.enum(['knowledge', 'hard_skill', 'soft_skill', 'tool_platform', 'language']).optional(),
+      family: z.string().optional(),
     })
   ).optional(),
 
@@ -579,7 +581,7 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   // Load skills + freshness + languages in parallel
   const [skillsResult, skillFreshnessResult, languagesResult] = await Promise.all([
     pool.query(
-      `SELECT c.name AS name, c.name_fr AS name_fr, ts.competency_slug AS slug,
+      `SELECT c.name AS name, c.name_fr AS name_fr, c.type AS type, c.family AS family, ts.competency_slug AS slug,
               ts.level, ts.score
        FROM talent_skills ts
        JOIN competencies c ON c.slug = ts.competency_slug
@@ -603,6 +605,8 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const skills = skillsResult.rows.map((s) => ({
     name: s.name_fr || s.name,
     level: mapProficiencyLevel(s.level),
+    type: s.type,
+    family: s.family,
   }));
 
   const languages = languagesResult.rows.map((l) => ({
@@ -867,11 +871,10 @@ async function loadNotifications(talentId: string, limit = 10): Promise<Notifica
 }
 
 async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
-  // OPTIMIZED: Single query with JOIN instead of N+1 queries
   const result = await pool.query(
     `
     SELECT
-      ob.opportunity_id as id,
+      ob.opportunity_id::text as id,
       'opportunity' as entity_type,
       ob.opportunity_id as entity_id,
       ob.created_at,
@@ -879,7 +882,27 @@ async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
     FROM opportunity_bookmarks ob
     LEFT JOIN opportunities o ON ob.opportunity_id = o.id
     WHERE ob.talent_id = $1
-    ORDER BY ob.created_at DESC
+    UNION ALL
+    SELECT
+      cb.community_id::text as id,
+      'community' as entity_type,
+      cb.community_id as entity_id,
+      cb.created_at,
+      c.name as entity_title
+    FROM community_bookmarks cb
+    LEFT JOIN communities c ON cb.community_id = c.id
+    WHERE cb.talent_id = $1
+    UNION ALL
+    SELECT
+      sb.space_id::text as id,
+      'space' as entity_type,
+      sb.space_id as entity_id,
+      sb.created_at,
+      s.name as entity_title
+    FROM space_bookmarks sb
+    LEFT JOIN spaces s ON sb.space_id = s.id
+    WHERE sb.talent_id = $1
+    ORDER BY created_at DESC
     LIMIT 50
     `,
     [talentId]
@@ -912,19 +935,48 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
   const now = new Date();
   const endDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
-  // Note: interviews table not yet implemented
-
-  // Load reservations
-  const reservations = await pool.query(
-    `
+  const [reservations, triggers, communityEvents] = await Promise.all([
+    pool.query(
+      `
     SELECT r.id, r.start_datetime, r.end_datetime, s.name as space_name
     FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
     WHERE r.talent_id = $1 AND r.start_datetime >= $2 AND r.start_datetime <= $3 AND r.status = 'CONFIRMED'
     ORDER BY r.start_datetime
     `,
-    [talentId, now, endDate]
-  );
+      [talentId, now, endDate]
+    ),
+    pool.query(
+      `
+      SELECT id, title, due_at, metadata
+      FROM agenda_triggers
+      WHERE talent_id = $1
+        AND scope = 'TALENT'
+        AND status = 'PENDING'
+        AND due_at >= $2
+        AND due_at <= $3
+      ORDER BY due_at
+      `,
+      [talentId, now, endDate]
+    ),
+    pool.query(
+      `
+      SELECT ca.id, ca.content, ca.metadata, ca.published_at, c.name as community_name
+      FROM community_activities ca
+      JOIN communities c ON c.id = ca.community_id
+      JOIN community_members cm ON cm.community_id = c.id
+      WHERE cm.talent_id = $1
+        AND cm.status = 'ACTIVE'
+        AND ca.type = 'EVENT'
+        AND ca.status = 'PUBLISHED'
+        AND ca.deleted_at IS NULL
+        AND COALESCE((ca.metadata->>'start_date')::timestamptz, ca.published_at) >= $2
+        AND COALESCE((ca.metadata->>'start_date')::timestamptz, ca.published_at) <= $3
+      ORDER BY COALESCE((ca.metadata->>'start_date')::timestamptz, ca.published_at)
+      `,
+      [talentId, now, endDate]
+    ),
+  ]);
 
   for (const row of reservations.rows) {
     events.push({
@@ -934,6 +986,30 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
       startDate: row.start_datetime?.toISOString(),
       endDate: row.end_datetime?.toISOString(),
       relatedEntityType: 'reservation',
+      relatedEntityId: row.id,
+    });
+  }
+
+  for (const row of triggers.rows) {
+    events.push({
+      id: row.id,
+      title: row.title,
+      type: 'deadline',
+      startDate: row.due_at?.toISOString(),
+      relatedEntityType: row.metadata?.entity_type || 'agenda_trigger',
+      relatedEntityId: row.metadata?.entity_id || row.id,
+    });
+  }
+
+  for (const row of communityEvents.rows) {
+    const startDate = row.metadata?.start_date || row.published_at?.toISOString();
+    events.push({
+      id: row.id,
+      title: `Événement: ${row.content}`,
+      type: 'community_event',
+      startDate,
+      location: row.metadata?.location,
+      relatedEntityType: 'community_activity',
       relatedEntityId: row.id,
     });
   }
@@ -1092,4 +1168,3 @@ function mapLanguageLevel(level: string | null): 'basic' | 'conversational' | 'f
   };
   return mapping[level.toUpperCase()] || 'basic';
 }
-

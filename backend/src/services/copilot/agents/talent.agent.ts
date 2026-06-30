@@ -1,10 +1,10 @@
 /**
  * Talent Agent — Explorer + Study modes
- * Returns AgentConfig for native Anthropic SDK execution
+ * Returns AgentConfig for provider-neutral tool execution
  */
 
 import { MODEL_AGENT } from '../../ai/models';
-import { AgentConfig } from '../tools/tool-helper';
+import { AgentConfig, splitSystemPrompt } from '../tools/tool-helper';
 import type { ToolDefinition } from '../tools/tool-helper';
 import { TalentContext } from '../types';
 import { smartSearchTool } from '../tools/smart-search.tool';
@@ -17,6 +17,8 @@ import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
 import { createFindCompetencyTool } from '../tools/find-competency.tool';
+import { createCompetencyGraphTool } from '../tools/competency-graph.tool';
+import { createLearningPathTool } from '../tools/learning-path.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
@@ -55,6 +57,8 @@ export function createTalentAgent(
       fileReaderTool,
       webSearchAsTool,
       createFindCompetencyTool(),
+      createCompetencyGraphTool(context.profile.id),
+      createLearningPathTool(context.profile.id),
       createManageSkillsTool(context.profile.id, context.language),
       createExecuteActionTool(context.profile.id, context.language),
     ];
@@ -68,16 +72,20 @@ export function createTalentAgent(
       fileReaderTool,
       webSearchAsTool,
       createFindCompetencyTool(), // validate/resolve catalog skills for skill_match (Actuel vs Cible)
+      createCompetencyGraphTool(context.profile.id), // graph-backed roadmaps / gap explanations
+      createLearningPathTool(context.profile.id), // ordered gap-to-role path ("devenir X")
       createExecuteActionTool(context.profile.id, context.language),
     ];
     instructions = buildTalentExplorerPrompt(context);
   }
 
+  const { staticPrompt, dynamicPrompt } = splitSystemPrompt(instructions);
   return {
     name: `Talent Agent (${mode})`,
     mode: mode as 'explore' | 'study',
     model: MODEL_AGENT,
-    systemPrompt: instructions,
+    systemPrompt: dynamicPrompt,
+    systemPromptStatic: staticPrompt,
     tools,
   };
 }

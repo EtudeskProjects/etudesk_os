@@ -1,10 +1,10 @@
 # Etudesk Digital Skills Schema
 
 > Data model for the skill catalog, the adjacency graph, and talent skill evaluations.
-> Current catalog: `competency_catalog.csv` (1261 active skills, 16 families, 5 types, English and French labels).
-> Adjacency graph: `competency_edges.csv` (4147 edges, generated + curated, adversarially reviewed).
+> Current catalog: `competency_catalog.csv` (1687 active skills, 16 families, 5 types, English/French labels, short descriptions, and conservative official URLs).
+> Adjacency graph: `competency_edges.csv` (8892 edges, generated + curated, adversarially reviewed).
 > Release manifest: `competency_manifest.json` (`catalog_version`: `2026-Q2`).
-> Last updated: June 24, 2026.
+> Last updated: June 27, 2026.
 
 ---
 
@@ -19,16 +19,22 @@ Competency {
   type:   enum     # knowledge | hard_skill | soft_skill | tool_platform | language
   name:    string   # English display name
   name_fr: string   # French display name
+  description_en: string # English sentence-case description, max 50 words
+  description_fr: string # French sentence-case description, max 50 words
+  official_url:   string # official URL when locally verified; otherwise empty
 }
 ```
 
-CSV columns: `slug,family,type,name,name_fr`.
+CSV columns: `slug,family,type,name,name_fr,description_en,description_fr,official_url`.
 
 Families:
-`ai_ml`, `emerging_tech`, `data`, `software_dev`, `cybersecurity`,
-`growth_marketing`, `industry_knowledge`, `human_skills`, `business_management`,
-`media_content`, `product_design`, `sustainability_climate`, `fintech_finance`,
-`cloud_devops`, `web3_blockchain`, `digital_literacy`.
+`digital_foundations`, `human_communication_languages`, `ai_ml_automation`,
+`data_analytics_bi`, `software_engineering`, `cloud_devops_infrastructure`,
+`cybersecurity_digital_trust`, `product_ux_design`, `marketing_sales_content`,
+`business_operations_management`, `finance_fintech_digital_assets`,
+`law_compliance_governance`, `education_learning_tech`,
+`health_biotech_medtech`, `industry_hardware_mobility`,
+`sustainability_climate_energy_agri`.
 
 Types:
 
@@ -43,6 +49,11 @@ Types:
 Stability rules:
 - `slug` is the canonical identifier stored in talent history.
 - Changing `name` or `name_fr` must never change `slug`.
+- `description_en` and `description_fr` are pedagogical display fields. They
+  must stay concise, sentence case, and no longer than 50 words each.
+- `official_url` must contain only a conservative official source. Leave it
+  empty when local enrichment cannot verify the source, especially for generic
+  concepts or ambiguous tools.
 - To retire a skill, remove its catalog row and every edge that references its
   slug (validated by `validate_edges.py`). Product databases keep history through
   `catalog_version`, `framework_version`, and timestamps.
@@ -136,9 +147,9 @@ Current distribution:
 
 | relation | edges |
 | --- | ---: |
-| `prerequisite` | 2145 |
-| `sibling` | 1148 |
-| `co_occurrence` | 716 |
+| `prerequisite` | 1833 |
+| `sibling` | 2806 |
+| `co_occurrence` | 4253 |
 
 Graph invariants (all enforced by `validate_edges.py`):
 - the `prerequisite` relation is **acyclic** (a directed acyclic graph): if `A`
@@ -163,8 +174,10 @@ The `reason` column records each edge's provenance and is informational only:
 `family_foundation`, `knowledge_foundation`, `knowledge_underpins_skill`,
 `same_family_type_similarity`, `same_family_cross_type_similarity`,
 `tool_skill_overlap` (edges first produced by the original rule-based pass);
-`curated_*` (added by hand); `adversarial_review` / `manual` (later edits). Use
-`manual` for new hand-added edges.
+`curated_*` (added by hand); `adversarial_review` / `manual` (later edits);
+`inter_domain_recluster:*`, `inter_family_recluster`, `inter_type_recluster`,
+and `low_degree_recluster` (deterministic coverage enrichment). Use `manual` for
+new hand-added edges.
 
 Coverage: every catalog skill carries at least one edge (no orphans), enforced
 by `validate_edges.py`. About 35 foundational `knowledge` skills (e.g.

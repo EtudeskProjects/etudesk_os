@@ -6,12 +6,13 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import { logger } from '../utils';
 import { getLocaleForLanguage, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
-const openai = getSuggestionClient();
+const suggestionClient = getSuggestionClient();
 
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_OBJECTIVE_LENGTH = 500;
@@ -293,10 +294,18 @@ RÈGLES STRICTES:
 Génère l'objectif (500 caractères max):`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 200,
+    });
+
+    void recordUsage({
+      feature: 'daily_objective',
+      model: MODEL_SUGGESTION,
+      usage: response.usage,
+      scopeTalentId: context.profile?.id ?? null,
+      billedActionCode: 'TALENT_DAILY_OBJECTIVE',
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';
@@ -585,10 +594,18 @@ RÈGLES STRICTES:
 Génère l'objectif (500 caractères max):`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 200,
+    });
+
+    void recordUsage({
+      feature: 'daily_objective',
+      model: MODEL_SUGGESTION,
+      usage: response.usage,
+      scopeOrganizationId: context.profile?.id ?? null,
+      billedActionCode: 'ORG_DAILY_OBJECTIVE',
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';

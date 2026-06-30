@@ -1,7 +1,7 @@
 /**
  * Copilot API Routes
  * Routes for AI copilot chat and session management
- * Native Anthropic SDK + Claude + SSE Streaming
+ * OpenAI-compatible agents + SSE Streaming
  */
 
 import { Router, Response } from 'express';
@@ -13,14 +13,13 @@ import {
   ALLOWED_MIME_TYPES,
 } from '../constants/documents';
 import { logger } from '../utils';
-import { i18next } from '../i18n';
+import { i18next, resolveLanguageFromHeader, type SupportedLanguage } from '../i18n';
 import { pool } from '../services/database';
 import {
   uploadDocument,
   canUploadDocument,
   validateFile,
 } from '../services/documents/document.service';
-import { MODEL_STT } from '../services/ai/models';
 import { analyzeAudio } from '../services/ai/audio-analysis.service';
 import { generateTTS } from '../services/ai/tts.service';
 import { uploadFile } from '../services/storage.service';
@@ -45,16 +44,31 @@ import {
   ORG_CONTEXT_OPTIONS,
 } from '../services/copilot/context-options';
 import { detectSkillFromMessage } from '../services/copilot/skills/skill.loader';
-import { isUEMOACountry, shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
 import { getWinningTrajectories, invalidateTrajectoryCache } from '../services/copilot/trace.service';
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
+import {
+  type QuizBlock,
+  type ActiveQuizState,
+  type QuizEvaluation,
+  buildQuizId,
+  extractLastQuizBlock,
+  parseQuizAnswer,
+  parseQuizBlock,
+  normalizeQuizText,
+  toQuizLetter,
+  buildStudyQuizHint,
+} from '../services/copilot/study-quiz';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
+import { createGenerateDocumentTool } from '../services/copilot/tools/generate-document.tool';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
 import { debitWalletForAction } from '../services/billing/credit.service';
+import { recordUsage } from '../services/ai/usage.service';
+import { MODEL_AGENT } from '../services/ai/models';
 import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
 const router = Router();
+const COPILOT_TIMEZONE = process.env.COPILOT_TIMEZONE || 'UTC';
 
 function buildDeterministicSessionTitle(
   message: string,
@@ -90,10 +104,99 @@ function buildDeterministicSessionTitle(
 
   return null;
 }
+
+function isOnboardingStartMessage(message: string): boolean {
+  const normalized = message.trim().toLowerCase();
+  return new Set([
+    "c'est parti",
+    "c'est parti !",
+    'lets go',
+    "let's go",
+    'get started',
+    'start onboarding',
+  ]).has(normalized);
+}
+
+function inferOnboardingStartLanguage(message: string, fallback: string): string {
+  const normalized = message.trim().toLowerCase();
+  if (/^(c['’]est parti|demarrons|démarrons|commençons|commencons)\s*!?$/.test(normalized)) {
+    return 'fr';
+  }
+  if (/^(lets go|let['’]s go|get started|start onboarding)\s*!?$/.test(normalized)) {
+    return 'en';
+  }
+  return fallback;
+}
+
+function inferLanguageFromUserMessage(message: string, fallback: SupportedLanguage): SupportedLanguage {
+  const raw = message.trim().toLowerCase();
+  if (!raw) return fallback;
+
+  if (/[àâäçéèêëîïôöùûüÿœæ]/i.test(raw)) {
+    return 'fr';
+  }
+
+  const normalized = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}'\s-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const frenchSignals = [
+    /\b(trouve moi|genere|cree|fais|donne moi|comment devenir|je veux|je voudrais|j aimerais|mon profil|mes competences|mes opportunites)\b/,
+    /\b(apprendre|comprendre|pratiquer|construire|ameliorer|developpeur|developpement|competence|competences|opportunite|opportunites|francais|anglais professionnel)\b/,
+    /\b(c est parti|demarrons|commencons|bilan rapide|a partir de|adapte a mon profil)\b/,
+  ];
+
+  return frenchSignals.some((pattern) => pattern.test(normalized)) ? 'fr' : fallback;
+}
+
+function buildDeterministicOnboardingReply(firstName: string | undefined, language: string, mode?: string): string {
+  const name = firstName?.trim() || (language === 'fr' ? 'toi' : 'there');
+  if (mode === 'study') {
+    if (language === 'fr') {
+      return `Bienvenue ${name} ! Dis-moi ce que tu veux apprendre, comprendre ou pratiquer, avec tes mots. Il n'y a pas de mauvaise réponse : on part de ton objectif, puis j'adapte le parcours.`;
+    }
+    return `Welcome, ${name}! Tell me what you want to learn, understand, or practice in your own words. There is no wrong answer: we start from your goal, then I adapt the path.`;
+  }
+  if (language === 'fr') {
+    return `Bienvenue ${name} ! Je suis ton guide carrière sur Etudesk. Dis-moi ce que tu veux construire ou améliorer en ce moment, avec tes mots.`;
+  }
+  return `Welcome, ${name}! I'm your career guide on Etudesk. Tell me what you want to build or improve right now, in your own words.`;
+}
+
+function isSimpleCvGenerationRequest(message: string): boolean {
+  const normalized = message.trim().toLowerCase();
+  const hasCv = /\b(cv|curriculum|resume|résumé)\b/.test(normalized);
+  const hasGenerate = /\b(génère|genere|crée|cree|fais|prépare|prepare|construis|build|generate|create)\b/.test(normalized);
+  return hasCv && hasGenerate;
+}
+
+function buildCvContentFromTalentContext(talentContext: any): Record<string, unknown> {
+  const profile = talentContext.profile;
+  return {
+    firstName: profile.firstName || '',
+    lastName: profile.lastName || '',
+    email: profile.email || undefined,
+    phone: profile.phone || undefined,
+    city: profile.city || profile.location || undefined,
+    country: profile.country || undefined,
+    bio: profile.bio || undefined,
+    skills: (profile.skills || []).map((skill: any) => ({
+      name: skill.name,
+      type: skill.type || 'hard_skill',
+      level: skill.level || 'beginner',
+    })),
+    languages: profile.languages || undefined,
+    interests: profile.sectorsOfInterest?.length ? profile.sectorsOfInterest : profile.topSectors,
+  };
+}
 const MEMORY_MAX_SESSIONS = 12;
 const MEMORY_MAX_MESSAGES = 120;
 const MEMORY_MAX_SNIPPETS = 6;
 const MEMORY_MIN_TEXT_LEN = 30;
+const CHAT_HISTORY_LIMIT = Number(process.env.COPILOT_CHAT_HISTORY_LIMIT || 14);
 
 /** Sanitize strings before PostgreSQL insertion — removes null bytes and fixes broken Unicode escapes */
 function sanitizeForPg(value: string | null | undefined): string | null {
@@ -114,119 +217,6 @@ function sanitizeJsonForPg(value: any): string | null {
   return sanitizeForPg(str);
 }
 
-interface QuizBlock {
-  topic?: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
-
-interface ActiveQuizState {
-  quizId: string;
-  topic?: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-  sourceMessageId?: string;
-  sourceMessageAt?: string;
-  awaitingAnswer: boolean;
-}
-
-interface QuizEvaluation {
-  selectedIndex: number;
-  selectedOption: string;
-  isCorrect: boolean;
-}
-
-function normalizeQuizText(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function toQuizLetter(index: number): string {
-  return String.fromCharCode(65 + index);
-}
-
-function buildQuizId(quiz: QuizBlock): string {
-  const payload = `${quiz.topic || ''}|${quiz.question}|${quiz.options.join('|')}|${quiz.correctAnswer}`;
-  return crypto.createHash('sha1').update(payload).digest('hex').slice(0, 16);
-}
-
-function parseQuizBlock(raw: string): QuizBlock | null {
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    const question = typeof parsed.question === 'string' ? parsed.question.trim() : '';
-    const options = Array.isArray(parsed.options)
-      ? parsed.options.map((o: any) => String(o || '').trim()).filter(Boolean)
-      : [];
-    const correctAnswer = Number(parsed.correctAnswer);
-
-    if (!question || options.length < 2) return null;
-    if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer >= options.length) return null;
-
-    return {
-      topic: typeof parsed.topic === 'string' ? parsed.topic.trim() : undefined,
-      question,
-      options,
-      correctAnswer,
-      explanation: typeof parsed.explanation === 'string' ? parsed.explanation.trim() : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function extractLastQuizBlock(content: string): QuizBlock | null {
-  const regex = /```quiz\s*([\s\S]*?)```/g;
-  let match: RegExpExecArray | null;
-  let last: QuizBlock | null = null;
-
-  while ((match = regex.exec(content)) !== null) {
-    const parsed = parseQuizBlock(match[1].trim());
-    if (parsed) last = parsed;
-  }
-
-  return last;
-}
-
-function parseQuizAnswer(userMessage: string, options: string[]): number | null {
-  const raw = userMessage.trim();
-  if (!raw || options.length === 0) return null;
-
-  // A) / A. / A: / "Option A" / "Réponse A"
-  const letterMatch = raw.match(/^(?:option|reponse|réponse)?\s*([A-Z])(?:[\)\].:\s-]|$)/i);
-  if (letterMatch) {
-    const idx = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
-    if (idx >= 0 && idx < options.length) return idx;
-  }
-
-  // "1", "2", ...
-  const numMatch = raw.match(/^([1-9][0-9]*)\s*$/);
-  if (numMatch) {
-    const idx = Number(numMatch[1]) - 1;
-    if (idx >= 0 && idx < options.length) return idx;
-  }
-
-  const normalizedRaw = normalizeQuizText(raw.replace(/^[A-Z]\)\s*/i, ''));
-  if (!normalizedRaw) return null;
-
-  // Exact option text
-  const exact = options.findIndex((o) => normalizeQuizText(o) === normalizedRaw);
-  if (exact >= 0) return exact;
-
-  // Containment fallback (only if unique)
-  const candidates = options
-    .map((o, i) => ({ i, n: normalizeQuizText(o) }))
-    .filter((o) => normalizedRaw.includes(o.n) || o.n.includes(normalizedRaw));
-  return candidates.length === 1 ? candidates[0].i : null;
-}
 
 async function getLatestAssistantMessage(sessionId: string): Promise<{ id: string; createdAt: string; content: string } | null> {
   const result = await pool.query(
@@ -266,9 +256,9 @@ interface ConfirmationBlockPayload {
   [key: string]: unknown;
 }
 
-function formatYmdInAbidjan(value: Date): string {
+function formatYmdForCopilot(value: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Abidjan',
+    timeZone: COPILOT_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -296,8 +286,8 @@ function normalizeAgendaTriggerDueAtFromUserMessage(
   if (Number.isNaN(dueAt.getTime())) return payload;
 
   const now = new Date();
-  const dueYmd = formatYmdInAbidjan(dueAt);
-  const todayYmd = formatYmdInAbidjan(now);
+  const dueYmd = formatYmdForCopilot(dueAt);
+  const todayYmd = formatYmdForCopilot(now);
   if (dueYmd !== todayYmd) return payload;
 
   const shifted = new Date(dueAt.getTime());
@@ -360,28 +350,6 @@ function extractLastConfirmationBlock(content: string): { rawBlock: string; conf
   return last;
 }
 
-function buildStudyQuizHint(params: { activeQuiz: ActiveQuizState; evaluation: QuizEvaluation }): string {
-  const { activeQuiz, evaluation } = params;
-  const optionsBlock = activeQuiz.options
-    .map((opt, idx) => `${toQuizLetter(idx)}) ${opt}`)
-    .join('\n');
-
-  return [
-    '[DETERMINISTIC_QUIZ_CONTEXT]',
-    'You must evaluate ONLY the currently active quiz below.',
-    'Do not re-evaluate older questions and do not mix with previous answers.',
-    `quiz_id=${activeQuiz.quizId}`,
-    `question=${activeQuiz.question}`,
-    'options:',
-    optionsBlock,
-    `correct_index=${activeQuiz.correctAnswer}`,
-    `user_selected_index=${evaluation.selectedIndex}`,
-    `user_selected_option=${evaluation.selectedOption}`,
-    `is_correct=${evaluation.isCorrect ? 'true' : 'false'}`,
-    'Instruction: acknowledge this specific answer, explain briefly, then continue to the next pedagogical step.',
-    '[/DETERMINISTIC_QUIZ_CONTEXT]',
-  ].join('\n');
-}
 
 function normalizeTextForMatch(value: string): string {
   return value
@@ -429,9 +397,9 @@ function userReportsMissingConfirmationBlock(message: string): boolean {
 function buildConfirmationReplayResponse(block: { rawBlock: string; confirmLabel?: string }, language?: string): string {
   const label = block.confirmLabel || (language === 'fr' ? 'Confirmer' : 'Confirm');
   if (language === 'fr') {
-    return `Je remets le bloc ici. Appuie sur **${label}** pour valider.\n\n${block.rawBlock}`;
+    return `${i18next.t('copilot:confirmationReplay', { lng: 'fr', label })}\n\n${block.rawBlock}`;
   }
-  return `I am showing the block again here. Tap **${label}** to confirm.\n\n${block.rawBlock}`;
+  return `${i18next.t('copilot:confirmationReplay', { lng: language || 'en', label })}\n\n${block.rawBlock}`;
 }
 
 function extractMemoryKeywords(message: string): string[] {
@@ -586,6 +554,18 @@ async function isActiveOrganizationMember(organizationId: string, talentId: stri
  * Response: Server-Sent Events stream
  */
 router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
+  const routeStart = Date.now();
+  let sseStarted = false;
+  const routeMetrics: Record<string, number> = {};
+  const markPhase = (phase: string, label: string) => {
+    const elapsedMs = Date.now() - routeStart;
+    routeMetrics[`${phase}Ms`] = elapsedMs;
+    logger.info(`[copilot] phase:${phase} ${elapsedMs}ms`);
+    if (sseStarted) {
+      sendSSE(res, { type: 'status', phase, label, elapsedMs });
+    }
+  };
+
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -617,6 +597,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
+    initSSE(res);
+    sseStarted = true;
+    markPhase('ack', req.t('copilot:statusAck'));
+
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
     const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
       ? requestIdempotencyKeyHeader[0]
@@ -630,7 +614,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       if (organizationId) {
         const orgOwner = await getOrganizationBillingOwner(organizationId, talentId);
         if (!orgOwner) {
-          return res.status(403).json({ error: req.t('organizations:notMember') });
+          sendSSE(res, { type: 'error', error: req.t('organizations:notMember') });
+          res.end();
+          return;
         }
 
         await debitWalletForAction({
@@ -663,16 +649,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       }
     } catch (debitError: any) {
       if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
-        return res.status(402).json({
-          error: req.t('billing:insufficientCredits'),
-          code: 'INSUFFICIENT_CREDITS',
-        });
+        sendSSE(res, { type: 'error', error: req.t('billing:insufficientCredits') });
+        res.end();
+        return;
       }
       throw debitError;
     }
-
-    // Initialize SSE
-    initSSE(res);
+    markPhase('billing', req.t('copilot:statusBilling'));
 
     // --- PHASE 1: Session + Context + Language in parallel ---
     const isOrg = !!organizationId;
@@ -685,7 +668,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Cache key: ctx:{talentId}:{mode} — TTL 5 min, invalidated on profile/skills/docs mutation
     const ctxCacheKey = `ctx:${talentId}:${isOrg ? 'org' : validMode}`;
 
-    const [session, talentContext, userLanguage] = await Promise.all([
+    const [session, talentContext, preferredLanguage] = await Promise.all([
       // Session (create or get — scoped by organizationId for isolation)
       (async () => {
         if (inputSessionId) {
@@ -699,6 +682,22 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Language preference
       resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] }),
     ]);
+    let userLanguage = inferLanguageFromUserMessage(safeMessage, preferredLanguage);
+    if (userLanguage !== 'fr') {
+      const recentLanguageContext = await pool.query(
+        `SELECT content
+         FROM copilot_messages
+         WHERE session_id = $1 AND deleted_at IS NULL
+         ORDER BY created_at DESC
+         LIMIT 6`,
+        [session.id]
+      );
+      const recentText = recentLanguageContext.rows.map((row: any) => row.content).join('\n');
+      userLanguage = inferLanguageFromUserMessage(recentText, userLanguage);
+    }
+    const statusLanguage = resolveLanguageFromHeader(req.headers['accept-language'], userLanguage);
+    const phaseLabel = (key: string) => i18next.t(`copilot:${key}`, { lng: statusLanguage });
+    markPhase('context', phaseLabel('statusContext'));
     const sessionId = session.id;
     const sessionContext: Record<string, unknown> =
       session.context && typeof session.context === 'object'
@@ -785,6 +784,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const skillMode = isOrg ? 'org' : validMode;
     const userCountry = talentContext.profile?.country;
     const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org', userCountry);
+    markPhase('planning', detectedSkill ? phaseLabel('statusWorkflow') : phaseLabel('statusPlanning'));
     // Build active skill instructions with DPO few-shot examples
     let activeSkillInstructions: string | undefined;
     if (detectedSkill) {
@@ -794,9 +794,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         activeSkillInstructions += `\n${trajectories}\n`;
       }
     }
-
-    // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
-    const injectUEMOA = isUEMOACountry(userCountry) && shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
 
     // Build agent context (CPU only, instant)
     let agent: any;
@@ -845,7 +842,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         orgCity,
         orgCountry,
         activeSkillInstructions,
-        injectUEMOA,
       };
       agent = createOrgAgent(orgCtx);
     } else {
@@ -855,7 +851,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
         language: userLanguage,
         activeSkillInstructions,
-        injectUEMOA,
         session: {
           currentMode: session.mode === COPILOT_MODES.STUDY ? COPILOT_MODES.STUDY : COPILOT_MODES.EXPLORE,
           conversationTopic: session.title,
@@ -903,9 +898,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         : Promise.resolve(null as string | null),
       // Load history (includes the user message we just saved, excludes soft-deleted)
       pool.query(
-        `SELECT role, content FROM copilot_messages
-         WHERE session_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 20`,
-        [sessionId]
+        `SELECT id, role, content, created_at FROM copilot_messages
+         WHERE session_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC LIMIT $2`,
+        [sessionId, CHAT_HISTORY_LIMIT]
       ),
     ]);
 
@@ -940,6 +935,217 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const history = crossSessionMemory.length > 0
       ? [...crossSessionMemory, ...summarizedHistory]
       : summarizedHistory;
+    markPhase('history', phaseLabel('statusHistory'));
+
+    if (!hasVoiceNote && !hasAttachments && isOnboardingStartMessage(safeMessage)) {
+      const onboardingLanguage = inferOnboardingStartLanguage(safeMessage, userLanguage);
+      const finalOutput = buildDeterministicOnboardingReply(talentContext.profile.firstName, onboardingLanguage, validMode);
+      const insertAssistantResult = await pool.query(
+        `INSERT INTO copilot_messages (session_id, role, content, tool_calls, output_data)
+         VALUES ($1, 'assistant', $2, $3, $4)
+         RETURNING id`,
+        [sessionId, sanitizeForPg(finalOutput), null, sanitizeJsonForPg([{ type: 'text', content: finalOutput }])]
+      );
+      const assistantMessageId = insertAssistantResult.rows[0]?.id || null;
+
+      pool.query(
+        `INSERT INTO copilot_traces
+          (session_id, message_id, talent_id, organization_id, mode, skill_id,
+           turn_count, tool_count, tool_names, tool_errors, duration_ms, output_chars,
+           has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked,
+           input_tokens, output_tokens, cache_read_tokens)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+        [
+          sessionId,
+          assistantMessageId,
+          talentId,
+          organizationId || null,
+          validMode,
+          null,
+          0,
+          0,
+          [],
+          0,
+          Date.now() - routeStart,
+          finalOutput.length,
+          false,
+          false,
+          false,
+          false,
+          0,
+          0,
+          0,
+        ]
+      ).catch((err) => logger.error('[copilot] Failed to persist deterministic onboarding trace:', err));
+
+      const messageCount = historyRes.rows.length;
+      if (messageCount <= 2) {
+        copilotService.updateSessionTitle(sessionId, buildDeterministicSessionTitle(safeMessage, onboardingLanguage, hasAttachments) || 'Etudesk onboarding').catch(() => { });
+      }
+
+      sendSSE(res, { type: 'text_delta', delta: finalOutput });
+      sendSSE(res, { type: 'content_corrected', content: finalOutput });
+      sendSSE(res, {
+        type: 'done',
+        sessionId,
+        metrics: {
+          ...routeMetrics,
+          totalMs: Date.now() - routeStart,
+          agentDurationMs: 0,
+          firstTokenMs: 0,
+          firstToolMs: 0,
+          toolCount: 0,
+          turnCount: 0,
+        },
+      });
+      res.end();
+      return;
+    }
+
+    if (
+      validMode === COPILOT_MODES.EXPLORE &&
+      !hasVoiceNote &&
+      !hasAttachments &&
+      isSimpleCvGenerationRequest(safeMessage)
+    ) {
+      const callId = crypto.randomUUID();
+      const preface = userLanguage === 'fr'
+        ? 'Je génère ton CV à partir de ton profil.\n\n'
+        : 'I am generating your CV from your profile.\n\n';
+      const title = `CV - ${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || 'CV';
+      const toolInput = {
+        format: 'PDF',
+        title,
+        contentJson: buildCvContentFromTalentContext(talentContext),
+        instructions: userLanguage === 'fr'
+          ? 'Génère un CV simple, propre et honnête uniquement avec les données du profil. N’invente aucune expérience, formation, certification ou référence.'
+          : 'Generate a simple, clean and honest CV using only profile data. Do not fabricate experience, education, certifications, or references.',
+      };
+
+      sendSSE(res, { type: 'text_delta', delta: preface });
+      sendSSE(res, {
+        type: 'tool_start',
+        tool: {
+          callId,
+          name: 'generate_document',
+          args: toolInput,
+        },
+      });
+
+      const toolStart = Date.now();
+      const documentTool = createGenerateDocumentTool(
+        talentId,
+        talentContext.profile.avatarUrl,
+        undefined,
+        userLanguage
+      );
+      const output = await documentTool.execute(toolInput);
+      const duration = Date.now() - toolStart;
+      const isError = !!(output?.error || output?.isError || output?.success === false);
+      const summary = isError
+        ? (userLanguage === 'fr' ? 'Génération du CV impossible.' : 'CV generation failed.')
+        : (userLanguage === 'fr' ? 'CV généré.' : 'CV generated.');
+
+      sendSSE(res, {
+        type: 'tool_end',
+        tool: {
+          callId,
+          name: 'generate_document',
+          summary,
+          result: output,
+          duration,
+          status: isError ? 'error' : 'success',
+          error: isError ? output?.error : undefined,
+        },
+      });
+
+      const finalOutput = isError
+        ? `${preface}${userLanguage === 'fr' ? "Je n'ai pas pu générer le CV" : 'I could not generate the CV'}: ${output?.error || 'unknown error'}`
+        : `${preface}\`\`\`entity:document\n${JSON.stringify({ id: output.id })}\n\`\`\`\n\n${userLanguage === 'fr' ? 'Ton CV est prêt et enregistré dans tes documents.' : 'Your CV is ready and saved in your documents.'}`;
+      const segments = [
+        { type: 'text', content: preface },
+        {
+          type: 'tool',
+          tool: {
+            callId,
+            name: 'generate_document',
+            args: toolInput,
+            result: output,
+            summary,
+            duration,
+            status: isError ? 'error' : 'success',
+            error: isError ? output?.error : undefined,
+          },
+        },
+        { type: 'text', content: finalOutput.slice(preface.length) },
+      ];
+      const toolTrace = [{ name: 'generate_document', args: toolInput, result: output, duration }];
+
+      const insertAssistantResult = await pool.query(
+        `INSERT INTO copilot_messages (session_id, role, content, tool_calls, output_data)
+         VALUES ($1, 'assistant', $2, $3, $4)
+         RETURNING id`,
+        [
+          sessionId,
+          sanitizeForPg(finalOutput),
+          sanitizeJsonForPg(toolTrace),
+          sanitizeJsonForPg(segments),
+        ]
+      );
+      const assistantMessageId = insertAssistantResult.rows[0]?.id || null;
+
+      pool.query(
+        `INSERT INTO copilot_traces
+          (session_id, message_id, talent_id, organization_id, mode, skill_id,
+           turn_count, tool_count, tool_names, tool_errors, duration_ms, output_chars,
+           has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked,
+           input_tokens, output_tokens, cache_read_tokens)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+        [
+          sessionId,
+          assistantMessageId,
+          talentId,
+          organizationId || null,
+          validMode,
+          null,
+          0,
+          1,
+          ['generate_document'],
+          isError ? 1 : 0,
+          Date.now() - routeStart,
+          finalOutput.length,
+          isError,
+          false,
+          false,
+          false,
+          0,
+          0,
+          0,
+        ]
+      ).catch((err) => logger.error('[copilot] Failed to persist fast CV trace:', err));
+
+      const messageCount = historyRes.rows.length;
+      if (messageCount <= 2) {
+        copilotService.updateSessionTitle(sessionId, title).catch(() => { });
+      }
+
+      sendSSE(res, { type: 'content_corrected', content: finalOutput });
+      sendSSE(res, {
+        type: 'done',
+        sessionId,
+        metrics: {
+          ...routeMetrics,
+          totalMs: Date.now() - routeStart,
+          agentDurationMs: duration,
+          firstTokenMs: 0,
+          firstToolMs: 0,
+          toolCount: 1,
+          turnCount: 0,
+        },
+      });
+      res.end();
+      return;
+    }
 
     // --- Default agent message: infer intent from attachments if text is empty ---
     let agentMessage = safeMessage || (hasAttachments ? i18next.t('copilot:attachmentInferMessage') : '');
@@ -975,7 +1181,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     }
 
     const latestAssistantBeforeCurrent = !hasVoiceNote && !hasAttachments && safeMessage
-      ? await getLatestAssistantMessage(sessionId)
+      ? [...historyRes.rows]
+          .slice(0, -1)
+          .reverse()
+          .find((r: any) => r.role === 'assistant') || null
       : null;
     const confirmationToReplay =
       latestAssistantBeforeCurrent && userReportsMissingConfirmationBlock(safeMessage)
@@ -1037,19 +1246,46 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
       sendSSE(res, { type: 'text_delta', delta: finalOutput });
       sendSSE(res, { type: 'content_corrected', content: finalOutput });
-      sendSSE(res, { type: 'done', sessionId });
+      sendSSE(res, {
+        type: 'done',
+        sessionId,
+        metrics: {
+          ...routeMetrics,
+          totalMs: Date.now() - routeStart,
+          agentDurationMs: 0,
+          firstTokenMs: 0,
+          firstToolMs: 0,
+          toolCount: 0,
+          turnCount: 0,
+        },
+      });
       res.end();
       return;
     }
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
+    markPhase('agent_start', phaseLabel('statusAgentStart'));
     const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
       agent,
       agentMessage,
       history,
       res,
-      parsedAttachments
+      parsedAttachments,
+      {
+        writing: phaseLabel('statusWriting'),
+        toolPlanning: phaseLabel('statusToolPlanning'),
+        guardrailInjectionBlocked: phaseLabel('guardrailInjectionBlocked'),
+        guardrailBlocked: phaseLabel('guardrailBlocked'),
+        limitMaxDuration: phaseLabel('limitMaxDuration'),
+        limitMaxTokens: phaseLabel('limitMaxTokens'),
+        limitToolLoop: phaseLabel('limitToolLoop'),
+        limitMaxTools: phaseLabel('limitMaxTools'),
+        limitEmptyResults: phaseLabel('limitEmptyResults'),
+        providerOverloaded: phaseLabel('providerOverloaded'),
+        providerUnavailable: phaseLabel('providerUnavailable'),
+        safetyRefusal: phaseLabel('safetyRefusal'),
+      }
     );
     const finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
 
@@ -1174,6 +1410,28 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       ]
     ).catch((err) => logger.error('[copilot] Failed to persist trace:', err));
 
+    // COGS accounting — record this billed query's Sonnet spend (incl. cache write)
+    const billedActionCode = organizationId
+      ? 'ORG_ASSISTANT_MANAGER_QUERY'
+      : validMode === COPILOT_MODES.STUDY
+        ? 'TALENT_ASSISTANT_STUDY_QUERY'
+        : 'TALENT_ASSISTANT_EXPLORER_QUERY';
+    void recordUsage({
+      feature: 'copilot_agent',
+      model: MODEL_AGENT,
+      usage: {
+        input_tokens: traceMetrics.inputTokens,
+        output_tokens: traceMetrics.outputTokens,
+        cache_read_input_tokens: traceMetrics.cacheReadTokens,
+        cache_creation_input_tokens: traceMetrics.cacheCreationTokens,
+      },
+      scopeTalentId: talentId,
+      scopeOrganizationId: organizationId || null,
+      sessionId,
+      billedActionCode,
+      metadata: { mode: validMode, turns: traceMetrics.turnCount, tools: traceMetrics.toolCount },
+    });
+
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
     if (messageCount <= 2) {
@@ -1191,7 +1449,19 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     sendSSE(res, { type: 'content_corrected', content: finalOutput });
 
     // Send done event
-    sendSSE(res, { type: 'done', sessionId });
+    sendSSE(res, {
+      type: 'done',
+      sessionId,
+      metrics: {
+        ...routeMetrics,
+        totalMs: Date.now() - routeStart,
+        agentDurationMs: traceMetrics.durationMs,
+        firstTokenMs: traceMetrics.firstTokenMs,
+        firstToolMs: traceMetrics.firstToolMs,
+        toolCount: traceMetrics.toolCount,
+        turnCount: traceMetrics.turnCount,
+      },
+    });
     res.end();
   } catch (error: any) {
     logger.error('Error in copilot chat:', error);
@@ -1266,20 +1536,27 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       sectors: profileRow.sectors,
     } : undefined;
 
-    // 3. Generate suggestions (OpenAI)
-    const { Runner } = await import('@openai/agents');
-    const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
+    // 3. Generate suggestions
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
-    const { openaiProvider } = await import('../services/ai/provider');
+    const { getSuggestionClient } = await import('../services/ai/provider');
+    const { MODEL_SUGGESTION } = await import('../services/ai/models');
+    const { recordUsage } = await import('../services/ai/usage.service');
 
     const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext, languageName);
-    const agent = createIntentSuggestionsAgent(systemPrompt);
-    const suggestionRunner = new Runner({ modelProvider: openaiProvider });
 
     let suggestions: string[] = [];
     try {
-      const result = await suggestionRunner.run(agent, `Generate 4 suggestions in ${languageName}.`);
-      const text = result.finalOutput?.trim() || '[]';
+      const client = getSuggestionClient();
+      const completion = await client.chat.completions.create({
+        model: MODEL_SUGGESTION,
+        max_tokens: 180,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Generate 4 suggestions in ${languageName}.` },
+        ],
+      });
+      void recordUsage({ feature: 'intent_suggestions', model: MODEL_SUGGESTION, usage: completion.usage as any });
+      const text = completion.choices[0]?.message?.content?.trim() || '[]';
       suggestions = JSON.parse(text);
 
       if (!Array.isArray(suggestions) || suggestions.length < 4) {
@@ -1520,8 +1797,7 @@ const audioUpload = multer({
 });
 
 /**
- * POST /api/copilot/transcribe - Transcribe audio using OpenAI gpt-4o-mini-transcribe
- * Better WER and French language recognition than whisper-1.
+ * POST /api/copilot/transcribe - Transcribe audio using provider STT.
  * Body: FormData with 'audio' file field
  * Returns: { text: string }
  */
@@ -1541,24 +1817,15 @@ router.post(
         return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
-      const { getOpenAIClient } = await import('../services/ai/provider');
-      const openai = getOpenAIClient();
-
-      // Create a File-like object from buffer for the API
-      const audioFile = new File([file.buffer], file.originalname, {
-        type: file.mimetype,
-      });
-
-      // gpt-4o-mini-transcribe: better accuracy, lower WER, better French support
-      // response_format must be 'json' for gpt-4o-mini-transcribe (text not supported)
       const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
-      const result = await openai.audio.transcriptions.create({
-        file: audioFile,
-        model: MODEL_STT,
+      const { transcribeWithProvider } = await import('../services/ai/media.client');
+      const result = await transcribeWithProvider({
+        buffer: file.buffer,
+        filename: file.originalname || 'audio.webm',
+        mimeType: file.mimetype,
         language,
       });
-
-      const transcription = typeof result === 'string' ? result : (result as any).text || '';
+      const transcription = result || '';
 
       logger.info(`Audio transcribed for talent ${talentId}: ${transcription.slice(0, 50)}...`);
 
@@ -1571,7 +1838,6 @@ router.post(
     } catch (error: any) {
       logger.error('Error transcribing audio:', error);
 
-      // Handle specific OpenAI errors
       if (error?.status === 400) {
         return res.status(400).json({
           error: req.t('copilot:invalidAudioFormat'),

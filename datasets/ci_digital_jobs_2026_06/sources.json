@@ -1,0 +1,22 @@
+{
+  "captured_from_image": "IMG_67B82B961C52-1.jpeg",
+  "checked_at": "2026-06-30",
+  "sources": [
+    { "name": "ci.coinafrique.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture, non prioritaire pour postes numeriques qualifies." },
+    { "name": "projobivoire.com", "status": "usable", "notes": "Fiches accessibles et certaines fiches exposent un mailto recruteur." },
+    { "name": "goafricaonline.com", "status": "listed_from_image", "notes": "Source annuaire regionale, a explorer pour enrichissement d'emails entreprises." },
+    { "name": "variancegrh.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "agenceemploijeunes.ci", "status": "listed_from_image", "notes": "Source institutionnelle, a explorer pour prochains imports." },
+    { "name": "wijob.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "unjobs.org", "status": "checked_low_yield", "notes": "Peu de resultats CI numeriques actifs trouves lors de la recherche." },
+    { "name": "jobpoint.ci", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "h2c-africa.com", "status": "listed_from_image", "notes": "Source cabinet/recrutement a explorer." },
+    { "name": "citalent.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "novojob.com", "status": "usable_partial", "notes": "Liste accessible, quelques offres numeriques, email recruteur non expose dans les resultats publics." },
+    { "name": "sociumjob.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "jobafrique.com", "status": "listed_from_image", "notes": "Source regionale lue sur la capture." },
+    { "name": "talentsplusafrique.com", "status": "listed_from_image", "notes": "Source cabinet/recrutement a explorer." },
+    { "name": "portail.bnetd.ci", "status": "listed_from_image", "notes": "Source institutionnelle lue sur la capture." },
+    { "name": "linkedin.com/jobs", "status": "usable_partial", "notes": "Tres bon volume sur IA/data/dev en CI, mais email recruteur generalement absent." }
+  ]
+}

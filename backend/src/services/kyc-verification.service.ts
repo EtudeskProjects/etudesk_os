@@ -1,13 +1,14 @@
 /**
  * KYC Verification Service
- * Uses OpenAI gpt-5-mini vision for document verification
+ * Uses the configured vision model for document verification
  */
 
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MODEL_SEARCH } from './ai/models';
-import { getOpenAIClient } from './ai/provider';
+import { getAIClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
 import { toTOON } from './ai/toon';
@@ -248,12 +249,12 @@ export async function verifyKYCDocument(
 ): Promise<VerificationResult> {
   logger.info(`Starting KYC verification for talent ${talentId}`);
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.AI_API_KEY) {
     return errorResult(
       ['Verification service not configured'],
       ['Verification service unavailable'],
       null,
-      'OPENAI_API_KEY not configured'
+      'AI_API_KEY not configured'
     );
   }
 
@@ -321,10 +322,10 @@ export async function verifyKYCDocument(
   }
 
   try {
-    logger.info(`Calling gpt-5-mini API for document analysis...`);
+    logger.info(`Calling configured vision model for document analysis...`);
 
-    const openai = getOpenAIClient();
-    const completion = await openai.chat.completions.create({
+    const aiClient = getAIClient();
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
@@ -332,12 +333,14 @@ export async function verifyKYCDocument(
       ],
     });
 
+    void recordUsage({ feature: 'kyc', model: MODEL_SEARCH, usage: completion.usage, scopeTalentId: talentId });
+
     const analysisText = completion.choices[0]?.message?.content?.trim();
     if (!analysisText) {
       throw new Error('Empty response from API');
     }
 
-    logger.info('gpt-5-mini KYC analysis received', { length: analysisText.length });
+    logger.info('KYC analysis received', { length: analysisText.length });
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';
@@ -500,7 +503,7 @@ export async function verifyKYCDocument(
 export async function quickDocumentCheck(
   frontImageUrl: string
 ): Promise<{ valid: boolean; document_type: DocumentType | 'UNKNOWN'; message: string }> {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.AI_API_KEY) {
     return { valid: true, document_type: 'UNKNOWN', message: 'Automatic verification unavailable' };
   }
 
@@ -510,8 +513,8 @@ export async function quickDocumentCheck(
       return { valid: false, document_type: 'UNKNOWN', message: 'Image not accessible' };
     }
 
-    const openai = getOpenAIClient();
-    const completion = await openai.chat.completions.create({
+    const aiClient = getAIClient();
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
@@ -527,6 +530,8 @@ export async function quickDocumentCheck(
         },
       ],
     });
+
+    void recordUsage({ feature: 'kyc', model: MODEL_SEARCH, usage: completion.usage });
 
     const resultText = completion.choices[0]?.message?.content?.trim();
     if (!resultText) {

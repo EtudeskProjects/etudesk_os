@@ -1,11 +1,12 @@
 /**
- * Audio Analysis Service — OpenAI gpt-4o-mini-transcribe
- * Transcribes audio via OpenAI Whisper/STT, then analyzes with gpt-4.1-nano.
+ * Audio Analysis Service — provider STT + chat analysis.
  */
 
 import { logger } from '../../utils';
-import { getOpenAIClient } from './provider';
+import { getAIClient } from './provider';
 import { MODEL_SUGGESTION, MODEL_STT } from './models';
+import { recordUsage } from './usage.service';
+import { transcribeWithProvider } from './media.client';
 
 const STUDY_PROMPT = `Tu es un assistant pédagogique. Analyse cette transcription vocale envoyée par un apprenant.
 
@@ -41,7 +42,7 @@ Formate ta réponse ainsi:
 **Message de l'utilisateur à traiter par l'assistant:** [transcription]`;
 
 /**
- * Analyze audio: transcribe with OpenAI STT, then analyze with gpt-4.1-nano.
+ * Analyze audio: transcribe with provider STT, then analyze with chat.
  * @param audioBase64 - Base64-encoded audio data
  * @param mimeType - Audio MIME type (e.g. 'audio/mp4', 'audio/webm')
  * @param mode - Copilot mode ('study' | 'explore' | 'org')
@@ -52,12 +53,11 @@ export async function analyzeAudio(
   mimeType: string,
   mode: 'study' | 'explore' | 'org'
 ): Promise<string> {
-  const openai = getOpenAIClient();
+  const aiClient = getAIClient();
 
-  logger.info(`[AudioAnalysis] Analyzing audio (${mimeType}, mode=${mode}) via OpenAI`);
+  logger.info(`[AudioAnalysis] Analyzing audio (${mimeType}, mode=${mode}) via AI provider`);
 
-  // Step 1: Transcribe with OpenAI STT
-  // Whisper accepts: flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm
+  // Step 1: Transcribe with provider STT
   const audioBuffer = Buffer.from(audioBase64, 'base64');
   const normalizedMime = (mimeType || '').toLowerCase();
   let ext: string;
@@ -78,35 +78,35 @@ export async function analyzeAudio(
     ext = 'm4a';
   }
   const safeMime = ext === 'm4a' ? 'audio/mp4' : ext === 'mp3' ? 'audio/mpeg' : `audio/${ext}`;
-  const file = new File([audioBuffer], `audio.${ext}`, { type: safeMime });
-
-  const transcription = await openai.audio.transcriptions.create({
-    model: MODEL_STT,
-    file,
+  const transcribedText = await transcribeWithProvider({
+    buffer: audioBuffer,
+    filename: `audio.${ext}`,
+    mimeType: safeMime,
   });
-
-  const transcribedText = transcription.text?.trim();
+  void recordUsage({ feature: 'audio_stt', model: MODEL_STT, audioSeconds: 0, metadata: { mode, bytes: audioBuffer.length } });
   if (!transcribedText) {
-    throw new Error('No transcription result from OpenAI STT');
+    throw new Error('No transcription result from AI provider STT');
   }
 
   logger.info(`[AudioAnalysis] Transcribed: ${transcribedText.slice(0, 100)}...`);
 
-  // Step 2: Analyze transcription with gpt-4.1-nano
+  // Step 2: Analyze transcription
   const prompt = mode === 'study' ? STUDY_PROMPT : DEFAULT_PROMPT;
 
-  const completion = await openai.chat.completions.create({
+  const completion = await aiClient.chat.completions.create({
     model: MODEL_SUGGESTION,
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content: transcribedText },
     ],
-    max_completion_tokens: 1024, // GPT-5: max_completion_tokens (not max_tokens), default temperature only
+    max_tokens: 1024,
   });
+
+  void recordUsage({ feature: 'audio_analysis', model: MODEL_SUGGESTION, usage: completion.usage });
 
   const text = completion.choices?.[0]?.message?.content?.trim();
   if (!text) {
-    throw new Error('No analysis result from OpenAI');
+    throw new Error('No analysis result from AI provider');
   }
 
   logger.info(`[AudioAnalysis] Result: ${text.slice(0, 100)}...`);

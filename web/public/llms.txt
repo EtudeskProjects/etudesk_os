@@ -1,0 +1,26 @@
+# Etudesk
+
+> Etudesk is an AI-powered platform to learn digital skills fast and affordably, and turn them directly into real opportunities. An AI tutor teaches you; an AI career guide finds you jobs, internships, gigs and training. In your pocket, at your pace.
+
+## What it is
+- A living referential of 1687 digital skills, updated at market speed, where every skill knows what comes before, beside and after it.
+- AI Tutor (learn): auto-generated quizzes & flashcards, step-by-step exercises, code playground (JavaScript / Python), multimodal explanations (diagrams, audio, video).
+- AI Career Guide (advance): opportunities matched to your profile, tailored CV generation, interview preparation, communities & spaces.
+
+## Why it matters
+- Digital skills are cross-cutting (every job, every industry), open a worldwide job market, rank among the best-paid jobs, and are accessible to anyone with a smartphone and an internet connection.
+- Pricing: pay-per-use credits, no subscription. Tutor costs 0.25 credit per question; quizzes, flashcards, diagrams, web/video search and applications are free. 20 free credits to start.
+
+## Proof
+- 10 years serving education, 3,000,000+ people trained, 600+ organisations, 53 countries (since 2016).
+- Worked with: Presidency of Côte d'Ivoire, Ministry for Youth Promotion, Ministry of Digital Transition, Orange, Société Générale, Mastercard Foundation, United Nations, World Bank, African Development Bank, Africa Global Logistics.
+
+## Key pages
+- Home: https://etudesk.com/
+- Digital skills referential (explore 1687 skills and their relations): https://etudesk.com/digital-skills
+- Terms: https://etudesk.com/terms
+- Privacy: https://etudesk.com/privacy
+
+## Apps
+- iOS: https://etudesk.com/link/ios
+- Android: https://etudesk.com/link/android

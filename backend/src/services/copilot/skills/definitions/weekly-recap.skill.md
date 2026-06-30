@@ -2,8 +2,8 @@
 name: Weekly Recap
 description: Generate a weekly learning recap showing skills progress, topics studied, and recommendations for next week
 modes: study
-tools: manage_skills
-triggers: recap, recapitulatif, bilan semaine, weekly, resume de la semaine, ou j'en suis cette semaine, progression, suivi, mon avancement
+tools: manage_skills, competency_graph
+triggers: recap, récap, recapitulatif, récapitulatif, bilan semaine, weekly, résumé de la semaine, resume de la semaine, où j'en suis cette semaine, ou j'en suis cette semaine, progression, suivi, mon avancement
 ---
 
 # Weekly Recap Workflow
@@ -17,58 +17,58 @@ You are now in Weekly Recap mode. Your goal: produce a motivating weekly summary
 
 ## Step 2: Skills Progress Overview — Charts #13, #3, #4
 
-Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
+Render les charts suivants dans l'ordre (1 par section de texte, enchaînés) :
 
 ### Chart A — Distribution par niveau (Catalog #13)
-4. Render un **donut** de repartition par niveau de maitrise :
+4. Render un **donut** de répartition par niveau de maîtrise :
 
 ```chart
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes compétences par niveau","data":[{"label":"Débutant","value":5},{"label":"Intermédiaire","value":8},{"label":"Avancé","value":3},{"label":"Master","value":1}],"total_label":"17 compétences"}
 ```
 
-**Thinking flow** : Compter skills par niveau. Exclure niveaux a 0. Labels : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si un seul niveau → metric : `{"type":"metric","title":"Tes competences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`. Si > 60% beginner → "Tu as beaucoup de bases — approfondis avec un cours !" Si beaucoup d'advanced → "Pret pour des certifications master ?"
+**Thinking flow** : Compter skills par niveau. Exclure niveaux à 0. Labels : beginner→"Débutant", intermediate→"Intermédiaire", advanced→"Avancé", master→"Master". Si un seul niveau → metric : `{"type":"metric","title":"Tes compétences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`. Si > 60% beginner → "Tu as beaucoup de bases — approfondis avec un cours !" Si beaucoup d'advanced → "Prêt pour une évaluation vérifiée ou un dossier de preuves ?"
 
-### Chart B — Repartition par type (Catalog #3)
-5. Render un **donut** de repartition par type :
+### Chart B — Répartition par type (Catalog #3)
+5. Render un **donut** de répartition par type :
 
 ```chart
-{"type":"donut","title":"Repartition par type","data":[{"label":"Hard Skills","value":8},{"label":"Soft Skills","value":4},{"label":"Connaissances","value":3}],"total_label":"15 competences"}
+{"type":"donut","title":"Répartition par type","data":[{"label":"Compétences techniques","value":8},{"label":"Savoir-être","value":4},{"label":"Connaissances","value":3}],"total_label":"15 compétences"}
 ```
 
-**Thinking flow** : Count par type. Exclure types a 0 du chart mais les mentionner : "Tu n'as aucun soft skill — ca vaut le coup d'en declarer."
+**Thinking flow** : Count par type. Exclure types à 0 du chart mais les mentionner : "Tu n'as aucun savoir-être déclaré — ça vaut le coup d'en ajouter."
 
 ### Chart C — Progression (Catalog #4) — optionnel
-6. Si l'utilisateur a des skills avec des `updated_at` repartis sur 2+ semaines, render un **line** :
+6. Si l'utilisateur a des skills avec des `updated_at` répartis sur 2+ semaines, render un **line** :
 
 ```chart
-{"type":"line","title":"Competences acquises","data":[{"label":"Sem 1","value":2},{"label":"Sem 2","value":5},{"label":"Sem 3","value":7},{"label":"Sem 4","value":12}]}
+{"type":"line","title":"Compétences acquises","data":[{"label":"Sem 1","value":2},{"label":"Sem 2","value":5},{"label":"Sem 3","value":7},{"label":"Sem 4","value":12}]}
 ```
 
-**Thinking flow** : Compter les skills par semaine de creation/update (cumule). Min 2 points pour une line. Si < 2 semaines de donnees → skip ce chart.
+**Thinking flow** : Compter les skills par semaine de création/update (cumulé). Min 2 points pour une line. Si < 2 semaines de données → skip ce chart.
 
 ## Step 3: Weekly Activity (Chart #12)
 
-### Chart D — Activite hebdo (Catalog #12)
-7. Render un **bar** resumant l'activite de la semaine :
+### Chart D — Activité hebdo (Catalog #12)
+7. Render un **bar** résumant l'activité de la semaine :
 
 ```chart
-{"type":"bar","title":"Activite cette semaine","data":[{"label":"Quiz passes","value":5},{"label":"Cours termines","value":2},{"label":"Skills ameliorees","value":3},{"label":"Documents etudies","value":1}]}
+{"type":"bar","title":"Activité cette semaine","data":[{"label":"Quiz passés","value":5},{"label":"Cours terminés","value":2},{"label":"Skills améliorées","value":3},{"label":"Documents étudiés","value":1}]}
 ```
 
-**Thinking flow** : Compter depuis le contexte de conversation : nombre de quiz blocks dans la session, nombre de lessons completees, skills ajoutees/upgradees cette semaine (via manage_skills dans l'historique), documents analyses. Exclure les categories a 0. Si aucune activite → skip ce chart et afficher un message encourageant : "C'est calme cette semaine — on reprend ?"
+**Thinking flow** : Compter depuis le contexte de conversation : nombre de quiz blocks dans la session, nombre de lessons complétées, skills ajoutées/upgradeées cette semaine (via manage_skills dans l'historique), documents analysés. Exclure les catégories à 0. Si aucune activité → skip ce chart et afficher un message encourageant : "C'est calme cette semaine — on reprend ?"
 
 ## Step 4: Weekly Highlights
 
 8. Present the recap:
 
 **Cette semaine :**
-- **Competences ajoutees** : [List any recently added skills, or "Aucune nouvelle competence cette semaine"]
-- **Competences ameliorees** : [Skills with level upgrades, or "Pas de changement de niveau"]
-- **Sujets explores** : [Topics from the current conversation session]
+- **Compétences ajoutées** : [List any recently added skills, or "Aucune nouvelle compétence cette semaine"]
+- **Compétences améliorées** : [Skills with level upgrades, or "Pas de changement de niveau"]
+- **Sujets explorés** : [Topics from the current conversation session]
 
 **Ton profil en chiffres :**
-- Total competences : [X]
-- Repartition : [X hard skills, Y soft skills, Z knowledge]
+- Total compétences : [X]
+- Répartition : [X compétences techniques, Y savoir-être, Z connaissances]
 
 ## Step 5: Strengths & Gaps
 
@@ -78,18 +78,18 @@ Render les charts suivants dans l'ordre (1 par section de texte, enchaines) :
 
 ## Step 6: Recommendations
 
-10. Provide 3 concrete recommendations for next week:
+10. Provide 3 concrete recommendations for next week. For the main weak skill or the strongest active skill, call `competency_graph(skill)` and choose recommendations from graph-backed prerequisites, siblings, related skills, or next steps. Do not invent adjacent skills outside the graph.
 
 **Plan pour la semaine prochaine :**
-1. **Renforcer** : [Weakest skill] — "Une session de revision de 15 min suffirait."
-2. **Approfondir** : [Skill at intermediate that could be advanced] — "Un mini-projet serait ideal."
-3. **Explorer** : [New skill related to existing ones] — "Ca complementerait bien tes competences en [related skill]."
+1. **Renforcer** : [Weakest skill] — "Une session de révision de 15 min suffirait."
+2. **Approfondir** : [Skill at intermediate that could be advanced] — "Un mini-projet serait idéal."
+3. **Explorer** : [New skill related to existing ones] — "Ça compléterait bien tes compétences en [related skill]."
 
 ## Step 7: Motivation
 
 11. End with an encouraging note personalized to their progress:
-   - If many skills: "Tu as un profil solide avec [X] competences. Continue a approfondir !"
-   - If few skills: "Chaque competence ajoutee te rapproche de ton objectif. La prochaine est a portee de main."
+   - If many skills: "Tu as un profil solide avec [X] compétences. Continue à approfondir !"
+   - If few skills: "Chaque compétence ajoutée te rapproche de ton objectif. La prochaine est à portée de main."
    - If recent progress: "Belle progression cette semaine ! [Specific achievement]."
 
 12. Offer next action:

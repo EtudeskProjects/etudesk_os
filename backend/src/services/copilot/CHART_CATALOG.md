@@ -8,21 +8,21 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - Exclure les valeurs a 0 — pas de barres vides
 - Labels lisibles — jamais d'enums bruts ou d'IDs
 - Values = quantites uniquement (counts, %, montants) — pas de niveaux ordinaux dans bar/donut
-- Currency FCFA (XOF) par defaut en zone UEMOA
+- Use explicit source currency only; no default country or currency
 - Nombres formates locale FR (espace milliers, virgule decimales)
 
 ---
 
 ## MODE EXPLORER — 7 visualisations
 
-### #1 Radar competences personnel
+### #1 Profil de competences (bloc `skills`)
 - **Skill** : autodiagnostic-talent, hr-skill-radar, weekly-recap
 - **Quand** : profil, bilan, "mes competences"
-- **Source** : `<skills>` contexte → grouper par competence, mapper le niveau (beginner=1, intermediate=2, advanced=3, master=4)
-- **Intelligence** : Top 5-8 skills max. Si < 3 skills → metric "Complete ton profil" au lieu du radar
-- **Format** :
-```json
-{"type":"radar","title":"Mon profil de competences","axes":["JavaScript","Management","Communication","Data Analysis","UX Design"],"max":4,"series":[{"name":"Mon niveau","values":[3,1,2,3,1]}]}
+- **Source** : `<skills>` contexte → lister les competences du talent (nom, type, niveau)
+- **Intelligence** : Top 5-8 skills max. Si < 3 skills → metric "Complete ton profil". JAMAIS de radar.
+- **Format** : bloc `skills` (cartes de competences, pas un chart) :
+```skills
+{"title":"Mon profil de competences","skills":[{"name":"Strategie d'entreprise","type":"hard_skill","level":"advanced"},{"name":"Economie numerique","type":"knowledge","level":"advanced"},{"name":"Communication","type":"soft_skill","level":"intermediate"},{"name":"Python","type":"language","level":"intermediate"}]}
 ```
 
 ### #2 Funnel candidatures personnel
@@ -59,11 +59,11 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 ### #5 Grille salariale marche
 - **Skill** : career-compensation-guide
 - **Quand** : salary-analysis, "combien gagne un..."
-- **Source** : UEMOA knowledge block + `smart_search(opportunities)` compensation_min/max + web_search
-- **Intelligence** : Adapter au pays/ville detecte. FCFA par defaut UEMOA. Contexte CDI/CDD/Freelance.
+- **Source** : `smart_search(opportunities)` compensation_min/max + web_search
+- **Intelligence** : Adapt to the requested market when provided. Do not assume country, region, or currency.
 - **Format** :
 ```json
-{"type":"table","title":"Grille salariale — Developpeur Web, Abidjan","columns":["Niveau","Min (FCFA)","Max (FCFA)","Mediane"],"rows":[{"Niveau":"Junior (0-2 ans)","Min (FCFA)":"150 000","Max (FCFA)":"300 000","Mediane":"200 000"},{"Niveau":"Confirme (3-5 ans)","Min (FCFA)":"350 000","Max (FCFA)":"600 000","Mediane":"450 000"},{"Niveau":"Senior (5+ ans)","Min (FCFA)":"600 000","Max (FCFA)":"1 200 000","Mediane":"800 000"}]}
+{"type":"table","title":"Grille salariale - Developpeur Web, marche explicite","columns":["Niveau","Min","Max","Mediane"],"rows":[{"Niveau":"Junior (0-2 ans)","Min":"market min","Max":"market max","Mediane":"market median"},{"Niveau":"Confirme (3-5 ans)","Min":"market min","Max":"market max","Mediane":"market median"},{"Niveau":"Senior (5+ ans)","Min":"market max","Max":"1 market median","Mediane":"market max"}]}
 ```
 
 ### #6 Opportunites par contrat
@@ -90,14 +90,14 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 
 ## MODE STUDY — 6 visualisations
 
-### #8 Radar avant/apres assessment
+### #8 Resultat d'evaluation par sous-domaine (bar)
 - **Skill** : exam-simulation (resultat), deep-dive-lesson (fin de cours)
 - **Quand** : fin d'evaluation ou de cours
-- **Source** : manage_skills (proficiency avant) vs score quiz
-- **Intelligence** : Axes = sous-domaines de la skill evaluee, pas des skills random. Serie "Apres" = score quiz mappe.
+- **Source** : score quiz par sous-domaine de la skill evaluee
+- **Intelligence** : Labels = sous-domaines de la skill evaluee, pas des skills random. Valeurs = % reussite. JAMAIS de radar — un `bar` suffit (cf. #9).
 - **Format** :
 ```json
-{"type":"radar","title":"Evaluation — Python","axes":["Syntaxe","POO","Librairies","Algo","Debug"],"max":5,"series":[{"name":"Avant","values":[2,1,1,2,1]},{"name":"Apres","values":[3,2,2,3,2]}]}
+{"type":"bar","title":"Evaluation — Python","data":[{"label":"Syntaxe","value":80},{"label":"POO","value":60},{"label":"Librairies","value":40},{"label":"Algo","value":70},{"label":"Debug","value":50}]}
 ```
 
 ### #9 Score examen par categorie
@@ -111,14 +111,14 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 ```
 - **Thinking** : Calculer score par bloc — (correct/total)*100 par categorie. Exclure blocs a 0% si un seul.
 
-### #10 Gap Analysis — niveau actuel vs requis
-- **Skill** : deep-dive-lesson (learning-path context), autodiagnostic-talent
+### #10 Gap Analysis — niveau actuel vs requis (bloc `skill_match`)
+- **Skill** : deep-dive-lesson (learning-path context), autodiagnostic-talent, talent-explorer
 - **Quand** : "je veux devenir...", reconversion, learning path
-- **Source** : `<skills>` (actuel) + web_search/UEMOA knowledge (requis pour metier cible)
-- **Intelligence** : Axes = skills cles du metier cible. Mettre en evidence les gaps critiques (delta > 2).
-- **Format** :
-```json
-{"type":"radar","title":"Gap Analysis — Product Manager","axes":["Agile/Scrum","UX Research","Data Analysis","Communication","Roadmapping","SQL"],"max":4,"series":[{"name":"Ton niveau","values":[1,0,2,3,0,1]},{"name":"Requis","values":[3,3,3,3,4,2]}]}
+- **Source** : `<skills>` (actuel) + find_competency (resolution) + requis du metier cible
+- **Intelligence** : Skills cles du metier cible. Mettre en evidence les gaps critiques. JAMAIS de radar.
+- **Format** : bloc `skill_match` (scope "talent", Actuel vs Cible) :
+```skill_match
+{"scope":"talent","subject":"Product Manager","skills":[{"name":"Agile/Scrum","type":"hard_skill","current":"beginner","target":"advanced"},{"name":"UX Research","type":"hard_skill","current":null,"target":"advanced"},{"name":"Data Analysis","type":"hard_skill","current":"intermediate","target":"advanced"},{"name":"Communication","type":"soft_skill","current":"advanced","target":"advanced"}],"insights":["Gap prioritaire : UX Research (absent → avance)","Tu couvres deja Communication","Comble Agile/Scrum en mode Etudier"]}
 ```
 
 ### #11 Parcours apprentissage — progression etapes
@@ -172,7 +172,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Si > 80% un seul pays → suggerer diversification. Grouper les < 3% en "Autres".
 - **Format** :
 ```json
-{"type":"donut","title":"Talents par pays","data":[{"label":"Cote d'Ivoire","value":45},{"label":"Senegal","value":12},{"label":"Cameroun","value":8},{"label":"Mali","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
+{"type":"donut","title":"Talents par pays","data":[{"label":"Market A","value":45},{"label":"Market B","value":12},{"label":"Market C","value":8},{"label":"Market D","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
 ```
 
 ### #16 Top skills vivier talents
@@ -202,7 +202,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Calculer taux activite = actifs_30j/total_members. Trier par taux decroissant. Alerter si < 20%.
 - **Format** :
 ```json
-{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Abidjan","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
+{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Community","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
 ```
 
 ### #19 Classement candidats — scoring
@@ -212,7 +212,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Score = skills matchees (40%) + experience (30%) + education (15%) + cultural fit (15%). Top 5 max.
 - **Format** :
 ```json
-{"type":"table","title":"Classement — Dev Backend Senior","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Abidjan"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Dakar"}]}
+{"type":"table","title":"Classement — Dev Backend Senior","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Remote"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Hybrid"}]}
 ```
 
 ### #20 Dashboard KPI organisation
@@ -243,11 +243,11 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 | application-tracker | #2 (funnel perso), #6 (opportunites par contrat) |
 | career-compensation-guide | #5 (grille salariale) |
 | onboarding | #7 (completude profil) |
-| autodiagnostic-talent | #1 (radar perso), #3 (repartition type), #10 (gap analysis), #13 (distribution niveau) |
-| hr-skill-radar | #1 (radar perso) |
-| weekly-recap | #1 (radar perso), #3 (repartition type), #4 (progression), #12 (activite hebdo), #13 (distribution niveau) |
-| deep-dive-lesson | #8 (radar avant/apres), #10 (gap analysis), #11 (parcours etapes) |
-| exam-simulation | #8 (radar avant/apres), #9 (score par categorie) |
+| autodiagnostic-talent | #1 (profil `skills`), #3 (repartition type), #10 (gap `skill_match`), #13 (distribution niveau) |
+| hr-skill-radar | #1 (profil `skills`) |
+| weekly-recap | #1 (profil `skills`), #3 (repartition type), #4 (progression), #12 (activite hebdo), #13 (distribution niveau) |
+| deep-dive-lesson | #8 (eval `bar`), #10 (gap `skill_match`), #11 (parcours etapes) |
+| exam-simulation | #8 (eval `bar`), #9 (score par categorie) |
 | document-study-session | — (pas de chart, seulement flashcards + quiz) |
 | org-analytics | #14 (funnel), #15 (geo), #16 (top skills), #17 (cohortes), #18 (engagement), #20 (KPIs) |
 | candidate-ranking | #19 (classement scoring) |

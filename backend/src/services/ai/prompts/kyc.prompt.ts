@@ -1,6 +1,6 @@
 /**
  * KYC Verification Prompt
- * Model: gpt-5-mini (vision) | Output: JSON schema
+ * Model: vision model | Output: JSON schema
  */
 
 import { toTOON } from '../toon';

@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/etudesk_squared_icon.png",
-        "backgroundColor": "#3B2416"
+        "backgroundColor": "#000000"
       },
       "package": "com.etudesk.mobile",
       "softwareKeyboardLayoutMode": "resize",
@@ -36,7 +36,7 @@
         "expo-notifications",
         {
           "icon": "./assets/etudesk_squared_icon.png",
-          "color": "#3B2416",
+          "color": "#18181B",
           "sounds": []
         }
       ],

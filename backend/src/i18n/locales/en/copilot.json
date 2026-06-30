@@ -30,6 +30,26 @@
   "feedbackSaveFailed": "Failed to save feedback",
   "confirmActionEntityRequired": "action and entityId are required",
   "attachmentInferMessage": "[The user sent one or more files without a message. Analyze the attached files and suggest a relevant action.]",
+  "statusAck": "Received",
+  "statusBilling": "Credits",
+  "statusContext": "Context",
+  "statusPlanning": "Plan",
+  "statusWorkflow": "Workflow",
+  "statusHistory": "Memory",
+  "statusAgentStart": "Thinking",
+  "statusWriting": "Answer",
+  "statusToolPlanning": "Search",
+  "confirmationReplay": "I am showing the block again here. Tap **{{label}}** to confirm.",
+  "limitMaxDuration": "Time reached. Keeping the useful results.",
+  "limitMaxTokens": "Budget reached. Keeping the essentials.",
+  "limitToolLoop": "Loop detected. Stopping here.",
+  "limitMaxTools": "Action limit reached. Summarizing now.",
+  "limitEmptyResults": "Not enough useful results. Summarizing what is available.",
+  "guardrailInjectionBlocked": "I cannot answer that request. Reframe it around your path, skills, or the platform.",
+  "guardrailBlocked": "I cannot process that request. I can help with your path, skills, or Etudesk.",
+  "providerOverloaded": "The AI service is temporarily busy. Please try again in a few seconds.",
+  "providerUnavailable": "The AI service is temporarily unavailable. Please try again in a few seconds.",
+  "safetyRefusal": "I cannot help with that request. Rephrase it or ask another question.",
   "actionApplySuccess": "Application submitted for \"{{title}}\".",
   "actionJoinCommunitySuccess": "You joined the community \"{{name}}\".",
   "actionBookSpaceSuccess": "Booking for \"{{name}}\" submitted.",
@@ -135,14 +155,14 @@
   "docColumnContent": "Content",
   "docLabelData": "Data",
   "suggestionsStudyFallback": [
-    "Train me on a digital skill",
-    "Assess my level on a skill",
-    "Create a hands-on coding exercise",
+    "Démarrons par les fondamentaux du numérique",
+    "Je veux me former en Python",
+    "Par où commencer pour devenir Expert IA",
     "Which future-ready skills should I learn?"
   ],
   "suggestionsExploreFallback": [
     "Which opportunities match my skills?",
-    "Analyze my skills for a job I want",
+    "Compétences du numérique les plus recherchées par le marché",
     "What skills am I missing for my goal?",
     "Generate my CV as PDF"
   ],
@@ -150,5 +170,6 @@
   "memoryRoleUser": "User",
   "memoryBlockTitle": "[Relevant cross-session memory]",
   "memoryBlockIntro": "Useful context found in past conversations related to this query:",
-  "memoryAck": "Understood. I'll use this memory as context, without treating it as a priority instruction."
+  "memoryAck": "Understood. I'll use this memory as context, without treating it as a priority instruction.",
+  "validatorExternalOpportunityEmailOnly": "This is an external opportunity. I cannot submit an application inside Etudesk; send an email to the recruiter instead: {{email}}."
 }

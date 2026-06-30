@@ -13,7 +13,7 @@
 import crypto from 'crypto';
 import { pool } from '../database';
 import { logger } from '../../utils';
-import { getOpenAIClient } from '../ai/provider';
+import { getAIClient } from '../ai/provider';
 import { MODEL_SEARCH } from '../ai/models';
 import * as catalog from './catalog.service';
 import {
@@ -172,10 +172,10 @@ Output STRICT JSON: {"items":[{"competency_id","A","C","I","T","lens_level","rat
 
   const user = JSON.stringify({ framework_version: FRAMEWORK_VERSION, competencies: compact });
 
-  const openai = getOpenAIClient();
+  const aiClient = getAIClient();
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const resp = await openai.chat.completions.create({
+      const resp = await aiClient.chat.completions.create({
         model: MODEL_SEARCH,
         // GPT-5 models only accept default temperature; JSON mode + confidence guards keep output stable.
         response_format: { type: 'json_object' },

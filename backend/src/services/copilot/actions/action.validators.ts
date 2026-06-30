@@ -32,11 +32,14 @@ export async function validateApplyOpportunity(
 
   // Check opportunity exists and is open
   const opp = await pool.query(
-    `SELECT id, title, status, deadline FROM opportunities WHERE id = $1 AND deleted_at IS NULL`,
+    `SELECT id, title, status, deadline, application_mode, external_apply_email FROM opportunities WHERE id = $1 AND deleted_at IS NULL`,
     [opportunityId]
   );
   if (opp.rows.length === 0) {
     return { valid: false, error: tr(language, 'copilot:validatorOpportunityNotFound') };
+  }
+  if (opp.rows[0].application_mode === 'EMAIL') {
+    return { valid: false, error: tr(language, 'copilot:validatorExternalOpportunityEmailOnly', { email: opp.rows[0].external_apply_email }) };
   }
   if (opp.rows[0].status !== 'OPEN') {
     return { valid: false, error: tr(language, 'copilot:validatorOpportunityNotOpen') };

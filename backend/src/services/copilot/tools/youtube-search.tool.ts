@@ -13,13 +13,13 @@ export const youtubeSearchTool = defineTool({
   description:
     'Search YouTube for educational videos. Study mode only. Returns up to 5 results. Present ONLY THE SINGLE BEST video as ONE youtube block — never multiple youtube blocks.',
   parameters: z.object({
-    query: z.string().describe('Search query in natural language. Include region/context when relevant. Example: "digital marketing training Côte d\'Ivoire"'),
+    query: z.string().describe('Search query in natural language. Include market/language only when the user explicitly asks for it. Example: "digital marketing training in French"'),
     maxResults: z.number().min(1).max(5).default(5).describe('Max results (always 5).'),
   }),
   execute: async ({ query, maxResults }) => {
     const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
     if (!YOUTUBE_API_KEY) {
-      return { videos: [], message: 'YouTube API non configurée' };
+      return { videos: [], unavailable: true, retryable: false, message: 'YouTube API non configurée. Ne rappelle pas youtube_search; utilise un fallback texte.' };
     }
 
     const sanitizedQuery = (query || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 200);
@@ -40,7 +40,12 @@ export const youtubeSearchTool = defineTool({
       if (!response.ok) {
         const body = await response.text().catch(() => '');
         logger.error(`YouTube API ${response.status} for query "${sanitizedQuery}": ${body.slice(0, 300)}`);
-        throw new Error(`YouTube API error: ${response.status}`);
+        return {
+          videos: [],
+          unavailable: true,
+          retryable: false,
+          message: `YouTube indisponible (${response.status}). Ne rappelle pas youtube_search; utilise un fallback texte, steps, flashcard ou quiz.`,
+        };
       }
 
       const data = (await response.json()) as {
@@ -67,7 +72,12 @@ export const youtubeSearchTool = defineTool({
       return { videos };
     } catch (error: any) {
       logger.error('YouTube search error:', error);
-      return { videos: [], error: error.message };
+      return {
+        videos: [],
+        unavailable: true,
+        retryable: false,
+        message: `YouTube indisponible. Ne rappelle pas youtube_search; utilise un fallback texte, steps, flashcard ou quiz.`,
+      };
     }
   },
 });

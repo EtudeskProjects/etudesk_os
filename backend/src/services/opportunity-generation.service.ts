@@ -5,6 +5,7 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import {
   OpportunityType,
@@ -247,8 +248,8 @@ export async function generateOpportunitySuggestion(
   data?: GeneratedOpportunity;
   error?: string;
 }> {
-  if (!process.env.OPENAI_API_KEY) {
-    return { success: false, error: 'OPENAI_API_KEY not configured' };
+  if (!process.env.AI_API_KEY) {
+    return { success: false, error: 'AI_API_KEY not configured' };
   }
 
   // Validate required fields
@@ -296,8 +297,8 @@ export async function generateOpportunitySuggestion(
   });
 
   try {
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildOpportunityGenSystemPrompt(languageName) },
@@ -306,12 +307,18 @@ export async function generateOpportunitySuggestion(
       response_format: { type: 'json_object' },
     });
 
+    void recordUsage({ feature: 'form_suggestion', model: MODEL_SUGGESTION, usage: completion.usage, scopeOrganizationId: input.organization_id });
+
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedOpportunity = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedOpportunity = (parsedData?.['@object'] || parsedData) as GeneratedOpportunity;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure application_questions have unique IDs
     if (generatedData.application_questions) {
@@ -326,7 +333,7 @@ export async function generateOpportunitySuggestion(
 
     // Set default currency if not provided
     if (!generatedData.currency) {
-      generatedData.currency = 'XOF';
+      generatedData.currency = input.existing_data?.currency || process.env.DEFAULT_CURRENCY || 'USD';
     }
 
     // Resolve suggested skills to the catalog (referential = single source of truth).

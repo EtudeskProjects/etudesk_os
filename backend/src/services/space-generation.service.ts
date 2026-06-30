@@ -5,6 +5,7 @@
 
 import { MODEL_SUGGESTION } from './ai/models';
 import { getSuggestionClient } from './ai/provider';
+import { recordUsage } from './ai/usage.service';
 import { pool } from './database';
 import {
   Sector,
@@ -12,6 +13,7 @@ import {
 } from '../types/models';
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
 import { buildSpaceGenPrompt, buildSpaceGenSystemPrompt } from './ai/prompts/space-gen.prompt';
+import { toTOON } from './ai/toon';
 import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
@@ -87,8 +89,8 @@ export async function generateSpaceSuggestion(
   data?: GeneratedSpace;
   error?: string;
 }> {
-  if (!process.env.OPENAI_API_KEY) {
-    return { success: false, error: 'OPENAI_API_KEY not configured' };
+  if (!process.env.AI_API_KEY) {
+    return { success: false, error: 'AI_API_KEY not configured' };
   }
 
   // Validate required fields
@@ -111,6 +113,9 @@ export async function generateSpaceSuggestion(
   const languageName = getLanguageDisplayName(language);
   const spaceTypeLabel = input.type.replace(/_/g, ' ').toLowerCase();
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
+  const existingDataContext = input.existing_data
+    ? `\nDonnées existantes (format TOON) :\n${toTOON(input.existing_data)}`
+    : '';
   const prompt = buildSpaceGenPrompt({
     spaceName: input.name,
     spaceTypeLabel,
@@ -121,14 +126,15 @@ export async function generateSpaceSuggestion(
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
     languageName,
+    existingDataContext,
   });
 
   try {
     logger.info('[SpaceGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = getSuggestionClient();
-    const completion = await openai.chat.completions.create({
+    const suggestionClient = getSuggestionClient();
+    const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: buildSpaceGenSystemPrompt(languageName) },
@@ -139,12 +145,18 @@ export async function generateSpaceSuggestion(
 
     logger.info(`[SpaceGeneration] Completed in ${Date.now() - startTime}ms`);
 
+    void recordUsage({ feature: 'form_suggestion', model: MODEL_SUGGESTION, usage: completion.usage, scopeOrganizationId: input.organization_id });
+
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
       return { success: false, error: 'No response from AI model' };
     }
 
-    const generatedData: GeneratedSpace = JSON.parse(generatedText);
+    const parsedData = JSON.parse(generatedText);
+    const generatedData: GeneratedSpace = (parsedData?.['@object'] || parsedData) as GeneratedSpace;
+    if (generatedData.skills && !Array.isArray(generatedData.skills)) {
+      generatedData.skills = [generatedData.skills as any];
+    }
 
     // Ensure sectors are valid
     if (generatedData.sectors) {

@@ -1,13 +1,14 @@
 /**
  * ETUDESK DESIGN SYSTEM - Web
  *
- * Philosophy: Ultra-moderne, minimaliste, luxe africain
- * - NO heavy shadows (subtle only)
- * - NO gradients (except phone mockup)
- * - Warm color palette with rich brown primary
+ * Philosophy: Noir & blanc, grand public, accessible, minimaliste, aere.
+ * - Canvas strictement monochrome (echelle de gris zinc + noir + blanc)
+ * - La couleur ne porte que du SENS : etats semantiques + 5 TYPES de competences
+ * - NO heavy shadows, NO gradients
  *
+ * Aligne sur le design system de l'app mobile (mobile/src/constants/theme.ts).
  * Typography: Montserrat (brand font, shared with the mobile app)
- * Brand: Warm luxury, African elegance, clarity, engagement, community
+ * Icons: Lucide only, stroke 1.25
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap');
@@ -15,66 +16,78 @@
 :root {
   /* --- Color Palette - Luxe Africain --- */
 
-  /* Primary - Marron Luxe (Rich Brown) */
-  --primary: #3B2416;
-  --primary-light: #5C3D2E;
-  --primary-dark: #2A1A10;
-  --primary-muted: #8B7355;
+  /* Primary - Noir encre (monochrome, aligne sur l'app mobile) */
+  --primary: #18181B;
+  --primary-light: #3F3F46;
+  --primary-dark: #09090B;
+  --primary-muted: #71717A;
 
-  /* Neutrals - Warm Gray Scale (brown undertone) */
+  /* Neutrals - Echelle zinc neutre (zero sous-ton brun) */
   --white: #FFFFFF;
-  --black: #1A1A1A;
-  --gray-50: #FAF9F7;
-  --gray-100: #F5F3F0;
-  --gray-200: #EBE8E4;
-  --gray-300: #D9D5CF;
-  --gray-400: #B8B2A8;
-  --gray-500: #918A7E;
-  --gray-600: #6E675C;
-  --gray-700: #4D4840;
-  --gray-800: #332F2A;
-  --gray-900: #1F1C18;
+  --black: #09090B;
+  --gray-50: #FAFAFA;
+  --gray-100: #F4F4F5;
+  --gray-200: #E4E4E7;
+  --gray-300: #D4D4D8;
+  --gray-400: #A1A1AA;
+  --gray-500: #71717A;
+  --gray-600: #52525B;
+  --gray-700: #3F3F46;
+  --gray-800: #27272A;
+  --gray-900: #18181B;
 
-  /* Semantic - Earth Tones */
-  --success: #4A6741;
-  --success-light: #E8EFE6;
-  --success-dark: #3A5233;
-  --error: #8B4A3C;
-  --error-light: #F5EBE8;
-  --error-dark: #6B3A2E;
-  --warning: #A67C52;
-  --warning-light: #F7F0E8;
-  --warning-dark: #866340;
-  --info: #6B5E52;
-  --info-light: #F2EFEC;
-  --info-dark: #524940;
+  /* Semantic - couleurs d'etat modernes */
+  --success: #16A34A;
+  --success-light: #DCFCE7;
+  --success-dark: #15803D;
+  --error: #DC2626;
+  --error-light: #FEE2E2;
+  --error-dark: #B91C1C;
+  --warning: #D97706;
+  --warning-light: #FEF3C7;
+  --warning-dark: #B45309;
+  --info: #2563EB;
+  --info-light: #DBEAFE;
+  --info-dark: #1D4ED8;
+
+  /* Skill types - la couleur "metier" (5 teintes joyau, une par TYPE) */
+  --skill-knowledge: #1D4ED8;
+  --skill-knowledge-bg: #EAF1FE;
+  --skill-hard-skill: #0E7490;
+  --skill-hard-skill-bg: #E4F5F9;
+  --skill-soft-skill: #BE185D;
+  --skill-soft-skill-bg: #FCE9F1;
+  --skill-tool-platform: #6D28D9;
+  --skill-tool-platform-bg: #F1EAFD;
+  --skill-language: #047857;
+  --skill-language-bg: #E3F4ED;
 
   /* Background & Surface */
   --background: #FFFFFF;
-  --background-secondary: #FAF9F7;
-  --background-tertiary: #F5F3F0;
+  --background-secondary: #FAFAFA;
+  --background-tertiary: #F4F4F5;
   --surface: #FFFFFF;
-  --surface-elevated: #FAF9F7;
+  --surface-elevated: #FAFAFA;
 
   /* Text */
-  --text-primary: #1F1C18;
-  --text-secondary: #6E675C;
-  --text-tertiary: #918A7E;
-  --text-disabled: #B8B2A8;
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+  --text-tertiary: #71717A;
+  --text-disabled: #A1A1AA;
   --text-inverse: #FFFFFF;
   --text-on-primary: #FFFFFF;
 
   /* Border & Dividers */
-  --border-color: #EBE8E4;
-  --border-strong: #D9D5CF;
-  --divider: #EBE8E4;
+  --border-color: #E4E4E7;
+  --border-strong: #D4D4D8;
+  --divider: #E4E4E7;
 
   /* Interactive States */
-  --overlay: rgba(26, 26, 26, 0.5);
-  --overlay-light: rgba(26, 26, 26, 0.3);
-  --pressed: rgba(59, 36, 22, 0.08);
-  --focused: rgba(59, 36, 22, 0.12);
-  --hover: rgba(59, 36, 22, 0.04);
+  --overlay: rgba(9, 9, 11, 0.5);
+  --overlay-light: rgba(9, 9, 11, 0.3);
+  --pressed: rgba(9, 9, 11, 0.06);
+  --focused: rgba(9, 9, 11, 0.10);
+  --hover: rgba(9, 9, 11, 0.04);
 
   /* --- Typography --- */
 
@@ -179,66 +192,78 @@
 /* --- Dark Theme --- */
 
 [data-theme="dark"] {
-  /* Primary - Bright warm gold for visibility on dark backgrounds */
-  --primary: #C9A070;
-  --primary-light: #DDB88A;
-  --primary-dark: #A68050;
-  --primary-muted: #8B7355;
+  /* Primary - clair sur fond sombre (le "noir" devient blanc) */
+  --primary: #FAFAFA;
+  --primary-light: #FFFFFF;
+  --primary-dark: #D4D4D8;
+  --primary-muted: #A1A1AA;
 
-  /* Neutrals - Inverted warm scale with better contrast */
-  --white: #0D0B0A;
-  --black: #F5F3F0;
-  --gray-50: #0D0B0A;
-  --gray-100: #161412;
-  --gray-200: #1E1C1A;
-  --gray-300: #2A2826;
-  --gray-400: #3D3A36;
-  --gray-500: #5C5850;
-  --gray-600: #8A847A;
-  --gray-700: #A8A29A;
-  --gray-800: #D4D0CA;
-  --gray-900: #F5F3F0;
+  /* Neutrals - echelle zinc inversee */
+  --white: #09090B;
+  --black: #FAFAFA;
+  --gray-50: #09090B;
+  --gray-100: #18181B;
+  --gray-200: #27272A;
+  --gray-300: #3F3F46;
+  --gray-400: #52525B;
+  --gray-500: #71717A;
+  --gray-600: #A1A1AA;
+  --gray-700: #D4D4D8;
+  --gray-800: #E4E4E7;
+  --gray-900: #FAFAFA;
 
-  /* Semantic - BRIGHT colors for dark mode visibility */
-  --success: #7CB870;
-  --success-light: #1A2418;
-  --success-dark: #5CA050;
-  --error: #E08070;
-  --error-light: #2A1816;
-  --error-dark: #C86050;
-  --warning: #E8B870;
-  --warning-light: #2A2418;
-  --warning-dark: #C8A050;
-  --info: #A89888;
-  --info-light: #1E1C1A;
-  --info-dark: #8A7868;
+  /* Semantic - variantes plus claires pour le mode sombre */
+  --success: #4ADE80;
+  --success-light: #14271B;
+  --success-dark: #22C55E;
+  --error: #F87171;
+  --error-light: #2A1515;
+  --error-dark: #EF4444;
+  --warning: #FBBF24;
+  --warning-light: #271E0E;
+  --warning-dark: #F59E0B;
+  --info: #60A5FA;
+  --info-light: #0F2038;
+  --info-dark: #3B82F6;
+
+  /* Skill types - teintes plus claires (lisibles sur fond sombre) */
+  --skill-knowledge: #60A5FA;
+  --skill-knowledge-bg: #11233F;
+  --skill-hard-skill: #22D3EE;
+  --skill-hard-skill-bg: #0C2A30;
+  --skill-soft-skill: #F472B6;
+  --skill-soft-skill-bg: #311321;
+  --skill-tool-platform: #A78BFA;
+  --skill-tool-platform-bg: #221A38;
+  --skill-language: #34D399;
+  --skill-language-bg: #0E2A20;
 
   /* Background & Surface */
-  --background: #0D0B0A;
-  --background-secondary: #121110;
-  --background-tertiary: #1A1816;
-  --surface: #1E1C1A;
-  --surface-elevated: #2A2826;
+  --background: #09090B;
+  --background-secondary: #0F0F11;
+  --background-tertiary: #18181B;
+  --surface: #18181B;
+  --surface-elevated: #27272A;
 
-  /* Text - High contrast */
-  --text-primary: #F5F3F0;
-  --text-secondary: #B8B2A8;
-  --text-tertiary: #8A847A;
-  --text-disabled: #5C5850;
-  --text-inverse: #0D0B0A;
-  --text-on-primary: #0D0B0A;
+  /* Text - haut contraste */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-disabled: #52525B;
+  --text-inverse: #09090B;
+  --text-on-primary: #09090B;
 
-  /* Border & Dividers - Subtle but visible */
-  --border-color: #2A2826;
-  --border-strong: #3D3A36;
-  --divider: #2A2826;
+  /* Border & Dividers */
+  --border-color: #27272A;
+  --border-strong: #3F3F46;
+  --divider: #27272A;
 
-  /* Interactive States - Using brighter primary */
-  --overlay: rgba(0, 0, 0, 0.85);
-  --overlay-light: rgba(0, 0, 0, 0.6);
-  --pressed: rgba(201, 160, 112, 0.20);
-  --focused: rgba(201, 160, 112, 0.30);
-  --hover: rgba(201, 160, 112, 0.12);
+  /* Interactive States */
+  --overlay: rgba(0, 0, 0, 0.7);
+  --overlay-light: rgba(0, 0, 0, 0.5);
+  --pressed: rgba(250, 250, 250, 0.08);
+  --focused: rgba(250, 250, 250, 0.12);
+  --hover: rgba(250, 250, 250, 0.05);
 
   /* Shadows - Subtle in dark mode */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -260,6 +285,13 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Defilement fluide vers les ancres (sauf si l'utilisateur reduit les animations) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {

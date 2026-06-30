@@ -80,12 +80,10 @@ export function generateToolSummary(
         const count = Array.isArray(results) ? results.length : 0;
         const entity = args?.entity as string | undefined;
         const typeLabel = entity ? NAMESPACE_LABELS[entity] || entity : '';
-        const source = (output as any)?.source;
-        const sourceLabel = source ? ` (${source})` : '';
         const countText = count > 0
           ? `${count} résultat${count > 1 ? 's' : ''}`
           : 'Aucun résultat';
-        return typeLabel ? `${countText} · ${typeLabel}${sourceLabel}` : `${countText}${sourceLabel}`;
+        return typeLabel ? `${countText} · ${typeLabel}` : countText;
       }
 
       case 'sql_query': {
@@ -158,6 +156,12 @@ export function generateToolSummary(
         if (inCat && name) return `Référentiel · ${name}`;
         if (q) return `Référentiel · "${q}"`;
         return 'Recherche référentiel';
+      }
+
+      case 'competency_graph': {
+        const name = outputObj?.competency?.name as string | undefined;
+        const q = args?.query as string | undefined;
+        return name ? `Graphe compétences · ${name}` : q ? `Graphe compétences · ${q}` : 'Graphe compétences';
       }
 
       case 'manage_skills': {

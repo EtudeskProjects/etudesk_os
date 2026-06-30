@@ -34,6 +34,7 @@ import { Input, Button, CheckboxRow, Chip, IconButton, SelectCard, Toggle, StepI
 import MapLocationPicker from '../../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../../../src/constants/phone-countries';
 import {
   getSpaceTypeData,
   getSpaceEquipmentData,
@@ -213,7 +214,7 @@ export default function EditSpaceScreen() {
           setSelectedSectors((space.sectors as Sector[]) || []);
           setSkills(((space as any).skills as EntitySkillTag[]) || []);
           setAddress(space.address || '');
-          setCountry(space.country || 'CI');
+          setCountry(space.country || DEFAULT_COUNTRY_CODE);
           setRegion(space.region || '');
           setCity(space.city || '');
           setSurfaceM2(space.surface_m2 ? Math.round(space.surface_m2).toString() : '');
@@ -604,7 +605,7 @@ export default function EditSpaceScreen() {
     address: address || undefined,
     city: city || undefined,
     region: region || undefined,
-    country: country || 'CI',
+    country: country || DEFAULT_COUNTRY_CODE,
     surface_m2: parseFloat(surfaceM2),
     capacity: parseInt(capacity),
     equipment: selectedEquipment,

@@ -3,7 +3,7 @@ name: Community Creation
 description: Create a community for the organization directly on the platform
 modes: org
 tools: execute_action
-triggers: creer une communaute, nouvelle communaute, create community, lancer une communaute, communaute tech, groupe professionnel, reseau, forum, hub communautaire
+triggers: créer une communauté, creer une communaute, nouvelle communauté, nouvelle communaute, create community, lancer une communauté, lancer une communaute, communauté tech, communaute tech, groupe professionnel, réseau, reseau, forum, hub communautaire
 ---
 
 # Community Creation Workflow
@@ -20,28 +20,28 @@ From the user's request, extract as many fields as possible:
 - **visibility**: PUBLIC, PRIVATE (default: PUBLIC)
 - **sectors**: Array of relevant sectors (infer from the topic)
 - **city**: Use org's city if known, or omit
-- **country**: CI (default)
+- **country**: Use org's country if known, or omit
 
-**CRITICAL:** NEVER write "a confirmer/valider/definir". Use concrete values or omit the field.
+**CRITICAL:** NEVER write "à confirmer/valider/définir". Use concrete values or omit the field.
 
 ## Step 2: Preview + Confirmation Block (SAME response)
 
 **Preview format (show ONLY fields with real values):**
 
 **[Name]**
-- **Type** : [type] | **Acces** : [access_type]
+- **Type** : [type] | **Accès** : [access_type]
 - **Secteurs** : [sectors list]
 - **Description** : [description — 2-3 sentences]
 
 Then IMMEDIATELY the confirmation block:
 
 ```confirmation
-{"action":"create_community","entity_id":"<org-id>","title":"Creer cette communaute ?","description":"[Name] - [type]","confirm_label":"Creer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","description":"...","type":"PROFESSIONAL","access_type":"OPEN","visibility":"PUBLIC","sectors":[...],"city":"...","country":"CI"}}
+{"action":"create_community","entity_id":"<org-id>","title":"Créer cette communauté ?","description":"[Name] - [type]","confirm_label":"Créer","cancel_label":"Modifier","data":{"organization_id":"<org-id>","name":"...","description":"...","type":"PROFESSIONAL","access_type":"OPEN","visibility":"PUBLIC","sectors":[...],"city":"..."}}
 ```
 
 ## Rules
 
-- NEVER generate a PDF document when the user asks to "creer" a community — use the confirmation block
+- NEVER generate a PDF document when the user asks to "créer" a community — use the confirmation block
 - Always set `organization_id` in the data to the current organization's ID
 - The `entity_id` in the confirmation block = organization ID
 - Default to type=PROFESSIONAL, access_type=OPEN, visibility=PUBLIC

@@ -3,21 +3,21 @@ name: Exam & Revision
 description: Mastery evaluation (exam, quiz, certification) and targeted spaced revision on weak skills
 modes: study
 tools: manage_skills, youtube_search, web_search
-triggers: examen, simulation, test complet, evaluation complete, certifier, exam, passer un test, 10 questions, evaluation globale, teste mes connaissances, evaluer mes competences, assessment, skill check, mes progres, niveau de maitrise, teste-moi sur, evalue-moi, certification, obtenir une certification, badge, revision, reviser, spaced repetition, raffraichir, session revision, renforcer mes acquis, reviser mes acquis, rafraichir mes connaissances
+triggers: examen, simulation, test complet, évaluation complète, evaluation complete, certifier, exam, passer un test, 10 questions, évaluation globale, evaluation globale, teste mes connaissances, évaluer mes compétences, evaluer mes competences, assessment, skill check, mes progrès, mes progres, niveau de maîtrise, niveau de maitrise, teste-moi sur, évalue-moi, evalue-moi, certification, obtenir une certification, badge, révision, revision, réviser, reviser, spaced repetition, rafraîchir, raffraichir, session révision, session revision, renforcer mes acquis, réviser mes acquis, reviser mes acquis, rafraîchir mes connaissances, rafraichir mes connaissances
 priority: 7
 ---
 
 # Exam & Revision Workflow
 
-You are now in Exam & Revision mode. Three formats available:
+You are now in Exam & Revision mode. Three formats available. Assessment is evidence-based: a short quiz is diagnostic, not a certification.
 
 ## Mode Detection
 
-- **Spaced Repetition Flow** — triggered by "revision", "reviser", "raffraichir", "session revision", "renforcer mes acquis", "reviser mes acquis", "rafraichir mes connaissances", "spaced repetition". Follow Steps R1-R5 below.
-- **Quick Assessment (3 questions)** — triggered by "evaluer", "teste-moi sur", "assessment", "skill check", "mes progres", "evalue-moi", "niveau de maitrise". Follow the Quick Assessment Protocol.
-- **Full Exam (10 questions)** — triggered by "examen", "simulation", "test complet", "10 questions", "certifier", "evaluation complete", "certification". Follow the Full Exam Protocol.
+- **Spaced Repetition Flow** — triggered by "révision", "réviser", "rafraîchir", "session révision", "renforcer mes acquis", "réviser mes acquis", "rafraîchir mes connaissances", "spaced repetition". Follow Steps R1-R5 below.
+- **Quick Diagnostic (3 questions)** — triggered by "évaluer", "teste-moi sur", "assessment", "skill check", "mes progrès", "évalue-moi", "niveau de maîtrise". Follow the Quick Diagnostic Protocol.
+- **Full Exam (10 questions)** — triggered by "examen", "simulation", "test complet", "10 questions", "certifier", "évaluation complète", "certification". Follow the Full Exam Protocol.
 
-If ambiguous, default to Quick Assessment.
+If ambiguous, default to Quick Diagnostic.
 
 ---
 
@@ -34,14 +34,14 @@ If ambiguous, default to Quick Assessment.
 
 | Skills count | Action |
 |--------------|--------|
-| **0** | Redirect: "Tu n'as pas encore de competences declarees. Dis-moi un sujet qui t'interesse et on commence par une evaluation !" Do NOT start a review session. |
+| **0** | Redirect: "Tu n'as pas encore de compétences déclarées. Dis-moi un sujet qui t'intéresse et on commence par une évaluation !" Do NOT start a review session. |
 | **1-2** | Review ALL of them. After the session, suggest related skills to explore. |
 | **3+** | Select 3-5 skills for review (prioritize beginner first, then oldest). |
 
 ### Step R2: Announce the Session
 
 4. Briefly announce which skills will be reviewed:
-   "Session de revision : on va renforcer [Skill 1], [Skill 2], et [Skill 3]. 3 a 5 questions par competence."
+   "Session de révision : on va renforcer [Skill 1], [Skill 2], et [Skill 3]. 3 à 5 questions par compétence."
 
 ### Step R3: Review Loop (one skill at a time)
 
@@ -64,7 +64,7 @@ For each skill, follow this sequence:
 ```
 
 8. Wait for user answer. Evaluate:
-   - **Correct** → "Bien joue ! [Skill] est solide." Move to next skill.
+   - **Correct** → "Bien joué ! [Skill] est solide." Move to next skill.
    - **Incorrect** → Provide a brief 2-sentence explanation, then give ONE more flashcard for reinforcement before moving on.
 
 **Round 3 (if incorrect) — Reinforcement Flashcard:**
@@ -75,7 +75,7 @@ For each skill, follow this sequence:
 10. After all skills are reviewed, render a results table:
 
 ```chart
-{"type":"table","title":"Resultats de la session","columns":["Competence","Resultat"],"rows":[["[Skill 1]","✅ Maitrise"],["[Skill 2]","🔄 A revoir"]]}
+{"type":"table","title":"Résultats de la session","columns":["Compétence","Résultat"],"rows":[["[Skill 1]","✅ Maîtrise"],["[Skill 2]","🔄 À revoir"]]}
 ```
 
 Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill was reviewed, skip the chart — summarize in text.
@@ -86,18 +86,18 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 
 ### Step R5: Skill Updates
 
-12. For skills where the user answered correctly AND their current level is below intermediate:
-    - Propose: "Tu maitrises bien [Skill]. On passe au niveau intermediaire ?"
-    - If confirmed, call `manage_skills` with action "update"
+12. For skills where the user answered correctly, do NOT upgrade from review alone.
+    - Propose one applied practice task to confirm autonomy.
+    - Only after that task succeeds and the user explicitly confirms, call `manage_skills` conservatively with A/C/I/T axes.
 
 ---
 
-## Quick Assessment Protocol (3 questions)
+## Quick Diagnostic Protocol (3 questions)
 
 ### Step Q1: Choose the Topic
 
 1. If the user specifies a topic ("teste-moi sur Python"), use that topic.
-2. If the user says "bilan" or "evalue mes competences" without a topic, pick the MOST RECENT topic discussed. If no prior topic, ask ONE question: "Sur quel sujet veux-tu etre evalue ?"
+2. If the user says "bilan" or "évalue mes compétences" without a topic, pick the MOST RECENT topic discussed. If no prior topic, ask ONE question: "Sur quel sujet veux-tu être évalué ?"
 
 ### Step Q2: Check Current Level
 
@@ -117,24 +117,24 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 
 **Question 3 — Analysis:** Deeper understanding (edge cases, tradeoffs). Wait for answer.
 
-### Step Q4: Assessment Summary
+### Step Q4: Diagnostic Summary
 
 After all 3 questions, present a summary table:
 
 ```chart
-{"type":"table","title":"Evaluation: [Topic]","columns":["Question","Type","Resultat"],"rows":[["Q1","Rappel","✅ ou ❌"],["Q2","Application","✅ ou ❌"],["Q3","Analyse","✅ ou ❌"]]}
+{"type":"table","title":"Évaluation : [Topic]","columns":["Question","Type","Résultat"],"rows":[["Q1","Rappel","✅ ou ❌"],["Q2","Application","✅ ou ❌"],["Q3","Analyse","✅ ou ❌"]]}
 ```
 
 Then state the score: **Score: X/3**
 
-| Score | Action | Skill Level |
-|-------|--------|-------------|
-| 3/3 | Add/upgrade skill | intermediate (if new) or upgrade by 1 level (intermediate→advanced, advanced→master) |
-| 2/3 | Add at current level | beginner (if new) or maintain |
-| 1/3 | Teach fundamentals | Do not add |
-| 0/3 | Encourage, resources | Do not add |
+| Score | Meaning | Next step |
+|-------|---------|-----------|
+| 3/3 | Strong diagnostic signal | Give one applied task before any profile update |
+| 2/3 | Partial understanding | Provide one flashcard or exercise on the missed concept |
+| 1/3 | Fragile base | Teach fundamentals, then simple practice |
+| 0/3 | Starting point unclear | Offer a beginner lesson or resource |
 
-- **3/3**: Suggest adding skill via `manage_skills`. Propose advanced resource.
+- **3/3**: Do NOT call `manage_skills` yet. Say the diagnostic is promising and propose ONE applied task, project mini-case, playground, role-play, or scenario based on the skill type. If the learner succeeds on that task in a later turn and confirms, then call `manage_skills` conservatively.
 - **2/3**: Provide ONE flashcard on missed concept. Suggest deepening.
 - **1/3**: Provide flashcard or youtube on fundamentals. Suggest mini-cours.
 - **0/3**: Search beginner resources via `youtube_search` or `web_search`. Offer learning session.
@@ -154,11 +154,11 @@ Then state the score: **Score: X/3**
 3. Announce the exam:
 
 "**Simulation d'examen — [Topic]**
-- 10 questions (difficulte adaptee a ton niveau)
-- Temps conseille : 10-15 minutes
-- Score final + analyse detaillee
+- 10 questions (difficulté adaptée à ton niveau)
+- Temps conseillé : 10-15 minutes
+- Score final + analyse détaillée
 
-Pret(e) ? On commence !"
+Prêt(e) ? On commence !"
 
 ### Step E2: Question Sequence (10 questions, ONE per message)
 
@@ -179,42 +179,42 @@ Pret(e) ? On commence !"
 7. Calculate and present TWO charts :
 
 **Chart A — Score par categorie (Catalog #9):**
-Calculer le % de reussite par bloc de questions. Exclure les blocs a 0% si un seul bloc a score.
+Calculer le % de réussite par bloc de questions. Exclure les blocs à 0% si un seul bloc a score.
 
 ```chart
-{"type":"bar","title":"Resultats — Examen [Topic]","data":[{"label":"Rappel (Q1-3)","value":100},{"label":"Application (Q4-6)","value":67},{"label":"Analyse (Q7-9)","value":33},{"label":"Synthese (Q10)","value":100}]}
+{"type":"bar","title":"Résultats — Examen [Topic]","data":[{"label":"Rappel (Q1-3)","value":100},{"label":"Application (Q4-6)","value":67},{"label":"Analyse (Q7-9)","value":33},{"label":"Synthèse (Q10)","value":100}]}
 ```
 
-**Thinking flow** : Rappel = (correct Q1-3 / 3) * 100. Application = (correct Q4-6 / 3) * 100. Analyse = (correct Q7-9 / 3) * 100. Synthese = Q10 correct ? 100 : 0. Si seulement 1 categorie a un score non-zero → metric : `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
+**Thinking flow** : Rappel = (correct Q1-3 / 3) * 100. Application = (correct Q4-6 / 3) * 100. Analyse = (correct Q7-9 / 3) * 100. Synthèse = Q10 correct ? 100 : 0. Si seulement 1 catégorie a un score non-zero → metric : `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
 
-**Chart B — Radar avant/apres (Catalog #8) — optionnel, si le skill existait deja:**
-Si le talent avait deja cette skill declaree, montrer l'evolution :
+**Chart B — Niveau atteint par sous-domaine (Catalog #8) — bar, JAMAIS un radar:**
+Le bar du Chart A (#9) suffit pour le résultat. Si tu veux détailler par sous-domaine de la skill, rends un second `bar` (jamais de radar) :
 
 ```chart
-{"type":"radar","title":"Evaluation — [Topic]","axes":["Rappel","Application","Analyse","Synthese","Profondeur"],"max":5,"series":[{"name":"Avant","values":[2,1,1,1,2]},{"name":"Apres","values":[4,3,2,3,3]}]}
+{"type":"bar","title":"Évaluation — [Topic]","data":[{"label":"Rappel","value":80},{"label":"Application","value":60},{"label":"Analyse","value":40},{"label":"Synthèse","value":100}]}
 ```
 
-**Thinking flow** : "Avant" = proficiency actuelle mappee sur 5 axes (utiliser le level declare comme baseline uniforme). "Apres" = score quiz mappe par categorie (0-1 correct→1, 2→3, 3→4, full→5). Ne montrer ce radar QUE si le talent avait deja la skill — sinon le bar chart #9 suffit.
+**Thinking flow** : valeurs = % réussite par sous-domaine, score quiz mappé par catégorie. Ne pas dupliquer le Chart A — n'ajouter ce détail que s'il apporte une lecture différente.
 
-| Score | Verdict | Skill Level |
-|-------|---------|-------------|
-| 9-10/10 | Expert | advanced |
-| 7-8/10 | Avance | advanced |
-| 5-6/10 | Intermediaire | intermediate |
-| 3-4/10 | Debutant | Review fundamentals |
-| 0-2/10 | A travailler | Start with a course |
+| Score | Verdict | Profile action |
+|-------|---------|----------------|
+| 9-10/10 | Strong advanced signal | May propose advanced only if questions included ambiguity, synthesis, and applied work |
+| 7-8/10 | Solid signal | May propose intermediate or one-level conservative update |
+| 5-6/10 | Partial signal | Keep current level, propose practice |
+| 3-4/10 | Fragile base | Review fundamentals |
+| 0-2/10 | À travailler | Start with a course |
 
 ### Step E4: Analysis
 
 8. Detailed feedback:
    - **Points forts** : Categories where they scored well
-   - **Points a ameliorer** : Categories where they scored poorly
-   - **Concepts a revoir** : Specific topics from wrong answers (1-line each)
+   - **Points à améliorer** : Categories where they scored poorly
+   - **Concepts à revoir** : Specific topics from wrong answers (1-line each)
 
 ### Step E5: Skill Certification
 
 9. Based on score:
-   - 7+/10: "Score de [X]/10 — je certifie [Topic] au niveau [Level] ?" → `manage_skills` with action "add" (if new) or "update" (if existing). **Upgrade rule**: If skill exists, upgrade by exactly 1 level: beginner→intermediate, intermediate→advanced, advanced→master.
+   - 7+/10: Ask explicit confirmation before any profile update. If confirmed, call `manage_skills` with the most conservative level supported by evidence and A/C/I/T axes. Never set or suggest master.
    - 4-6/10: "Tu progresses. Veux-tu revoir les points faibles ?"
    - 0-3/10: "Bon diagnostic. On commence par les bases ?"
 
@@ -226,7 +226,9 @@ Si le talent avait deja cette skill declaree, montrer l'evolution :
 - **RANDOMIZE correctAnswer position**: vary across 0, 1, 2, 3 throughout questions. Never place the correct answer at the same index more than 3 times in a row.
 - Adapt question difficulty to the learner's skill level and conversational context
 - All questions must be DIFFERENT — no repeats or paraphrases
-- ALWAYS ask before modifying skills: "J'ajoute [skill] a ton profil ?"
+- ALWAYS ask before modifying skills: "J'ajoute [skill] à ton profil ?" or "Je mets à jour [skill] avec ce niveau ?"
+- Quiz-only evidence is never enough for a level upgrade. Require applied practice, a scenario, a project-like artifact, or a substantial full exam with synthesis before using `manage_skills`.
+- Never write or propose `master`; master is reserved for verified evaluation outside normal study conversation.
 - After assessment, ALWAYS suggest a next step (resource, related topic, deeper dive)
 - Score calculation must be accurate — count correct answers carefully
 - NEVER certify a skill above advanced for scores below 9/10

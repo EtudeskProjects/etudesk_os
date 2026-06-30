@@ -12,7 +12,7 @@ import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
-import { getOpenAIClient } from '../ai/provider';
+import { deleteAIFile, getAIClient } from '../ai/provider';
 import { buildOrgExtractionPrompt, ORG_EXTRACTION_SYSTEM_PROMPT } from '../ai/prompts/org-extraction.prompt';
 import { DOCUMENT_STATUS, DocumentStatus } from '../../constants/documents';
 import {
@@ -237,7 +237,7 @@ export async function processOrgDocumentExtraction(
     }
 
     const prompt = buildOrgExtractionPrompt(mimeType);
-    const openai = getOpenAIClient();
+    const aiClient = getAIClient();
 
     const contentParts: OpenAI.ChatCompletionContentPart[] = [
       { type: 'text', text: prompt },
@@ -256,7 +256,7 @@ export async function processOrgDocumentExtraction(
         throw new Error('Format PDF invalide');
       }
       const pdfBuffer = Buffer.from(base64Match[1], 'base64');
-      const file = await openai.files.create({
+      const file = await aiClient.files.create({
         file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
         purpose: 'assistants',
       });
@@ -267,7 +267,7 @@ export async function processOrgDocumentExtraction(
       } as any);
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiClient.chat.completions.create({
       model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: ORG_EXTRACTION_SYSTEM_PROMPT },
@@ -276,7 +276,7 @@ export async function processOrgDocumentExtraction(
     });
 
     if (uploadedFileId) {
-      openai.files.delete(uploadedFileId).catch(() => {});
+      deleteAIFile(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

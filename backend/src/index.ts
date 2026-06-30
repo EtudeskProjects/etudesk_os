@@ -34,7 +34,6 @@ import orgTalentsRouter from './routes/org-talents';
 import skillsRouter from './routes/skills';
 import dailyObjectiveRouter from './routes/daily-objective';
 import waitlistRouter from './routes/waitlist';
-import whatsappRouter from './routes/whatsapp';
 import communityNotificationsRouter from './routes/community-notifications.routes';
 import ecosystemRouter from './routes/ecosystem.routes';
 import entitiesRouter from './routes/entities';
@@ -114,7 +113,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://api.paystack.co", "https://api.openai.com", "https://api.anthropic.com", "https://generativelanguage.googleapis.com"],
+      connectSrc: ["'self'", "https://api.paystack.co"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],
@@ -144,8 +143,11 @@ app.use(i18nMiddleware);
 // Serve uploaded files — split into public and private directories
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 
-// Public directories: avatars, logos, illustrations (no auth required)
-const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations'];
+// Public directories: avatars, logos, illustrations, seed assets (no auth required).
+// `seed` holds shared sample covers (opportunities/communities/orgs) shown in cards,
+// which <img>/SVG fetches load WITHOUT a Bearer token — keeping it private caused 401s.
+// Private content (talent documents) lives elsewhere and stays behind the auth catch-all.
+const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations', 'seed'];
 for (const dir of PUBLIC_UPLOAD_DIRS) {
   app.use(`/uploads/${dir}`, express.static(path.join(uploadDir, dir)));
 }
@@ -203,8 +205,6 @@ v1Router.use(apiLimiter);
 // Auth Routes with stricter rate limiting
 v1Router.use('/auth/request-otp', otpLimiter);
 v1Router.use('/auth/verify-otp', authLimiter);
-v1Router.use('/auth/request-whatsapp-otp', otpLimiter);
-v1Router.use('/auth/verify-whatsapp-otp', authLimiter);
 v1Router.use('/auth/refresh', authLimiter);
 v1Router.use('/auth/google', authLimiter);
 v1Router.use('/auth/delete-account', authLimiter);
@@ -243,9 +243,6 @@ v1Router.use('/organizations/:orgId/talents', orgTalentsRouter);
 v1Router.use('/skills', skillsRouter);
 v1Router.use('/daily-objective', dailyObjectiveRouter);
 v1Router.use('/waitlist', waitlistRouter);
-
-// WhatsApp — versioned under /api/v1/whatsapp
-v1Router.use('/whatsapp', whatsappRouter);
 
 // Short Links CRUD (admin — protected by auth)
 v1Router.use('/short-links', shortLinksRouter);

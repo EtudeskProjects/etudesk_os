@@ -20,7 +20,9 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'generate_document',
     'file_reader',
     'web_search',
+    'find_competency',
     'execute_action',
+    'competency_graph',
   ],
   study: [
     'sql_query',
@@ -31,6 +33,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'web_search',
     'manage_skills',
     'find_competency',
+    'competency_graph',
     'execute_action',
   ],
   org: [
@@ -39,6 +42,8 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'generate_document',
     'file_reader',
     'web_search',
+    'find_competency',
+    'competency_graph',
     'execute_action',
   ],
 };
@@ -50,6 +55,7 @@ let cachedSkills: SkillDefinition[] | null = null;
 
 /** Cosine similarity threshold — below this, no skill matches */
 const SKILL_MATCH_THRESHOLD = 0.45;
+const SKILL_DETECTION_TIMEOUT_MS = Number(process.env.COPILOT_SKILL_DETECTION_TIMEOUT_MS || 700);
 
 /**
  * Parse a .skill.md file into a SkillDefinition.
@@ -186,18 +192,6 @@ export function getSkillBody(skillId: string): string | null {
  * Checks if any trigger keyword appears in the normalized message.
  * If multiple skills match: (1) pick the one with the most trigger hits, (2) on tie, pick the one with highest priority.
  */
-/** Country-specific bonus triggers — boost skill matching when user is in a specific country */
-const COUNTRY_BONUS_TRIGGERS: Record<string, string[]> = {
-  CI: ['abidjan', 'cnps', 'cote d\'ivoire', 'yamoussoukro', 'fdfp', 'orange ci'],
-  SN: ['dakar', 'css', 'ipres', 'senegal', 'thies'],
-  ML: ['bamako', 'inps', 'mali'],
-  BF: ['ouagadougou', 'burkina', 'bobo-dioulasso', 'cnss bf'],
-  TG: ['lome', 'togo', 'cnss togo'],
-  BN: ['cotonou', 'benin', 'porto-novo'],
-  NE: ['niamey', 'niger'],
-  GW: ['bissau', 'guinee-bissau'],
-};
-
 export function detectSkillFromMessageStatic(
   message: string,
   mode: 'explore' | 'study' | 'org',
@@ -220,16 +214,6 @@ export function detectSkillFromMessageStatic(
         hits++;
       }
     }
-    // Country bonus: if user is in a UEMOA country and message mentions their country-specific terms,
-    // give an extra hit to skills that deal with regional topics (salary, legal, etc.)
-    if (hits > 0 && country) {
-      const countryCode = country.trim().toUpperCase();
-      const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
-      if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
-        hits += 1; // Regional relevance boost
-      }
-    }
-
     if (hits === 0) continue;
 
     const priority = skill.priority ?? 0;
@@ -287,20 +271,25 @@ export async function detectSkillFromMessage(
   country?: string
 ): Promise<{ skillId: string; skillName: string; instructions: string } | null> {
   const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
+  const staticMatch = detectSkillFromMessageStatic(message, mode, country);
+  if (staticMatch) return staticMatch;
 
   // If no skill has an embedding yet (startup not done or failed), use static fallback
   const hasEmbeddings = skills.some((s) => s.embedding);
   if (!hasEmbeddings) {
-    return detectSkillFromMessageStatic(message, mode, country);
+    return null;
   }
 
   try {
-    const messageEmbedding = await generateEmbedding(message);
+    const messageEmbedding = await Promise.race([
+      generateEmbedding(message),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`skill detection timed out after ${SKILL_DETECTION_TIMEOUT_MS}ms`)), SKILL_DETECTION_TIMEOUT_MS);
+      }),
+    ]);
 
     let bestMatch: SkillDefinition | null = null;
     let bestScore = -1;
-
-    const normalizedMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
     for (const skill of skills) {
       if (!skill.embedding) continue;
@@ -308,15 +297,6 @@ export async function detectSkillFromMessage(
       const similarity = cosineSimilarity(messageEmbedding, skill.embedding);
       // Small priority boost for tie-breaking (priority 8 → +0.04)
       let score = similarity + (skill.priority ?? 0) * 0.005;
-
-      // Country relevance boost (parity with static matching path)
-      if (country) {
-        const countryCode = country.trim().toUpperCase();
-        const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
-        if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
-          score += 0.05;
-        }
-      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -334,7 +314,7 @@ export async function detectSkillFromMessage(
   } catch (error) {
     // Embedding API down → graceful fallback to static matching
     logger.warn(`[skill.loader] Embedding-based detection failed, using static fallback: ${error}`);
-    return detectSkillFromMessageStatic(message, mode, country);
+    return null;
   }
 }
 

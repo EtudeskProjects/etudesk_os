@@ -1,4 +1,4 @@
-// Données de localisation — UEMOA (communes.json) + mondial (countries.json + regions/)
+// Données de localisation — pays détaillés (communes.json) + mondial (countries.json + regions/)
 import communesData from '../data/communes.json';
 import countriesData from '../data/countries.json';
 import americasData from '../data/regions/americas.json';
@@ -29,7 +29,7 @@ export interface Commune {
   label: string;
 }
 
-// Structure du JSON communes (UEMOA)
+// Structure du JSON communes
 interface CommunesRegion {
   nom: string;
   communes: string[];
@@ -60,47 +60,26 @@ interface CountriesData {
   countries: CountryEntry[];
 }
 
-const uemoaData = communesData as CommunesData;
-
-// UEMOA country codes for priority sorting
-const UEMOA_CODES = new Set(['BJ', 'BF', 'CI', 'GW', 'ML', 'NE', 'SN', 'TG']);
+const detailedCountriesData = communesData as CommunesData;
 
 // ── Country list ─────────────────────────────────────────────────────────────
 
 // Cache for global countries list
 let _globalCountries: Country[] | null = null;
 
-/** Get all countries (always from bundled countries.json, with UEMOA priority) */
+/** Get all countries from bundled countries.json. */
 export const getCountries = (): Country[] => {
   if (_globalCountries) return _globalCountries;
 
   const countriesJson = countriesData as CountriesData;
-  const uemoaCountries: Country[] = [];
-  const otherCountries: Country[] = [];
-
-  for (const c of countriesJson.countries) {
-    const entry: Country = {
+  _globalCountries = countriesJson.countries
+    .map((c) => ({
       id: c.code,
       label: `${c.flag} ${c.name}`,
       zone: c.zone,
       currency: c.currency,
-    };
-    if (UEMOA_CODES.has(c.code)) {
-      uemoaCountries.push(entry);
-    } else {
-      otherCountries.push(entry);
-    }
-  }
-
-  // UEMOA first (CI at top), then rest alphabetically
-  uemoaCountries.sort((a, b) => {
-    if (a.id === 'CI') return -1;
-    if (b.id === 'CI') return 1;
-    return a.label.localeCompare(b.label, 'fr');
-  });
-  otherCountries.sort((a, b) => a.label.localeCompare(b.label, 'fr'));
-
-  _globalCountries = [...uemoaCountries, ...otherCountries];
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 
   return _globalCountries;
 };
@@ -113,9 +92,9 @@ export const COUNTRIES: Country[] = getCountries();
 // Map country codes to their zone file for lazy loading
 const ZONE_FILE_MAP: Record<string, string> = {};
 
-// UEMOA countries → loaded from communes.json (already in memory)
-for (const p of uemoaData.pays) {
-  ZONE_FILE_MAP[p.code_iso] = 'uemoa';
+// Detailed countries → loaded from communes.json (already in memory)
+for (const p of detailedCountriesData.pays) {
+  ZONE_FILE_MAP[p.code_iso] = 'detailed';
 }
 
 // Other zones → loaded on demand from regions/*.json
@@ -139,7 +118,7 @@ for (const [zone, codes] of Object.entries(ZONE_COUNTRIES)) {
 
 // Cache loaded zone data
 const _zoneCache: Record<string, CommunesPays[]> = {
-  uemoa: uemoaData.pays,
+  detailed: detailedCountriesData.pays,
 };
 
 const REGION_ZONE_DATA: Record<string, CommunesData> = {
@@ -182,17 +161,6 @@ export const getRegionsByCountry = (countryCode: string): Region[] => {
     id: region.nom.toLowerCase().replace(/\s+/g, '-'),
     label: region.nom,
   }));
-
-  // Pour la Côte d'Ivoire, mettre District Abidjan en premier
-  if (countryCode === 'CI') {
-    const abidjanIndex = regions.findIndex((r) => r.label.toLowerCase().includes('abidjan'));
-    if (abidjanIndex > 0) {
-      const [abidjan] = regions.splice(abidjanIndex, 1);
-      regions.unshift(abidjan);
-    }
-    const [first, ...rest] = regions;
-    return [first, ...rest.sort((a, b) => a.label.localeCompare(b.label, 'fr'))];
-  }
 
   return regions.sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 };

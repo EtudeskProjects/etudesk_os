@@ -24,8 +24,7 @@
     "codeLength": "验证码必须为6位数字",
     "codeDigits": "验证码必须由6位数字组成",
     "refreshTokenRequired": "刷新令牌为必填项",
-    "invalidPhone": "手机号无效",
-    "invalidWhatsApp": "WhatsApp 号码无效"
+    "invalidPhone": "手机号无效"
   },
   "opportunity": {
     "titleMinLength": "标题至少需要3个字符",

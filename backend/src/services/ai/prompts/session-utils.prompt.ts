@@ -25,7 +25,7 @@ Rules:
 8. Reflect the user's actual topic
 
 Good examples:
-- Fintech opportunities Abidjan
+- Fintech product roles
 - React hooks mastery
 - CV improvement plan
 - Linear functions practice
@@ -60,7 +60,7 @@ ${toTOON(SUGGESTIONS_OUTPUT_CONTRACT)}
 
 /**
  * Build a prompt for intent prediction based on conversation history
- * Used with gpt-5-nano for fast, contextual suggestions
+ * Used with the suggestion model for fast, contextual suggestions
  */
 export function buildIntentSuggestionsPrompt(
   mode: string,
@@ -97,7 +97,7 @@ export function buildIntentSuggestionsPrompt(
 - Postuler a une offre ou rejoindre une communaute`;
 
   return `You MUST return all suggestions in ${languageName}.
-Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme de carriere et formation en Afrique.
+Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme globale de carriere et formation numerique.
 
 <capacites_plateforme>
 ${capabilities}
@@ -113,5 +113,5 @@ Contrat compact (TOON) :
 ${toTOON(INTENT_SUGGESTIONS_OUTPUT_CONTRACT)}
 ${mode === 'study'
     ? 'Exemple: ["Prepare-moi pour un entretien", "Evalue mes competences en Python", "Cree un quiz sur le marketing digital", "Resume mon CV et conseille-moi"]'
-    : 'Exemple: ["Offres de stage en marketing a Abidjan", "Genere mon CV en PDF", "Communautes tech dans mon secteur", "Ajoute React a mes competences"]'}`;
+    : 'Exemple: ["Offres de stage en marketing digital", "Genere mon CV en PDF", "Communautes tech dans mon secteur", "Ajoute React a mes competences"]'}`;
 }

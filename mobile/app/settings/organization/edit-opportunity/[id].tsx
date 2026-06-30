@@ -39,6 +39,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from 
 import { Input, Button, IconButton, Toggle, Chip, KeyboardAwareScrollView, SelectCard, useToast, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
+import { DEFAULT_COUNTRY_CODE } from '../../../../src/constants/phone-countries';
 import {
   getOpportunityTypeData,
   getContractTypeData,
@@ -238,7 +239,7 @@ export default function EditOpportunityScreen() {
 
       if (opp.locations && opp.locations.length > 0) {
         const loc = opp.locations[0];
-        setCountry(loc.country || 'CI');
+        setCountry(loc.country || DEFAULT_COUNTRY_CODE);
         setRegion(loc.region || '');
         setCity(loc.city || '');
       }

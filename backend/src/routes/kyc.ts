@@ -1,6 +1,6 @@
 /**
  * KYC (Know Your Customer) Routes
- * Handles identity verification document uploads with OpenAI vision verification
+ * Handles identity verification document uploads with AI vision verification
  */
 
 import { Router, Response } from 'express';

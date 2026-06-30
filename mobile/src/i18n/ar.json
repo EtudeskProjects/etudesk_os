@@ -173,17 +173,7 @@
       "verifyError": "خطأ في التحقق. حاول مرة أخرى.",
       "codeSent": "تم إرسال رمز جديد!",
       "verified": "تم التحقق من البريد الإلكتروني!",
-      "redirecting": "جاري تسجيل الدخول...",
-      "titleWhatsApp": "تحقق من WhatsApp",
-      "subtitleWhatsApp": "أدخل الرمز المرسل إلى الرقم"
-    },
-    "whatsappLogin": {
-      "title": "تسجيل الدخول عبر WhatsApp",
-      "subtitle": "أدخل رقمك لتلقي رمز على WhatsApp",
-      "phoneLabel": "رقم WhatsApp",
-      "sendCode": "إرسال الرمز",
-      "infoText": "ستتلقى رمزا مكونا من 6 أرقام على WhatsApp",
-      "sendError": "تعذر إرسال رمز WhatsApp. تحقق من رقمك."
+      "redirecting": "جاري تسجيل الدخول..."
     }
   },
   "tabs": {
@@ -498,7 +488,7 @@
     "contact": "الاتصال بالدعم",
     "email": "البريد الإلكتروني",
     "phone": "الهاتف",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "المعلومات القانونية",

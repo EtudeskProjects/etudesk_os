@@ -23,12 +23,27 @@ export function createFindCompetencyTool() {
     execute: async ({ query }) => {
       const resolved = await catalog.resolveLabel(query);
       const suggestions = await catalog.suggestCompetencies(query, 5);
+      const graph =
+        resolved
+          ? {
+              prerequisites: (
+                await catalog.getNeighbors(resolved.slug, { relations: ['prerequisite'], limit: 5 })
+              ).map((n) => ({ slug: n.slug, relation: n.relation, strength: n.strength })),
+              next_steps: (
+                await catalog.getDependents(resolved.slug, { relations: ['prerequisite'], limit: 5 })
+              ).map((n) => ({ slug: n.slug, relation: n.relation, strength: n.strength })),
+              related: (
+                await catalog.getNeighbors(resolved.slug, { relations: ['sibling', 'co_occurrence'], limit: 5 })
+              ).map((n) => ({ slug: n.slug, relation: n.relation, strength: n.strength })),
+            }
+          : null;
       return {
         query,
         in_catalog: !!resolved,
         competency: resolved
           ? { slug: resolved.slug, name: resolved.name, name_fr: resolved.name_fr, family: resolved.family, type: resolved.type }
           : null,
+        graph,
         suggestions: suggestions.map((s) => ({ slug: s.slug, name: s.name, name_fr: s.name_fr, family: s.family, type: s.type })),
       };
     },

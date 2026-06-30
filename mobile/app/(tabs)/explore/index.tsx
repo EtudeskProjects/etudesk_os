@@ -51,9 +51,9 @@ const PAGE_SIZE = 20;
 
 // User location for proximity sorting (mock - would come from user profile)
 const USER_LOCATION = {
-  city: 'Abidjan',
-  region: 'Lagunes',
-  country: 'CI',
+  city: 'Remote',
+  region: '',
+  country: '',
 };
 
 // Placeholder images for items without images
@@ -193,7 +193,7 @@ export default function ExploreScreen() {
     loadData();
   };
 
-  // Categories with translated labels — local Midjourney images (UEMOA context)
+  // Categories with translated labels and local images.
   const CATEGORIES_TRANSLATED = [
     { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, image: require('../../../assets/explore_communities.jpg') },
     { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, image: require('../../../assets/explore_spaces.jpg') },

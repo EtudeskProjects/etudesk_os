@@ -49,6 +49,7 @@ interface AssistantMessagesListProps {
   handleRetry: (messageId: string) => void;
   handleSelectFollowUp: (value: string) => void;
   handleUserMessageLongPress: (id: string, content: string) => void;
+  onSkillPress?: (name: string) => void;
   hasClearNextStep: (content: string) => boolean;
   isOrganizationSpace: boolean;
   isSending: boolean;
@@ -68,6 +69,7 @@ export function AssistantMessagesList({
   handleQuizAnswer,
   handleRetry,
   handleSelectFollowUp,
+  onSkillPress,
   handleUserMessageLongPress,
   hasClearNextStep,
   isOrganizationSpace,
@@ -172,6 +174,7 @@ export function AssistantMessagesList({
                           key={`segment-${index}`}
                           content={segment.content}
                           onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
+                          onSkillPress={onSkillPress}
                           sessionId={sessionId || undefined}
                           interactiveConfirmation={!message.isStreaming}
                         />

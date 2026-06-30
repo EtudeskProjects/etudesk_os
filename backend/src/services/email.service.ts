@@ -31,10 +31,12 @@ export interface SendEmailOptions {
 // --- Configuration ---
 
 // Determine which provider to use
-const EMAIL_PROVIDER: EmailProvider = (process.env.EMAIL_PROVIDER as EmailProvider) || 'smtp';
+const configuredEmailProvider = (process.env.EMAIL_PROVIDER || 'smtp').toLowerCase();
+const EMAIL_PROVIDER: EmailProvider = configuredEmailProvider === 'resend' ? 'resend' : 'smtp';
 const DEFAULT_FROM = process.env.EMAIL_FROM || 'Etudesk <noreply@etudesk.com>';
 const APP_URL = process.env.APP_URL || 'https://etudesk.com';
 const EMAIL_LOGO_URL = process.env.EMAIL_LOGO_URL || `${APP_URL}/images/etudesk_logo_black.png`;
+const OTP_EMAIL_DEV_FALLBACK = process.env.OTP_EMAIL_DEV_FALLBACK === 'true';
 
 // SMTP configuration (Mailhog for local dev)
 const SMTP_CONFIG = {
@@ -53,6 +55,9 @@ const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_
 
 // Log which provider is active
 logger.info(`📧 Email provider: ${EMAIL_PROVIDER.toUpperCase()}${EMAIL_PROVIDER === 'smtp' ? ` (${SMTP_CONFIG.host}:${SMTP_CONFIG.port})` : ''}`);
+if (configuredEmailProvider !== EMAIL_PROVIDER) {
+  logger.warn(`Unknown EMAIL_PROVIDER "${configuredEmailProvider}", falling back to SMTP`);
+}
 
 // --- Helpers ---
 
@@ -326,10 +331,17 @@ ${t('emails:welcome.copyright', { year })}
  */
 export async function sendOTPEmail(email: string, code: string, language: EmailLanguage = 'en'): Promise<{ success: boolean; error?: string }> {
   const template = EmailTemplates.otpLogin(code, 10, language);
-  return sendEmail({
+  const result = await sendEmail({
     to: email,
     ...template,
   });
+  // Explicit dev-only fallback. Keep disabled by default so email delivery
+  // problems are visible during QA instead of silently pretending the email was sent.
+  if (!result.success && process.env.NODE_ENV !== 'production' && OTP_EMAIL_DEV_FALLBACK) {
+    logger.warn(`🔑 [DEV OTP] ${email} -> code ${code} (email delivery unavailable; use this code to sign in)`);
+    return { success: true };
+  }
+  return result;
 }
 
 /**

@@ -7,7 +7,7 @@
  * resolves free-text labels to a catalog slug through this service. Resolution
  * ladder: exact slug -> exact name -> trigram -> semantic (pgvector cosine over
  * competencies.embedding, embedded once by seed:competency-embeddings). An
- * in-process cache memoizes the (small, 1261-row) catalog.
+ * in-process cache memoizes the (small, 1510-row) catalog.
  */
 
 import { pool } from '../database';
@@ -39,7 +39,7 @@ export interface ResolveResult extends Competency {
 // Minimum trigram similarity to accept a fuzzy resolution.
 const RESOLVE_THRESHOLD = Number(process.env.CATALOG_RESOLVE_THRESHOLD || 0.5);
 // Minimum cosine similarity to accept a SEMANTIC (embedding) resolution — higher
-// bar than suggestions since this writes a skill. Tuned for text-embedding-3-small.
+// bar than suggestions since this writes a skill. Tuned for configured embedding model.
 const SEMANTIC_RESOLVE_THRESHOLD = Number(process.env.CATALOG_SEMANTIC_THRESHOLD || 0.62);
 
 /**

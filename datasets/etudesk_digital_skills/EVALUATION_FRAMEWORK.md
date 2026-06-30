@@ -3,7 +3,7 @@
 > Operational framework for AI services that create or update `UserCompetency` rows.
 > This is not a human self-assessment form.
 >
-> Catalog: `competency_catalog.csv` (1261 active skills, English labels + French labels).
+> Catalog: `competency_catalog.csv` (1687 active skills, English labels + French labels).
 > Graph: `competency_edges.csv`.
 > Current framework version: `2026-06-24`.
 
@@ -204,13 +204,13 @@ Formal languages use the `hard_skill` lens.
 
 | Family | Cycle | Gold evidence | Adjacency |
 | --- | --- | --- | --- |
-| `ai_ml`, `emerging_tech`, `web3_blockchain` | fast | dated repo, model, or benchmark | strong |
-| `tool_platform`, `cloud_devops`, `cybersecurity` | fast | production config, dated certification, resolved incident | strong |
-| `software_dev`, `data` | medium | repo, production pipeline, review | strong |
-| `fintech_finance`, `industry_knowledge`, `sustainability_climate` | slow | decision, publication, regulatory file | medium |
-| `growth_marketing`, `media_content`, `product_design` | medium | published deliverable with impact metric | medium |
-| `business_management`, `human_skills` | slow | 360 feedback, team result, held mandate | weak |
-| `digital_literacy` | slow | observed usage | weak |
+| `ai_ml_automation` | fast | dated repo, model, or benchmark | strong |
+| `cloud_devops_infrastructure`, `cybersecurity_digital_trust` | fast | production config, dated certification, resolved incident | strong |
+| `software_engineering`, `data_analytics_bi`, `industry_hardware_mobility` | medium | repo, production pipeline, lab or field evidence | strong |
+| `finance_fintech_digital_assets`, `product_ux_design`, `marketing_sales_content`, `education_learning_tech` | medium | published deliverable with impact metric | medium |
+| `health_biotech_medtech`, `law_compliance_governance`, `sustainability_climate_energy_agri` | slow | decision, publication, regulatory file or field report | medium |
+| `business_operations_management`, `human_communication_languages` | slow | 360 feedback, team result, held mandate | weak |
+| `digital_foundations` | slow | observed usage | weak |
 
 Freshness penalty:
 - fast cycle: evidence older than 24 months -> `confidence -0.20`;
@@ -289,7 +289,8 @@ Recommended active caps:
 Family caps:
 - `master`: max 3 per family;
 - `advanced`: max 12 per family;
-- `advanced`: max 16 for `software_dev`, `data`, `ai_ml`, `cloud_devops`.
+- `advanced`: max 16 for `software_engineering`, `data_analytics_bi`,
+  `ai_ml_automation`, `cloud_devops_infrastructure`.
 
 When caps are exceeded, keep the strongest rows by:
 

@@ -30,7 +30,6 @@ export interface AuthState {
 interface AuthContextType extends AuthState {
   // Actions
   signIn: (email: string, code: string) => Promise<boolean>;
-  signInWhatsApp: (phone: string, code: string) => Promise<boolean>;
   signInGoogle: (idToken: string) => Promise<boolean>;
   signOut: (allDevices?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -88,14 +87,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (state.status === 'loading') return;
 
-    const inAuthGroup = segments[0] === 'auth';
-    const inTabsGroup = segments[0] === '(tabs)';
-    const isOnboarding = segments[0] === undefined; // index.tsx
-    const isWelcomePage = inAuthGroup && segments[1] === 'welcome';
+    const routeSegments = segments as readonly string[];
+    const inAuthGroup = routeSegments[0] === 'auth';
+    const inTabsGroup = routeSegments[0] === '(tabs)';
+    const isOnboarding = routeSegments[0] === undefined; // index.tsx
+    const isWelcomePage = inAuthGroup && routeSegments[1] === 'welcome';
 
     if (state.status === 'unauthenticated') {
       // Not authenticated - allow auth screens and onboarding
-      if (inTabsGroup || segments[0] === 'settings' || segments[0] === 'details' || segments[0] === 'gestion') {
+      if (inTabsGroup || routeSegments[0] === 'settings' || routeSegments[0] === 'details' || routeSegments[0] === 'gestion') {
         // Trying to access protected route - redirect to login
         router.replace('/auth/login');
       }
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Authenticated
       if (state.needsOnboarding) {
         // Need to complete profile
-        if (!inAuthGroup || segments[1] !== 'create-profile') {
+        if (!inAuthGroup || routeSegments[1] !== 'create-profile') {
           router.replace('/auth/create-profile');
         }
       } else if (state.mustShowWelcome) {
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Fully authenticated with profile
         // Allow welcome page to be shown after onboarding
         // Also allow create-profile page to handle its own navigation to welcome
-        const isCreateProfilePage = inAuthGroup && segments[1] === 'create-profile';
+        const isCreateProfilePage = inAuthGroup && routeSegments[1] === 'create-profile';
         if ((inAuthGroup && !isWelcomePage && !isCreateProfilePage) || isOnboarding) {
           // On auth screen (except welcome/create-profile) or onboarding but already logged in - go to main app
           router.replace('/(tabs)/home');
@@ -276,25 +276,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  const signInWhatsApp = useCallback(async (phone: string, code: string): Promise<boolean> => {
-    try {
-      logger.debug(LOG_SOURCE, 'Attempting WhatsApp sign in', { phone });
-      const result = await otpService.verifyWhatsAppOTP(phone, code);
-
-      if (result.success) {
-        logger.info(LOG_SOURCE, 'WhatsApp sign in successful', { phone, needsOnboarding: result.needsOnboarding });
-        await checkAuthState();
-        return true;
-      }
-
-      logger.warn(LOG_SOURCE, 'WhatsApp sign in failed - invalid OTP', { phone });
-      return false;
-    } catch (error) {
-      logger.error(LOG_SOURCE, 'WhatsApp sign in error', error, { phone });
-      return false;
-    }
-  }, []);
-
   // SIGN IN WITH GOOGLE
   const signInGoogle = useCallback(async (idToken: string): Promise<boolean> => {
     try {
@@ -387,7 +368,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const contextValue: AuthContextType = {
     ...state,
     signIn,
-    signInWhatsApp,
     signInGoogle,
     signOut,
     refreshUser,

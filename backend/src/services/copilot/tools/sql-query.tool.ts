@@ -88,7 +88,7 @@ export function createSqlQueryTool(
       paramsJson: z.string().optional().describe('Optional JSON string with extra filters. Examples: \'{"status":"PENDING"}\', \'{"organizationId":"uuid"}\'. Do NOT include talentId — it is injected automatically.'),
       params: z.record(z.string(), z.unknown()).optional().describe('Optional parameters as an object. Alternative to paramsJson. Example: {"organizationId":"uuid","status":"PENDING"}. Do NOT include talentId.'),
       query: z.string().optional().describe('Text query for filtering results (rarely needed).'),
-      country: z.string().optional().describe('Country code filter (e.g., "CI" for Côte d\'Ivoire).'),
+      country: z.string().optional().describe('Country code filter (e.g., "US", "FR", "BR").'),
     }),
     execute: async ({ intent, paramsJson, params: paramsObj, query, country }) => {
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
@@ -102,6 +102,7 @@ export function createSqlQueryTool(
       }
       // Merge top-level query/country into params (agent may send them at root level)
       if (query && !params.query) params.query = query;
+      if (query && intent === 'org_talents' && !params.search) params.search = query;
       if (country && !params.country) params.country = country;
 
       // Cap limit to prevent LLM from requesting excessive rows
@@ -250,10 +251,24 @@ export function createSqlQueryTool(
 
           case 'my_bookmarks': {
             const res = await pool.query(
-              `SELECT b.opportunity_id as id, 'opportunity' as entity_type, b.opportunity_id as entity_id, b.created_at
-             FROM opportunity_bookmarks b
-             WHERE b.talent_id = $1
-             ORDER BY b.created_at DESC LIMIT 20`,
+              `SELECT b.opportunity_id as id, 'opportunity' as entity_type, b.opportunity_id as entity_id,
+                      o.title as title, b.notes, b.created_at
+               FROM opportunity_bookmarks b
+               LEFT JOIN opportunities o ON o.id = b.opportunity_id
+               WHERE b.talent_id = $1
+               UNION ALL
+               SELECT b.community_id as id, 'community' as entity_type, b.community_id as entity_id,
+                      c.name as title, b.notes, b.created_at
+               FROM community_bookmarks b
+               LEFT JOIN communities c ON c.id = b.community_id
+               WHERE b.talent_id = $1
+               UNION ALL
+               SELECT b.space_id as id, 'space' as entity_type, b.space_id as entity_id,
+                      s.name as title, b.notes, b.created_at
+               FROM space_bookmarks b
+               LEFT JOIN spaces s ON s.id = b.space_id
+               WHERE b.talent_id = $1
+               ORDER BY created_at DESC LIMIT 20`,
               [talentId]
             );
             return { bookmarks: res.rows };
@@ -311,8 +326,15 @@ export function createSqlQueryTool(
             if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT om.role, om.created_at, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
-                    (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
-                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
+                    (SELECT json_agg(row_to_json(skill_row))
+                     FROM (
+                       SELECT c.name, c.name_fr, sk.level, c.type, sk.origin, sk.context, sk.updated_at
+                       FROM talent_skills sk
+                       JOIN competencies c ON c.slug = sk.competency_slug
+                       WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived'
+                       ORDER BY sk.score DESC
+                       LIMIT 5
+                     ) skill_row) as top_skills
              FROM organization_members om
              JOIN talents t ON om.talent_id = t.id
              WHERE om.organization_id = $1 AND om.status = 'ACTIVE'
@@ -331,8 +353,15 @@ export function createSqlQueryTool(
                     t.id as talent_id,
                     o.title as opportunity_title, o.id as opportunity_id,
                     o.summary as opportunity_summary, o.type as opportunity_type,
-                    (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
-                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
+                    (SELECT json_agg(row_to_json(skill_row))
+                     FROM (
+                       SELECT c.name, c.name_fr, sk.level, c.type, sk.origin, sk.context, sk.updated_at
+                       FROM talent_skills sk
+                       JOIN competencies c ON c.slug = sk.competency_slug
+                       WHERE sk.talent_id = t.id AND sk.decay_state <> 'archived'
+                       ORDER BY sk.score DESC
+                       LIMIT 5
+                     ) skill_row) as top_skills
              FROM opportunity_applications a
              JOIN opportunities o ON a.opportunity_id = o.id
              JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -508,8 +537,15 @@ export function createSqlQueryTool(
             SELECT a.talent_id as id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
                    t.bio, t.city, t.country, a.sources, a.first_interaction, a.last_interaction,
                    (otf.talent_id IS NOT NULL) as is_favorite,
-                   (SELECT json_agg(json_build_object('name', c.name, 'name_fr', c.name_fr, 'level', sk.level, 'type', c.type, 'origin', sk.origin, 'context', sk.context, 'updated_at', sk.updated_at))
-                     FROM talent_skills sk JOIN competencies c ON c.slug = sk.competency_slug WHERE sk.talent_id = a.talent_id AND sk.decay_state <> 'archived' ORDER BY sk.score DESC LIMIT 5) as top_skills
+                   (SELECT json_agg(row_to_json(skill_row))
+                    FROM (
+                      SELECT c.name, c.name_fr, sk.level, c.type, sk.origin, sk.context, sk.updated_at
+                      FROM talent_skills sk
+                      JOIN competencies c ON c.slug = sk.competency_slug
+                      WHERE sk.talent_id = a.talent_id AND sk.decay_state <> 'archived'
+                      ORDER BY sk.score DESC
+                      LIMIT 5
+                    ) skill_row) as top_skills
             FROM aggregated a
             JOIN talents t ON a.talent_id = t.id
             LEFT JOIN organization_talent_favorites otf ON otf.talent_id = a.talent_id AND otf.organization_id = $1`;
@@ -815,9 +851,35 @@ export function createSqlQueryTool(
           // --- Talent community ---
           case 'my_community_feed': {
             const communityId = params?.communityId as string;
-            if (!communityId) return { error: tr('copilot:toolCommunityIdRequired') };
             const limit = (params?.limit as number) || 10;
             const activityType = params?.type as string;
+            if (!communityId) {
+              let query = `
+              SELECT ca.id, ca.type, ca.content, ca.metadata, ca.reactions_count, ca.comments_count,
+                     ca.is_pinned, COALESCE(t.first_name || ' ' || t.last_name, t.email) as author_name,
+                     ca.published_at, c.id as community_id, c.name as community_name, c.slug as community_slug
+              FROM community_members cm
+              JOIN communities c ON c.id = cm.community_id
+              JOIN community_activities ca ON ca.community_id = c.id
+              JOIN talents t ON ca.author_id = t.id
+              WHERE cm.talent_id = $1
+                AND cm.status = 'ACTIVE'
+                AND cm.deleted_at IS NULL
+                AND c.deleted_at IS NULL
+                AND ca.status = 'PUBLISHED'
+                AND ca.deleted_at IS NULL`;
+              const queryParams: any[] = [talentId];
+              let idx = 2;
+              if (activityType) { query += ` AND ca.type = $${idx}`; queryParams.push(activityType); idx++; }
+              query += ` ORDER BY ca.is_pinned DESC, ca.published_at DESC NULLS LAST LIMIT $${idx}`;
+              queryParams.push(limit);
+              const res = await pool.query(query, queryParams);
+              return {
+                activities: res.rows,
+                scope: 'all_joined_communities',
+                note: 'No communityId was provided, so the feed was aggregated across communities joined by the authenticated talent.',
+              };
+            }
             // Verify talent is member of this community
             const memberCheck = await pool.query(
               `SELECT id FROM community_members

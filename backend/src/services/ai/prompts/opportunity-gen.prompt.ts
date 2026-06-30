@@ -16,7 +16,7 @@ interface OpportunityPromptContext {
 }
 
 export function buildOpportunityGenPrompt(ctx: OpportunityPromptContext): string {
-  return `<role>Expert en recrutement en Afrique francophone</role>
+  return `<role>Expert en recrutement international pour les métiers du numérique</role>
 
 <context>
 Organisation : ${ctx.orgName} (${ctx.orgType})
@@ -43,15 +43,15 @@ ${ctx.schemaJson}
 6. deadline_days : Stage 14-21j, Emploi 30-45j, Consultation 21-30j
 7. Questions de candidature : 2-3 questions courtes et pertinentes
 8. Content in ${ctx.languageName}, concise and professional
-9. Génère TOUJOURS compensation_min ET compensation_max
+9. Génère TOUJOURS compensation_min ET compensation_max. Utilise la devise déjà fournie par l'organisation ou la requête; sinon génère des montants cohérents sans supposer de pays.
 </rules>
 
 <examples>
-Salaires XOF/mois :
-- Stage/Apprentissage : min 50,000 — max 150,000
-- Junior : min 150,000 — max 400,000
-- Mid : min 400,000 — max 800,000
-- Senior : min 800,000 — max 1,500,000
+Repères de rémunération :
+- Stage/Apprentissage : fourchette locale d'entrée
+- Junior : fourchette locale junior
+- Mid : fourchette locale intermédiaire
+- Senior : fourchette locale senior
 </examples>`;
 }
 

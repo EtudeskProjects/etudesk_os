@@ -107,6 +107,14 @@ async function main(): Promise<void> {
     assert(result === null, 'unrelated message should not match any skill');
   });
 
+  test('study pedagogy routing skills are preferred for relevant triggers', () => {
+    const language = detectSkillFromMessageStatic("Je veux apprendre l'anglais pour un entretien", 'study');
+    assert(language?.skillId === 'natural-language-vocal-coach', `expected natural-language-vocal-coach, got ${language?.skillId}`);
+
+    const router = detectSkillFromMessageStatic('Construis-moi un parcours pédagogique avec les prérequis du référentiel', 'study');
+    assert(router?.skillId === 'pedagogical-router', `expected pedagogical-router, got ${router?.skillId}`);
+  });
+
   // --- Async (embedding) detection tests — falls back to static when no embeddings are pre-computed ---
 
   await testAsync('detectSkillFromMessage (async) returns null or a valid skill', async () => {

@@ -1,6 +1,6 @@
 /**
  * Copilot — Shared Types
- * Native Anthropic SDK + Claude (MODEL_AGENT) + SSE Streaming
+ * Provider-neutral agent config + SSE streaming
  */
 
 // --- Context Types ---
@@ -16,8 +16,6 @@ export interface TalentContext extends BaseTalentContext {
   language?: SupportedLanguage;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
-  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
-  injectUEMOA?: boolean;
 }
 
 export interface OrgContext {
@@ -35,12 +33,10 @@ export interface OrgContext {
   logoUrl?: string;
   orgCity?: string;
   orgCountry?: string;
-  /** Admin's country — used for UEMOA knowledge injection */
+  /** Admin's country, used only as explicit organization context */
   country?: string;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
-  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
-  injectUEMOA?: boolean;
 }
 
 // --- Message Segments Ordered Text/Tool Blocks For Inline Rendering ---
@@ -69,6 +65,13 @@ export interface SSETextDeltaEvent {
   delta: string;
 }
 
+export interface SSEStatusEvent {
+  type: 'status';
+  phase: string;
+  label: string;
+  elapsedMs?: number;
+}
+
 export interface SSEToolStartEvent {
   type: 'tool_start';
   tool: {
@@ -94,6 +97,7 @@ export interface SSEToolEndEvent {
 export interface SSEDoneEvent {
   type: 'done';
   sessionId: string;
+  metrics?: Record<string, number>;
 }
 
 export interface SSEErrorEvent {
@@ -103,7 +107,7 @@ export interface SSEErrorEvent {
 
 export interface SSELimitReachedEvent {
   type: 'limit_reached';
-  reason: 'max_tools' | 'max_duration' | 'tool_loop' | 'semantic_empty_results';
+  reason: 'max_tools' | 'max_duration' | 'tool_loop' | 'semantic_empty_results' | 'max_tokens';
   message: string;
 }
 
@@ -120,6 +124,7 @@ export interface SSEAudioReadyEvent {
 
 export type SSEEvent =
   | SSETextDeltaEvent
+  | SSEStatusEvent
   | SSEToolStartEvent
   | SSEToolEndEvent
   | SSEDoneEvent

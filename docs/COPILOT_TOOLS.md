@@ -18,11 +18,8 @@
 | 7 | `file_reader` | explore, study, org | oui (talentId ou orgId) | aucun (pdf-parse) |
 | 8 | `web_search` | explore, study, org | non (singleton) | OpenAI gpt-4.1-mini |
 | 9 | `manage_skills` | study | oui (talentId) | PostgreSQL |
-| 10 | `find_competency` | study | non | PostgreSQL (catalogue, lecture seule) |
-| 11 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
-| 12 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
-
-`find_competency` : recherche un sujet d'apprentissage dans le référentiel (catalogue) et renvoie `in_catalog`, la compétence (avec `family` + `type`) et des suggestions proches. Le tuteur l'utilise pour ne former QUE sur le référentiel et recadrer en douceur les demandes hors-catalogue (jamais d'invention de compétence).
+| 10 | `execute_action` | explore, org | oui (talentId) | PostgreSQL |
+| 11 | `cv_generation` | explore | oui (talentId, avatarUrl) | Anthropic (sub-agent) |
 
 ### Allocation par mode
 
@@ -307,20 +304,20 @@ Gestion des competences du talent (ajout/mise a jour).
 
 ```typescript
 {
-  skillQuery: z.string(),        // LABEL de competence, resolu au catalogue (slug ou nom)
-  level: z.enum(['beginner','intermediate','advanced','master']),
-  origin: z.enum(['declared','inferred','extracted']).default('inferred'),
-  axisA?: 1..4, axisC?: 1..4, axisI?: 1..4, axisT?: 1..4, // A/C/I/T optionnels
+  action: z.string(),            // 'add' | 'update'
+  skillName: z.string(),
+  proficiencyLevel: z.string(),  // BEGINNER | INTERMEDIATE | EXPERT | MASTER
+  origin: z.string(),            // declared | inferred | extracted
+  type: z.string(),              // HARD_SKILL | SOFT_SKILL | KNOWLEDGE
 }
 ```
 
 **Logique** :
-- Resout `skillQuery` au catalogue Etudesk (`competencies`). Label non resolu -> `{ success:false, suggestions:[...] }`.
-- Ecrit via le service d'evaluation (EVALUATION_FRAMEWORK : axes A/C/I/T, confidence, guards).
-- **Plafonne a `advanced`** : l'agent ne peut jamais ecrire `master` (reserve a l'evaluation verifiee).
-- `origin='validated'` n'est jamais ecrit par l'agent (validation par participation uniquement).
+- `add` : verification doublon (case-insensitive, smart merge si nouveau niveau superieur), limite 100 skills
+- `update` : met a jour level + is_visible
+- Normalisation automatique des enums (uppercase/lowercase)
 
-**Interdit** : suppression (pas d'action `remove`), competences hors catalogue.
+**Interdit** : suppression (pas d'action `remove`)
 
 ---
 

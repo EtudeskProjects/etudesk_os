@@ -68,7 +68,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255),
+    email VARCHAR(255) NOT NULL,
     phone VARCHAR(30),
     email_verified BOOLEAN DEFAULT FALSE,
     email_verified_at TIMESTAMP WITH TIME ZONE,
@@ -79,13 +79,10 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT users_email_or_phone_required CHECK (
-      NULLIF(BTRIM(COALESCE(email, '')), '') IS NOT NULL
-      OR NULLIF(BTRIM(COALESCE(phone, '')), '') IS NOT NULL
-    )
+    CONSTRAINT users_email_required CHECK (NULLIF(BTRIM(COALESCE(email, '')), '') IS NOT NULL)
 );
 
-CREATE UNIQUE INDEX idx_users_email_unique_active ON users(email) WHERE deleted_at IS NULL AND email IS NOT NULL;
+CREATE UNIQUE INDEX idx_users_email_unique_active ON users(email) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX idx_users_phone_unique_active ON users(phone) WHERE deleted_at IS NULL AND phone IS NOT NULL;
 CREATE INDEX idx_users_deleted_at ON users(deleted_at) WHERE deleted_at IS NULL;
 
@@ -157,7 +154,7 @@ CREATE TABLE talents (
     sectors TEXT[],
     payment_methods JSONB DEFAULT '[]'::jsonb,
     is_visible BOOLEAN DEFAULT TRUE,
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
@@ -196,7 +193,7 @@ CREATE TABLE competencies (
     name            VARCHAR(255) NOT NULL,
     name_fr         VARCHAR(255) NOT NULL,
     catalog_version VARCHAR(20)  NOT NULL,
-    embedding       vector(1536),   -- semantic resolution (seed:competency-embeddings)
+    embedding       vector(1024),   -- semantic resolution (seed:competency-embeddings)
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -337,7 +334,7 @@ CREATE TABLE organizations (
     headquarters_coordinates POINT,
     verification_status VARCHAR(50) DEFAULT 'CLAIMED',
     is_visible BOOLEAN DEFAULT TRUE,
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     culture_summary TEXT,
     created_by UUID REFERENCES talents(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -427,7 +424,7 @@ CREATE TABLE communities (
     currency VARCHAR(10) DEFAULT 'XOF',
     trial_period_days INTEGER DEFAULT 0 CHECK (trial_period_days IN (0, 1, 3, 7, 30)),
     status VARCHAR(50) DEFAULT 'ACTIVE',
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     created_by UUID REFERENCES talents(id) ON DELETE SET NULL,
     organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -743,7 +740,7 @@ CREATE TABLE opportunities (
     start_date DATE,
     duration INTERVAL,
     status VARCHAR(50) DEFAULT 'DRAFT',
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     ideal_candidate_summary TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -905,6 +902,7 @@ CREATE TABLE spaces (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     created_by UUID REFERENCES talents(id),
     status VARCHAR(20) DEFAULT 'ACTIVE',
+    embedding VECTOR(1024),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
@@ -1225,52 +1223,6 @@ CREATE TRIGGER trigger_update_copilot_session_timestamp
     AFTER INSERT ON copilot_messages FOR EACH ROW EXECUTE FUNCTION update_copilot_session_timestamp();
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- SECTION 14: WHATSAPP SUPPORT
--- ═══════════════════════════════════════════════════════════════════════════════
-
-CREATE TABLE whatsapp_support_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    phone_e164 VARCHAR(25) NOT NULL,
-    direction VARCHAR(10) NOT NULL CHECK (direction IN ('inbound', 'outbound')),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('received', 'generated', 'sent', 'failed')),
-    message_text TEXT NOT NULL,
-    channel_message_id VARCHAR(255),
-    linked_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    linked_talent_id UUID REFERENCES talents(id) ON DELETE SET NULL,
-    link_action VARCHAR(30) NOT NULL DEFAULT 'none' CHECK (link_action IN ('none', 'user_by_talent', 'linked_user_to_talent')),
-    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_whatsapp_support_phone_created ON whatsapp_support_messages(phone_e164, created_at DESC);
-CREATE INDEX idx_whatsapp_support_user_created ON whatsapp_support_messages(linked_user_id, created_at DESC) WHERE linked_user_id IS NOT NULL;
-CREATE INDEX idx_whatsapp_support_talent_created ON whatsapp_support_messages(linked_talent_id, created_at DESC) WHERE linked_talent_id IS NOT NULL;
-
-CREATE TABLE whatsapp_support_reports (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    phone_e164 VARCHAR(25) NOT NULL,
-    linked_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    linked_talent_id UUID REFERENCES talents(id) ON DELETE SET NULL,
-    category VARCHAR(20) NOT NULL CHECK (category IN ('issue', 'feedback')),
-    priority VARCHAR(20) NOT NULL CHECK (priority IN ('low', 'medium', 'high', 'critical')),
-    status VARCHAR(20) NOT NULL DEFAULT 'NEW' CHECK (status IN ('NEW', 'IN_REVIEW', 'RESOLVED', 'REJECTED')),
-    message_text TEXT NOT NULL,
-    tags JSONB NOT NULL DEFAULT '[]'::jsonb,
-    internal_notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_whatsapp_reports_status_priority_created ON whatsapp_support_reports(status, priority, created_at DESC);
-CREATE INDEX idx_whatsapp_reports_phone_created ON whatsapp_support_reports(phone_e164, created_at DESC);
-CREATE INDEX idx_whatsapp_reports_user_created ON whatsapp_support_reports(linked_user_id, created_at DESC) WHERE linked_user_id IS NOT NULL;
-CREATE INDEX idx_whatsapp_reports_talent_created ON whatsapp_support_reports(linked_talent_id, created_at DESC) WHERE linked_talent_id IS NOT NULL;
-
-CREATE TRIGGER trigger_whatsapp_support_reports_updated_at
-    BEFORE UPDATE ON whatsapp_support_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
-
--- ═══════════════════════════════════════════════════════════════════════════════
 -- SECTION 15: HELPER FUNCTIONS
 -- ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1418,7 +1370,7 @@ CREATE TABLE waitlist (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     type VARCHAR(20) NOT NULL CHECK (type IN ('TALENT', 'ORGANIZATION')),
     country VARCHAR(100) NOT NULL,
-    contact_type VARCHAR(10) NOT NULL CHECK (contact_type IN ('EMAIL', 'WHATSAPP')),
+    contact_type VARCHAR(10) NOT NULL CHECK (contact_type IN ('EMAIL')),
     contact_value VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

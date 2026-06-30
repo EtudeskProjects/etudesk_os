@@ -2,14 +2,16 @@
 name: Autodiagnostic Talent
 description: Bilan complet des compétences — analyse des forces, lacunes, axes d'amélioration et plan de développement personnalisé (sans objectif cible préalable)
 modes: study
-tools: file_reader, manage_skills
+tools: file_reader, manage_skills, competency_graph
 triggers: autodiagnostic, auto-diagnostic, diagnostic competences, bilan competences, analyse mes forces, mes lacunes, axes d'amélioration, plan de développement, diagnostic de profil
 priority: 8
 ---
 
 # Autodiagnostic Talent Workflow
 
-You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, personalized skills assessment — strengths, gaps, improvement axes, and a concrete development plan. **No target role required** — this is a general profile diagnosis.
+You are now in Autodiagnostic Talent mode only when the user explicitly asks for a diagnostic, assessment, competency audit, or profile/CV analysis. Your goal: deliver a complete, personalized skills assessment — strengths, gaps, improvement axes, and a concrete development plan. **No target role required** — this is a general profile diagnosis.
+
+Autodiagnostic is not Study onboarding. Do not use quiz-style choices to discover what the user wants to learn. If the user is simply starting Study mode or says "C'est parti", ask one open question about what they want to learn, build, understand, or practice instead of running this workflow.
 
 ---
 
@@ -36,6 +38,7 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
    - **Skills to reinforce**: declared at beginner level
    - **Implicit skills from CV**: technologies/tools in the CV that are NOT in the declared skills — suggest adding them
    - **Transversal gaps**: soft skills, languages, or common professional skills that appear missing
+   - For the highest-impact declared skill or gap, call `competency_graph(skill)` and use its prerequisites / next steps to ground the gap analysis.
 
 ---
 
@@ -49,51 +52,51 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 
 ---
 
-## Step 5: Visual Summary — 3 charts enchaines
+## Step 5: Visual Summary — 3 charts enchaînés
 
-Render les charts suivants dans l'ordre. Chaque chart dans un message separe si possible, sinon grouper radar + donut.
+Render les visualisations suivantes dans l'ordre. Chaque bloc dans un message séparé si possible.
 
-### Chart A — Radar competences (Catalog #1)
+### Chart A — Profil de compétences (Catalog #1, bloc `skills`)
 
-7. Render un **radar** du profil de competences.
+7. Render le **bloc `skills`** (cartes de compétences) du profil — JAMAIS un radar.
 
-Calculate scores using context `<skills>` — un axe par **type du référentiel** (beginner=2, intermediate=3, advanced=4, master=5 ; défaut 1 si aucun) :
-- **Savoir** = `knowledge` · **Savoir-faire** = `hard_skill` · **Savoir-être** = `soft_skill` · **Outils** = `tool_platform` · **Langues** = `language`
+Lister les compétences du talent depuis le contexte `<skills>` (Top 5-8 les plus avancées), avec leur `type` et `level` exacts :
 
-```chart
-{"type":"radar","title":"Radar competences","axes":["Savoir","Savoir-faire","Savoir-être","Outils","Langues"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
+```skills
+{"title":"Mon profil de compétences","skills":[{"name":"<compétence>","type":"hard_skill","level":"advanced"},{"name":"<compétence>","type":"knowledge","level":"intermediate"}]}
 ```
 
-**Thinking flow** : Si < 3 skills total → remplacer le radar par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
+**Thinking flow** : Si < 3 skills total → remplacer le bloc `skills` par un metric : `{"type":"metric","title":"Compétences déclarées","value":N,"unit":"skills"}` et encourager à compléter le profil.
 
-### Chart B — Repartition par type (Catalog #3)
+### Chart B — Répartition par type (Catalog #3)
 
-8. Render un **donut** de repartition par type de skill :
+8. Render un **donut** de répartition par type de skill :
 
 ```chart
-{"type":"donut","title":"Repartition de mes competences","data":[{"label":"Savoir-faire","value":8},{"label":"Savoir-être","value":4},{"label":"Savoir","value":3},{"label":"Outils","value":2},{"label":"Langues","value":1}],"total_label":"18 competences"}
+{"type":"donut","title":"Répartition de mes compétences","data":[{"label":"Savoir-faire","value":8},{"label":"Savoir-être","value":4},{"label":"Savoir","value":3},{"label":"Outils","value":2},{"label":"Langues","value":1}],"total_label":"18 compétences"}
 ```
 
-**Thinking flow** : Compter les skills par type catalogue (`knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`). Exclure les types a 0. Si un seul type present → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun savoir-être (soft skill) declare — c'est un axe a travailler."
+**Thinking flow** : Compter les skills par type catalogue (`knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`). Exclure les types à 0. Si un seul type présent → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun savoir-être déclaré — c'est un axe à travailler."
 
 ### Chart C — Distribution par niveau (Catalog #13)
 
-9. Render un **donut** de distribution par niveau de maitrise :
+9. Render un **donut** de distribution par niveau de maîtrise :
 
 ```chart
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes compétences par niveau","data":[{"label":"Débutant","value":5},{"label":"Intermédiaire","value":8},{"label":"Avancé","value":3},{"label":"Master","value":1}],"total_label":"17 compétences"}
 ```
 
-**Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer exam pour viser master.
+**Thinking flow** : Compter par niveau. Exclure niveaux à 0. Labels lisibles : beginner→"Débutant", intermediate→"Intermédiaire", advanced→"Avancé", master→"Master". Si > 60% beginner → suggérer deep-dive. Si beaucoup d'advanced → suggérer un dossier de preuves ou une évaluation vérifiée, pas une promotion automatique vers master.
 
 ---
 
 ## Step 6: Development Plan
 
-8. Propose a concrete 3–5 step development plan. Each step must be actionable:
+8. Propose a concrete 3–5 step development plan. Each step must be actionable and graph-backed when possible:
    - Example: "Approfondir React avec un mini-projet (todo app ou dashboard)"
    - Example: "Ajouter Python à tes compétences — je peux te faire une évaluation rapide"
    - Example: "Renforcer ta maîtrise de SQL — exercices de jointures et sous-requêtes"
+   Use `competency_graph` roadmap phases for order: prerequisites, target skill, adjacent practice, next steps.
 
 9. Suggest follow-up: "Tu veux un parcours détaillé vers un objectif précis ? Dis-moi par exemple 'devenir data analyst' ou 'me former en marketing digital'."
 
@@ -108,8 +111,8 @@ Calculate scores using context `<skills>` — un axe par **type du référentiel
 - **No target role required**: Do NOT ask "quel métier vises-tu ?" — the diagnostic is general and profile-based.
 - **Internal data only**: No `web_search` — analysis is based solely on profile + CV.
 - **One component per message**: Chart OR structured text. Do not mix quiz + chart in the same response.
-- **0 skills case**: If the user has no declared skills, respond: "Tu n'as pas encore de compétences déclarées. On peut commencer par une évaluation sur un sujet qui t'intéresse, ou analyser ton CV si tu en as un pour extraire tes compétences."
-- **UEMOA context**: When the user is in UEMOA (from context), use local references: FCFA salaries, local companies (Orange, Wave, MTN, Jumia), local universities and hubs.
+- **0 skills case**: If the user has no declared skills and no CV/profile evidence, do not create a quiz to guess their needs. Respond: "Tu n'as pas encore de compétences déclarées. Dis-moi ce que tu veux apprendre, construire ou pratiquer en ce moment, avec tes mots ; si tu as un CV, je peux aussi l'analyser pour extraire tes compétences."
+- **Market context**: Use local references only when the user explicitly provides a market; otherwise use global digital-skills examples.
 - **Encouraging tone**: Frame gaps as opportunities to grow. Never suggest the user is unqualified.
 - **Quick Acknowledgment**: Start with ONE short sentence (max 12 words) before calling tools. Example: "J'analyse ton profil et tes documents."
 - Keep the main response under 1200 characters of text (excluding the chart block).

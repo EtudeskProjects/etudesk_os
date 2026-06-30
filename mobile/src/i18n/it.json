@@ -129,7 +129,7 @@
       "gender": "Genere",
       "yourProfile": "Il tuo profilo",
       "bio": "Presentazione",
-      "bioPlaceholder": "Es: Sviluppatore web con 2 anni di esperienza, appassionato di fintech. Cerco un CDI ad Abidjan.",
+      "bioPlaceholder": "Es: Sviluppatore web con 2 anni di esperienza, appassionato di fintech. Cerco un ruolo remoto.",
       "country": "Paese",
       "region": "Regione / Distretto",
       "city": "Città / Comune",
@@ -173,17 +173,7 @@
       "verifyError": "Errore di verifica. Riprova.",
       "codeSent": "Nuovo codice inviato!",
       "verified": "Email verificata!",
-      "redirecting": "Accesso in corso...",
-      "titleWhatsApp": "Verifica il tuo WhatsApp",
-      "subtitleWhatsApp": "Inserisci il codice inviato al numero"
-    },
-    "whatsappLogin": {
-      "title": "Accesso via WhatsApp",
-      "subtitle": "Inserisci il tuo numero per ricevere un codice su WhatsApp",
-      "phoneLabel": "Numero WhatsApp",
-      "sendCode": "Ricevi il codice",
-      "infoText": "Riceverai un codice a 6 cifre su WhatsApp",
-      "sendError": "Impossibile inviare il codice WhatsApp. Verifica il tuo numero."
+      "redirecting": "Accesso in corso..."
     }
   },
   "tabs": {
@@ -498,7 +488,7 @@
     "contact": "Contatta il supporto",
     "email": "Email",
     "phone": "Telefono",
-    "chat": "WhatsApp"
+    "chat": "Chat"
   },
   "legal": {
     "title": "Informazioni legali",

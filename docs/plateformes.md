@@ -17,9 +17,8 @@
 
 | Plateforme | URL | Usage | Acces |
 |------------|-----|-------|-------|
-| Anthropic | https://console.anthropic.com | Claude (agents copilot: Sonnet 4.6, guardrails/summaries: Haiku 4.5) | [ ] |
-| OpenAI | https://platform.openai.com | Suggestions/objectifs/bio/assistant WhatsApp (gpt-4.1-nano), vision, embeddings, gpt-image-1, STT/TTS, web search (Responses API), recommendations, moderation | [ ] |
-| Pinecone | https://app.pinecone.io | Base vectorielle (index: etudesk, 1536-dim, cosine) | [ ] |
+| Provider IA generique | Configure via `AI_BASE_URL` | Modeles open-source: LLM, vision, embeddings, image, STT, TTS | [ ] |
+| OpenAI | https://platform.openai.com | Moderation gratuite uniquement si activee | [ ] |
 | YouTube Data API | https://console.cloud.google.com | Recherche videos (copilot Study) | [ ] |
 
 ## Infrastructure & Hebergement
@@ -37,7 +36,6 @@
 | Plateforme | URL | Usage | Acces |
 |------------|-----|-------|-------|
 | Google Workspace | https://workspace.google.com | 5 emails @etudesk.com | [ ] |
-| UltraMsg | https://ultramsg.com | Notifications WhatsApp | [ ] |
 
 ## Domaines & DNS
 
@@ -56,7 +54,7 @@
 | Account Type | Organization |
 | Developer Name | ETUDESK |
 | Email compte | hello@etudesk.org |
-| Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire (CI) |
+| Adresse | Adresse legale du compte |
 | Website | https://etudesk.com/ |
 | Statut | **ACTIF** |
 
@@ -69,7 +67,7 @@
 | D-U-N-S | 851758402 |
 | Email | hello@etudesk.org |
 | Legal Entity | ETUDESK |
-| Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire |
+| Adresse | Adresse legale du compte |
 | Statut | **ACTIF** — Agreement signe le 02/04/2026 |
 
 ### Expo

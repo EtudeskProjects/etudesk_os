@@ -19,5 +19,6 @@
   "noteUpdated": "Commentaire mis à jour",
   "messageEmpty": "Le message ne peut pas être vide",
   "organizationFirstMessage": "Tu ne peux pas initier la conversation. Attends que l'organisation te contacte.",
-  "unableToGenerateRecommendation": "Impossible de générer une recommandation"
+  "unableToGenerateRecommendation": "Impossible de générer une recommandation",
+  "externalOpportunityEmailOnly": "Cette opportunité est externe. La candidature doit être envoyée par email au recruteur."
 }

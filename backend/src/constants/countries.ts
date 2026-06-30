@@ -1,21 +1,15 @@
 /**
  * Global Countries Configuration
  *
- * Supports 195+ countries with UEMOA priority.
- * UEMOA countries use XOF currency, all others default to USD.
+ * Supports 195+ countries with neutral alphabetical ordering.
+ * Country currency is explicit data, not a platform default.
  */
 
 import type { SupportedCurrency } from './index';
 
-// ── UEMOA (backward compat) ──────────────────────────────────────────────────
-
-export const UEMOA_COUNTRIES = ['BJ', 'BF', 'CI', 'GW', 'ML', 'NE', 'SN', 'TG'] as const;
-export type UEMOACountryCode = typeof UEMOA_COUNTRIES[number];
-
 // ── Zone definitions ─────────────────────────────────────────────────────────
 
 export type GeoZone =
-  | 'UEMOA'
   | 'WEST_AFRICA'
   | 'CENTRAL_AFRICA'
   | 'EAST_AFRICA'
@@ -38,17 +32,15 @@ export interface CountryInfo {
 }
 
 export const ALL_COUNTRIES: Record<string, CountryInfo> = {
-  // ── UEMOA (XOF) ──
-  BJ: { name: 'Bénin', nameEn: 'Benin', zone: 'UEMOA', currency: 'XOF', dialCode: '+229' },
-  BF: { name: 'Burkina Faso', nameEn: 'Burkina Faso', zone: 'UEMOA', currency: 'XOF', dialCode: '+226' },
-  CI: { name: "Côte d'Ivoire", nameEn: 'Ivory Coast', zone: 'UEMOA', currency: 'XOF', dialCode: '+225' },
-  GW: { name: 'Guinée-Bissau', nameEn: 'Guinea-Bissau', zone: 'UEMOA', currency: 'XOF', dialCode: '+245' },
-  ML: { name: 'Mali', nameEn: 'Mali', zone: 'UEMOA', currency: 'XOF', dialCode: '+223' },
-  NE: { name: 'Niger', nameEn: 'Niger', zone: 'UEMOA', currency: 'XOF', dialCode: '+227' },
-  SN: { name: 'Sénégal', nameEn: 'Senegal', zone: 'UEMOA', currency: 'XOF', dialCode: '+221' },
-  TG: { name: 'Togo', nameEn: 'Togo', zone: 'UEMOA', currency: 'XOF', dialCode: '+228' },
-
-  // ── West Africa (non-UEMOA) ──
+  // ── West Africa ──
+  BJ: { name: 'Bénin', nameEn: 'Benin', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+229' },
+  BF: { name: 'Burkina Faso', nameEn: 'Burkina Faso', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+226' },
+  CI: { name: 'Ivory Coast', nameEn: 'Ivory Coast', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+225' },
+  GW: { name: 'Guinée-Bissau', nameEn: 'Guinea-Bissau', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+245' },
+  ML: { name: 'Mali', nameEn: 'Mali', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+223' },
+  NE: { name: 'Niger', nameEn: 'Niger', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+227' },
+  SN: { name: 'Sénégal', nameEn: 'Senegal', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+221' },
+  TG: { name: 'Togo', nameEn: 'Togo', zone: 'WEST_AFRICA', currency: 'XOF', dialCode: '+228' },
   GH: { name: 'Ghana', nameEn: 'Ghana', zone: 'WEST_AFRICA', currency: 'USD', dialCode: '+233' },
   NG: { name: 'Nigeria', nameEn: 'Nigeria', zone: 'WEST_AFRICA', currency: 'USD', dialCode: '+234' },
   GN: { name: 'Guinée', nameEn: 'Guinea', zone: 'WEST_AFRICA', currency: 'USD', dialCode: '+224' },
@@ -239,19 +231,13 @@ export function normalizeCountryCode(input: string | undefined | null): string |
   return COUNTRY_NAME_TO_CODE[normalized] || null;
 }
 
-/** Check if a country code is UEMOA */
-export function isUEMOACountry(code: string | undefined | null): boolean {
-  if (!code) return false;
-  return UEMOA_COUNTRIES.includes(code.toUpperCase() as UEMOACountryCode);
-}
-
 /** Get country display name from code */
 export function getCountryName(code: string | undefined | null): string | null {
   if (!code) return null;
   return ALL_COUNTRIES[code.toUpperCase()]?.name ?? null;
 }
 
-/** Get the default currency for a country (XOF for UEMOA, USD for all others) */
+/** Get the configured currency for a country (USD fallback when unknown) */
 export function getCurrencyForCountry(code: string | undefined | null): SupportedCurrency {
   if (!code) return 'USD';
   return ALL_COUNTRIES[code.toUpperCase()]?.currency ?? 'USD';
@@ -263,11 +249,8 @@ export function getCountryInfo(code: string | undefined | null): CountryInfo | n
   return ALL_COUNTRIES[code.toUpperCase()] ?? null;
 }
 
-/** Get all country codes as sorted array (UEMOA first, then alphabetical) */
+/** Get all country codes as sorted array */
 export function getAllCountryCodes(): string[] {
-  const uemoa = [...UEMOA_COUNTRIES];
-  const rest = Object.keys(ALL_COUNTRIES)
-    .filter(c => !UEMOA_COUNTRIES.includes(c as UEMOACountryCode))
+  return Object.keys(ALL_COUNTRIES)
     .sort((a, b) => ALL_COUNTRIES[a].name.localeCompare(ALL_COUNTRIES[b].name, 'fr'));
-  return [...uemoa, ...rest];
 }

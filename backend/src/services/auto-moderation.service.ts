@@ -5,8 +5,6 @@ import { ModerationStatus } from '../types/community-activity.types';
 import { logger } from '../utils';
 dotenv.config();
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 // Category labels in French for user-facing messages
 const CATEGORY_LABELS: Record<string, string> = {
     'hate': 'discours haineux',
@@ -35,8 +33,15 @@ const FIELD_LABELS: Record<string, string> = {
     'nice_to_have': 'atouts',
     'rules': 'règles',
     'content': 'contenu',
+    'poll_options': 'options du sondage',
+    'event_location': 'lieu de l’événement',
     'notes': 'notes',
     'answers': 'réponses',
+    'application_questions': 'questions de candidature',
+    'accessibility_notes': 'notes d’accessibilité',
+    'booking_rules': 'règles de réservation',
+    'questions': 'questions',
+    'payment_collection_info': 'instructions de paiement',
 };
 
 export interface ModerationResult {
@@ -46,28 +51,26 @@ export interface ModerationResult {
 }
 
 export class AutoModerationService {
-    private openai: OpenAI | null = null;
+    private readonly client: OpenAI | null;
+    private readonly model: string;
 
     constructor() {
-        if (!OPENAI_API_KEY) {
-            logger.warn('⚠️ OPENAI_API_KEY is not set. Auto-moderation will be disabled (always APPROVED).');
-        } else {
-            this.openai = new OpenAI({ 
-                apiKey: OPENAI_API_KEY,
-                timeout: 3000, // 3 second timeout for all requests
-            });
+        this.model = process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest';
+        this.client = process.env.OPENAI_API_KEY
+            ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+            : null;
+
+        if (!this.client) {
+            logger.warn('OPENAI_API_KEY is not set. Optional content moderation is disabled (always APPROVED).');
         }
     }
 
     /**
-     * Screen content using OpenAI's dedicated Moderation API
-     * - Free to use
-     * - Fast (~200ms)
-     * - Highly accurate for detecting harmful content
+     * Screen content using OpenAI's free moderation endpoint.
      * - Timeout: 3 seconds (fails open on timeout)
      */
     async screenContent(content: string): Promise<ModerationResult> {
-        if (!this.openai) {
+        if (!this.client) {
             return { status: 'APPROVED' };
         }
 
@@ -85,25 +88,18 @@ export class AutoModerationService {
                 }, MODERATION_TIMEOUT_MS);
             });
 
-            const moderationPromise = this.openai.moderations.create({
-                model: 'omni-moderation-latest',
-                input: content,
+            const moderationPromise = this.client.moderations.create({
+                model: this.model,
+                input: content.slice(0, 12000),
             }).then(response => {
                 const result = response.results[0];
-
                 if (result.flagged) {
-                    // Get flagged categories
-                    const flaggedCategories: string[] = [];
-                    const categories = result.categories as unknown as Record<string, boolean>;
-                    
-                    for (const [category, isFlagged] of Object.entries(categories)) {
-                        if (isFlagged) {
-                            flaggedCategories.push(CATEGORY_LABELS[category] || category);
-                        }
-                    }
+                    const categories = Object.entries(result.categories || {})
+                        .filter(([, flagged]) => flagged)
+                        .map(([category]) => CATEGORY_LABELS[category] || category);
 
-                    const reason = flaggedCategories.length > 0
-                        ? `Contenu inapproprié détecté: ${flaggedCategories.join(', ')}`
+                    const reason = categories.length > 0
+                        ? `Contenu inapproprié détecté: ${categories.join(', ')}`
                         : 'Contenu inapproprié détecté';
 
                     logger.info(`[Moderation] FLAGGED: "${content.substring(0, 50)}..." - ${reason}`);
@@ -139,7 +135,7 @@ export class AutoModerationService {
      * @returns ModerationResult with flaggedField if any field is flagged
      */
     async screenMultipleFields(fields: Record<string, string | undefined | null>): Promise<ModerationResult> {
-        if (!this.openai) {
+        if (!this.client) {
             return { status: 'APPROVED' };
         }
 

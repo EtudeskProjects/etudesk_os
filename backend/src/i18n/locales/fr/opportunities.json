@@ -41,5 +41,6 @@
   "errorAcceptingInvite": "Erreur lors de l'acceptation de l'invitation",
   "errorDecliningInvite": "Erreur lors du refus de l'invitation",
   "errorVerifyingInvite": "Erreur lors de la vérification de l'invitation",
-  "userNotFound": "Utilisateur non trouvé"
+  "userNotFound": "Utilisateur non trouvé",
+  "externalApplyEmailRequired": "Un email de recrutement est requis pour une opportunité externe"
 }

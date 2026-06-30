@@ -95,7 +95,7 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
-      // Accept dataJson as object or string (Claude native SDK may send objects)
+      // Accept dataJson as object or string (some providers may send objects)
       const data = typeof dataJson === 'object' && dataJson !== null
         ? dataJson
         : (typeof dataJson === 'string' && dataJson.trim() ? JSON.parse(dataJson) : {});
@@ -499,14 +499,13 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               return { success: true, message: newStatus === 'ACCEPTED' ? tr('copilot:toolInvitationAccepted') : tr('copilot:toolInvitationDeclined') };
             }
 
-            // Try organization invitations (match by email OR invitee_talent_id, LIMIT 1 to prevent double-accept)
+            // Organization invitations are email-based in the current schema.
             result = await pool.query(
               `UPDATE organization_invitations SET status = $3, updated_at = NOW()
                WHERE id = (
                  SELECT id FROM organization_invitations
                  WHERE id = $1 AND status = 'PENDING'
-                   AND (email = (SELECT email FROM talents WHERE id = $2 AND email IS NOT NULL)
-                        OR invitee_talent_id = $2)
+                   AND email = (SELECT email FROM talents WHERE id = $2 AND email IS NOT NULL)
                  LIMIT 1
                )
                RETURNING id, organization_id, role`,

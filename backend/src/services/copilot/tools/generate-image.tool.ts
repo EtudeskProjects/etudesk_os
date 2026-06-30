@@ -1,5 +1,5 @@
 /**
- * Generate Image Tool — AI image generation via OpenAI gpt-image-1
+ * Generate Image Tool — AI image generation via configured image model
  * Generates an image synchronously and returns the URL for display.
  * Factory pattern: injects talentId for credit debit.
  */
@@ -7,12 +7,13 @@
 import { defineTool } from './tool-helper';
 import { MODEL_IMAGE } from '../../ai/models';
 import { getImageClient } from '../../ai/provider';
+import { recordUsage } from '../../ai/usage.service';
 import { z } from 'zod';
 import { uploadFile } from '../../storage.service';
 import { logger } from '../../../utils';
 import { debitWalletForAction } from '../../billing/credit.service';
 
-const openai = getImageClient();
+const imageClient = getImageClient();
 
 export function createGenerateImageTool(talentId: string) {
   return defineTool({
@@ -45,7 +46,13 @@ export function createGenerateImageTool(talentId: string) {
     },
     execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
       const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
-      const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
+      // Margin guardrail: 'high' (~$0.17) exceeds the 1-credit revenue of an image,
+      // so it is downgraded to 'medium' unless explicitly allowed via env.
+      const requestedQuality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
+      const quality: 'low' | 'medium' | 'high' =
+        requestedQuality === 'high' && process.env.ALLOW_HIGH_QUALITY_IMAGES !== 'true'
+          ? 'medium'
+          : requestedQuality;
 
       // Pre-screen prompt for prohibited content (saves API cost on obvious violations)
       const BLOCKED_PATTERNS = /\b(nude|naked|nsfw|porn|sex|violence|gore|weapon|drug|kill|murder)\b/i;
@@ -72,20 +79,33 @@ export function createGenerateImageTool(talentId: string) {
       }
 
       try {
-        const response = await openai.images.generate({
+        const response = await imageClient.images.generate({
           model: MODEL_IMAGE,
           prompt,
           size,
           quality,
         });
 
-        const imageData = response.data?.[0];
-        const b64 = imageData?.b64_json;
-        if (!b64) {
+        void recordUsage({
+          feature: 'image',
+          model: MODEL_IMAGE,
+          images: { count: response.data?.length ?? 1, quality },
+          scopeTalentId: talentId,
+          billedActionCode: 'TALENT_IMAGE_GENERATION',
+        });
+
+        const imageData: any = response.data?.[0];
+        let imageBuffer: Buffer | null = null;
+        if (imageData?.b64_json) {
+          imageBuffer = Buffer.from(imageData.b64_json, 'base64');
+        } else if (imageData?.url) {
+          const imgRes = await fetch(imageData.url);
+          if (!imgRes.ok) throw new Error(`Image download failed (${imgRes.status})`);
+          imageBuffer = Buffer.from(await imgRes.arrayBuffer());
+        }
+        if (!imageBuffer) {
           return { success: false, error: 'No image data returned' };
         }
-
-        const imageBuffer = Buffer.from(b64, 'base64');
         const filename = `image-${Date.now()}.png`;
         const storagePath = `generated/${filename}`;
 

@@ -59,7 +59,7 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 9. Render un **donut** de distribution geographique :
 
 ```chart
-{"type":"donut","title":"Talents par pays","data":[{"label":"Cote d'Ivoire","value":45},{"label":"Senegal","value":12},{"label":"Cameroun","value":8},{"label":"Mali","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
+{"type":"donut","title":"Talents par pays","data":[{"label":"Market A","value":45},{"label":"Market B","value":12},{"label":"Market C","value":8},{"label":"Market D","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
 ```
 
 **Thinking flow** : Grouper les pays < 3% du total en "Autres". Si > 80% dans un seul pays → recommander diversification geographique. total_label = somme de toutes les valeurs + " talents".
@@ -84,7 +84,7 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 2. Render un **table** chart avec taux d'activite calcule :
 
 ```chart
-{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Abidjan","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
+{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Community","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
 ```
 
 **Thinking flow** : Calculer taux activite = (active_30d / total_members) * 100, arrondi. Trier par taux decroissant. Si taux < 20% → marquer la communaute comme "faible engagement". Si taux > 50% → "communaute tres active".
@@ -226,7 +226,7 @@ Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not w
 - ALWAYS use the Org Document JSON format for PDF reports — never the plain sections format
 - Use logo_url, city, country from `<organization>` context (pre-loaded, no org_stats call needed)
 - Format numbers with French locale (espace pour les milliers, virgule pour les decimales)
-- Currency: XOF / FCFA
+- Currency: explicit source currency
 - Write analysis and recommendations in professional French
 - If a data source returns empty results, mention it as "Donnees insuffisantes" rather than omitting the section
 - Keep reports executive-friendly: insights over raw data

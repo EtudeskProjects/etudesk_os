@@ -478,6 +478,11 @@ export interface Opportunity {
   duration?: string; // Interval
 
   status?: OpportunityStatus;
+  application_mode?: 'IN_APP' | 'EMAIL';
+  external_apply_email?: string;
+  external_apply_url?: string;
+  source_url?: string;
+  source_name?: string;
 
   // Organization and sectors
   organization_id?: UUID;
@@ -626,5 +631,4 @@ export interface CommunityMember {
   created_at?: ISOTimestamp;
   updated_at?: ISOTimestamp;
 }
-
 

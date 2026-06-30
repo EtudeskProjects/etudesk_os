@@ -21,6 +21,24 @@ export function isValidCatalogType(type: string): type is CatalogType {
   return Object.values(CATALOG_TYPES).includes(type as CatalogType);
 }
 
+/**
+ * Map a free-text / legacy skill type label to a canonical catalog type.
+ * The single harmonization point so every surface (CV generator, document
+ * normalizers, exports) speaks the 5 referential types — not legacy "hard"/"soft".
+ * Returns undefined when nothing maps (callers fall back to a neutral default).
+ */
+export function canonicalCatalogType(raw?: string): CatalogType | undefined {
+  const t = (raw || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  if (!t) return undefined;
+  if (isValidCatalogType(t)) return t;
+  if (/(knowledge|connaissance|savoir|concept|theory|theorie)/.test(t)) return CATALOG_TYPES.KNOWLEDGE;
+  if (/(soft|behaviou?r|comportement|interpersonnel|relationnel)/.test(t)) return CATALOG_TYPES.SOFT_SKILL;
+  if (/(tool|platform|plateforme|outil|software|logiciel|saas|framework)/.test(t)) return CATALOG_TYPES.TOOL_PLATFORM;
+  if (/(language|langue|langage)/.test(t)) return CATALOG_TYPES.LANGUAGE;
+  if (/(hard|technical|technique|tech|metier|business)/.test(t)) return CATALOG_TYPES.HARD_SKILL;
+  return undefined;
+}
+
 // --- Levels (talent_skills.level — aligned to EVALUATION_FRAMEWORK) ---
 
 export const LEVELS = {

@@ -14,7 +14,18 @@ import { createTalentAgent } from '../services/copilot/agents/talent.agent';
 import { createOrgAgent } from '../services/copilot/agents/organization.agent';
 import type { AgentConfig } from '../services/copilot/tools/tool-helper';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
-import { getAnthropicClient } from '../services/ai/provider';
+import { getChatClient } from '../services/ai/provider';
+import {
+  AGENTIC_LIMITS,
+  buildAgentSystemText,
+  buildChatCompletionTools,
+  buildMissingRequiredToolMessage,
+  buildToolPreface,
+  enforceToolCallLimit,
+  getAgentCompletionOptions,
+  inferInitialToolChoice,
+  inferRequiredCompletionTool,
+} from '../services/copilot/agentic-policy';
 
 // --- Config ---
 
@@ -23,7 +34,8 @@ const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-au
 // CLI args: pass test names as arguments to run only specific tests
 // Usage: npx tsx src/tests/copilot-agents.test.ts "Espaces coworking" "Generer CV"
 const FILTER_ARGS = process.argv.slice(2).map(a => a.toLowerCase());
-
+const AUDIT_15 = process.env.COPILOT_AUDIT_15 === '1';
+const AUDIT_10 = process.env.COPILOT_AUDIT_10 === '1';
 const C = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
@@ -58,9 +70,10 @@ async function findTestTalent(): Promise<{ id: string; name: string }> {
     SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
     FROM talents t
     WHERE t.deleted_at IS NULL
-    ORDER BY (SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id) DESC
+    ORDER BY (t.slug = COALESCE($1, 'app-review')) DESC,
+             (SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id) DESC
     LIMIT 1
-  `);
+  `, [process.env.COPILOT_AUDIT_TALENT_SLUG || 'app-review']);
 
   if (existing.rows.length > 0) {
     const t = existing.rows[0];
@@ -172,6 +185,7 @@ async function buildTestContext(talentId: string, mode: 'explore' | 'study'): Pr
       currentMode: mode,
       conversationTopic: mode === 'study' ? 'General learning' : undefined,
     },
+    language: 'fr',
     contextLoadedAt: new Date().toISOString(),
     contextVersion: '1.0',
   };
@@ -184,10 +198,11 @@ function buildOrgTestContext(talentId: string, talentName: string, org: { id: st
     organizationId: org.id,
     organizationName: org.name,
     role: org.role,
+    language: 'fr',
   };
 }
 
-// --- Agent Runner — Full Capture ---
+// --- Agent Execution — Full Capture ---
 
 interface ToolCallCapture {
   name: string;
@@ -223,17 +238,23 @@ interface TestResult {
   duration: number;
   errors: string[];
   calibration: CalibrationMetrics;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedTokens: number;
+    requests: number;
+  };
 }
 
 function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBeforeFirstTool: string = ''): CalibrationMetrics {
-  const charCount = output.length;
+  const textOnly = output.replace(/`{2,}[\s\S]*?`{2,}/g, ''); // strip fenced structural blocks
+  const charCount = textOnly.length;
 
   // Count sentences (split on period/exclamation/question mark followed by space or end)
-  const sentences = output.split(/[.!?]+\s/).filter(s => s.trim().length > 5);
+  const sentences = textOnly.split(/[.!?]+\s/).filter(s => s.trim().length > 5);
   const sentenceCount = sentences.length;
 
   // Check if agent asks unnecessary questions — exclude ? inside code blocks
-  const textOnly = output.replace(/`{2,}[\s\S]*?`{2,}/g, ''); // strip fenced blocks
   const questionMatches = textOnly.match(/\?/g) || [];
   const questionCount = questionMatches.length;
   const asksQuestion = questionCount > 0;
@@ -251,6 +272,7 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
   // Tool usage
   const toolCallCount = toolCalls.length;
   const usedToolsImmediately = toolCallCount > 0;
+  const hasConfirmationAction = /`{3}confirmation\s*\n/i.test(output);
 
   // Verbosity rating
   let verbosityRating: CalibrationMetrics['verbosityRating'] = 'ok';
@@ -260,8 +282,8 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
 
   // Proactivity rating
   let proactivityRating: CalibrationMetrics['proactivityRating'] = 'ok';
-  if (usedToolsImmediately && questionCount <= 1) proactivityRating = 'proactive';
-  if (!usedToolsImmediately || questionCount > 2) proactivityRating = 'passive';
+  if ((usedToolsImmediately || hasConfirmationAction) && questionCount <= 1) proactivityRating = 'proactive';
+  if ((!usedToolsImmediately && !hasConfirmationAction) || questionCount > 2) proactivityRating = 'passive';
 
   // Quick ack: agent output text before first tool call (for streaming responsiveness)
   const ackTrimmed = textBeforeFirstTool.trim();
@@ -283,6 +305,62 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
   };
 }
 
+const ENTITY_CARD_ID_REGEX = /```entity:(?!maps)(\w+)\s*\n\s*\{\s*"id"\s*:\s*"([^"]+)"/g;
+const UUID_VALUE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function collectToolResultIds(value: unknown): Set<string> {
+  const ids = new Set<string>();
+  const serialized = JSON.stringify(value) || '';
+  for (const match of serialized.matchAll(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi)) {
+    if (UUID_VALUE_REGEX.test(match[0])) ids.add(match[0]);
+  }
+  return ids;
+}
+
+async function validateEntityCardsComeFromTools(output: string, toolCalls: ToolCallCapture[]): Promise<string[]> {
+  const allowedIds = collectToolResultIds(toolCalls.map((tc) => tc.output));
+  const errors: string[] = [];
+  for (const match of output.matchAll(ENTITY_CARD_ID_REGEX)) {
+    const entityType = match[1];
+    const id = match[2];
+    if (toolCalls.length === 0) {
+      errors.push(`Entity card id ${id} was produced without any tool call`);
+      continue;
+    }
+    if (!allowedIds.has(id) && !(await entityExists(entityType, id))) {
+      errors.push(`Entity card id ${id} was not present in any tool result`);
+    }
+  }
+  return errors;
+}
+
+async function entityExists(entityType: string, id: string): Promise<boolean> {
+  if (entityType === 'document') {
+    const res = await pool.query(
+      `SELECT 1 FROM talent_documents WHERE id = $1 AND deleted_at IS NULL
+       UNION ALL
+       SELECT 1 FROM organization_documents WHERE id = $1 AND deleted_at IS NULL
+       LIMIT 1`,
+      [id]
+    );
+    return (res.rowCount || 0) > 0;
+  }
+
+  const tableByType: Record<string, string> = {
+    opportunity: 'opportunities',
+    community: 'communities',
+    space: 'spaces',
+    organization: 'organizations',
+    talent: 'talents',
+    event: 'community_activities',
+    notification: 'notifications',
+  };
+  const table = tableByType[entityType];
+  if (!table) return false;
+  const res = await pool.query(`SELECT 1 FROM ${table} WHERE id = $1 LIMIT 1`, [id]);
+  return (res.rowCount || 0) > 0;
+}
+
 async function runAgentTest(
   agent: AgentConfig,
   testName: string,
@@ -297,53 +375,84 @@ async function runAgentTest(
   let currentToolStart = 0;
   let textBeforeFirstTool = '';
   let firstToolSeen = false;
+  const usage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cachedTokens: 0,
+    requests: 0,
+  };
+  const perToolCounts = new Map<string, number>();
+  const sqlIntentCounts = new Map<string, number>();
 
   section(`TEST: ${testName}`);
   log('dim', `Agent: ${agentType} | Message: "${message}"`);
 
   try {
-    const client = getAnthropicClient();
+    const client = getChatClient();
     const messages: any[] = [{ role: 'user' as const, content: message }];
-    const toolDefs = agent.tools.map(t => t.definition);
+    const toolDefs = buildChatCompletionTools(agent.tools);
+    const completionOptions = getAgentCompletionOptions();
+    const systemText = buildAgentSystemText(agent);
+    const initialToolChoice = inferInitialToolChoice(agent.mode, message);
+    const requiredCompletionTool = inferRequiredCompletionTool(agent.mode, message);
+    let requiredToolRetryUsed = false;
+    if (
+      initialToolChoice &&
+      typeof initialToolChoice === 'object' &&
+      initialToolChoice.type === 'function'
+    ) {
+      const preface = buildToolPreface(initialToolChoice.function.name);
+      output += preface;
+      textBeforeFirstTool += preface;
+    }
     let turnCount = 0;
-    const MAX_TURNS = 15;
 
-    while (turnCount < MAX_TURNS) {
-      const stream = client.messages.stream({
+    while (turnCount < AGENTIC_LIMITS.maxTurns) {
+      const response = await client.chat.completions.create({
         model: agent.model,
-        system: agent.systemPrompt,
-        messages,
+        messages: [{ role: 'system' as const, content: systemText }, ...messages],
         tools: toolDefs,
-        max_tokens: 4096,
+        tool_choice: turnCount === 0 ? initialToolChoice || 'auto' : 'auto',
+        ...completionOptions,
       });
+      usage.requests++;
+      usage.inputTokens += response.usage?.prompt_tokens || 0;
+      usage.outputTokens += response.usage?.completion_tokens || 0;
+      usage.cachedTokens += (response.usage as any)?.prompt_tokens_details?.cached_tokens || 0;
 
-      // Collect streaming events
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta') {
-          const delta = event.delta as any;
-          if (delta.type === 'text_delta') {
-            output += delta.text;
-            if (!firstToolSeen) textBeforeFirstTool += delta.text;
-          }
-        }
-      }
-
-      const response = await stream.finalMessage();
+      const responseMessage = response.choices[0]?.message;
+      const responseText = responseMessage?.content || '';
+      output += responseText;
+      if (!firstToolSeen) textBeforeFirstTool += responseText;
 
       // Check for tool_use blocks
-      const toolUseBlocks = response.content.filter((b: any) => b.type === 'tool_use');
+      const toolUseBlocks = responseMessage?.tool_calls || [];
+
+      if (
+        toolUseBlocks.length === 0 &&
+        requiredCompletionTool &&
+        !requiredToolRetryUsed &&
+        !toolCalls.some((tc) => tc.name === requiredCompletionTool)
+      ) {
+        requiredToolRetryUsed = true;
+        messages.push(responseMessage);
+        messages.push({ role: 'user' as const, content: buildMissingRequiredToolMessage(requiredCompletionTool) });
+        continue;
+      }
 
       if (toolUseBlocks.length === 0) break; // No tools → done
 
       // Execute tools
-      messages.push({ role: 'assistant' as const, content: response.content });
+      messages.push(responseMessage);
       const toolResults: any[] = [];
 
       for (const toolUse of toolUseBlocks) {
         if (!firstToolSeen) firstToolSeen = true;
         currentToolStart = Date.now();
-        const toolName = (toolUse as any).name;
-        const toolArgs = (toolUse as any).input;
+        const toolName = (toolUse as any).function?.name;
+        const toolArgs = JSON.parse((toolUse as any).function?.arguments || '{}');
+        const toolNameCount = (perToolCounts.get(toolName) || 0) + 1;
+        perToolCounts.set(toolName, toolNameCount);
 
         log('blue', `  Tool: ${toolName}`);
         log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
@@ -352,7 +461,17 @@ async function runAgentTest(
         const toolDef = agent.tools.find(t => t.definition.name === toolName);
         let result: any;
         try {
-          result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+          const limit = enforceToolCallLimit({
+            toolName,
+            toolInput: toolArgs,
+            toolNameCount,
+            sqlIntentCounts,
+          });
+          if (limit.limited) {
+            result = limit.output;
+          } else {
+            result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+          }
         } catch (err: any) {
           result = { error: err.message };
         }
@@ -372,13 +491,13 @@ async function runAgentTest(
         }
 
         toolResults.push({
-          type: 'tool_result',
-          tool_use_id: (toolUse as any).id,
+          role: 'tool',
+          tool_call_id: (toolUse as any).id,
           content: JSON.stringify(result),
         });
       }
 
-      messages.push({ role: 'user' as const, content: toolResults });
+      messages.push(...toolResults);
       turnCount++;
     }
   } catch (error: any) {
@@ -393,9 +512,13 @@ async function runAgentTest(
 
   const duration = Date.now() - start;
   const calibration = analyzeCalibration(output, toolCalls, textBeforeFirstTool);
+  if (targetTool !== 'none' && !toolCalls.some((tc) => tc.name === targetTool)) {
+    errors.push(`Expected tool "${targetTool}" was not called`);
+  }
+  errors.push(...await validateEntityCardsComeFromTools(output, toolCalls));
 
   // Print output
-  log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms):`);
+  log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms, tokens in/out/cached: ${usage.inputTokens}/${usage.outputTokens}/${usage.cachedTokens}):`);
   console.log(output);
 
   // Calibration summary
@@ -420,7 +543,7 @@ async function runAgentTest(
     errors.forEach(e => log('red', `     - ${e}`));
   }
 
-  return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration };
+  return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration, usage };
 }
 
 // --- Test Definitions ---
@@ -441,16 +564,16 @@ const TESTS: TestDef[] = [
     message: 'Quels postes correspondent a mon profil en ce moment ?',
   },
   {
-    name: 'Explorer — Espaces coworking Abidjan',
+    name: 'Explorer — Espaces coworking remote',
     agentType: 'explorer',
     targetTool: 'smart_search',
-    message: 'Je cherche un espace de travail calme sur Abidjan avec wifi',
+    message: 'Je cherche un espace de travail calme avec wifi',
   },
   {
     name: 'Explorer — Communautes tech',
     agentType: 'explorer',
     targetTool: 'smart_search',
-    message: 'Quelles communautes tech actives existent a Abidjan ?',
+    message: 'Quelles communautes tech actives existent dans mon secteur ?',
   },
   {
     name: 'Explorer — Generer CV a jour',
@@ -499,8 +622,8 @@ const TESTS: TestDef[] = [
   {
     name: 'Org — Recruter profils marketing',
     agentType: 'org',
-    targetTool: 'smart_search',
-    message: 'Trouve-moi 5 profils marketing digital seniors disponibles sur Abidjan',
+    targetTool: 'sql_query',
+    message: 'Trouve-moi 5 profils marketing digital seniors disponibles en remote',
   },
   {
     name: 'Org — Dashboard organisation',
@@ -518,7 +641,7 @@ const TESTS: TestDef[] = [
     name: 'Org — Publier offre stage',
     agentType: 'org',
     targetTool: 'none',
-    message: 'Publie une offre de stage en communication digitale a Abidjan, 3 mois',
+    message: 'Publie une offre de stage en communication digitale remote, 3 mois',
   },
   // --- New Intent Tests (Phase Renforcement) ---
   {
@@ -574,15 +697,15 @@ function writeCalibrationReport(results: TestResult[]) {
 
   // --- Calibration Summary Table ---
   md += `## Calibration Summary\n\n`;
-  md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Quick Ack | Cards |\n`;
-  md += `|------|-------|-------|-----------|-------|-----------|-------------|-----------|-------|\n`;
+  md += `| Test | Agent | Chars | Questions | Tools | Tokens In | Tokens Out | Cached | Verbosity | Proactivity | Quick Ack | Cards |\n`;
+  md += `|------|-------|-------|-----------|-------|-----------|------------|--------|-----------|-------------|-----------|-------|\n`;
 
   for (const r of results) {
     const c = r.calibration;
     const status = r.success ? '✅' : '❌';
     const cardsInfo = c.entityCardsWithScore > 0 ? `${c.entityCardCount} (⚠️ ${c.entityCardsWithScore} with matchScore)` : `${c.entityCardCount}`;
     const ackInfo = c.toolCallCount > 0 ? (c.hasQuickAck ? '✅' : '❌') : 'N/A';
-    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
+    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${r.usage.inputTokens} | ${r.usage.outputTokens} | ${r.usage.cachedTokens} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
   }
 
   // --- Calibration Issues ---
@@ -644,6 +767,7 @@ function writeCalibrationReport(results: TestResult[]) {
       // Calibration
       md += `**Calibration:** Verbosity=${r.calibration.verbosityRating}, Proactivity=${r.calibration.proactivityRating}, `;
       md += `Chars=${r.calibration.charCount}, Questions=${r.calibration.questionCount}, Tools=${r.calibration.toolCallCount}\n\n`;
+      md += `**Usage:** Requests=${r.usage.requests}, Input=${r.usage.inputTokens}, Output=${r.usage.outputTokens}, Cached=${r.usage.cachedTokens}\n\n`;
 
       // Tool calls
       for (const tc of r.toolCalls) {
@@ -673,10 +797,14 @@ function writeCalibrationReport(results: TestResult[]) {
   const avgChars = results.reduce((sum, r) => sum + r.calibration.charCount, 0) / results.length;
   const avgQuestions = results.reduce((sum, r) => sum + r.calibration.questionCount, 0) / results.length;
   const avgTools = results.reduce((sum, r) => sum + r.calibration.toolCallCount, 0) / results.length;
+  const totalInputTokens = results.reduce((sum, r) => sum + r.usage.inputTokens, 0);
+  const totalOutputTokens = results.reduce((sum, r) => sum + r.usage.outputTokens, 0);
+  const totalCachedTokens = results.reduce((sum, r) => sum + r.usage.cachedTokens, 0);
 
   md += `- **Average response length:** ${Math.round(avgChars)} chars (target: 300-800)\n`;
   md += `- **Average questions per response:** ${avgQuestions.toFixed(1)} (target: 0-1)\n`;
   md += `- **Average tool calls per response:** ${avgTools.toFixed(1)} (target: 1-3)\n\n`;
+  md += `- **Total tokens:** input=${totalInputTokens}, output=${totalOutputTokens}, cached=${totalCachedTokens}\n\n`;
 
   if (avgChars > 1200) {
     md += `> **ACTION: Reduce verbosity.** Add explicit length constraint to prompts: "Keep responses between 3-5 sentences plus entity cards."\n\n`;
@@ -697,12 +825,11 @@ function writeCalibrationReport(results: TestResult[]) {
 async function main() {
   header('COPILOT AGENT CALIBRATION');
   log('dim', `  Date: ${new Date().toISOString()}`);
-  log('dim', `  OpenAI Key: ${process.env.OPENAI_API_KEY ? 'set' : 'MISSING'}`);
-  log('dim', `  Pinecone Key: ${process.env.PINECONE_API_KEY ? 'set' : 'MISSING'}`);
+  log('dim', `  AI provider key: ${process.env.AI_API_KEY ? 'set' : 'MISSING'}`);
   log('dim', `  YouTube Key: ${process.env.YOUTUBE_API_KEY ? 'set' : 'MISSING'}`);
 
-  if (!process.env.OPENAI_API_KEY) {
-    log('red', '  OPENAI_API_KEY not set.');
+  if (!process.env.AI_API_KEY) {
+    log('red', '  AI_API_KEY not set.');
     process.exit(1);
   }
 
@@ -727,9 +854,15 @@ async function main() {
     }
 
     // Group tests by agent type
-    const explorerTests = filteredTests.filter(t => t.agentType === 'explorer');
-    const studyTests = filteredTests.filter(t => t.agentType === 'study');
-    const orgTests = filteredTests.filter(t => t.agentType === 'org');
+    const explorerTests = filteredTests.filter(t => t.agentType === 'explorer').slice(0, (AUDIT_15 || AUDIT_10) ? 5 : undefined);
+    const studyTests = AUDIT_10 ? [] : filteredTests.filter(t => t.agentType === 'study').slice(0, AUDIT_15 ? 5 : undefined);
+    const orgTests = filteredTests.filter(t => t.agentType === 'org').slice(0, (AUDIT_15 || AUDIT_10) ? 5 : undefined);
+    if (AUDIT_15) {
+      log('cyan', `  Running audit-15 mode: ${explorerTests.length} career/explorer + ${studyTests.length} study + ${orgTests.length} org`);
+    }
+    if (AUDIT_10) {
+      log('cyan', `  Running audit-10 mode: ${explorerTests.length} career/explorer + ${orgTests.length} org`);
+    }
 
     // --- Explorer Tests ---
     if (explorerTests.length > 0) {
@@ -749,6 +882,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -772,6 +906,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -795,6 +930,7 @@ async function main() {
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
             calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
+            usage: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, requests: 0 },
           });
         }
       }
@@ -833,7 +969,7 @@ async function main() {
       const vFlag = (r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose') ? ' [VERBOSE]' : '';
       const pFlag = r.calibration.proactivityRating === 'passive' ? ' [PASSIVE]' : '';
       const aFlag = (r.calibration.toolCallCount > 0 && !r.calibration.hasQuickAck) ? ' [NO ACK]' : '';
-      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q${vFlag}${pFlag}${aFlag}`);
+      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q, tokens ${r.usage.inputTokens}/${r.usage.outputTokens}/${r.usage.cachedTokens}${vFlag}${pFlag}${aFlag}`);
     }
 
     // Tool usage

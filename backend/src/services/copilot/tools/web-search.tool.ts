@@ -1,72 +1,13 @@
 /**
- * Web Search Tool — OpenAI webSearchTool() wrapped for Anthropic agents
- * Uses OpenAI Agents SDK webSearchTool() via a sub-agent internally.
- * Always runs on OpenAI Responses API (webSearchTool is a HostedTool).
- * Exposed as a defineTool() for the native Anthropic agent loop.
+ * Web Search Tool — direct Brave Search API.
+ *
+ * Hosted web-search tools are provider-specific. We keep external search on a
+ * dedicated search API while model calls run through the configured AI provider.
  */
 
-import { Agent, webSearchTool } from '@openai/agents';
 import { z } from 'zod';
 import { defineTool } from './tool-helper';
-import { openaiResponsesProvider } from '../../ai/provider';
-import { Runner } from '@openai/agents';
 import { logger } from '../../../utils';
-
-const SEARCH_INSTRUCTIONS = `# Role and Objective
-
-You are a web search specialist for the Etudesk platform. Use the web_search tool to find current, reliable information and return structured results.
-
-# Context
-
-Etudesk is a talent development, employment, and training platform serving French-speaking Africa. Users are:
-- **Talents**: job seekers, students, professionals looking for opportunities
-- **Organizations**: companies, universities, NGOs posting opportunities
-
-Common search topics: job offers, training programs, skills development, market trends, company profiles, salary benchmarks, tech ecosystem news.
-
-# Instructions
-
-- Search in both French AND English to maximize coverage.
-- Return results in the same language as the user's query. If unclear, default to English.
-- Prioritize reliable, recent sources: official websites, news articles, industry reports, government data.
-- For salary and employment data: prioritize French-speaking African market data (Côte d'Ivoire, Senegal, Cameroon, etc.).
-- CRITICAL: For any salary, employment, or market data: French-speaking African data takes absolute priority. If African data is unavailable, clearly state that the data is from another market and may not apply locally.
-- For training resources: include online courses accessible from Africa (MOOCs, free certifications).
-- Structure results clearly with:
-  - Source name and URL
-  - Publication date (so the user knows if it is recent)
-  - Key findings summarized in 2-3 sentences
-- If no relevant results are found, say so clearly instead of making up information.
-
-# Output Format
-
-Return results as a structured list:
-1. **[Source Title](URL)** — date
-   Summary of key information.
-
-Always cite your sources.`;
-
-/**
- * WebSearchAgent — Always on OpenAI Responses API.
- * Uses gpt-4.1-mini (hardcode) because this sub-agent
- * always runs on OpenAI, regardless of the global provider.
- */
-const webSearchAgent = new Agent({
-  name: 'WebSearchAgent',
-  model: 'gpt-4.1-mini',
-  instructions: SEARCH_INSTRUCTIONS,
-  tools: [webSearchTool()],
-});
-
-/**
- * Execute a web search query via the OpenAI sub-agent.
- * Returns the text result.
- */
-async function executeWebSearch(query: string): Promise<string> {
-  const runner = new Runner({ modelProvider: openaiResponsesProvider });
-  const result = await runner.run(webSearchAgent, query, { maxTurns: 2 });
-  return result.finalOutput?.trim() || 'No relevant results found.';
-}
 
 function buildNoResultsResponse(query: string) {
   return {
@@ -79,16 +20,41 @@ function buildNoResultsResponse(query: string) {
   };
 }
 
-/**
- * Web search as a native Anthropic tool.
- * Internally delegates to the OpenAI sub-agent for actual web search.
- */
+async function executeWebSearch(query: string): Promise<Array<{ title: string; url: string; description: string; age?: string }>> {
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!apiKey) throw new Error('BRAVE_SEARCH_API_KEY not configured');
+
+  const url = new URL('https://api.search.brave.com/res/v1/web/search');
+  url.searchParams.set('q', query);
+  url.searchParams.set('count', '5');
+  url.searchParams.set('search_lang', 'fr');
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'X-Subscription-Token': apiKey,
+    },
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Brave Search failed (${response.status}): ${body.slice(0, 300)}`);
+  }
+
+  const data: any = await response.json();
+  return (data.web?.results || []).map((r: any) => ({
+    title: r.title || r.url,
+    url: r.url,
+    description: r.description || '',
+    age: r.age,
+  }));
+}
+
 export const webSearchAsTool = defineTool({
   name: 'web_search',
   description:
     'Search the web for current information (salary benchmarks, company info, market trends, training resources). Use ONLY when internal data is insufficient.',
   parameters: z.object({
-    query: z.string().describe('The search query in natural language. Be specific and include context (e.g., "salaire moyen développeur React Côte d\'Ivoire 2026").'),
+    query: z.string().describe('The search query in natural language. Be specific and include the user-requested role, market, language, period, or domain when relevant.'),
   }),
   normalize: (raw) => ({
     ...raw,
@@ -98,20 +64,18 @@ export const webSearchAsTool = defineTool({
     try {
       const normalizedQuery = query.trim().replace(/\s+/g, ' ');
       if (!normalizedQuery) {
-        return {
-          success: false,
-          error: 'Missing query. Provide a concrete search request with topic and region.',
-        };
+        return { success: false, error: 'Missing query. Provide a concrete search request with topic and region.' };
       }
 
-      logger.info(`[web_search] Executing search: "${normalizedQuery.slice(0, 100)}"`);
-      const result = await executeWebSearch(normalizedQuery);
+      logger.info(`[web_search] Executing Brave search: "${normalizedQuery.slice(0, 100)}"`);
+      const results = await executeWebSearch(normalizedQuery);
+      if (results.length === 0) return buildNoResultsResponse(normalizedQuery);
 
-      if (/^no relevant results found\.?$/i.test(result)) {
-        return buildNoResultsResponse(normalizedQuery);
-      }
+      const content = results
+        .map((r, i) => `${i + 1}. **${r.title}**${r.age ? ` — ${r.age}` : ''}\n${r.url}\n${r.description}`)
+        .join('\n\n');
 
-      return { success: true, query: normalizedQuery, content: result };
+      return { success: true, query: normalizedQuery, results, content };
     } catch (error: any) {
       logger.error(`[web_search] Error: ${error.message}`);
       return { success: false, error: error.message };
@@ -119,5 +83,4 @@ export const webSearchAsTool = defineTool({
   },
 });
 
-// Re-export for backward compatibility
-export { webSearchAgent };
+export const webSearchAgent = null;

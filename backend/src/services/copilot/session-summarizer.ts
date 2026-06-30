@@ -1,11 +1,12 @@
 /**
  * Session Summarizer
- * Uses Claude Haiku to summarize long conversations.
+ * Uses the fast model to summarize long conversations.
  * Keeps last 3 messages verbatim, summarizes the rest.
  */
 
-import { getAnthropicClient } from '../ai/provider';
+import { getChatClient } from '../ai/provider';
 import { MODEL_FAST } from '../ai/models';
+import { recordUsage } from '../ai/usage.service';
 import { logger } from '../../utils';
 import { SupportedLanguage } from '../../i18n';
 import { getLanguageDisplayName } from '../language-preference.service';
@@ -54,20 +55,20 @@ export async function summarizeHistoryIfNeeded(
       .map((m) => `${m.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${m.content.slice(0, 500)}`)
       .join('\n\n');
 
-    const client = getAnthropicClient();
+    const client = getChatClient();
     const languageName = getLanguageDisplayName(language);
-    const response = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODEL_FAST,
       max_tokens: 512,
-      system: buildSystemPrompt(languageName),
-      messages: [{ role: 'user', content: conversationText }],
+      messages: [
+        { role: 'system', content: buildSystemPrompt(languageName) },
+        { role: 'user', content: conversationText },
+      ],
     });
 
-    const summary = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as any).text)
-      .join('')
-      .trim();
+    void recordUsage({ feature: 'session_summarizer', model: MODEL_FAST, usage: response.usage as any });
+
+    const summary = (response.choices[0]?.message?.content || '').trim();
 
     if (!summary) {
       return history;

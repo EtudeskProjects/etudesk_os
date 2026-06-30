@@ -13,9 +13,10 @@ import {
   GenerationInput,
 } from '../../services/community-generation.service';
 import { handleRouteError, createNotFoundError, createForbiddenError, logger } from '../../utils';
-import { upsertCommunityEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { upsertCommunityEmbedding, deletePgVector } from '../../services/embedding.service';
 import { setCommunitySkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
+import { autoModerationService } from '../../services/auto-moderation.service';
 
 const router = Router();
 
@@ -101,6 +102,23 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
       throw createForbiddenError(req.t('common:mustBeOrgMember'));
     }
 
+    try {
+      await autoModerationService.assertContentApproved({
+        name,
+        description,
+        rules,
+        application_questions: Array.isArray(application_questions) ? application_questions.join('\n') : application_questions,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Community creation rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
+    }
+
     // Generate unique slug
     const baseSlug = generateSlug(name);
     let slug = baseSlug;
@@ -179,6 +197,23 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       city, region, country, cover_image_url, images, status
     } = req.body;
 
+    try {
+      await autoModerationService.assertContentApproved({
+        name,
+        description,
+        rules,
+        application_questions: Array.isArray(application_questions) ? application_questions.join('\n') : application_questions,
+      });
+    } catch (moderationError: unknown) {
+      const err = moderationError as { message: string; flaggedField?: string };
+      logger.info(`[Moderation] Community update rejected: ${err.message}`);
+      return res.status(400).json({
+        error: err.message,
+        code: 'CONTENT_MODERATION_FAILED',
+        field: err.flaggedField,
+      });
+    }
+
     const result = await pool.query(`
       UPDATE communities SET
         name = COALESCE($1, name),
@@ -212,7 +247,7 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       throw createNotFoundError('Community');
     }
 
-    // Update Pinecone embedding (fire-and-forget)
+    // Update local pgvector embedding (fire-and-forget)
     const updated = result.rows[0];
     upsertCommunityEmbedding(id, {
       name: updated.name, description: updated.description, type: updated.type,
@@ -220,7 +255,7 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       is_paid: updated.is_paid,
       sectors: updated.sectors ? (typeof updated.sectors === 'string' ? JSON.parse(updated.sectors) : updated.sectors) : [],
       tags: updated.tags ? (typeof updated.tags === 'string' ? JSON.parse(updated.tags) : updated.tags) : [],
-    }).catch(err => logger.error('[communities] Error updating Pinecone embedding:', err));
+    }).catch(err => logger.error('[communities] Error updating pgvector embedding:', err));
 
     // Update catalog skill tags only when provided
     let skillTags = null;
@@ -261,8 +296,8 @@ router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async
       [id]
     );
 
-    // Remove Pinecone vector (fire-and-forget)
-    deletePineconeVector('community', id).catch(err => logger.error('[communities] Error deleting Pinecone vector:', err));
+    // Remove local pgvector embedding (fire-and-forget)
+    deletePgVector('community', id).catch(err => logger.error('[communities] Error clearing pgvector:', err));
 
     res.json({ success: true, message: req.t('communities:deleted') });
   } catch (error) {

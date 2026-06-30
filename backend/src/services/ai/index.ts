@@ -2,15 +2,7 @@
  * AI Services — Centralized exports
  */
 
-export {
-  createSpaceGenAgent,
-  createCommunityGenAgent,
-  createOpportunityGenAgent,
-  createRecommendationAgent,
-  createSuggestionsAgent,
-} from './agent-factory';
-
-export { getAnthropicClient } from './provider';
+export { getChatClient, getAIClient, getSuggestionClient, getEmbeddingClient } from './provider';
 
 export { buildExtractionPrompt, EXTRACTION_SYSTEM_PROMPT } from './prompts/extraction.prompt';
 export { buildSpaceGenPrompt, SPACE_GEN_SYSTEM_PROMPT } from './prompts/space-gen.prompt';
