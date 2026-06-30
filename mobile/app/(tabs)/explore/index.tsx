@@ -35,6 +35,7 @@ import {
 	import { ShimmerPlaceholder } from '../../../src/components/ui/ShimmerPlaceholder';
 import { formatRelativeTime, formatDeadline } from '../../../src/utils/date';
 import { formatCompactNumber } from '../../../src/utils/number';
+import { getFullImageUrl } from '../../../src/utils/image';
 import type {
   Opportunity,
   Community,
@@ -48,10 +49,21 @@ type SortOption = 'relevance' | 'proximity' | 'recent' | 'popularity';
 
 // Pagination config
 const PAGE_SIZE = 20;
+const PREFETCH_IMAGE_LIMIT = 12;
 
 const isCategory = (value?: string): value is Category => (
   value === 'opportunities' || value === 'communities' || value === 'spaces'
 );
+
+const prefetchImageUrls = (urls: Array<string | null | undefined>) => {
+  urls
+    .slice(0, PREFETCH_IMAGE_LIMIT)
+    .map((url) => getFullImageUrl(url, { width: 640, quality: 75 }))
+    .filter((url): url is string => Boolean(url))
+    .forEach((url) => {
+      Image.prefetch(url).catch(() => {});
+    });
+};
 
 // User location for proximity sorting (mock - would come from user profile)
 const USER_LOCATION = {
@@ -174,6 +186,10 @@ export default function ExploreScreen() {
           organization: opp.organizations?.[0] || opp.organization,
         }));
         setOpportunities(transformedOpps);
+        prefetchImageUrls(transformedOpps.flatMap((opp: any) => [
+          opp.cover_image_url || opp.images?.[0],
+          opp.organization?.logo_url,
+        ]));
       }
       if (spacesRes.status === 'fulfilled' && spacesRes.value.data) setSpaces(spacesRes.value.data);
       if (communitiesRes.status === 'fulfilled' && communitiesRes.value.data) setCommunities(communitiesRes.value.data);
@@ -603,6 +619,11 @@ export default function ExploreScreen() {
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
             refreshControl={refreshControl}
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={7}
+            updateCellsBatchingPeriod={50}
+            removeClippedSubviews
           />
         ) : renderEmptyState();
       case 'spaces':
@@ -620,6 +641,11 @@ export default function ExploreScreen() {
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
             refreshControl={refreshControl}
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={7}
+            updateCellsBatchingPeriod={50}
+            removeClippedSubviews
           />
         ) : renderEmptyState();
       case 'communities':
@@ -637,6 +663,11 @@ export default function ExploreScreen() {
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
             refreshControl={refreshControl}
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={7}
+            updateCellsBatchingPeriod={50}
+            removeClippedSubviews
           />
         ) : renderEmptyState();
       default:
