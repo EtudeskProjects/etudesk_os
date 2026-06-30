@@ -97,8 +97,9 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { sql, params } = finalizeQuery(builder);
     const result = await pool.query(sql, params);
+    const communities = result.rows.map(({ embedding: _embedding, ...row }) => row);
 
-    res.json({ data: result.rows, count: result.rowCount });
+    res.json({ data: communities, count: result.rowCount });
   } catch (error) {
     handleRouteError(res, error, 'Error fetching communities');
   }

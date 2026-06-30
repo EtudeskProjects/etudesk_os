@@ -135,7 +135,8 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
 
     logger.debug(`[opportunities] Query params count: ${params.length}, paramIndex: ${paramIndex}, matchParams: ${matchFragment.params.length}, talentId: ${!!talentId}`);
     const result = await pool.query(query, params);
-    res.json({ data: result.rows, count: result.rowCount });
+    const opportunities = result.rows.map(({ embedding: _embedding, ...row }) => row);
+    res.json({ data: opportunities, count: result.rowCount });
   } catch (error: any) {
     if (error?.message?.includes('could not determine data type')) {
       // Avoid silent production failures: log the full placeholder query + request query params.

@@ -205,7 +205,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     const result = await pool.query(query, params);
 
     // Format response
-    const spaces = result.rows.map((row) => ({
+    const spaces = result.rows.map(({ embedding: _embedding, ...row }) => ({
       ...row,
       organization: row.organization_name
         ? {
