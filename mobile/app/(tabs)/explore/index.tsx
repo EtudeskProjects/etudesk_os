@@ -49,6 +49,10 @@ type SortOption = 'relevance' | 'proximity' | 'recent' | 'popularity';
 // Pagination config
 const PAGE_SIZE = 20;
 
+const isCategory = (value?: string): value is Category => (
+  value === 'opportunities' || value === 'communities' || value === 'spaces'
+);
+
 // User location for proximity sorting (mock - would come from user profile)
 const USER_LOCATION = {
   city: 'Remote',
@@ -109,7 +113,7 @@ export default function ExploreScreen() {
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
   const [activeCategory, setActiveCategory] = useState<Category>(
-    (initialCategory as Category) || 'communities'
+    isCategory(initialCategory) ? initialCategory : 'opportunities'
   );
   const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, Set<string>>>({
     opportunities: new Set(),
@@ -157,22 +161,28 @@ export default function ExploreScreen() {
   // Load data from API
   const loadData = useCallback(async () => {
     try {
-      const [oppsRes, spacesRes, communitiesRes] = await Promise.all([
+      const [oppsRes, spacesRes, communitiesRes] = await Promise.allSettled([
         opportunityService.getAll({ status: 'OPEN', limit: 50 }),
         spaceService.getAll({ limit: 50 }),
         communityService.getAll({ status: 'ACTIVE', limit: 50 }), // Communities use ACTIVE
       ]);
 
-      if (oppsRes.data) {
+      if (oppsRes.status === 'fulfilled' && oppsRes.value.data) {
         // Transform organizations array to organization object
-        const transformedOpps = oppsRes.data.map((opp: any) => ({
+        const transformedOpps = oppsRes.value.data.map((opp: any) => ({
           ...opp,
           organization: opp.organizations?.[0] || opp.organization,
         }));
         setOpportunities(transformedOpps);
       }
-      if (spacesRes.data) setSpaces(spacesRes.data);
-      if (communitiesRes.data) setCommunities(communitiesRes.data);
+      if (spacesRes.status === 'fulfilled' && spacesRes.value.data) setSpaces(spacesRes.value.data);
+      if (communitiesRes.status === 'fulfilled' && communitiesRes.value.data) setCommunities(communitiesRes.value.data);
+
+      if (__DEV__) {
+        if (oppsRes.status === 'rejected') console.error('Error loading opportunities:', oppsRes.reason);
+        if (spacesRes.status === 'rejected') console.error('Error loading spaces:', spacesRes.reason);
+        if (communitiesRes.status === 'rejected') console.error('Error loading communities:', communitiesRes.reason);
+      }
 
       // Load bookmarks after data
       loadBookmarks();
@@ -188,6 +198,12 @@ export default function ExploreScreen() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (isCategory(initialCategory)) {
+      setActiveCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     loadData();
@@ -195,9 +211,9 @@ export default function ExploreScreen() {
 
   // Categories with translated labels and local images.
   const CATEGORIES_TRANSLATED = [
+    { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, image: require('../../../assets/explore_opportunities.jpg') },
     { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, image: require('../../../assets/explore_communities.jpg') },
     { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, image: require('../../../assets/explore_spaces.jpg') },
-    { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, image: require('../../../assets/explore_opportunities.jpg') },
   ];
 
   // Sort options configuration

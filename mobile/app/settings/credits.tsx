@@ -23,6 +23,9 @@ import { useI18n } from '../../src/contexts/I18nContext';
 
 function parseError(error: any, fallback: string): string {
   if (!error) return fallback;
+  if (error?.error === 'Network error') {
+    return fallback;
+  }
   return String(error?.error || error?.message || fallback);
 }
 
