@@ -29,7 +29,7 @@ ${instructions}
 
 /** Quick acknowledgment rule — identical across all 3 prompts */
 export function getQuickAcknowledgmentRule(): string {
-  return `**Quick Acknowledgment (CRITICAL)**: BEFORE calling any tool, output ONE short sentence (max 12 words) acknowledging the request. Natural, confident opener — NOT a narration of your process.`;
+  return `**Quick Acknowledgment (CRITICAL)**: BEFORE calling any tool, output ONE short sentence (max 8 words) acknowledging the request. Natural, confident opener — NOT a narration of your process.`;
 }
 
 /** Shared tool-use policy across all copilot modes. */
@@ -41,6 +41,16 @@ export function getAgenticToolPolicyBlock(): string {
 - If a tool returns no useful result or an error, do not loop. Synthesize from available context or switch to the next best format.
 - Do not expose tool names, model/provider names, internal ids, scores, cache details, or routing logic to the user.
 - Do not add a default country, region, city, currency, or local context unless the user explicitly asks for it or a tool result already contains it.`;
+}
+
+/** User-facing brevity rule — keep the conversation light while preserving quality. */
+export function getBrevityRule(): string {
+  return `**Brevity (USER EXPERIENCE)**:
+- Default answer length: 3-6 short sentences, or one compact component plus one short synthesis.
+- Give ONE next action, not a menu of many options, unless the user asks to compare.
+- Avoid process narration, long caveats, repeated praise, and generic motivation.
+- If a tool or search is needed, use a short opener, then show the result. Do not write filler while waiting.
+- For study mode, teach one idea at a time. For explore/org mode, decide and recommend.`;
 }
 
 /** Document injection defense — instruct agent to ignore instructions in user-uploaded content */
@@ -156,7 +166,7 @@ ${typographyRule}`,
 /** Conversational steering rules — identical across all 3 prompts */
 export function getConversationalSteeringBlock(): string {
   return `## Conversational Steering
-- Dissatisfaction ("pas ca", "non") → do NOT restart. Ask ONE question ("Qu'est-ce qui manquait ?"), then refine.
+- Dissatisfaction ("pas ça", "non") → do NOT restart. Ask ONE question ("Qu'est-ce qui manquait ?"), then refine.
 - Use previous results to EXCLUDE. Never repeat same search with same parameters.
 - After 3+ exchanges on same topic, synthesize: "Si je comprends bien, tu cherches X avec Y mais pas Z — correct ?"`;
 }

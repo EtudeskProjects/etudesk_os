@@ -13,7 +13,7 @@ import {
   ALLOWED_MIME_TYPES,
 } from '../constants/documents';
 import { logger } from '../utils';
-import { i18next } from '../i18n';
+import { i18next, resolveLanguageFromHeader } from '../i18n';
 import { pool } from '../services/database';
 import {
   uploadDocument,
@@ -307,9 +307,9 @@ function userReportsMissingConfirmationBlock(message: string): boolean {
 function buildConfirmationReplayResponse(block: { rawBlock: string; confirmLabel?: string }, language?: string): string {
   const label = block.confirmLabel || (language === 'fr' ? 'Confirmer' : 'Confirm');
   if (language === 'fr') {
-    return `Je remets le bloc ici. Appuie sur **${label}** pour valider.\n\n${block.rawBlock}`;
+    return `${i18next.t('copilot:confirmationReplay', { lng: 'fr', label })}\n\n${block.rawBlock}`;
   }
-  return `I am showing the block again here. Tap **${label}** to confirm.\n\n${block.rawBlock}`;
+  return `${i18next.t('copilot:confirmationReplay', { lng: language || 'en', label })}\n\n${block.rawBlock}`;
 }
 
 function extractMemoryKeywords(message: string): string[] {
@@ -509,7 +509,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     initSSE(res);
     sseStarted = true;
-    markPhase('ack', 'Message reçu');
+    markPhase('ack', req.t('copilot:statusAck'));
 
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
     const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
@@ -565,7 +565,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       }
       throw debitError;
     }
-    markPhase('billing', 'Crédits vérifiés');
+    markPhase('billing', req.t('copilot:statusBilling'));
 
     // --- PHASE 1: Session + Context + Language in parallel ---
     const isOrg = !!organizationId;
@@ -592,7 +592,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Language preference
       resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] }),
     ]);
-    markPhase('context', 'Contexte chargé');
+    const statusLanguage = resolveLanguageFromHeader(req.headers['accept-language'], userLanguage);
+    const phaseLabel = (key: string) => i18next.t(`copilot:${key}`, { lng: statusLanguage });
+    markPhase('context', phaseLabel('statusContext'));
     const sessionId = session.id;
     const sessionContext: Record<string, unknown> =
       session.context && typeof session.context === 'object'
@@ -679,7 +681,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const skillMode = isOrg ? 'org' : validMode;
     const userCountry = talentContext.profile?.country;
     const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org', userCountry);
-    markPhase('planning', detectedSkill ? 'Workflow spécialisé détecté' : 'Plan de réponse préparé');
+    markPhase('planning', detectedSkill ? phaseLabel('statusWorkflow') : phaseLabel('statusPlanning'));
     // Build active skill instructions with DPO few-shot examples
     let activeSkillInstructions: string | undefined;
     if (detectedSkill) {
@@ -830,7 +832,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const history = crossSessionMemory.length > 0
       ? [...crossSessionMemory, ...summarizedHistory]
       : summarizedHistory;
-    markPhase('history', 'Historique prêt');
+    markPhase('history', phaseLabel('statusHistory'));
 
     // --- Default agent message: infer intent from attachments if text is empty ---
     let agentMessage = safeMessage || (hasAttachments ? i18next.t('copilot:attachmentInferMessage') : '');
@@ -947,13 +949,27 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
-    markPhase('agent_start', 'Assistant en réflexion');
+    markPhase('agent_start', phaseLabel('statusAgentStart'));
     const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
       agent,
       agentMessage,
       history,
       res,
-      parsedAttachments
+      parsedAttachments,
+      {
+        writing: phaseLabel('statusWriting'),
+        toolPlanning: phaseLabel('statusToolPlanning'),
+        guardrailInjectionBlocked: phaseLabel('guardrailInjectionBlocked'),
+        guardrailBlocked: phaseLabel('guardrailBlocked'),
+        limitMaxDuration: phaseLabel('limitMaxDuration'),
+        limitMaxTokens: phaseLabel('limitMaxTokens'),
+        limitToolLoop: phaseLabel('limitToolLoop'),
+        limitMaxTools: phaseLabel('limitMaxTools'),
+        limitEmptyResults: phaseLabel('limitEmptyResults'),
+        providerOverloaded: phaseLabel('providerOverloaded'),
+        providerUnavailable: phaseLabel('providerUnavailable'),
+        safetyRefusal: phaseLabel('safetyRefusal'),
+      }
     );
     const finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
 

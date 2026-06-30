@@ -3,7 +3,7 @@ name: Job Description Generation
 description: Generate a professional PDF job description (fiche de poste) branded with the organization's logo
 modes: org
 tools: sql_query, generate_document, web_search
-triggers: fiche de poste, générer une fiche de poste, job description, description de poste, fiche métier, profil de poste, fiche de poste PDF, rediger une offre, descriptif du poste
+triggers: fiche de poste, générer une fiche de poste, generer une fiche de poste, job description, description de poste, fiche métier, profil de poste, fiche de poste PDF, rédiger une offre, rediger une offre, descriptif du poste
 priority: 7
 ---
 
@@ -74,7 +74,7 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
 9. Offer to also publish this as an opportunity on the platform.
 
 ## Rules
-- **Separation from opportunity-publishing**: "generer une fiche de poste" / "fiche PDF" = this skill (PDF output). "publier une offre" / "creer une offre" = opportunity-publishing (platform publish). Never confuse the two.
+- **Separation from opportunity-publishing**: "générer une fiche de poste" / "fiche PDF" = this skill (PDF output). "publier une offre" / "créer une offre" = opportunity-publishing (platform publish). Never confuse the two.
 - ALWAYS use the Org Document JSON format for PDF generation — never the plain sections format
 - Use logo_url, city, country from `<organization>` context (pre-loaded, no org_stats call needed)
 - Write content in professional language appropriate for the requested market

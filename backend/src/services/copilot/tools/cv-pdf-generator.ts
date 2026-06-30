@@ -1,7 +1,7 @@
 /**
  * CV PDF Generator — Minimaliste, noir & blanc, grand public
  * Mise en page deux colonnes, encre noire sur fond blanc.
- * La SEULE couleur = les barres de competences, colorees par TYPE de
+ * La SEULE couleur = les barres de compétences, colorées par TYPE de
  * competence (aligne sur le design system de l'app Etudesk).
  * Palette : echelle zinc neutre (aucun ton brun).
  */
@@ -25,7 +25,7 @@ const C = {
   surfaceAlt: '#F4F4F5',
   border: '#E4E4E7',
   borderLight: '#F4F4F5',
-  track: '#E4E4E7',        // Fond des barres de competences
+  track: '#E4E4E7',        // Fond des barres de compétences
   white: '#FFFFFF',
   accent: '#18181B',       // Accent par defaut = encre (monochrome)
 };
@@ -132,9 +132,9 @@ function skillLevelToPercent(level?: string): number {
 function formatLevel(level?: string): string {
   const map: Record<string, string> = {
     master: 'Master',
-    advanced: 'Avance', avance: 'Avance',
-    intermediate: 'Intermediaire', intermediaire: 'Intermediaire',
-    beginner: 'Debutant', debutant: 'Debutant',
+    advanced: 'Avancé', avance: 'Avancé',
+    intermediate: 'Intermédiaire', intermediaire: 'Intermédiaire',
+    beginner: 'Débutant', debutant: 'Débutant',
   };
   return map[level?.toLowerCase()?.normalize('NFD').replace(/[\u0300-\u036f]/g, '') || ''] || '';
 }
@@ -142,9 +142,9 @@ function formatLevel(level?: string): string {
 function langLevel(level?: string): string {
   const map: Record<string, string> = {
     native: 'Natif', fluent: 'Courant',
-    conversational: 'Conversationnel', basic: 'Elementaire',
-    c2: 'Natif (C2)', c1: 'Courant (C1)', b2: 'Avance (B2)',
-    b1: 'Intermediaire (B1)', a2: 'Elementaire (A2)', a1: 'Decouverte (A1)',
+    conversational: 'Conversationnel', basic: 'Élémentaire',
+    c2: 'Natif (C2)', c1: 'Courant (C1)', b2: 'Avancé (B2)',
+    b1: 'Intermédiaire (B1)', a2: 'Élémentaire (A2)', a1: 'Découverte (A1)',
   };
   return map[level?.toLowerCase() || ''] || level || '';
 }
@@ -318,7 +318,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       // --- SKILLS (Top 10) ---
       const topSkills = cvData.skills.slice(0, 10);
       if (topSkills.length > 0) {
-        sideY = sidebarSectionTitle(doc, 'Competences', sideY);
+        sideY = sidebarSectionTitle(doc, 'Compétences', sideY);
 
         for (const skill of topSkills) {
           // Skill name

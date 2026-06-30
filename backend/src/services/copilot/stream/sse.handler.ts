@@ -241,7 +241,34 @@ export async function runAgentWithSSE(
   message: string,
   history: Array<{ role: string; content: string }>,
   res: Response,
-  attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>
+  attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>,
+  statusLabels: {
+    writing: string;
+    toolPlanning: string;
+    guardrailInjectionBlocked: string;
+    guardrailBlocked: string;
+    limitMaxDuration: string;
+    limitMaxTokens: string;
+    limitToolLoop: string;
+    limitMaxTools: string;
+    limitEmptyResults: string;
+    providerOverloaded: string;
+    providerUnavailable: string;
+    safetyRefusal: string;
+  } = {
+    writing: 'Answer',
+    toolPlanning: 'Search',
+    guardrailInjectionBlocked: 'I cannot answer that request. Reframe it around your path, skills, or the platform.',
+    guardrailBlocked: 'I cannot process that request. I can help with your path, skills, or Etudesk.',
+    limitMaxDuration: 'Time reached. Keeping the useful results.',
+    limitMaxTokens: 'Budget reached. Keeping the essentials.',
+    limitToolLoop: 'Loop detected. Stopping here.',
+    limitMaxTools: 'Action limit reached. Summarizing now.',
+    limitEmptyResults: 'Not enough useful results. Summarizing what is available.',
+    providerOverloaded: 'The AI service is temporarily busy. Please try again in a few seconds.',
+    providerUnavailable: 'The AI service is temporarily unavailable. Please try again in a few seconds.',
+    safetyRefusal: 'I cannot help with that request. Rephrase it or ask another question.',
+  }
 ): Promise<{
   finalOutput: string;
   toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }>;
@@ -321,8 +348,8 @@ export async function runAgentWithSSE(
       const classification = guardrailResult.outputInfo?.classification || 'BLOCKED';
       logger.warn(`[guardrail] Input blocked — classification: ${classification}`);
       const userMessage = classification === 'INJECTION'
-        ? 'Je ne peux pas répondre à ce type de requête. Reformulez votre question en lien avec la plateforme.'
-        : 'Cette requête ne peut pas être traitée. Je suis là pour vous accompagner sur la plateforme Etudesk.';
+        ? statusLabels.guardrailInjectionBlocked
+        : statusLabels.guardrailBlocked;
       sendSSE(res, { type: 'error', error: userMessage });
       guardrailBlocked = true;
       return {
@@ -355,7 +382,7 @@ export async function runAgentWithSSE(
       // Check duration limit
       if (!limitReached && Date.now() - turnStart > AGENTIC_LIMITS.maxTurnDurationMs) {
         limitReached = true;
-        const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
+        const limitMsg = statusLabels.limitMaxDuration;
         sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
         break;
       }
@@ -364,7 +391,7 @@ export async function runAgentWithSSE(
       // query has already consumed its token budget. Protects the fixed credit price.
       if (!limitReached && totalOutputTokens >= AGENTIC_LIMITS.maxOutputTokensPerQuery) {
         limitReached = true;
-        const limitMsg = 'Budget de calcul de la requête atteint. Voici les résultats disponibles.';
+        const limitMsg = statusLabels.limitMaxTokens;
         logger.warn(`[copilot] Output token budget reached (${totalOutputTokens}/${AGENTIC_LIMITS.maxOutputTokensPerQuery}). Stopping run.`);
         sendSSE(res, { type: 'limit_reached', reason: 'max_tokens', message: limitMsg });
         break;
@@ -436,7 +463,7 @@ export async function runAgentWithSSE(
                   sendSSE(res, {
                     type: 'status',
                     phase: 'writing',
-                    label: 'Rédaction en cours',
+                    label: statusLabels.writing,
                     elapsedMs: firstTokenMs,
                   });
                 }
@@ -461,7 +488,7 @@ export async function runAgentWithSSE(
                   sendSSE(res, {
                     type: 'status',
                     phase: 'tool_planning',
-                    label: 'Préparation des actions',
+                    label: statusLabels.toolPlanning,
                     elapsedMs: firstToolMs,
                   });
                 }
@@ -538,7 +565,7 @@ export async function runAgentWithSSE(
       // content vide). Sans ce garde-fou, on renvoyait une reponse vide a
       // l'utilisateur. On surface un message propre + log.
       if (response.stopReason === 'content_filter' && !finalOutput.trim()) {
-        const refusalMsg = "Je ne peux pas t'aider sur cette demande. Reformule ou pose une autre question.";
+        const refusalMsg = statusLabels.safetyRefusal;
         finalOutput = refusalMsg;
         segments.push({ type: 'text', content: refusalMsg });
         sendSSE(res, { type: 'text_delta', delta: refusalMsg });
@@ -597,7 +624,7 @@ export async function runAgentWithSSE(
         if (!limitReached && sameCount > AGENTIC_LIMITS.maxSameToolCalls) {
           limitReached = true;
           hitLoopDetection = true;
-          const limitMsg = `Boucle d'outils detectee (${toolUse.name} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits.`;
+          const limitMsg = statusLabels.limitToolLoop;
           logger.warn(`[copilot] Tool loop detected — ${loopKey} (#${sameCount}). Aborting run.`);
           sendSSE(res, { type: 'limit_reached', reason: 'tool_loop', message: limitMsg });
           finalOutput += `\n\n${limitMsg}`;
@@ -614,7 +641,7 @@ export async function runAgentWithSSE(
         // Check tool count limit
         if (!limitReached && toolCallCounter > AGENTIC_LIMITS.maxToolCalls) {
           limitReached = true;
-          const limitMsg = `Limite de ${AGENTIC_LIMITS.maxToolCalls} outils atteinte. Voici les résultats disponibles.`;
+          const limitMsg = statusLabels.limitMaxTools;
           sendSSE(res, { type: 'limit_reached', reason: 'max_tools', message: limitMsg });
         }
 
@@ -720,7 +747,7 @@ export async function runAgentWithSSE(
           if (!limitReached && consecutiveEmptyResults >= 3) {
             limitReached = true;
             hitLoopDetection = true;
-            const limitMsg = 'Plusieurs appels outils successifs n\'ont retourne aucun resultat exploitable. Je stoppe ici pour eviter une boucle inutile.';
+            const limitMsg = statusLabels.limitEmptyResults;
             sendSSE(res, { type: 'limit_reached', reason: 'semantic_empty_results', message: limitMsg });
             finalOutput += `\n\n${limitMsg}`;
             sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
@@ -760,8 +787,8 @@ export async function runAgentWithSSE(
   } catch (error: any) {
     logger.error('SSE stream error:', error);
     const userMessage = isOverloadedProviderError(error)
-      ? 'Service IA temporairement saturé. Merci de réessayer dans quelques secondes.'
-      : error.message || 'Erreur interne';
+      ? statusLabels.providerOverloaded
+      : error.message || statusLabels.providerUnavailable;
     sendSSE(res, { type: 'error', error: userMessage });
   } finally {
     clearInterval(heartbeatId);

@@ -1,17 +1,17 @@
 ---
 name: Skill Match (Actuel vs Cible)
-description: Analyse de couverture de competences vs un poste/objectif (talent ou cohorte) avec le block skill_match
+description: Analyse de couverture de compétences vs un poste/objectif (talent ou cohorte) avec le block skill_match
 modes: explore, org
 tools: sql_query, smart_search, find_competency, competency_graph
-triggers: analyse mes competences, suis-je fait pour ce poste, suis-je fait pour cette offre, qu'est-ce qui me manque, competences manquantes, gap de competences, ecart de competences, pret pour ce job, match avec l'offre, mon profil correspond, devenir, me former pour, ma cohorte couvre, mon vivier couvre, mon equipe a-t-elle les competences, couverture de la cohorte, couverture des competences, besoins du poste couverts, skill gap, actuel vs cible
+triggers: analyse mes compétences, analyse mes competences, suis-je fait pour ce poste, suis-je fait pour cette offre, qu'est-ce qui me manque, compétences manquantes, competences manquantes, gap de compétences, gap de competences, écart de compétences, ecart de competences, prêt pour ce job, pret pour ce job, match avec l'offre, mon profil correspond, devenir, me former pour, ma cohorte couvre, mon vivier couvre, mon équipe a-t-elle les compétences, mon equipe a-t-elle les competences, couverture de la cohorte, couverture des compétences, couverture des competences, besoins du poste couverts, skill gap, actuel vs cible
 priority: 8
 ---
 
 # Skill Match (Actuel vs Cible) — Workflow
 
-Objectif : rendre UN block `skill_match` qui compare des niveaux ACTUELS a des CIBLES (compétences du référentiel uniquement), avec une couverture globale et des insights actionnables.
+Objectif : rendre UN block `skill_match` qui compare des niveaux ACTUELS à des CIBLES (compétences du référentiel uniquement), avec une couverture globale et des insights actionnables.
 
-Detecte le scope :
+Détecte le scope :
 - **talent** (mode Explorer) : les compétences du talent vs un poste/métier qui l'intéresse.
 - **cohort** (mode Gérer) : l'agrégat des compétences du vivier/cohorte vs une cible.
 
@@ -39,7 +39,7 @@ Champs : `scope` ("talent"|"cohort"), `subject` (poste/objectif), `title?`, `cov
 
 ## Regles
 
-- Le block `skill_match` est le composant principal de la reponse. Un seul block par message.
+- Le block `skill_match` est le composant principal de la réponse. Un seul block par message.
 - Compétences du **référentiel uniquement** (issues de `opportunity_skills` / `org_skills_analytics` / `<skills>`). Ne jamais inventer une compétence.
 - Tous les niveaux en minuscules : beginner | intermediate | advanced | master.
 - Termine par 2-4 insights concrets et UNE prochaine action (talent → mode Étudier ; org → recrutement/formation ciblée).

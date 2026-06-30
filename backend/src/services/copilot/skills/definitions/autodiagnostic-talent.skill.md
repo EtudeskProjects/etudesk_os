@@ -50,41 +50,41 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 
 ---
 
-## Step 5: Visual Summary — 3 charts enchaines
+## Step 5: Visual Summary — 3 charts enchaînés
 
-Render les visualisations suivantes dans l'ordre. Chaque bloc dans un message separe si possible.
+Render les visualisations suivantes dans l'ordre. Chaque bloc dans un message séparé si possible.
 
-### Chart A — Profil de competences (Catalog #1, bloc `skills`)
+### Chart A — Profil de compétences (Catalog #1, bloc `skills`)
 
-7. Render le **bloc `skills`** (cartes de competences) du profil — JAMAIS un radar.
+7. Render le **bloc `skills`** (cartes de compétences) du profil — JAMAIS un radar.
 
-Lister les competences du talent depuis le contexte `<skills>` (Top 5-8 les plus avancees), avec leur `type` et `level` exacts :
+Lister les compétences du talent depuis le contexte `<skills>` (Top 5-8 les plus avancées), avec leur `type` et `level` exacts :
 
 ```skills
-{"title":"Mon profil de competences","skills":[{"name":"<competence>","type":"hard_skill","level":"advanced"},{"name":"<competence>","type":"knowledge","level":"intermediate"}]}
+{"title":"Mon profil de compétences","skills":[{"name":"<compétence>","type":"hard_skill","level":"advanced"},{"name":"<compétence>","type":"knowledge","level":"intermediate"}]}
 ```
 
-**Thinking flow** : Si < 3 skills total → remplacer le bloc `skills` par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
+**Thinking flow** : Si < 3 skills total → remplacer le bloc `skills` par un metric : `{"type":"metric","title":"Compétences déclarées","value":N,"unit":"skills"}` et encourager à compléter le profil.
 
-### Chart B — Repartition par type (Catalog #3)
+### Chart B — Répartition par type (Catalog #3)
 
-8. Render un **donut** de repartition par type de skill :
+8. Render un **donut** de répartition par type de skill :
 
 ```chart
-{"type":"donut","title":"Repartition de mes competences","data":[{"label":"Savoir-faire","value":8},{"label":"Savoir-être","value":4},{"label":"Savoir","value":3},{"label":"Outils","value":2},{"label":"Langues","value":1}],"total_label":"18 competences"}
+{"type":"donut","title":"Répartition de mes compétences","data":[{"label":"Savoir-faire","value":8},{"label":"Savoir-être","value":4},{"label":"Savoir","value":3},{"label":"Outils","value":2},{"label":"Langues","value":1}],"total_label":"18 compétences"}
 ```
 
-**Thinking flow** : Compter les skills par type catalogue (`knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`). Exclure les types a 0. Si un seul type present → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun savoir-être (soft skill) declare — c'est un axe a travailler."
+**Thinking flow** : Compter les skills par type catalogue (`knowledge`, `hard_skill`, `soft_skill`, `tool_platform`, `language`). Exclure les types à 0. Si un seul type présent → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun savoir-être déclaré — c'est un axe à travailler."
 
 ### Chart C — Distribution par niveau (Catalog #13)
 
-9. Render un **donut** de distribution par niveau de maitrise :
+9. Render un **donut** de distribution par niveau de maîtrise :
 
 ```chart
-{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Avance","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+{"type":"donut","title":"Tes compétences par niveau","data":[{"label":"Débutant","value":5},{"label":"Intermédiaire","value":8},{"label":"Avancé","value":3},{"label":"Master","value":1}],"total_label":"17 compétences"}
 ```
 
-**Thinking flow** : Compter par niveau. Exclure niveaux a 0. Labels lisibles : beginner→"Debutant", intermediate→"Intermediaire", advanced→"Avance", master→"Master". Si > 60% beginner → suggerer deep-dive. Si beaucoup d'advanced → suggerer un dossier de preuves ou une evaluation verifiee, pas une promotion automatique vers master.
+**Thinking flow** : Compter par niveau. Exclure niveaux à 0. Labels lisibles : beginner→"Débutant", intermediate→"Intermédiaire", advanced→"Avancé", master→"Master". Si > 60% beginner → suggérer deep-dive. Si beaucoup d'advanced → suggérer un dossier de preuves ou une évaluation vérifiée, pas une promotion automatique vers master.
 
 ---
 

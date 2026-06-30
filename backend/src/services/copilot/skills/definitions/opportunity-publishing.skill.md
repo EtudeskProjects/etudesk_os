@@ -3,7 +3,7 @@ name: Opportunity Publishing
 description: Create and publish a job opportunity directly on the platform from a conversation
 modes: org
 tools: sql_query
-triggers: publier une offre, creer une offre, poster un emploi, publish opportunity, creer un poste, publier un poste, recruter, CDI, CDD, stage, alternance, offre emploi, recruter un dev, recruter un stagiaire
+triggers: publier une offre, créer une offre, creer une offre, poster un emploi, publish opportunity, créer un poste, creer un poste, publier un poste, recruter, CDI, CDD, stage, alternance, offre emploi, recruter un dev, recruter un stagiaire
 priority: 8
 ---
 
@@ -11,7 +11,7 @@ priority: 8
 
 You are now in Opportunity Publishing mode. Your goal: generate a COMPLETE preview + confirmation block on the FIRST response.
 
-**Skill separation (CRITICAL):** This skill PUBLISHES opportunities on the platform (confirmation block). If the user wants only a PDF document ("generer une fiche de poste", "rediger une offre PDF"), use the job-description-generation skill instead. Triggers: "publier", "creer une offre", "poster" = this skill. Triggers: "fiche de poste PDF", "generer une fiche" = job-description-generation.
+**Skill separation (CRITICAL):** This skill PUBLISHES opportunities on the platform (confirmation block). If the user wants only a PDF document ("générer une fiche de poste", "rédiger une offre PDF"), use the job-description-generation skill instead. Triggers: "publier", "créer une offre", "poster" = this skill. Triggers: "fiche de poste PDF", "générer une fiche" = job-description-generation.
 
 ## Step 1: Extract and Infer
 
@@ -32,7 +32,7 @@ From the user's message, extract everything you can:
 
 **RULES:**
 - The organization is ALWAYS known from context — never question it.
-- If the user gives minimal info ("cree une offre commercial CDD"), you MUST still generate a complete, professional summary and requirements. You are the expert — draft it.
+- If the user gives minimal info ("crée une offre commercial CDD"), you MUST still generate a complete, professional summary and requirements. You are the expert — draft it.
 - Optionally call `sql_query` (org_opportunities) to check similar existing opportunities for tone and style reference.
 
 ## Step 2: Preview + Confirmation Block (SAME response)
@@ -44,9 +44,9 @@ Show the structured preview, then IMMEDIATELY the confirmation block. Do NOT ask
 **[Title]**
 - **Contrat** : [contract_type] | **Rythme** : Temps plein
 - **Lieu** : [city], [country] ([location_type])
-- **Remuneration** : [min] - [max] [currency]/mois
+- **Rémunération** : [min] - [max] [currency]/mois
 - **Description** : [summary — 2-3 sentences]
-- **Profil recherche** : [requirements — 3-5 points]
+- **Profil recherché** : [requirements — 3-5 points]
 - **Atouts** : [nice_to_have — if any]
 
 Omit any line where the value is unknown. No placeholders.
@@ -59,8 +59,8 @@ Then:
 
 ## Rules
 
-- NEVER generate a PDF document when the user asks to "publier", "creer", or "poster" an opportunity — use the confirmation block
-- "generer une fiche de poste" = PDF, "creer/publier une offre" = confirmation block
+- NEVER generate a PDF document when the user asks to "publier", "créer", or "poster" an opportunity — use the confirmation block
+- "générer une fiche de poste" = PDF, "créer/publier une offre" = confirmation block
 - Always set `organization_id` in the data to the current organization's ID
 - The `entity_id` in the confirmation block = organization ID
 - Default values: location_type=ON_SITE, work_rhythm=FULL_TIME, type=JOB
