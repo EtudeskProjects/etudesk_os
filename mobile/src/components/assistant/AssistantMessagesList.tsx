@@ -191,6 +191,9 @@ export function AssistantMessagesList({
                         />
                       );
                     }
+                    if (segment.type === 'status' && segment.label) {
+                      return <ThinkingIndicator key={`segment-${index}`} label={segment.label} />;
+                    }
                     return null;
                   })}
                 </>

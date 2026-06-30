@@ -261,6 +261,8 @@ export async function runAgentWithSSE(
     outputTokens: number;
     cacheReadTokens: number;
     cacheCreationTokens: number;
+    firstTokenMs: number;
+    firstToolMs: number;
   };
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
@@ -278,6 +280,8 @@ export async function runAgentWithSSE(
   let totalOutputTokens = 0;
   let totalCacheReadTokens = 0;
   let totalCacheCreationTokens = 0;
+  let firstTokenMs = 0;
+  let firstToolMs = 0;
   const sameToolCounts = new Map<string, number>();
   const perToolCounts = new Map<string, number>();
   const sqlIntentCounts = new Map<string, number>();
@@ -328,6 +332,7 @@ export async function runAgentWithSSE(
           durationMs: Date.now() - turnStart, outputChars: 0,
           hasToolError: false, hitLoopDetection: false, hitTurnLimit: false, guardrailBlocked: true,
           inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0,
+          firstTokenMs: 0, firstToolMs: 0,
         },
       };
     }
@@ -426,6 +431,15 @@ export async function runAgentWithSSE(
             if (choice) {
               const delta = choice.delta;
               if (delta?.content) {
+                if (!firstTokenMs) {
+                  firstTokenMs = Date.now() - turnStart;
+                  sendSSE(res, {
+                    type: 'status',
+                    phase: 'writing',
+                    label: 'Rédaction en cours',
+                    elapsedMs: firstTokenMs,
+                  });
+                }
                 finalOutput += delta.content;
                 currentTurnText += delta.content;
                 textBuffer += delta.content;
@@ -442,6 +456,15 @@ export async function runAgentWithSSE(
                 }
               }
               if (delta?.tool_calls) {
+                if (!firstToolMs) {
+                  firstToolMs = Date.now() - turnStart;
+                  sendSSE(res, {
+                    type: 'status',
+                    phase: 'tool_planning',
+                    label: 'Préparation des actions',
+                    elapsedMs: firstToolMs,
+                  });
+                }
                 for (const tc of delta.tool_calls) {
                   const idx = tc.index ?? 0;
                   if (!toolCallAccum[idx]) {
@@ -729,6 +752,8 @@ export async function runAgentWithSSE(
     logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars, tokens: {in: ${totalInputTokens}, out: ${totalOutputTokens}, cached: ${totalCacheReadTokens}}`, {
       toolNames: toolTrace.map((t) => t.name).join(', '),
       finalOutputPreview: finalOutput.slice(0, 200),
+      firstTokenMs,
+      firstToolMs,
     });
   } catch (error: any) {
     logger.error('SSE stream error:', error);
@@ -804,6 +829,8 @@ export async function runAgentWithSSE(
     outputTokens: totalOutputTokens,
     cacheReadTokens: totalCacheReadTokens,
     cacheCreationTokens: totalCacheCreationTokens,
+    firstTokenMs,
+    firstToolMs,
   };
 
   return { finalOutput, toolTrace, segments, traceMetrics };

@@ -464,6 +464,18 @@ async function isActiveOrganizationMember(organizationId: string, talentId: stri
  * Response: Server-Sent Events stream
  */
 router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
+  const routeStart = Date.now();
+  let sseStarted = false;
+  const routeMetrics: Record<string, number> = {};
+  const markPhase = (phase: string, label: string) => {
+    const elapsedMs = Date.now() - routeStart;
+    routeMetrics[`${phase}Ms`] = elapsedMs;
+    logger.info(`[copilot] phase:${phase} ${elapsedMs}ms`);
+    if (sseStarted) {
+      sendSSE(res, { type: 'status', phase, label, elapsedMs });
+    }
+  };
+
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -495,6 +507,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
+    initSSE(res);
+    sseStarted = true;
+    markPhase('ack', 'Message reçu');
+
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
     const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
       ? requestIdempotencyKeyHeader[0]
@@ -508,7 +524,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       if (organizationId) {
         const orgOwner = await getOrganizationBillingOwner(organizationId, talentId);
         if (!orgOwner) {
-          return res.status(403).json({ error: req.t('organizations:notMember') });
+          sendSSE(res, { type: 'error', error: req.t('organizations:notMember') });
+          res.end();
+          return;
         }
 
         await debitWalletForAction({
@@ -541,16 +559,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       }
     } catch (debitError: any) {
       if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
-        return res.status(402).json({
-          error: req.t('billing:insufficientCredits'),
-          code: 'INSUFFICIENT_CREDITS',
-        });
+        sendSSE(res, { type: 'error', error: req.t('billing:insufficientCredits') });
+        res.end();
+        return;
       }
       throw debitError;
     }
-
-    // Initialize SSE
-    initSSE(res);
+    markPhase('billing', 'Crédits vérifiés');
 
     // --- PHASE 1: Session + Context + Language in parallel ---
     const isOrg = !!organizationId;
@@ -577,6 +592,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Language preference
       resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] }),
     ]);
+    markPhase('context', 'Contexte chargé');
     const sessionId = session.id;
     const sessionContext: Record<string, unknown> =
       session.context && typeof session.context === 'object'
@@ -663,6 +679,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const skillMode = isOrg ? 'org' : validMode;
     const userCountry = talentContext.profile?.country;
     const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org', userCountry);
+    markPhase('planning', detectedSkill ? 'Workflow spécialisé détecté' : 'Plan de réponse préparé');
     // Build active skill instructions with DPO few-shot examples
     let activeSkillInstructions: string | undefined;
     if (detectedSkill) {
@@ -813,6 +830,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const history = crossSessionMemory.length > 0
       ? [...crossSessionMemory, ...summarizedHistory]
       : summarizedHistory;
+    markPhase('history', 'Historique prêt');
 
     // --- Default agent message: infer intent from attachments if text is empty ---
     let agentMessage = safeMessage || (hasAttachments ? i18next.t('copilot:attachmentInferMessage') : '');
@@ -910,13 +928,26 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
       sendSSE(res, { type: 'text_delta', delta: finalOutput });
       sendSSE(res, { type: 'content_corrected', content: finalOutput });
-      sendSSE(res, { type: 'done', sessionId });
+      sendSSE(res, {
+        type: 'done',
+        sessionId,
+        metrics: {
+          ...routeMetrics,
+          totalMs: Date.now() - routeStart,
+          agentDurationMs: 0,
+          firstTokenMs: 0,
+          firstToolMs: 0,
+          toolCount: 0,
+          turnCount: 0,
+        },
+      });
       res.end();
       return;
     }
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
+    markPhase('agent_start', 'Assistant en réflexion');
     const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
       agent,
       agentMessage,
@@ -1086,7 +1117,19 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     sendSSE(res, { type: 'content_corrected', content: finalOutput });
 
     // Send done event
-    sendSSE(res, { type: 'done', sessionId });
+    sendSSE(res, {
+      type: 'done',
+      sessionId,
+      metrics: {
+        ...routeMetrics,
+        totalMs: Date.now() - routeStart,
+        agentDurationMs: traceMetrics.durationMs,
+        firstTokenMs: traceMetrics.firstTokenMs,
+        firstToolMs: traceMetrics.firstToolMs,
+        toolCount: traceMetrics.toolCount,
+        turnCount: traceMetrics.turnCount,
+      },
+    });
     res.end();
   } catch (error: any) {
     logger.error('Error in copilot chat:', error);

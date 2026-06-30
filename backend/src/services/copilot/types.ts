@@ -65,6 +65,13 @@ export interface SSETextDeltaEvent {
   delta: string;
 }
 
+export interface SSEStatusEvent {
+  type: 'status';
+  phase: string;
+  label: string;
+  elapsedMs?: number;
+}
+
 export interface SSEToolStartEvent {
   type: 'tool_start';
   tool: {
@@ -90,6 +97,7 @@ export interface SSEToolEndEvent {
 export interface SSEDoneEvent {
   type: 'done';
   sessionId: string;
+  metrics?: Record<string, number>;
 }
 
 export interface SSEErrorEvent {
@@ -116,6 +124,7 @@ export interface SSEAudioReadyEvent {
 
 export type SSEEvent =
   | SSETextDeltaEvent
+  | SSEStatusEvent
   | SSEToolStartEvent
   | SSEToolEndEvent
   | SSEDoneEvent

@@ -31,11 +31,14 @@ export interface ToolSegmentData {
 }
 
 export interface MessageSegment {
-  type: 'text' | 'tool' | 'audio';
+  type: 'text' | 'tool' | 'audio' | 'status';
   content?: string;
   tool?: ToolSegmentData;
   audioUrl?: string;
   audioDuration?: number;
+  phase?: string;
+  label?: string;
+  elapsedMs?: number;
 }
 
 // Message types
@@ -195,6 +198,7 @@ class CopilotService {
       onToolEnd: (tool: { callId: string; name: string; summary?: string; result?: unknown; duration?: number; status: 'success' | 'error'; error?: string }) => void;
       onDone: (sessionId: string) => void;
       onError: (error: string) => void;
+      onStatus?: (status: { phase: string; label: string; elapsedMs?: number }) => void;
       onLimitReached?: (reason: string, message: string) => void;
       onContentCorrected?: (content: string) => void;
       onAudioReady?: (audioUrl: string, duration: number) => void;
@@ -261,6 +265,13 @@ class CopilotService {
                     duration: event.tool.duration,
                     status: event.tool.status || 'success',
                     error: event.tool.error,
+                  });
+                  break;
+                case 'status':
+                  callbacks.onStatus?.({
+                    phase: event.phase,
+                    label: event.label,
+                    elapsedMs: event.elapsedMs,
                   });
                   break;
                 case 'done':

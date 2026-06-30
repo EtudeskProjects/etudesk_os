@@ -235,7 +235,7 @@ export function useAssistantStreaming({
             setMessages((prev) =>
               prev.map((message) => {
                 if (message.id !== assistantMsgId) return message;
-                const nextSegments = [...message.segments];
+                const nextSegments = message.segments.filter((segment) => segment.type !== 'status');
                 const lastSegment = nextSegments[nextSegments.length - 1];
                 if (lastSegment && lastSegment.type === 'text') {
                   nextSegments[nextSegments.length - 1] = {
@@ -300,6 +300,26 @@ export function useAssistantStreaming({
                     }
                   : message
               )
+            );
+          },
+          onStatus: (status) => {
+            setMessages((prev) =>
+              prev.map((message) => {
+                if (message.id !== assistantMsgId || message.content) return message;
+                const withoutPreviousStatus = message.segments.filter((segment) => segment.type !== 'status');
+                return {
+                  ...message,
+                  segments: [
+                    ...withoutPreviousStatus,
+                    {
+                      type: 'status' as const,
+                      phase: status.phase,
+                      label: status.label,
+                      elapsedMs: status.elapsedMs,
+                    },
+                  ],
+                };
+              })
             );
           },
           onDone: (newSessionId) => {
