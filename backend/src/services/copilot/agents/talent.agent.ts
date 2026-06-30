@@ -84,6 +84,7 @@ export function createTalentAgent(
     name: `Talent Agent (${mode})`,
     mode: mode as 'explore' | 'study',
     model: MODEL_AGENT,
+    language: context.language,
     systemPrompt: dynamicPrompt,
     systemPromptStatic: staticPrompt,
     tools,

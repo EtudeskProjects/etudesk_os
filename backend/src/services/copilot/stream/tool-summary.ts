@@ -1,76 +1,114 @@
 /**
  * Tool Summary Generator
- * Generates human-readable French summaries for tool execution results
+ * Generates human-readable summaries for tool execution results
  * Includes args context for richer tool block display
  */
 
-const NAMESPACE_LABELS: Record<string, string> = {
-  opportunities: 'opportunités',
-  communities: 'communautés',
-  spaces: 'espaces',
-  talents: 'talents',
-  organizations: 'organisations',
+import { SupportedLanguage } from '../../../i18n';
+
+const NAMESPACE_LABELS: Record<string, { fr: string; en: string }> = {
+  opportunities: { fr: 'opportunités', en: 'opportunities' },
+  communities: { fr: 'communautés', en: 'communities' },
+  spaces: { fr: 'espaces', en: 'spaces' },
+  talents: { fr: 'talents', en: 'talents' },
+  organizations: { fr: 'organisations', en: 'organizations' },
 };
 
-const INTENT_LABELS: Record<string, string> = {
-  my_profile: 'Mon profil',
-  my_applications: 'Mes candidatures',
-  my_reservations: 'Mes réservations',
-  my_invitations: 'Mes invitations',
-  my_communities: 'Mes communautés',
-  my_bookmarks: 'Mes favoris',
-  my_documents: 'Mes documents',
-  my_skills: 'Mes compétences',
-  org_members: 'Membres',
-  org_applications: 'Candidatures reçues',
-  org_stats: 'Statistiques',
-  org_opportunities: 'Opportunités',
-  org_communities: 'Communautés',
-  org_spaces: 'Espaces',
-  org_invitations: 'Invitations',
-  org_documents: 'Documents organisation',
-  org_talents: 'Talents CRM',
-  org_talent_profile: 'Profil talent',
-  org_community_feed: 'Activités communauté',
-  org_community_members: 'Membres communauté',
-  org_skills_analytics: 'Analyse compétences',
-  org_application_funnel: 'Entonnoir candidatures',
-  org_talent_cohorts: 'Cohortes talents',
-  org_geo_distribution: 'Répartition géographique',
-  org_community_engagement: 'Engagement communautés',
-  org_opportunity_performance: 'Performance opportunités',
-  my_community_feed: 'Feed communauté',
-  my_community_members: 'Membres communauté',
-  search_opportunities: 'Recherche opportunités',
-  search_communities: 'Recherche communautés',
-  search_spaces: 'Recherche espaces',
-  search_organizations: 'Recherche organisations',
-  search_talents: 'Recherche talents',
-  apply_opportunity: 'Candidature',
-  join_community: 'Adhésion communauté',
-  book_space: 'Réservation espace',
-  create_activity: 'Création activité',
-  respond_invitation: 'Réponse invitation',
-  update_application: 'Mise à jour candidature',
+const INTENT_LABELS: Record<string, { fr: string; en: string }> = {
+  my_profile: { fr: 'Mon profil', en: 'My profile' },
+  my_applications: { fr: 'Mes candidatures', en: 'My applications' },
+  my_reservations: { fr: 'Mes réservations', en: 'My reservations' },
+  my_invitations: { fr: 'Mes invitations', en: 'My invitations' },
+  my_communities: { fr: 'Mes communautés', en: 'My communities' },
+  my_bookmarks: { fr: 'Mes favoris', en: 'My bookmarks' },
+  my_documents: { fr: 'Mes documents', en: 'My documents' },
+  my_skills: { fr: 'Mes compétences', en: 'My skills' },
+  org_members: { fr: 'Membres', en: 'Members' },
+  org_applications: { fr: 'Candidatures reçues', en: 'Received applications' },
+  org_stats: { fr: 'Statistiques', en: 'Stats' },
+  org_opportunities: { fr: 'Opportunités', en: 'Opportunities' },
+  org_communities: { fr: 'Communautés', en: 'Communities' },
+  org_spaces: { fr: 'Espaces', en: 'Spaces' },
+  org_invitations: { fr: 'Invitations', en: 'Invitations' },
+  org_documents: { fr: 'Documents organisation', en: 'Organization documents' },
+  org_talents: { fr: 'Talents CRM', en: 'CRM talents' },
+  org_talent_profile: { fr: 'Profil talent', en: 'Talent profile' },
+  org_community_feed: { fr: 'Activités communauté', en: 'Community activity' },
+  org_community_members: { fr: 'Membres communauté', en: 'Community members' },
+  org_skills_analytics: { fr: 'Analyse compétences', en: 'Skills analytics' },
+  org_application_funnel: { fr: 'Entonnoir candidatures', en: 'Application funnel' },
+  org_talent_cohorts: { fr: 'Cohortes talents', en: 'Talent cohorts' },
+  org_geo_distribution: { fr: 'Répartition géographique', en: 'Geographic distribution' },
+  org_community_engagement: { fr: 'Engagement communautés', en: 'Community engagement' },
+  org_opportunity_performance: { fr: 'Performance opportunités', en: 'Opportunity performance' },
+  my_community_feed: { fr: 'Feed communauté', en: 'Community feed' },
+  my_community_members: { fr: 'Membres communauté', en: 'Community members' },
+  search_opportunities: { fr: 'Recherche opportunités', en: 'Opportunity search' },
+  search_communities: { fr: 'Recherche communautés', en: 'Community search' },
+  search_spaces: { fr: 'Recherche espaces', en: 'Space search' },
+  search_organizations: { fr: 'Recherche organisations', en: 'Organization search' },
+  search_talents: { fr: 'Recherche talents', en: 'Talent search' },
+  apply_opportunity: { fr: 'Candidature', en: 'Application' },
+  join_community: { fr: 'Adhésion communauté', en: 'Community membership' },
+  book_space: { fr: 'Réservation espace', en: 'Space booking' },
+  create_activity: { fr: 'Création activité', en: 'Activity creation' },
+  respond_invitation: { fr: 'Réponse invitation', en: 'Invitation response' },
+  update_application: { fr: 'Mise à jour candidature', en: 'Application update' },
 };
 
 export function generateToolSummary(
   toolName: string,
   output: unknown,
   isError: boolean,
-  args?: Record<string, unknown>
+  args?: Record<string, unknown>,
+  language: SupportedLanguage = 'en'
 ): string {
+  const isFrench = language === 'fr';
+  const tr = {
+    error: isFrench ? 'Erreur' : 'Error',
+    actionNotDone: isFrench ? 'Action non réalisée' : 'Action not completed',
+    unknownError: isFrench ? 'Erreur inconnue' : 'Unknown error',
+    noResult: isFrench ? 'Aucun résultat' : 'No results',
+    dataLoaded: isFrench ? 'Données chargées' : 'Data loaded',
+    element: (count: number) => isFrench
+      ? `${count} élément${count > 1 ? 's' : ''}`
+      : `${count} item${count > 1 ? 's' : ''}`,
+    result: (count: number) => isFrench
+      ? `${count} résultat${count > 1 ? 's' : ''}`
+      : `${count} result${count > 1 ? 's' : ''}`,
+    video: (count: number) => isFrench
+      ? `${count} vidéo${count > 1 ? 's' : ''} trouvée${count > 1 ? 's' : ''}`
+      : `${count} video${count > 1 ? 's' : ''} found`,
+    noVideo: isFrench ? 'Aucune vidéo' : 'No videos',
+    generatedDocument: isFrench ? 'Document généré' : 'Document generated',
+    saved: isFrench ? 'sauvegardé' : 'saved',
+    generatedImage: isFrench ? 'Image générée' : 'Image generated',
+    generatedDiagram: isFrench ? 'Diagramme généré' : 'Diagram generated',
+    noWebSource: isFrench ? 'Aucune source fiable trouvée' : 'No reliable sources found',
+    webDone: isFrench ? 'Recherche web terminée' : 'Web search complete',
+    extractionUnavailable: isFrench ? 'Extraction indisponible' : 'Extraction unavailable',
+    degradedRead: isFrench ? 'Lu (mode dégradé)' : 'Read (degraded mode)',
+    documentRead: isFrench ? 'Document lu' : 'Document read',
+    read: isFrench ? 'Lu' : 'Read',
+    referential: isFrench ? 'Référentiel' : 'Catalog',
+    catalogSearch: isFrench ? 'Recherche référentiel' : 'Catalog search',
+    graph: isFrench ? 'Graphe compétences' : 'Skill graph',
+    skill: isFrench ? 'Compétence' : 'Skill',
+    skillUpdated: isFrench ? 'Compétence mise à jour' : 'Skill updated',
+    actionDone: isFrench ? 'Action effectuée' : 'Action completed',
+    done: isFrench ? 'Terminé' : 'Done',
+  };
   const outputObj = (output && typeof output === 'object') ? (output as any) : null;
   if (!isError && outputObj && outputObj.success === false) {
-    const msg = outputObj.error || outputObj.message || 'Action non réalisée';
-    return `Erreur: ${String(msg).slice(0, 100)}`;
+    const msg = outputObj.error || outputObj.message || tr.actionNotDone;
+    return `${tr.error}: ${String(msg).slice(0, 100)}`;
   }
 
   if (isError) {
     const msg = typeof output === 'string'
       ? output
-      : (output as any)?.message || (output as any)?.error || 'Erreur inconnue';
-    return `Erreur: ${String(msg).slice(0, 100)}`;
+      : (output as any)?.message || (output as any)?.error || tr.unknownError;
+    return `${tr.error}: ${String(msg).slice(0, 100)}`;
   }
 
   try {
@@ -79,20 +117,18 @@ export function generateToolSummary(
         const results = Array.isArray(output) ? output : (output as any)?.results;
         const count = Array.isArray(results) ? results.length : 0;
         const entity = args?.entity as string | undefined;
-        const typeLabel = entity ? NAMESPACE_LABELS[entity] || entity : '';
-        const countText = count > 0
-          ? `${count} résultat${count > 1 ? 's' : ''}`
-          : 'Aucun résultat';
+        const typeLabel = entity ? NAMESPACE_LABELS[entity]?.[isFrench ? 'fr' : 'en'] || entity : '';
+        const countText = count > 0 ? tr.result(count) : tr.noResult;
         return typeLabel ? `${countText} · ${typeLabel}` : countText;
       }
 
       case 'sql_query': {
         const intent = args?.intent as string | undefined;
-        const intentLabel = intent ? INTENT_LABELS[intent] || intent.replace(/_/g, ' ') : '';
-        let countText = 'Données chargées';
+        const intentLabel = intent ? INTENT_LABELS[intent]?.[isFrench ? 'fr' : 'en'] || intent.replace(/_/g, ' ') : '';
+        let countText = tr.dataLoaded;
         if (Array.isArray(output)) {
           const count = output.length;
-          countText = count > 0 ? `${count} élément${count > 1 ? 's' : ''}` : 'Aucun résultat';
+          countText = count > 0 ? tr.element(count) : tr.noResult;
         } else if (typeof output === 'object' && output !== null) {
           // Search for the first array value in the output object
           // Handles: { applications: [...] }, { communities: [...] }, { skills: [...] }, etc.
@@ -101,7 +137,7 @@ export function generateToolSummary(
           if (arrayKey) {
             const arr = obj[arrayKey] as unknown[];
             const count = arr.length;
-            countText = count > 0 ? `${count} élément${count > 1 ? 's' : ''}` : 'Aucun résultat';
+            countText = count > 0 ? tr.element(count) : tr.noResult;
           }
         }
         return intentLabel ? `${countText} · ${intentLabel}` : countText;
@@ -110,27 +146,27 @@ export function generateToolSummary(
       case 'youtube_search': {
         const videos = Array.isArray(output) ? output : (output as any)?.results || (output as any)?.videos;
         const count = Array.isArray(videos) ? videos.length : 0;
-        return count > 0 ? `${count} vidéo${count > 1 ? 's' : ''} trouvée${count > 1 ? 's' : ''}` : 'Aucune vidéo';
+        return count > 0 ? tr.video(count) : tr.noVideo;
       }
 
       case 'generate_document': {
         const docId = (output as any)?.id;
         const docTitle = (output as any)?.metadata?.title || (output as any)?.filename;
-        const label = docTitle ? `Document généré · ${String(docTitle).slice(0, 50)}` : 'Document généré';
-        return docId ? `${label} (sauvegardé)` : label;
+        const label = docTitle ? `${tr.generatedDocument} · ${String(docTitle).slice(0, 50)}` : tr.generatedDocument;
+        return docId ? `${label} (${tr.saved})` : label;
       }
 
       case 'generate_image':
-        return 'Image générée';
+        return tr.generatedImage;
 
       case 'generate_diagram':
-        return 'Diagramme généré';
+        return tr.generatedDiagram;
 
       case 'web_search':
         if ((output as any)?.results?.length === 0) {
-          return 'Aucune source fiable trouvée';
+          return tr.noWebSource;
         }
-        return 'Recherche web terminée';
+        return tr.webDone;
 
       case 'file_reader':
       case 'file_read': {
@@ -139,29 +175,29 @@ export function generateToolSummary(
           || (output as any)?.title;
         const extractionMode = (output as any)?.document?.extractionMode;
         if (extractionMode === 'unavailable') {
-          return docTitle ? `Extraction indisponible · ${String(docTitle).slice(0, 60)}` : 'Extraction indisponible';
+          return docTitle ? `${tr.extractionUnavailable} · ${String(docTitle).slice(0, 60)}` : tr.extractionUnavailable;
         }
         if (extractionMode === 'salvaged') {
-          return docTitle ? `Lu (mode dégradé) · ${String(docTitle).slice(0, 60)}` : 'Document lu (mode dégradé)';
+          return docTitle ? `${tr.degradedRead} · ${String(docTitle).slice(0, 60)}` : `${tr.documentRead} (${isFrench ? 'mode dégradé' : 'degraded mode'})`;
         }
-        if (docTitle) return `Lu · ${String(docTitle).slice(0, 60)}`;
+        if (docTitle) return `${tr.read} · ${String(docTitle).slice(0, 60)}`;
         const name = args?.fileName || args?.name || args?.file;
-        return name ? `Lu · ${String(name).slice(0, 60)}` : 'Document lu';
+        return name ? `${tr.read} · ${String(name).slice(0, 60)}` : tr.documentRead;
       }
 
       case 'find_competency': {
         const q = args?.query as string | undefined;
         const inCat = outputObj?.in_catalog as boolean | undefined;
         const name = outputObj?.competency?.name as string | undefined;
-        if (inCat && name) return `Référentiel · ${name}`;
-        if (q) return `Référentiel · "${q}"`;
-        return 'Recherche référentiel';
+        if (inCat && name) return `${tr.referential} · ${name}`;
+        if (q) return `${tr.referential} · "${q}"`;
+        return tr.catalogSearch;
       }
 
       case 'competency_graph': {
         const name = outputObj?.competency?.name as string | undefined;
         const q = args?.query as string | undefined;
-        return name ? `Graphe compétences · ${name}` : q ? `Graphe compétences · ${q}` : 'Graphe compétences';
+        return name ? `${tr.graph} · ${name}` : q ? `${tr.graph} · ${q}` : tr.graph;
       }
 
       case 'manage_skills': {
@@ -169,28 +205,28 @@ export function generateToolSummary(
         const resolvedName = outputObj?.skill?.name as string | undefined;
         const skill = resolvedName || (args?.skillQuery as string | undefined) || (args?.skillName as string | undefined);
         const level = outputObj?.skill?.level as string | undefined;
-        if (skill) return level ? `Compétence · ${skill} (${level})` : `Compétence · ${skill}`;
-        return 'Compétence mise à jour';
+        if (skill) return level ? `${tr.skill} · ${skill} (${level})` : `${tr.skill} · ${skill}`;
+        return tr.skillUpdated;
       }
 
       case 'execute_action': {
         const action = args?.action as string | undefined;
-        const actionLabels: Record<string, string> = {
-          apply_opportunity: 'Candidature soumise',
-          join_community: 'Communauté rejointe',
-          book_space: 'Espace réservé',
-          accept_invitation: 'Invitation acceptée',
-          decline_invitation: 'Invitation déclinée',
-          create_agenda_trigger: 'Trigger créé',
-          update_agenda_trigger: 'Trigger mis à jour',
+        const actionLabels: Record<string, { fr: string; en: string }> = {
+          apply_opportunity: { fr: 'Candidature soumise', en: 'Application submitted' },
+          join_community: { fr: 'Communauté rejointe', en: 'Community joined' },
+          book_space: { fr: 'Espace réservé', en: 'Space booked' },
+          accept_invitation: { fr: 'Invitation acceptée', en: 'Invitation accepted' },
+          decline_invitation: { fr: 'Invitation déclinée', en: 'Invitation declined' },
+          create_agenda_trigger: { fr: 'Trigger créé', en: 'Trigger created' },
+          update_agenda_trigger: { fr: 'Trigger mis à jour', en: 'Trigger updated' },
         };
-        return action ? actionLabels[action] || 'Action effectuée' : 'Action effectuée';
+        return action ? actionLabels[action]?.[isFrench ? 'fr' : 'en'] || tr.actionDone : tr.actionDone;
       }
 
       default:
-        return 'Terminé';
+        return tr.done;
     }
   } catch {
-    return 'Terminé';
+    return tr.done;
   }
 }

@@ -597,9 +597,15 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
+    const earlyStatusLanguage = resolveLanguageFromHeader(
+      req.headers['accept-language'],
+      inferLanguageFromUserMessage(safeMessage, 'en')
+    );
+    const earlyPhaseLabel = (key: string) => i18next.t(`copilot:${key}`, { lng: earlyStatusLanguage });
+
     initSSE(res);
     sseStarted = true;
-    markPhase('ack', req.t('copilot:statusAck'));
+    markPhase('ack', earlyPhaseLabel('statusAck'));
 
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
     const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
@@ -655,7 +661,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       }
       throw debitError;
     }
-    markPhase('billing', req.t('copilot:statusBilling'));
+    markPhase('billing', earlyPhaseLabel('statusBilling'));
 
     // --- PHASE 1: Session + Context + Language in parallel ---
     const isOrg = !!organizationId;

@@ -27,6 +27,7 @@ export interface AgentConfig {
   name: string;
   mode: 'explore' | 'study' | 'org';
   model: string;
+  language?: import('../../../i18n').SupportedLanguage;
   /** Per-user / dynamic part of the system prompt (situation, profile, context). */
   systemPrompt: string;
   /**

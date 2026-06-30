@@ -53,6 +53,7 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
     name: 'Organization Explorer',
     mode: 'org' as const,
     model: MODEL_AGENT,
+    language: context.language,
     systemPrompt: dynamicPrompt,
     systemPromptStatic: staticPrompt,
     tools: [

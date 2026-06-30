@@ -450,7 +450,7 @@ export async function runAgentWithSSE(
           typeof initialToolChoice === 'object' &&
           initialToolChoice.type === 'function'
         ) {
-          const preface = buildToolPreface(initialToolChoice.function.name);
+          const preface = buildToolPreface(initialToolChoice.function.name, agentConfig.language);
           finalOutput += preface;
           currentTurnText += preface;
           segments.push({ type: 'text', content: preface });
@@ -740,7 +740,7 @@ export async function runAgentWithSSE(
         });
 
         // Update segment
-        const summary = generateToolSummary(toolUse.name, output, isError, toolUse.input);
+        const summary = generateToolSummary(toolUse.name, output, isError, toolUse.input, agentConfig.language);
         const toolSeg = segments.find(
           (s) => s.type === 'tool' && s.tool?.callId === callId
         );

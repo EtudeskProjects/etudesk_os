@@ -165,19 +165,28 @@ export function getAgentCompletionOptions(): {
   };
 }
 
-export function buildToolPreface(toolName: string): string {
-  switch (toolName) {
-    case 'smart_search':
-      return 'Je vérifie les résultats disponibles.\n\n';
-    case 'sql_query':
-      return 'Je consulte les données disponibles.\n\n';
-    case 'file_reader':
-      return 'Je lis le document avant de répondre.\n\n';
-    case 'web_search':
-      return 'Je vérifie les sources externes utiles.\n\n';
-    default:
-      return 'Je vérifie les données utiles.\n\n';
-  }
+export function buildToolPreface(toolName: string, language: AgentConfig['language'] = 'en'): string {
+  const isFrench = language === 'fr';
+  const labels: Record<string, { fr: string; en: string }> = {
+    smart_search: {
+      fr: 'Je vérifie les résultats disponibles.',
+      en: 'Checking available results.',
+    },
+    sql_query: {
+      fr: 'Je consulte les données disponibles.',
+      en: 'Checking the available data.',
+    },
+    file_reader: {
+      fr: 'Je lis le document avant de répondre.',
+      en: 'Reading the document first.',
+    },
+    web_search: {
+      fr: 'Je vérifie les sources externes utiles.',
+      en: 'Checking useful external sources.',
+    },
+  };
+  const fallback = isFrench ? 'Je vérifie les données utiles.' : 'Checking the useful data.';
+  return `${labels[toolName]?.[isFrench ? 'fr' : 'en'] || fallback}\n\n`;
 }
 
 export function inferInitialToolChoice(
