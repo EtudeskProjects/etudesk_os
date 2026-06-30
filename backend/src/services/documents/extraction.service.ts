@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai';
 import { MODEL_SEARCH } from '../ai/models';
-import { getAIClient } from '../ai/provider';
+import { deleteAIFile, getAIClient } from '../ai/provider';
 import { recordUsage } from '../ai/usage.service';
 import {
   DocumentType,
@@ -239,7 +239,7 @@ export async function extractDocumentMetadata(
 
     // Cleanup: delete uploaded file from the compatible provider.
     if (uploadedFileId) {
-      aiClient.files.delete(uploadedFileId).catch(() => {});
+      deleteAIFile(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

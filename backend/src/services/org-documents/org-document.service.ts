@@ -12,7 +12,7 @@ import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
-import { getAIClient } from '../ai/provider';
+import { deleteAIFile, getAIClient } from '../ai/provider';
 import { buildOrgExtractionPrompt, ORG_EXTRACTION_SYSTEM_PROMPT } from '../ai/prompts/org-extraction.prompt';
 import { DOCUMENT_STATUS, DocumentStatus } from '../../constants/documents';
 import {
@@ -276,7 +276,7 @@ export async function processOrgDocumentExtraction(
     });
 
     if (uploadedFileId) {
-      aiClient.files.delete(uploadedFileId).catch(() => {});
+      deleteAIFile(uploadedFileId).catch(() => {});
     }
 
     const content = completion.choices[0]?.message?.content?.trim();

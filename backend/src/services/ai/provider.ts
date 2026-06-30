@@ -55,3 +55,11 @@ export function getImageClient(): OpenAI { return aiClient; }
 
 /** Embeddings client, stored in pgvector. */
 export function getEmbeddingClient(): OpenAI { return aiClient; }
+
+/** Delete a temporary provider file across OpenAI SDK versions. */
+export async function deleteAIFile(fileId: string): Promise<void> {
+  const files = aiClient.files as any;
+  const deleteFile = files.delete ?? files.del;
+  if (typeof deleteFile !== 'function') return;
+  await deleteFile.call(files, fileId);
+}
