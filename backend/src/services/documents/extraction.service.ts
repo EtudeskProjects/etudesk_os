@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai';
 import { MODEL_SEARCH } from '../ai/models';
-import { deleteAIFile, getAIClient } from '../ai/provider';
+import { getAIClient } from '../ai/provider';
 import { recordUsage } from '../ai/usage.service';
 import {
   DocumentType,
@@ -18,6 +18,9 @@ import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/e
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 import { pool } from '../database';
 import { logger } from '../../utils';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse: (buffer: Buffer) => Promise<{ text?: string; numpages?: number }> = require('pdf-parse');
 
 export interface ExtractedSkill {
   name: string;
@@ -147,6 +150,79 @@ function parseExtractionPayload(content: string): Partial<ExtractedDocumentData>
   throw lastError instanceof Error ? lastError : new Error('Invalid JSON extraction payload');
 }
 
+function normalizePdfText(text: string): string | null {
+  const normalized = text
+    .replace(/\u0000/g, ' ')
+    .replace(/[^\S\r\n]+/g, ' ')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 2)
+    .join('\n')
+    .trim();
+
+  return normalized.length >= 80 ? normalized.slice(0, 18000) : null;
+}
+
+function salvagePdfText(buffer: Buffer): string | null {
+  const source = buffer.toString('latin1').replace(/[^\x09\x0A\x0D\x20-\x7EÀ-ÿ]/g, ' ');
+  const chunks = source
+    .match(/[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ,.;:!?@%()'"\-_/+\n\r]{8,}/g)
+    ?.map((chunk) => chunk.replace(/\s+/g, ' ').trim())
+    .filter((chunk) => chunk.length >= 12) || [];
+  const text = [...new Set(chunks)].join('\n').trim();
+  return text.length >= 80 ? text.slice(0, 12000) : null;
+}
+
+async function extractPdfTextFromDataUrl(fileUrl: string): Promise<string | null> {
+  const base64Match = fileUrl.match(/^data:[^;]+;base64,(.+)$/);
+  if (!base64Match) {
+    throw new Error('Format PDF invalide');
+  }
+
+  const pdfBuffer = Buffer.from(base64Match[1], 'base64');
+  try {
+    const pdfData = await pdfParse(pdfBuffer);
+    return normalizePdfText(pdfData.text || '') || salvagePdfText(pdfBuffer);
+  } catch (error) {
+    const salvaged = salvagePdfText(pdfBuffer);
+    if (salvaged) {
+      logger.warn('PDF parsed in degraded extraction mode', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return salvaged;
+    }
+    throw error;
+  }
+}
+
+function buildFallbackPdfExtraction(pdfText: string | null, error: unknown): ExtractionResult {
+  const lowerText = (pdfText || '').toLowerCase();
+  const likelyCv = /curriculum vitae|\bcv\b|\bresume\b|expérience|experience|formation|compétences|competences|skills|education|linkedin/.test(lowerText);
+  const detectedType = likelyCv ? DOCUMENT_TYPES.CV : DOCUMENT_TYPES.OTHER;
+  const summarySource = pdfText
+    ? pdfText.replace(/\s+/g, ' ').trim().slice(0, 500)
+    : 'Document PDF importé. Le texte n’a pas pu être extrait automatiquement.';
+
+  logger.warn('Using fallback PDF document extraction', {
+    likelyCv,
+    error: error instanceof Error ? error.message : String(error),
+  });
+
+  return {
+    success: true,
+    data: {
+      detected_type: detectedType,
+      detected_category: DOCUMENT_TYPE_CATEGORIES[detectedType] || 'OTHER',
+      confidence_score: likelyCv ? 0.45 : 0.2,
+      title: likelyCv ? 'CV' : 'Document PDF',
+      description: summarySource,
+      tags: likelyCv ? ['cv', 'pdf'] : ['pdf'],
+      summary: summarySource,
+    },
+  };
+}
+
 // --- Extraction Functions ---
 
 /**
@@ -157,9 +233,12 @@ export async function extractDocumentMetadata(
   mimeType: string,
   talentId?: string
 ): Promise<ExtractionResult> {
+  const isPdfInput = mimeType === 'application/pdf';
+  let extractedPdfText: string | null = null;
+
   try {
     const isImage = mimeType.startsWith('image/');
-    const isPdf = mimeType === 'application/pdf';
+    const isPdf = isPdfInput;
 
     if (!isImage && !isPdf) {
       return {
@@ -195,29 +274,20 @@ export async function extractDocumentMetadata(
       { type: 'text', text: prompt },
     ];
 
-    let uploadedFileId: string | undefined;
-
     if (isImage) {
       contentParts.push({
         type: 'image_url',
         image_url: { url: fileUrl, detail: 'high' },
       });
     } else if (isPdf) {
-      // Upload PDF through the compatible Files API, then reference by file_id.
-      const base64Match = fileUrl.match(/^data:[^;]+;base64,(.+)$/);
-      if (!base64Match) {
-        return { success: false, error: 'Format PDF invalide' };
+      extractedPdfText = await extractPdfTextFromDataUrl(fileUrl);
+      if (!extractedPdfText) {
+        return buildFallbackPdfExtraction(null, new Error('Texte PDF vide ou non lisible'));
       }
-      const pdfBuffer = Buffer.from(base64Match[1], 'base64');
-      const file = await aiClient.files.create({
-        file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
-        purpose: 'assistants',
-      });
-      uploadedFileId = file.id;
       contentParts.push({
-        type: 'file',
-        file: { file_id: file.id },
-      } as any);
+        type: 'text',
+        text: `<uploaded_document mime_type="application/pdf">\n${extractedPdfText}\n</uploaded_document>`,
+      });
     }
 
     const completion = await aiClient.chat.completions.create({
@@ -236,11 +306,6 @@ export async function extractDocumentMetadata(
       scopeTalentId: talentId ?? null,
       billedActionCode: 'TALENT_DOCUMENT_UPLOAD',
     });
-
-    // Cleanup: delete uploaded file from the compatible provider.
-    if (uploadedFileId) {
-      deleteAIFile(uploadedFileId).catch(() => {});
-    }
 
     const content = completion.choices[0]?.message?.content?.trim();
     if (!content) {
@@ -271,6 +336,9 @@ export async function extractDocumentMetadata(
     };
   } catch (error) {
     logger.error('Document extraction error:', error);
+    if (isPdfInput) {
+      return buildFallbackPdfExtraction(extractedPdfText, error);
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown extraction error",

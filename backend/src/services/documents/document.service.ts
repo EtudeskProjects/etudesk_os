@@ -87,6 +87,15 @@ export interface DocumentListOptions {
   offset?: number;
 }
 
+function normalizeOriginalFilename(originalname: string): string {
+  const trimmed = (originalname || '').trim();
+  try {
+    return decodeURIComponent(trimmed).replace(/\0/g, '').trim() || trimmed || 'document.pdf';
+  } catch {
+    return trimmed.replace(/\0/g, '').trim() || 'document.pdf';
+  }
+}
+
 // --- Validation ---
 
 /**
@@ -164,9 +173,11 @@ export async function canUploadDocument(talentId: string): Promise<{
  */
 export async function uploadDocument(input: UploadDocumentInput): Promise<TalentDocument> {
   const { talentId, file, documentType, title, description, isPublic } = input;
+  const originalFilename = normalizeOriginalFilename(file.originalname);
+  const normalizedFile = { ...file, originalname: originalFilename };
 
   // Validate file
-  const validation = validateFile(file);
+  const validation = validateFile(normalizedFile);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
@@ -179,7 +190,7 @@ export async function uploadDocument(input: UploadDocumentInput): Promise<Talent
 
   // Generate unique filename
   const documentId = uuidv4();
-  const ext = file.originalname.split('.').pop()?.toLowerCase() || 'pdf';
+  const ext = originalFilename.split('.').pop()?.toLowerCase() || 'pdf';
   const storedFilename = `${documentId}.${ext}`;
   const storagePath = `documents/${talentId}/${storedFilename}`;
 
@@ -201,7 +212,7 @@ export async function uploadDocument(input: UploadDocumentInput): Promise<Talent
     [
       documentId,
       talentId,
-      file.originalname,
+      originalFilename,
       storedFilename,
       file.mimetype,
       file.size,

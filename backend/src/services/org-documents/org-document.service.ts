@@ -12,7 +12,7 @@ import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
-import { deleteAIFile, getAIClient } from '../ai/provider';
+import { getAIClient } from '../ai/provider';
 import { buildOrgExtractionPrompt, ORG_EXTRACTION_SYSTEM_PROMPT } from '../ai/prompts/org-extraction.prompt';
 import { DOCUMENT_STATUS, DocumentStatus } from '../../constants/documents';
 import {
@@ -25,6 +25,9 @@ import {
   isValidFileSize,
   isValidExtension,
 } from '../../constants/org-documents';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse: (buffer: Buffer) => Promise<{ text?: string; numpages?: number }> = require('pdf-parse');
 
 // --- Interfaces ---
 
@@ -82,6 +85,29 @@ export interface OrgDocumentListOptions {
   search?: string;
   limit?: number;
   offset?: number;
+}
+
+function normalizeOriginalFilename(originalname: string): string {
+  const trimmed = (originalname || '').trim();
+  try {
+    return decodeURIComponent(trimmed).replace(/\0/g, '').trim() || trimmed || 'document.pdf';
+  } catch {
+    return trimmed.replace(/\0/g, '').trim() || 'document.pdf';
+  }
+}
+
+function normalizePdfText(text: string): string | null {
+  const normalized = text
+    .replace(/\u0000/g, ' ')
+    .replace(/[^\S\r\n]+/g, ' ')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 2)
+    .join('\n')
+    .trim();
+
+  return normalized.length >= 80 ? normalized.slice(0, 18000) : null;
 }
 
 interface ExtractedOrgData {
@@ -158,8 +184,10 @@ export async function canOrgUploadDocument(organizationId: string): Promise<{
 
 export async function uploadOrgDocument(input: UploadOrgDocumentInput): Promise<OrgDocument> {
   const { organizationId, uploadedBy, file, documentType, title, description, isPublic } = input;
+  const originalFilename = normalizeOriginalFilename(file.originalname);
+  const normalizedFile = { ...file, originalname: originalFilename };
 
-  const validation = validateFile(file);
+  const validation = validateFile(normalizedFile);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
@@ -170,7 +198,7 @@ export async function uploadOrgDocument(input: UploadOrgDocumentInput): Promise<
   }
 
   const documentId = uuidv4();
-  const ext = file.originalname.split('.').pop()?.toLowerCase() || 'pdf';
+  const ext = originalFilename.split('.').pop()?.toLowerCase() || 'pdf';
   const storedFilename = `${documentId}.${ext}`;
   const storagePath = `org-documents/${organizationId}/${storedFilename}`;
 
@@ -190,7 +218,7 @@ export async function uploadOrgDocument(input: UploadOrgDocumentInput): Promise<
       documentId,
       organizationId,
       uploadedBy,
-      file.originalname,
+      originalFilename,
       storedFilename,
       file.mimetype,
       file.size,
@@ -243,8 +271,6 @@ export async function processOrgDocumentExtraction(
       { type: 'text', text: prompt },
     ];
 
-    let uploadedFileId: string | undefined;
-
     if (isImage) {
       contentParts.push({
         type: 'image_url',
@@ -256,15 +282,15 @@ export async function processOrgDocumentExtraction(
         throw new Error('Format PDF invalide');
       }
       const pdfBuffer = Buffer.from(base64Match[1], 'base64');
-      const file = await aiClient.files.create({
-        file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
-        purpose: 'assistants',
-      });
-      uploadedFileId = file.id;
+      const pdfData = await pdfParse(pdfBuffer);
+      const pdfText = normalizePdfText(pdfData.text || '');
+      if (!pdfText) {
+        throw new Error('Texte PDF vide ou non lisible');
+      }
       contentParts.push({
-        type: 'file',
-        file: { file_id: file.id },
-      } as any);
+        type: 'text',
+        text: `<uploaded_document mime_type="application/pdf">\n${pdfText}\n</uploaded_document>`,
+      });
     }
 
     const completion = await aiClient.chat.completions.create({
@@ -274,10 +300,6 @@ export async function processOrgDocumentExtraction(
         { role: 'user', content: contentParts },
       ],
     });
-
-    if (uploadedFileId) {
-      deleteAIFile(uploadedFileId).catch(() => {});
-    }
 
     const content = completion.choices[0]?.message?.content?.trim();
     if (!content) {
