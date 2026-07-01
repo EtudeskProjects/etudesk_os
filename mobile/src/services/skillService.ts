@@ -60,18 +60,40 @@ export const getSkillTypeLabel = (key: string): string =>
 
 export const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced', 'master'];
 
+type ListEnvelope<T> = T[] | {
+  data?: T[] | { data?: T[]; skills?: T[] };
+  skills?: T[];
+  items?: T[];
+};
+
+function unwrapList<T>(payload: ListEnvelope<T> | null | undefined): T[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.skills)) return payload.skills;
+  if (Array.isArray(payload.items)) return payload.items;
+
+  if (payload.data && typeof payload.data === 'object') {
+    if (Array.isArray(payload.data.data)) return payload.data.data;
+    if (Array.isArray(payload.data.skills)) return payload.data.skills;
+  }
+
+  return [];
+}
+
 const skillService = {
   async getMySkills(): Promise<TalentSkill[]> {
-    const response = await api.get<TalentSkill[]>('/api/skills/my');
-    return response.data;
+    const response = await api.get<ListEnvelope<TalentSkill>>('/api/skills/my');
+    return unwrapList(response.data);
   },
 
   /** Search the referential catalog (autocomplete for the skill picker). */
   async searchCatalog(query: string): Promise<CatalogCompetency[]> {
-    const response = await api.get<CatalogCompetency[]>(
+    const response = await api.get<ListEnvelope<CatalogCompetency>>(
       `/api/skills/catalog/search?q=${encodeURIComponent(query)}`
     );
-    return response.data;
+    return unwrapList(response.data);
   },
 
   /**

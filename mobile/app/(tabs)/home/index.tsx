@@ -378,6 +378,12 @@ export default function EcosystemScreen() {
     };
   }, [loadQuickActionCounts, loadNotifications, loadDailyObjective]);
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadQuickActionCounts();
+    }, [loadQuickActionCounts])
+  );
+
 // Render Talent Content
 const renderTalentContent = () => (
   <>
