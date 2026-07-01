@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "data:skills": "node scripts/gen-skills-data.mjs && node scripts/gen-graph.mjs",
-    "prebuild": "npm run data:skills",
+    "prebuild": "node -e \"console.log('Using committed skills data')\"",
     "predev": "rm -rf .next",
     "dev": "next dev",
     "build": "next build",
