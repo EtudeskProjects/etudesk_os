@@ -430,7 +430,7 @@ export async function runAgentWithSSE(
       const systemText = buildAgentSystemText(agentConfig);
       if (turnCount === 1) {
         promptChars = byteLength(systemText) + byteLength(messages);
-        logger.info(`[copilot] payload: promptChars=${promptChars}, toolSchemaChars=${toolSchemaChars}, tools=${toolDefs.length}/${agentConfig.tools.length}, toolProfile=${selectedToolProfile.reason}, history=${history.length}, maxTokens=${completionOptions.max_tokens}`);
+        logger.info(`[copilot] payload: promptChars=${promptChars}, toolSchemaChars=${toolSchemaChars}, tools=${toolDefs.length}/${agentConfig.tools.length}, toolProfile=${selectedToolProfile.reason}, history=${history.length}, maxTokens=${completionOptions.max_completion_tokens}`);
       }
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {

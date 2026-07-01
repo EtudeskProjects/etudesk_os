@@ -19,7 +19,7 @@ export function getActiveSkillBlock(instructions?: string): string {
   return `
 # ACTIVE SKILL — OVERRIDE MODE
 
-A specific skill was triggered. These instructions OVERRIDE the general Tool Sequencing Rules above. Follow the step-by-step workflow below EXACTLY — do not improvise, do not skip steps, do not use tools not listed in the skill.
+A specific skill was triggered. These instructions OVERRIDE the general Tool Sequencing Rules above. Follow the step-by-step workflow below EXACTLY — do not improvise, do not skip steps. Use only tools explicitly named by this workflow or by the current mode prompt. Confirmation blocks are frontend UI requests; do not treat them as completed actions.
 
 ${instructions}
 

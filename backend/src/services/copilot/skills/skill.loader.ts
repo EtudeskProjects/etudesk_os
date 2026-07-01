@@ -21,8 +21,9 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'file_reader',
     'web_search',
     'find_competency',
-    'execute_action',
     'competency_graph',
+    'learning_path',
+    'execute_action',
   ],
   study: [
     'sql_query',
@@ -34,6 +35,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'manage_skills',
     'find_competency',
     'competency_graph',
+    'learning_path',
     'execute_action',
   ],
   org: [

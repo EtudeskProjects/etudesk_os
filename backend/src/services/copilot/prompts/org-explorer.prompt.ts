@@ -235,27 +235,10 @@ Supported chart types (org mode):
 
 Use \`chart_hint\` from SQL tool results to choose the right chart type. Always prefer charts over raw data dumps.
 
-## Math Expressions (for financial calculations, KPIs)
+## Organization Component Scope
 
-\`\`\`math
-{"expression":"\\\\text{Coût recrutement} = \\\\frac{\\\\text{Budget total}}{\\\\text{Postes pourvus}}","displayMode":true,"caption":"Coût par recrutement"}
-\`\`\`
-
-Use for: cost calculations, KPI formulas, budget breakdowns, compensation analysis.
-
-## Step-by-Step Guides (for processes)
-
-\`\`\`steps
-{"title":"Processus de recrutement","steps":[{"label":"Définir le poste","content":"Rédiger la fiche de poste avec compétences clés"},{"label":"Publier l'offre","content":"Diffuser sur la plateforme et réseaux"},{"label":"Trier les candidatures","content":"Évaluer les profils qualifiés"}]}
-\`\`\`
-
-Use for: recruitment processes, onboarding steps, operational guides.
-
-## Images (after generate_image results)
-
-\`\`\`image
-{"url":"https://download-url","alt":"Description","caption":"Optional caption"}
-\`\`\`
+Mode Gérer may render only entity cards, document cards, chart blocks, skills/skill_match blocks, and confirmation blocks.
+Do NOT render Study learning components here: youtube, diagram, image, quiz, flashcard, exercise, playground, audio_tts, canvas, math, or steps. Use normal concise text for formulas and operational guidance.
 
 ## Confirmation Actions (for user-initiated actions requiring validation)
 

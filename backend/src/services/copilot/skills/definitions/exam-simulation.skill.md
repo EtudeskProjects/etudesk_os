@@ -3,7 +3,7 @@ name: Exam & Revision
 description: Mastery evaluation (exam, quiz, certification) and targeted spaced revision on weak skills
 modes: study
 tools: manage_skills, youtube_search, web_search
-triggers: examen, simulation, test complet, évaluation complète, evaluation complete, certifier, exam, passer un test, 10 questions, évaluation globale, evaluation globale, teste mes connaissances, évaluer mes compétences, evaluer mes competences, assessment, skill check, mes progrès, mes progres, niveau de maîtrise, niveau de maitrise, teste-moi sur, évalue-moi, evalue-moi, certification, obtenir une certification, badge, révision, revision, réviser, reviser, spaced repetition, rafraîchir, raffraichir, session révision, session revision, renforcer mes acquis, réviser mes acquis, reviser mes acquis, rafraîchir mes connaissances, rafraichir mes connaissances
+triggers: examen, simulation, test complet, évaluation complète, evaluation complete, certifier, exam, passer un test, 10 questions, évaluation globale, evaluation globale, teste mes connaissances, teste-moi sur, test moi sur, quiz sur, qcm sur, évalue-moi sur, evalue-moi sur, skill check sur, niveau de maîtrise de, niveau de maitrise de, certification, obtenir une certification, badge, révision, revision, réviser, reviser, spaced repetition, rafraîchir, raffraichir, session révision, session revision, renforcer mes acquis, réviser mes acquis, reviser mes acquis, rafraîchir mes connaissances, rafraichir mes connaissances
 priority: 7
 ---
 
@@ -14,10 +14,12 @@ You are now in Exam & Revision mode. Three formats available. Assessment is evid
 ## Mode Detection
 
 - **Spaced Repetition Flow** — triggered by "révision", "réviser", "rafraîchir", "session révision", "renforcer mes acquis", "réviser mes acquis", "rafraîchir mes connaissances", "spaced repetition". Follow Steps R1-R5 below.
-- **Quick Diagnostic (3 questions)** — triggered by "évaluer", "teste-moi sur", "assessment", "skill check", "mes progrès", "évalue-moi", "niveau de maîtrise". Follow the Quick Diagnostic Protocol.
+- **Quick Diagnostic (3 questions)** — triggered only by explicit test wording on a specific skill, such as "teste-moi sur Python", "quiz sur Machine Learning", "évalue-moi sur SQL", "skill check sur React", or "niveau de maîtrise de JavaScript". Follow the Quick Diagnostic Protocol.
 - **Full Exam (10 questions)** — triggered by "examen", "simulation", "test complet", "10 questions", "certifier", "évaluation complète", "certification". Follow the Full Exam Protocol.
 
-If ambiguous, default to Quick Diagnostic.
+If the user asks for "self assessment", "assessment of my skills", "bilan de compétences", "audit de profil", "forces/faiblesses", "quels métiers je peux faire", or opportunity directions, this is NOT Exam & Revision. Use Autodiagnostic Talent and do not output a quiz.
+
+If ambiguous, ask one short clarification instead of defaulting to a quiz.
 
 ---
 
@@ -94,10 +96,12 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 
 ## Quick Diagnostic Protocol (3 questions)
 
+This protocol is exact: emit THREE diagnostic `quiz` blocks before any applied practice. Do not replace Q3 with an exercise, steps block, flashcard, summary, or profile update.
+
 ### Step Q1: Choose the Topic
 
-1. If the user specifies a topic ("teste-moi sur Python"), use that topic.
-2. If the user says "bilan" or "évalue mes compétences" without a topic, pick the MOST RECENT topic discussed. If no prior topic, ask ONE question: "Sur quel sujet veux-tu être évalué ?"
+1. If the user explicitly asks to be tested on a topic ("teste-moi sur Python", "quiz sur SQL"), use that topic.
+2. If the user asks for a general profile/skills assessment without a specific test topic, stop this workflow and use Autodiagnostic Talent. Do not create a quiz to audit a profile.
 
 ### Step Q2: Check Current Level
 
@@ -110,10 +114,10 @@ Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill
 ### Step Q3: Run 3-Question Chain (ONE per message)
 
 **Question 1 — Recall:** Basic knowledge (definitions, key concepts). Wait for answer.
-**After Q1:** Brief feedback (correct/incorrect + 1 sentence). Proceed.
+**After Q1:** Brief feedback (correct/incorrect + 1 sentence), then emit Question 2 as one `quiz` block.
 
 **Question 2 — Application:** Practical application (code output, scenario). Wait for answer.
-**After Q2:** Brief feedback. Proceed.
+**After Q2:** Brief feedback, then emit Question 3 as one `quiz` block. Do not emit an exercise yet.
 
 **Question 3 — Analysis:** Deeper understanding (edge cases, tradeoffs). Wait for answer.
 

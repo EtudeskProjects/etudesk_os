@@ -59,7 +59,7 @@ import {
 
 // --- Config ---
 
-const TALENT_ID = '90000000-0000-4000-8000-000000000001';
+const TALENT_ID = process.env.COPILOT_STEERING_TALENT_ID || '90000000-0000-4000-8000-000000000001';
 const LANGUAGE = 'fr' as const;
 const HISTORY_LIMIT = 20;
 const SUMMARY_THRESHOLD = 12;

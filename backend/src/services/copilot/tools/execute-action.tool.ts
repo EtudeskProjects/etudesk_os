@@ -1,7 +1,8 @@
 /**
  * Execute Action Tool — Perform user-confirmed actions
  * Factory pattern with injected authenticatedTalentId for IDOR protection
- * Actions: apply_opportunity, join_community, book_space, accept_invitation, decline_invitation
+ * Actions: apply_opportunity, join_community, book_space, accept_invitation,
+ * decline_invitation, create_agenda_trigger, update_agenda_trigger
  */
 
 import { defineTool } from './tool-helper';
@@ -74,10 +75,10 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
   return defineTool({
     name: 'execute_action',
     description:
-      'Execute a user-confirmed action on the platform. ALWAYS show a confirmation block to the user BEFORE calling this tool. Actions: apply to opportunity, join community, book space, accept/decline invitation.',
+      'Execute a user-confirmed runtime action on the platform. ALWAYS show a confirmation block to the user BEFORE calling this tool. Supported tool actions: apply_opportunity, join_community, book_space, accept_invitation, decline_invitation, create_agenda_trigger, update_agenda_trigger. Publishing opportunities, creating communities/spaces, and updating profiles are handled by frontend confirmation blocks, not by this tool.',
     parameters: z.object({
       action: z.enum(ACTION_TYPES).describe('The action to execute'),
-      entityId: z.string().optional().default('').describe('The UUID of the target entity (opportunity, community, space, invitation, or trigger). For create_agenda_trigger tool execution, empty string "" is accepted, but UI confirmation blocks should use "self".'),
+      entityId: z.string().optional().default('').describe('The UUID of the target entity (opportunity, community, space, invitation, or trigger). For create_agenda_trigger tool execution, empty string "" is accepted, but confirmation blocks should use "self".'),
       dataJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
         .default('')

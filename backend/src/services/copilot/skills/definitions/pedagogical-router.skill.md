@@ -2,8 +2,8 @@
 name: Pedagogical Router
 description: Route a Study Mode request by catalog edges, competency type, family rhythm, and evidence requirements before choosing a learning component.
 modes: study
-tools: find_competency, competency_graph, youtube_search, web_search, file_reader, manage_skills
-triggers: parcours pedagogique, parcours pédagogique, progression competence, progression compétence, plan de formation, chemin d'apprentissage, quoi apprendre ensuite, par ou commencer, par où commencer, roadmap, referentiel, référentiel, exploiter le graphe, prerequis, prérequis, composant pedagogique, composant pédagogique, workflow pedagogique, workflow pédagogique
+tools: find_competency, competency_graph, youtube_search, web_search, file_reader, manage_skills, generate_diagram, generate_image
+triggers: parcours pedagogique, parcours pédagogique, progression competence, progression compétence, plan de formation, chemin d'apprentissage, quoi apprendre ensuite, par ou commencer, par où commencer, roadmap, referentiel, référentiel, exploiter le graphe, prerequis, prérequis, composant pedagogique, composant pédagogique, workflow pedagogique, workflow pédagogique, schema, schéma, diagramme, diagram, architecture, flow, processus, cycle, image, illustration, visuel, generer une image, générer une image, video, vidéo, youtube, cours video, cours vidéo, quiz, qcm, flashcard, carte memoire, carte mémoire, exercice, exercice interactif, fill gap, matching, ordering, steps, etapes, étapes, pas a pas, pas à pas, playground, code interactif, math, formule, equation, équation, canvas, geometrie, géométrie
 priority: 9
 ---
 
@@ -12,6 +12,14 @@ priority: 9
 Use this workflow when the learner asks what to learn next, how to progress, how to structure a course, or when the agent must choose the right Study Mode component.
 
 Principle: the graph decides **what comes before what**; the competency type decides **how to teach it**.
+
+Explicit component requests are learning asset requests:
+- Diagram/schema/flow/cycle -> call `generate_diagram`, render one `diagram` block, then one short mentor sentence.
+- Video/YouTube -> call `youtube_search`, render one `youtube` block, then one short mentor sentence.
+- Image/illustration -> ask confirmation because `generate_image` consumes credits; after confirmation call `generate_image`, render one `image` block.
+- Quiz/flashcard/exercise/steps/playground/math/canvas -> render that single component directly; no tool is required.
+
+These asset requests do not by themselves create or update skills.
 
 ---
 

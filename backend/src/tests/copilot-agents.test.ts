@@ -12,8 +12,10 @@ import * as path from 'path';
 import { pool } from '../services/database';
 import { createTalentAgent } from '../services/copilot/agents/talent.agent';
 import { createOrgAgent } from '../services/copilot/agents/organization.agent';
+import { detectSkillFromMessageStatic } from '../services/copilot/skills/skill.loader';
 import type { AgentConfig } from '../services/copilot/tools/tool-helper';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
+import { MODEL_AGENT } from '../services/ai/models';
 import { getChatClient } from '../services/ai/provider';
 import {
   AGENTIC_LIMITS,
@@ -202,6 +204,15 @@ function buildOrgTestContext(talentId: string, talentName: string, org: { id: st
   };
 }
 
+function activeSkillFor(message: string, mode: 'explore' | 'study' | 'org'): { name: string; instructions: string } | null {
+  const detectedSkill = detectSkillFromMessageStatic(message, mode);
+  if (!detectedSkill) return null;
+  return {
+    name: detectedSkill.skillName,
+    instructions: `\n<active_skill_instructions skill="${detectedSkill.skillId}" name="${detectedSkill.skillName}">\n${detectedSkill.instructions}\n</active_skill_instructions>\n`,
+  };
+}
+
 // --- Agent Execution — Full Capture ---
 
 interface ToolCallCapture {
@@ -306,7 +317,7 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
 }
 
 const ENTITY_CARD_ID_REGEX = /```entity:(?!maps)(\w+)\s*\n\s*\{\s*"id"\s*:\s*"([^"]+)"/g;
-const UUID_VALUE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_VALUE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function collectToolResultIds(value: unknown): Set<string> {
   const ids = new Set<string>();
@@ -323,6 +334,10 @@ async function validateEntityCardsComeFromTools(output: string, toolCalls: ToolC
   for (const match of output.matchAll(ENTITY_CARD_ID_REGEX)) {
     const entityType = match[1];
     const id = match[2];
+    if (!UUID_VALUE_REGEX.test(id)) {
+      errors.push(`Entity card id ${id} is not a valid UUID`);
+      continue;
+    }
     if (toolCalls.length === 0) {
       errors.push(`Entity card id ${id} was produced without any tool call`);
       continue;
@@ -366,7 +381,8 @@ async function runAgentTest(
   testName: string,
   agentType: 'explorer' | 'study' | 'org',
   targetTool: string,
-  message: string
+  message: string,
+  forbiddenBlocks: string[] = []
 ): Promise<TestResult> {
   const start = Date.now();
   const toolCalls: ToolCallCapture[] = [];
@@ -450,7 +466,26 @@ async function runAgentTest(
         if (!firstToolSeen) firstToolSeen = true;
         currentToolStart = Date.now();
         const toolName = (toolUse as any).function?.name;
-        const toolArgs = JSON.parse((toolUse as any).function?.arguments || '{}');
+        let toolArgs: any = {};
+        try {
+          toolArgs = JSON.parse((toolUse as any).function?.arguments || '{}');
+        } catch (parseError: any) {
+          const rawArgs = String((toolUse as any).function?.arguments || '');
+          errors.push(`${toolName}: invalid JSON tool arguments (${parseError.message})`);
+          log('red', `  ERROR: ${toolName}: invalid JSON tool arguments`);
+          toolCalls.push({
+            name: toolName,
+            args: { _invalidJson: true, rawPreview: rawArgs.slice(0, 300) },
+            output: { error: 'Invalid JSON tool arguments' },
+            error: parseError.message,
+          });
+          messages.push({
+            role: 'tool',
+            tool_call_id: (toolUse as any).id,
+            content: JSON.stringify({ error: 'Invalid JSON tool arguments. Retry with valid compact JSON only.' }),
+          });
+          continue;
+        }
         const toolNameCount = (perToolCounts.get(toolName) || 0) + 1;
         perToolCounts.set(toolName, toolNameCount);
 
@@ -515,6 +550,12 @@ async function runAgentTest(
   if (targetTool !== 'none' && !toolCalls.some((tc) => tc.name === targetTool)) {
     errors.push(`Expected tool "${targetTool}" was not called`);
   }
+  for (const block of forbiddenBlocks) {
+    const blockRegex = new RegExp('```' + block + '\\b', 'i');
+    if (blockRegex.test(output)) {
+      errors.push(`Forbidden block "${block}" was rendered`);
+    }
+  }
   errors.push(...await validateEntityCardsComeFromTools(output, toolCalls));
 
   // Print output
@@ -553,6 +594,7 @@ interface TestDef {
   agentType: 'explorer' | 'study' | 'org';
   targetTool: string;
   message: string;
+  forbiddenBlocks?: string[];
 }
 
 const TESTS: TestDef[] = [
@@ -617,6 +659,13 @@ const TESTS: TestDef[] = [
     agentType: 'study',
     targetTool: 'youtube_search',
     message: 'Trouve-moi une bonne video YouTube sur l\'agriculture durable',
+  },
+  {
+    name: 'Study — Self assessment skills audit',
+    agentType: 'study',
+    targetTool: 'none',
+    message: 'Do a self assessment of my skills: audit my profile, strengths, weaknesses, possible jobs and opportunity directions',
+    forbiddenBlocks: ['quiz'],
   },
   // --- Organization Explorer Tests ---
   {
@@ -825,11 +874,13 @@ function writeCalibrationReport(results: TestResult[]) {
 async function main() {
   header('COPILOT AGENT CALIBRATION');
   log('dim', `  Date: ${new Date().toISOString()}`);
-  log('dim', `  AI provider key: ${process.env.AI_API_KEY ? 'set' : 'MISSING'}`);
+  log('dim', `  Agent model: ${MODEL_AGENT}`);
+  log('dim', `  Completion options: ${JSON.stringify(getAgentCompletionOptions())}`);
+  log('dim', `  AI provider key: ${process.env.AI_API_KEY || process.env.OPENAI_API_KEY ? 'set' : 'MISSING'}`);
   log('dim', `  YouTube Key: ${process.env.YOUTUBE_API_KEY ? 'set' : 'MISSING'}`);
 
-  if (!process.env.AI_API_KEY) {
-    log('red', '  AI_API_KEY not set.');
+  if (!process.env.AI_API_KEY && !process.env.OPENAI_API_KEY) {
+    log('red', '  AI_API_KEY or OPENAI_API_KEY not set.');
     process.exit(1);
   }
 
@@ -868,12 +919,17 @@ async function main() {
     if (explorerTests.length > 0) {
       header('TALENT EXPLORER AGENT');
       const explorerCtx = await buildTestContext(talent.id, 'explore');
-      const explorerAgent = createTalentAgent(explorerCtx);
       log('dim', `  Skills: ${explorerCtx.profile.skills?.length || 0}`);
 
       for (const test of explorerTests) {
         try {
-          const result = await runAgentTest(explorerAgent, test.name, test.agentType, test.targetTool, test.message);
+          const activeSkill = activeSkillFor(test.message, 'explore');
+          if (activeSkill) log('dim', `  Active skill: ${activeSkill.name}`);
+          const explorerAgent = createTalentAgent({
+            ...explorerCtx,
+            activeSkillInstructions: activeSkill?.instructions,
+          });
+          const result = await runAgentTest(explorerAgent, test.name, test.agentType, test.targetTool, test.message, test.forbiddenBlocks);
           allResults.push(result);
         } catch (error: any) {
           log('red', `  "${test.name}" crashed: ${error.message}`);
@@ -893,11 +949,16 @@ async function main() {
       await pool.query('SELECT 1'); // keepalive between batches
       header('TALENT STUDY AGENT');
       const studyCtx = await buildTestContext(talent.id, 'study');
-      const studyAgent = createTalentAgent(studyCtx);
 
       for (const test of studyTests) {
         try {
-          const result = await runAgentTest(studyAgent, test.name, test.agentType, test.targetTool, test.message);
+          const activeSkill = activeSkillFor(test.message, 'study');
+          if (activeSkill) log('dim', `  Active skill: ${activeSkill.name}`);
+          const studyAgent = createTalentAgent({
+            ...studyCtx,
+            activeSkillInstructions: activeSkill?.instructions,
+          });
+          const result = await runAgentTest(studyAgent, test.name, test.agentType, test.targetTool, test.message, test.forbiddenBlocks);
           allResults.push(result);
         } catch (error: any) {
           log('red', `  "${test.name}" crashed: ${error.message}`);
@@ -917,11 +978,16 @@ async function main() {
       await pool.query('SELECT 1'); // keepalive between batches
       header('ORGANIZATION AGENT');
       const orgCtx = buildOrgTestContext(talent.id, talent.name, org);
-      const orgAgent = createOrgAgent(orgCtx);
 
       for (const test of orgTests) {
         try {
-          const result = await runAgentTest(orgAgent, test.name, test.agentType, test.targetTool, test.message);
+          const activeSkill = activeSkillFor(test.message, 'org');
+          if (activeSkill) log('dim', `  Active skill: ${activeSkill.name}`);
+          const orgAgent = createOrgAgent({
+            ...orgCtx,
+            activeSkillInstructions: activeSkill?.instructions,
+          });
+          const result = await runAgentTest(orgAgent, test.name, test.agentType, test.targetTool, test.message, test.forbiddenBlocks);
           allResults.push(result);
         } catch (error: any) {
           log('red', `  "${test.name}" crashed: ${error.message}`);

@@ -15,7 +15,7 @@ export const AGENTIC_LIMITS = {
   maxSameToolCalls: Number(process.env.COPILOT_MAX_SAME_TOOL_CALLS || 3),
   maxTurnDurationMs: Number(process.env.COPILOT_MAX_TURN_DURATION_MS || 120_000),
   maxOutputTokensPerQuery: Number(process.env.COPILOT_MAX_OUTPUT_TOKENS || 12_000),
-  maxCompletionTokens: Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 900),
+  maxCompletionTokens: Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1800),
 } as const;
 
 export const PER_TOOL_CALL_LIMITS: Record<string, number> = {
@@ -149,20 +149,30 @@ export function buildAgentSystemText(agentConfig: Pick<AgentConfig, 'systemPromp
 }
 
 export function getAgentCompletionOptions(): {
-  max_tokens: number;
-  temperature: number;
+  max_completion_tokens: number;
+  temperature?: number;
   parallel_tool_calls: boolean;
 } {
-  return {
-    max_tokens: AGENTIC_LIMITS.maxCompletionTokens,
-    // Low temperature improves JSON/function-call determinism. Keep top_p at the
-    // provider default; combining both controls tends to make open tool callers
-    // brittle without improving answer quality.
-    temperature: Number(process.env.COPILOT_AGENT_TEMPERATURE || 0.2),
+  const model = process.env.AI_MODEL_AGENT || 'gpt-5.4-mini';
+  const isOpenAIGpt5 = !process.env.AI_BASE_URL && model.startsWith('gpt-5');
+  const options: {
+    max_completion_tokens: number;
+    temperature?: number;
+    parallel_tool_calls: boolean;
+  } = {
+    max_completion_tokens: AGENTIC_LIMITS.maxCompletionTokens,
     // Sequential tools are easier to cache, summarize, and debug. The model can
     // still call several tools across turns when the result of one determines the next.
     parallel_tool_calls: false,
   };
+
+  // OpenAI GPT-5 Chat Completions rejects non-default temperature. Other
+  // OpenAI-compatible providers still benefit from the explicit low setting.
+  if (!isOpenAIGpt5) {
+    options.temperature = Number(process.env.COPILOT_AGENT_TEMPERATURE || 0.2);
+  }
+
+  return options;
 }
 
 export function buildToolPreface(toolName: string, language: AgentConfig['language'] = 'en'): string {

@@ -2,8 +2,8 @@
  * AI Provider Configuration — single OpenAI-compatible provider
  *
  * MIGRATION (2026-06): consolidated onto one OpenAI-compatible AI provider.
- *   base_url: AI_BASE_URL
- *   key:      AI_API_KEY
+ *   base_url: AI_BASE_URL (optional; empty uses OpenAI's default API)
+ *   key:      AI_API_KEY or OPENAI_API_KEY
  *
  * - Chat (agent, fast, suggestions, vision), embeddings → OpenAI-compatible client below.
  * - Media (image/STT/TTS) uses the provider's native inference API — see media.client.ts.
@@ -16,7 +16,9 @@ import OpenAI from 'openai';
 import { logger } from '../../utils';
 
 const AI_BASE_URL = process.env.AI_BASE_URL || '';
-const AI_API_KEY = process.env.AI_API_KEY || '';
+const AI_API_KEY = AI_BASE_URL
+  ? process.env.AI_API_KEY || process.env.OPENAI_API_KEY || ''
+  : process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
 
 // ---------------------------------------------------------------------------
 // OpenAI-compatible client — chat + embeddings
@@ -31,10 +33,11 @@ const aiClient = new OpenAI({
 // Status log
 // ---------------------------------------------------------------------------
 
-if (AI_API_KEY && AI_BASE_URL) {
-  logger.info(`[AI Provider] OpenAI-compatible provider (${AI_BASE_URL}) — chat + embeddings`);
+if (AI_API_KEY) {
+  const providerLabel = AI_BASE_URL ? `OpenAI-compatible provider (${AI_BASE_URL})` : 'OpenAI API';
+  logger.info(`[AI Provider] ${providerLabel} — chat + embeddings`);
 } else {
-  logger.warn('[AI Provider] AI_API_KEY or AI_BASE_URL missing — AI calls may fail');
+  logger.warn('[AI Provider] AI_API_KEY or OPENAI_API_KEY missing — AI calls may fail');
 }
 
 // ---------------------------------------------------------------------------

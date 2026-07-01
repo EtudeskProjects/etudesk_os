@@ -18,11 +18,56 @@ interface OutputGuardrail {
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ENTITY_CARD_REGEX = /```entity:(\w+)\s*\n\s*(\{[^}]*\})\s*\n\s*```/g;
 const SUPPORTED_ENTITY_TYPES = new Set(['opportunity', 'community', 'space', 'organization', 'talent', 'document', 'event', 'skill', 'notification', 'maps']);
+const KNOWN_COMPONENT_BLOCKS = new Set([
+  'chart',
+  'confirmation',
+  'skills',
+  'skill_match',
+  'youtube',
+  'diagram',
+  'image',
+  'quiz',
+  'flashcard',
+  'exercise',
+  'playground',
+  'audio_tts',
+  'canvas',
+  'math',
+  'steps',
+]);
 
 function getAllowedEntityTypes(mode?: string): Set<string> {
   if (mode === 'study') return new Set();
   if (mode === 'org') return new Set(['talent', 'opportunity', 'document', 'event', 'skill', 'notification', 'maps']);
   return SUPPORTED_ENTITY_TYPES;
+}
+
+function getAllowedComponentBlocks(mode?: string): Set<string> {
+  if (mode === 'study') {
+    return new Set([
+      'chart',
+      'confirmation',
+      'skills',
+      'skill_match',
+      'youtube',
+      'diagram',
+      'image',
+      'quiz',
+      'flashcard',
+      'exercise',
+      'playground',
+      'audio_tts',
+      'canvas',
+      'math',
+      'steps',
+    ]);
+  }
+
+  if (mode === 'org' || mode === 'explore') {
+    return new Set(['chart', 'confirmation', 'skills', 'skill_match']);
+  }
+
+  return KNOWN_COMPONENT_BLOCKS;
 }
 
 function isValidMapsPayload(value: any): boolean {
@@ -46,6 +91,7 @@ function validateOutput(text: string, mode?: string): OutputValidationResult {
   const violations: string[] = [];
   let entityCardCount = 0;
   const allowedEntityTypes = getAllowedEntityTypes(mode);
+  const allowedComponentBlocks = getAllowedComponentBlocks(mode);
 
   // 1. Validate entity cards contain only valid UUIDs
   const cardMatches = [...text.matchAll(ENTITY_CARD_REGEX)];
@@ -93,7 +139,16 @@ function validateOutput(text: string, mode?: string): OutputValidationResult {
     }
   }
 
-  // 4. Character count (text outside code blocks)
+  // 4. Component blocks by mode. Ordinary fenced code examples are ignored.
+  const componentMatches = [...text.matchAll(/```([a-z_]+)\b/g)];
+  for (const match of componentMatches) {
+    const component = match[1];
+    if (KNOWN_COMPONENT_BLOCKS.has(component) && !allowedComponentBlocks.has(component)) {
+      violations.push(`${mode || 'unknown'} mode: blocked component block: ${component}`);
+    }
+  }
+
+  // 5. Character count (text outside code blocks)
   const textOnly = text.replace(/```[\s\S]*?```/g, '').trim();
   const maxChars = mode === 'study' ? 6000 : 5000;
   const textCharCount = textOnly.length;
@@ -132,6 +187,7 @@ export function sanitizeOutput(text: string, mode?: string): string {
   if (!text) return text;
   let result = text;
   const allowedEntityTypes = getAllowedEntityTypes(mode);
+  const allowedComponentBlocks = getAllowedComponentBlocks(mode);
 
   // Study mode: remove ALL entity cards
   if (mode === 'study') {
@@ -159,6 +215,13 @@ export function sanitizeOutput(text: string, mode?: string): string {
     });
 
   }
+
+  result = result.replace(/```([a-z_]+)\b[\s\S]*?```/g, (fullMatch, component) => {
+    if (KNOWN_COMPONENT_BLOCKS.has(component) && !allowedComponentBlocks.has(component)) {
+      return '';
+    }
+    return fullMatch;
+  });
 
   // Clean up triple-newlines left by removals
   result = result.replace(/\n{3,}/g, '\n\n');

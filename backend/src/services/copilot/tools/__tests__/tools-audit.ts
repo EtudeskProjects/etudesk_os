@@ -19,6 +19,14 @@ import { generateToolSummary } from '../../stream/tool-summary';
 
 // Test constants (resolved dynamically from DB at runtime)
 const PREFERRED_TALENT_SLUG = process.env.COPILOT_AUDIT_TALENT_SLUG || 'app-review';
+const FIXTURE_OVERRIDES = {
+  talentId: process.env.COPILOT_AUDIT_TALENT_ID || '',
+  orgId: process.env.COPILOT_AUDIT_ORG_ID || '',
+  documentId: process.env.COPILOT_AUDIT_DOCUMENT_ID || '',
+  opportunityId: process.env.COPILOT_AUDIT_OPPORTUNITY_ID || '',
+  communityId: process.env.COPILOT_AUDIT_COMMUNITY_ID || '',
+  spaceId: process.env.COPILOT_AUDIT_SPACE_ID || '',
+};
 
 interface FixtureIds {
   talentId: string;
@@ -51,6 +59,30 @@ const AUDIT_DOCUMENT_TITLES = [
   'Notes reunion',
   'CV Lamine Barro',
 ];
+const columnExistsCache = new Map<string, boolean>();
+
+async function tableHasColumn(tableName: string, columnName: string): Promise<boolean> {
+  const key = `${tableName}.${columnName}`;
+  if (columnExistsCache.has(key)) return columnExistsCache.get(key)!;
+
+  const res = await pool.query(
+    `SELECT 1
+     FROM information_schema.columns
+     WHERE table_schema = current_schema()
+       AND table_name = $1
+       AND column_name = $2
+     LIMIT 1`,
+    [tableName, columnName]
+  );
+  const exists = res.rows.length > 0;
+  columnExistsCache.set(key, exists);
+  return exists;
+}
+
+async function optionalNullClause(tableName: string, columnName: string, qualifier?: string): Promise<string> {
+  if (!(await tableHasColumn(tableName, columnName))) return '';
+  return ` AND ${(qualifier || tableName)}.${columnName} IS NULL`;
+}
 
 /**
  * Provider-neutral ToolDefinition pattern: toolObj.execute(params)
@@ -103,21 +135,46 @@ async function runTest(
 }
 
 async function resolveFixtureIds(): Promise<FixtureIds> {
-  const talentRes = await pool.query(
-    `SELECT id
-     FROM talents
-     WHERE deleted_at IS NULL
-       AND slug = $1
-     LIMIT 1`,
-    [PREFERRED_TALENT_SLUG]
-  );
-  let activeTalentId = talentRes.rows[0]?.id as string | undefined;
+  const [
+    talentsHasSlug,
+    talentsHasCreatedAt,
+    talentDeletedClause,
+    docDeletedClause,
+    opportunityDeletedClause,
+    communityDeletedClause,
+    spaceDeletedClause,
+  ] = await Promise.all([
+    tableHasColumn('talents', 'slug'),
+    tableHasColumn('talents', 'created_at'),
+    optionalNullClause('talents', 'deleted_at'),
+    optionalNullClause('talent_documents', 'deleted_at'),
+    optionalNullClause('opportunities', 'deleted_at', 'o'),
+    optionalNullClause('communities', 'deleted_at', 'c'),
+    optionalNullClause('spaces', 'deleted_at', 's'),
+  ]);
+
+  let activeTalentId: string | undefined = FIXTURE_OVERRIDES.talentId || undefined;
+  if (!activeTalentId && talentsHasSlug) {
+    const talentRes = await pool.query(
+      `SELECT id
+       FROM talents
+       WHERE slug = $1
+         ${talentDeletedClause}
+       LIMIT 1`,
+      [PREFERRED_TALENT_SLUG]
+    );
+    activeTalentId = talentRes.rows[0]?.id as string | undefined;
+  }
   if (!activeTalentId) {
+    const orderBy = talentsHasSlug
+      ? `ORDER BY (slug = 'app-review') DESC${talentsHasCreatedAt ? ', created_at DESC' : ''}`
+      : (talentsHasCreatedAt ? 'ORDER BY created_at DESC' : 'ORDER BY id DESC');
     const fallbackTalentRes = await pool.query(
       `SELECT id
        FROM talents
-       WHERE deleted_at IS NULL
-       ORDER BY (slug = 'app-review') DESC, created_at DESC
+       WHERE TRUE
+       ${talentDeletedClause}
+       ${orderBy}
        LIMIT 1`
     );
     activeTalentId = fallbackTalentRes.rows[0]?.id;
@@ -127,7 +184,9 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
   }
 
   const [orgRes, docRes, oppRes, commRes, spaceRes] = await Promise.all([
-    pool.query(
+    FIXTURE_OVERRIDES.orgId
+      ? Promise.resolve({ rows: [{ organization_id: FIXTURE_OVERRIDES.orgId }] })
+      : pool.query(
       `SELECT om.organization_id
        FROM organization_members om
        WHERE om.talent_id = $1 AND om.status = 'ACTIVE'
@@ -135,32 +194,44 @@ async function resolveFixtureIds(): Promise<FixtureIds> {
        LIMIT 1`,
       [activeTalentId]
     ),
-    pool.query(
+    FIXTURE_OVERRIDES.documentId
+      ? Promise.resolve({ rows: [{ id: FIXTURE_OVERRIDES.documentId }] })
+      : pool.query(
       `SELECT id
        FROM talent_documents
-       WHERE talent_id = $1 AND deleted_at IS NULL
+       WHERE talent_id = $1
+       ${docDeletedClause}
        ORDER BY (original_filename LIKE 'seed-ops-%') DESC, created_at DESC
        LIMIT 1`,
       [activeTalentId]
     ),
-    pool.query(
+    FIXTURE_OVERRIDES.opportunityId
+      ? Promise.resolve({ rows: [{ id: FIXTURE_OVERRIDES.opportunityId }] })
+      : pool.query(
       `SELECT o.id
        FROM opportunities o
-       WHERE o.status = 'OPEN' AND o.deleted_at IS NULL
+       WHERE o.status = 'OPEN'
+       ${opportunityDeletedClause}
        ORDER BY o.created_at DESC
        LIMIT 1`
     ),
-    pool.query(
+    FIXTURE_OVERRIDES.communityId
+      ? Promise.resolve({ rows: [{ id: FIXTURE_OVERRIDES.communityId }] })
+      : pool.query(
       `SELECT c.id
        FROM communities c
-       WHERE c.status = 'ACTIVE' AND c.deleted_at IS NULL
+       WHERE c.status = 'ACTIVE'
+       ${communityDeletedClause}
        ORDER BY c.created_at DESC
        LIMIT 1`
     ),
-    pool.query(
+    FIXTURE_OVERRIDES.spaceId
+      ? Promise.resolve({ rows: [{ id: FIXTURE_OVERRIDES.spaceId }] })
+      : pool.query(
       `SELECT s.id
        FROM spaces s
-       WHERE s.status = 'ACTIVE' AND s.deleted_at IS NULL
+       WHERE s.status = 'ACTIVE'
+       ${spaceDeletedClause}
        ORDER BY s.created_at DESC
        LIMIT 1`
     ),
@@ -190,7 +261,16 @@ async function cleanupAuditGeneratedDocuments(talentId: string): Promise<void> {
   console.log('║         ETUDESK COPILOT TOOLS — AUDIT RÉEL          ║');
   console.log('╚══════════════════════════════════════════════════════╝\n');
 
-  const fixtures = await resolveFixtureIds();
+  let fixtures: FixtureIds;
+  try {
+    fixtures = await resolveFixtureIds();
+  } catch (error: any) {
+    console.error('Impossible de résoudre les fixtures du harnais Copilot.');
+    console.error(`Cause: ${error.message}`);
+    console.error('Si le rôle DB ne peut pas lire les tables de fixtures, définis au minimum COPILOT_AUDIT_TALENT_ID, puis les autres COPILOT_AUDIT_*_ID utiles.');
+    await pool.end();
+    process.exit(1);
+  }
   await cleanupAuditGeneratedDocuments(fixtures.talentId);
   console.log(`ℹ Talent audit utilisé: ${fixtures.talentId}`);
 
@@ -564,8 +644,12 @@ async function cleanupAuditGeneratedDocuments(talentId: string): Promise<void> {
     console.log('  ⊘ Aucun document talent — skip');
     console.log('');
   } else {
+  const docDeletedClause = await optionalNullClause('talent_documents', 'deleted_at');
   const docCheck = await pool.query(
-    `SELECT id, title, mime_type, file_url FROM talent_documents WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
+    `SELECT id, title, mime_type, file_url
+     FROM talent_documents
+     WHERE id = $1 AND talent_id = $2
+     ${docDeletedClause}`,
     [fixtures.documentId, fixtures.talentId]
   );
   if (docCheck.rows.length > 0) {

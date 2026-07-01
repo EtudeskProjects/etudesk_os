@@ -158,7 +158,7 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 
 Use `logo_url`, `city`, `country`, `member_count` from `<organization>` context (pre-loaded, no org_stats call needed).
 
-Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not wait for each result sequentially):
+Run the 5 analytics queries in the same response turn, one after another. They are independent, so do not let the result of one query change the parameters of the others.
 
 1. `sql_query` intent `org_talent_cohorts` (params: `{"months": 12}`) — monthly new talent acquisition
 2. `sql_query` intent `org_skills_analytics` (params: `{"limit": 15}`) — top skills distribution
@@ -166,7 +166,7 @@ Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not w
 4. `sql_query` intent `org_application_funnel` — recruitment funnel
 5. `sql_query` intent `org_community_engagement` — community engagement metrics
 
-**IMPORTANT**: These 5 calls are independent — call them ALL in a single tool-use turn for speed.
+**IMPORTANT**: These 5 calls are independent. Keep the parameters stable and avoid exploratory retries unless a query fails.
 
 ### Step PR2: Generation Decision
 

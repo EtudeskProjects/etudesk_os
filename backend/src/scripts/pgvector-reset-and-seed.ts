@@ -46,7 +46,9 @@ async function countRows(target: string): Promise<number> {
 }
 
 async function main(): Promise<void> {
-  if (!process.env.AI_API_KEY) throw new Error('AI_API_KEY not set');
+  if (!process.env.AI_API_KEY && !process.env.OPENAI_API_KEY) {
+    throw new Error('AI_API_KEY or OPENAI_API_KEY not set');
+  }
 
   const only = parseOnlyArg();
   const targets = only ? [only] : ['talents', 'organizations', 'opportunities', 'communities', 'spaces'];

@@ -38,7 +38,9 @@ async function seedPgvector() {
   console.log('');
 
   await pool.query('SELECT 1');
-  if (!process.env.AI_API_KEY) throw new Error('AI_API_KEY not set');
+  if (!process.env.AI_API_KEY && !process.env.OPENAI_API_KEY) {
+    throw new Error('AI_API_KEY or OPENAI_API_KEY not set');
+  }
 
   const results: Record<string, number> = {};
   for (const target of targets) {
