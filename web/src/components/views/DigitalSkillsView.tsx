@@ -358,6 +358,7 @@ export default function DigitalSkillsView({ lang }: { lang: Lang }) {
           .left { order: 2; overflow: visible; border-right: none; }
           .right { order: 3; overflow: visible; border-left: none; border-top: 1px solid var(--border-color); }
           .search { margin-bottom: 1.1rem; }
+          .search input { font-size: 16px; }
           /* La carte de stats reste superposee mais plus compacte */
           .cstat { left: 0.75rem; top: 0.75rem; gap: 0.8rem; padding: 0.55rem 0.85rem; }
         }

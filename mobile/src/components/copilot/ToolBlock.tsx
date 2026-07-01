@@ -37,6 +37,7 @@ interface ToolBlockProps {
 }
 
 const TOOL_ICONS: Record<string, any> = {
+  smart_search: Compass,
   vector_query: Compass,
   sql_query: Database,
   youtube_search: Youtube,
@@ -48,6 +49,8 @@ const TOOL_ICONS: Record<string, any> = {
   file_reader: FileText,
   manage_skills: Wrench,
   find_competency: BookOpen,
+  competency_graph: GitBranch,
+  learning_path: BookOpen,
   execute_action: Zap,
 };
 
@@ -71,6 +74,18 @@ function decodeDisplay(str: string): string {
  */
 function getToolTitle(t: (key: string, params?: Record<string, string>) => string, toolName: string, args?: Record<string, unknown>, result?: unknown): string {
   switch (toolName) {
+    case 'smart_search': {
+      const entity = args?.entity as string | undefined;
+      const entityKeys: Record<string, string> = {
+        opportunities: 'copilot.tool.searchOpportunities',
+        communities: 'copilot.tool.searchCommunities',
+        spaces: 'copilot.tool.searchSpaces',
+        talents: 'copilot.tool.searchTalents',
+        organizations: 'copilot.tool.searchOrganizations',
+      };
+      return entity ? t(entityKeys[entity] || 'copilot.tool.searchPlatform') : t('copilot.tool.searchPlatform');
+    }
+
     case 'vector_query': {
       const ns = args?.namespace as string | undefined;
       const nsKeys: Record<string, string> = {
@@ -165,6 +180,16 @@ function getToolTitle(t: (key: string, params?: Record<string, string>) => strin
       return query ? t('copilot.tool.findCompetencyPrefix', { query: truncate(query, 40) }) : t('copilot.tool.findCompetency');
     }
 
+    case 'competency_graph': {
+      const query = (args?.query || args?.skillQuery || args?.skillName) as string | undefined;
+      return query ? t('copilot.tool.competencyGraphPrefix', { query: truncate(query, 40) }) : t('copilot.tool.competencyGraph');
+    }
+
+    case 'learning_path': {
+      const target = (args?.targetSkill || args?.goal || args?.query) as string | undefined;
+      return target ? t('copilot.tool.learningPathPrefix', { target: truncate(target, 40) }) : t('copilot.tool.learningPath');
+    }
+
     case 'execute_action': {
       const action = args?.action as string | undefined;
       const actionKeys: Record<string, string> = {
@@ -178,7 +203,7 @@ function getToolTitle(t: (key: string, params?: Record<string, string>) => strin
     }
 
     default:
-      return toolName.replace(/_/g, ' ');
+      return t('copilot.tool.genericTool');
   }
 }
 
@@ -189,6 +214,7 @@ function formatToolDetail(toolName: string, args?: Record<string, unknown>): str
   if (!args) return '';
 
   switch (toolName) {
+    case 'smart_search':
     case 'vector_query': {
       const query = args.query as string | undefined;
       return query ? `\u00ab ${truncate(query, 55)} \u00bb` : '';
@@ -223,6 +249,12 @@ function formatToolDetail(toolName: string, args?: Record<string, unknown>): str
     case 'file_reader':
       // Title already shows the document name
       return '';
+
+    case 'competency_graph':
+    case 'learning_path': {
+      const query = (args.query || args.targetSkill || args.goal || args.skillQuery || args.skillName) as string | undefined;
+      return query ? `\u00ab ${truncate(query, 55)} \u00bb` : '';
+    }
 
     default: {
       const entries = Object.entries(args).filter(([, v]) => typeof v === 'string' && v);

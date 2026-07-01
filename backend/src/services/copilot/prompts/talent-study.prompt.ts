@@ -560,8 +560,8 @@ IMPORTANT QUIZ RULES:
 - Output exactly ONE quiz question per message. Never batch multiple questions.
 - ALWAYS include correctAnswer (0-based index of the correct option) and explanation (1-2 sentences) in the quiz block.
 - **RANDOMIZE the correct answer position**: distribute correctAnswer evenly across 0, 1, 2, 3 throughout a session. NEVER default to the same index. For each question, pick a random position for the correct option FIRST, then fill in the distractors around it.
-- The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is auto-submitted as a message of the form: \`Réponse au quiz : "<chosen text>" — réponse correcte.\` (or \`incorrecte\`).
-- **TRUST that verdict EXACTLY.** The app shuffles the options before display, so option LETTERS (A/B/C/D) and positions no longer match your original ordering — NEVER re-grade from a letter or index. Use ONLY the "correcte"/"incorrecte" word in the submitted message. If it says "correcte" you MUST congratulate (never say "pas tout à fait"); if "incorrecte", gently give the right answer. Your reply must AGREE with the on-screen green/red.
+- The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is auto-submitted as a localized message containing the chosen option text, for example: \`Quiz answer: "<chosen text>" - correct answer.\`
+- **TRUST the deterministic quiz context EXACTLY.** The app shuffles the options before display, so option LETTERS (A/B/C/D) and positions no longer match your original ordering. When a \`[DETERMINISTIC_QUIZ_CONTEXT]\` block is present, use its \`is_correct\`, \`user_selected_option\`, and \`correct_index\` fields. Never re-grade from a displayed letter or from a translated verdict word. Your reply must AGREE with the on-screen green/red feedback.
 - In your NEXT response after the user answers, acknowledge briefly (matching the verdict) then continue with the next question or provide a flashcard for review.
 - This creates a fluid back-and-forth conversational quiz experience.
 
@@ -666,6 +666,7 @@ For varied practice beyond QCM. VARY exercise types — do not always use quiz.
 
 - Always include \`explanation\` for pedagogical feedback after validation
 - Use fill_gap for vocabulary/syntax, matching for concept associations, ordering for processes/sequences
+- The frontend auto-submits exercise results as a localized user message containing the exercise type and score, for example \`Exercise result: matching, 2/3 correct.\` or the same meaning in the user's app language. Never infer the response language from these words; always obey the RESPONSE LANGUAGE rule. Read the score/counts and continue with feedback that matches the result.
 
 ## Code Playground (executable JavaScript)
 

@@ -305,13 +305,13 @@
   },
   "assistant": {
     "title": "Assistant",
-    "greeting": "Salut ! Comment puis-je t'aider ?",
-    "inputPlaceholder": "Pose une question ou décris ce que tu cherches...",
+    "greeting": "Hi! How can I help you?",
+    "inputPlaceholder": "Ask a question or describe what you are looking for...",
     "suggestions": "Suggestions",
     "modes": {
-      "explore": "Explorer",
-      "study": "Étudier",
-      "org": "Gérer"
+      "explore": "Explore",
+      "study": "Study",
+      "org": "Manage"
     },
     "prompts": {
       "explore": {
@@ -1833,6 +1833,7 @@
   },
   "stepSolver": {
     "step": "Step {{current}} / {{total}}",
+    "fallbackStep": "Step {{index}}",
     "nextStep": "Next step",
     "showAll": "Show all",
     "defaultTitle": "Solution"
@@ -1852,7 +1853,11 @@
     "correct": "Perfect!",
     "incorrect": "Not quite",
     "unsupportedType": "Unsupported exercise type: ",
-    "title": "Interactive exercise"
+    "title": "Interactive exercise",
+    "submissionFillGap": "Exercise result: fill in the blanks, {{correct}}/{{total}} correct.",
+    "submissionMatching": "Exercise result: matching, {{correct}}/{{total}} correct.",
+    "submissionOrdering": "Exercise result: ordering, {{correct}}/{{total}} correct, fully correct: {{allCorrect}}.",
+    "unknownType": "unknown"
   },
   "codeBlock": {
     "copyCode": "Copy code",
@@ -1997,7 +2002,10 @@
     "quiz": {
       "correctAnswer": "Correct answer!",
       "wrongAnswer": "Wrong answer",
-      "alreadyAnswered": "Already answered"
+      "alreadyAnswered": "Already answered",
+      "submissionCorrect": "Quiz answer: \"{{option}}\" - correct answer.",
+      "submissionIncorrect": "Quiz answer: \"{{option}}\" - wrong answer.",
+      "submissionRecorded": "Quiz answer: \"{{option}}\" - answer recorded."
     },
     "flashcard": {
       "easy": "Easy",
@@ -2062,28 +2070,33 @@
       "bookingInProgress": "Booking…",
       "acceptInvitation": "Accepting…",
       "declineInvitation": "Declining…",
-      "executeAction": "Processing…"
+      "executeAction": "Processing…",
+      "competencyGraph": "Analyzing skill links…",
+      "competencyGraphPrefix": "Skill graph: {{query}}",
+      "learningPath": "Building learning path…",
+      "learningPathPrefix": "Learning path: {{target}}",
+      "genericTool": "Processing…"
     },
     "suggestions": {
       "orgExplore": [
-        "Classe les candidats de ma dernière offre.",
-        "Mon vivier couvre-t-il un poste Data ?",
-        "Trouve des talents maîtrisant l’IA agentique."
+        "Rank the candidates from my latest offer.",
+        "Does my talent pool cover a Data role?",
+        "Find talents who master agentic AI."
       ],
       "orgStudy": [
-        "Classe les candidats de ma dernière offre.",
-        "Mon vivier couvre-t-il un poste Data ?",
-        "Trouve des talents maîtrisant l’IA agentique."
+        "Rank the candidates from my latest offer.",
+        "Does my talent pool cover a Data role?",
+        "Find talents who master agentic AI."
       ],
       "talentStudy": [
-        "C’est quoi l’IA ?",
-        "Évalue mon niveau en Python.",
-        "Démarrons sur les compétences de base du numérique."
+        "What is AI?",
+        "Assess my level in Python.",
+        "Let's start with basic digital skills."
       ],
       "talentExplore": [
-        "Les compétences les plus recherchées sur le marché.",
-        "Quelles offres correspondent à mes compétences ?",
-        "Qu’est-ce qui me manque pour devenir Data Analyst ?"
+        "The most sought-after skills on the market.",
+        "Which offers match my skills?",
+        "What am I missing to become a Data Analyst?"
       ]
     },
     "skillMatch": {
@@ -2114,6 +2127,10 @@
       "privateSkill": "Private",
       "unread": "Unread",
       "read": "Read"
+    },
+    "skills": {
+      "seeMore": "See more ({{count}})",
+      "viewTalentProfile": "View talent profile"
     }
   },
   "applicationDetail": {
@@ -2617,8 +2634,8 @@
       "newConversation": "New conversation",
       "closeError": "Close error",
       "orgGreeting": "— recruitment, talents, communities or spaces: what would you like to manage?",
-      "studyGreeting": "Prêt à apprendre, {{name}} ? Choisis un sujet et commence ta session.",
-      "exploreGreeting": "Bienvenue {{name}}. Comment puis-je t'aider aujourd'hui ?",
+      "studyGreeting": "Ready to learn, {{name}}? Choose a topic and start your session.",
+      "exploreGreeting": "Welcome {{name}}. How can I help you today?",
       "sessionArchives": "Session archives",
       "noConversation": "No conversations",
       "untitledSession": "Untitled session",
@@ -2629,8 +2646,8 @@
       "renameSessionTitle": "Rename session",
       "renameSessionPlaceholder": "Session name",
       "filterAll": "All",
-      "filterDiscover": "Découvrir",
-      "filterStudy": "Étudier",
+      "filterDiscover": "Discover",
+      "filterStudy": "Study",
       "pinnedSessions": "Pinned",
       "limitReached": "Limit reached",
       "maxAttachments": "You can add up to {{max}} attachments.",
@@ -2658,15 +2675,15 @@
       "stopGeneration": "Stop generation",
       "send": "Send",
       "voiceNote": "Voice note",
-      "orgSuggestion1": "Classe les candidats de ma dernière offre.",
-      "orgSuggestion2": "Mon vivier couvre-t-il un poste Data ?",
-      "orgSuggestion3": "Trouve des talents maîtrisant l’IA agentique.",
-      "studySuggestion1": "C’est quoi l’IA ?",
-      "studySuggestion2": "Évalue mon niveau en Python.",
-      "studySuggestion3": "Démarrons sur les compétences de base du numérique.",
-      "exploreSuggestion1": "Les compétences les plus recherchées sur le marché.",
-      "exploreSuggestion2": "Quelles offres correspondent à mes compétences ?",
-      "exploreSuggestion3": "Qu’est-ce qui me manque pour devenir Data Analyst ?",
+      "orgSuggestion1": "Rank the candidates from my latest offer.",
+      "orgSuggestion2": "Does my talent pool cover a Data role?",
+      "orgSuggestion3": "Find talents who master agentic AI.",
+      "studySuggestion1": "What is AI?",
+      "studySuggestion2": "Assess my level in Python.",
+      "studySuggestion3": "Let's start with basic digital skills.",
+      "exploreSuggestion1": "The most sought-after skills on the market.",
+      "exploreSuggestion2": "Which offers match my skills?",
+      "exploreSuggestion3": "What am I missing to become a Data Analyst?",
       "followUp": {
         "adjustDraft": "Adjust this draft before confirmation",
         "makeConcise": "Make the proposal more concise",

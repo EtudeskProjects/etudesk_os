@@ -70,15 +70,24 @@ import { getLanguageDisplayName, resolveTalentLanguage } from '../services/langu
 const router = Router();
 const COPILOT_TIMEZONE = process.env.COPILOT_TIMEZONE || 'UTC';
 
+function copilotText(
+  language: SupportedLanguage,
+  key: string,
+  params: Record<string, unknown> = {}
+): string {
+  const value = i18next.t(`copilot:${key}`, { lng: language, ...params });
+  return typeof value === 'string' ? value : String(value);
+}
+
 function buildDeterministicSessionTitle(
   message: string,
-  language: string,
+  language: SupportedLanguage,
   hasAttachments: boolean
 ): string | null {
   const normalized = message.trim().toLowerCase();
 
   if (!normalized && hasAttachments) {
-    return language === 'fr' ? 'Analyse de document' : 'Document analysis';
+    return copilotText(language, 'documentAnalysisTitle');
   }
 
   const onboardingTriggers = new Set([
@@ -90,7 +99,7 @@ function buildDeterministicSessionTitle(
     'start onboarding',
   ]);
   if (onboardingTriggers.has(normalized)) {
-    return language === 'fr' ? 'Onboarding Etudesk' : 'Etudesk onboarding';
+    return copilotText(language, 'etudeskOnboardingTitle');
   }
 
   const genericReplies = new Set(['oui', 'yes', 'ok', 'okay', 'daccord', "d'accord"]);
@@ -99,7 +108,7 @@ function buildDeterministicSessionTitle(
   }
 
   if (normalized.startsWith('[') && normalized.endsWith(']')) {
-    return language === 'fr' ? 'Analyse de document' : 'Document analysis';
+    return copilotText(language, 'documentAnalysisTitle');
   }
 
   return null;
@@ -115,17 +124,6 @@ function isOnboardingStartMessage(message: string): boolean {
     'get started',
     'start onboarding',
   ]).has(normalized);
-}
-
-function inferOnboardingStartLanguage(message: string, fallback: string): string {
-  const normalized = message.trim().toLowerCase();
-  if (/^(c['’]est parti|demarrons|démarrons|commençons|commencons)\s*!?$/.test(normalized)) {
-    return 'fr';
-  }
-  if (/^(lets go|let['’]s go|get started|start onboarding)\s*!?$/.test(normalized)) {
-    return 'en';
-  }
-  return fallback;
 }
 
 function inferLanguageFromUserMessage(message: string, fallback: SupportedLanguage): SupportedLanguage {
@@ -152,18 +150,9 @@ function inferLanguageFromUserMessage(message: string, fallback: SupportedLangua
   return frenchSignals.some((pattern) => pattern.test(normalized)) ? 'fr' : fallback;
 }
 
-function buildDeterministicOnboardingReply(firstName: string | undefined, language: string, mode?: string): string {
-  const name = firstName?.trim() || (language === 'fr' ? 'toi' : 'there');
-  if (mode === 'study') {
-    if (language === 'fr') {
-      return `Bienvenue ${name} ! Dis-moi ce que tu veux apprendre, comprendre ou pratiquer, avec tes mots. Il n'y a pas de mauvaise réponse : on part de ton objectif, puis j'adapte le parcours.`;
-    }
-    return `Welcome, ${name}! Tell me what you want to learn, understand, or practice in your own words. There is no wrong answer: we start from your goal, then I adapt the path.`;
-  }
-  if (language === 'fr') {
-    return `Bienvenue ${name} ! Je suis ton guide carrière sur Etudesk. Dis-moi ce que tu veux construire ou améliorer en ce moment, avec tes mots.`;
-  }
-  return `Welcome, ${name}! I'm your career guide on Etudesk. Tell me what you want to build or improve right now, in your own words.`;
+function buildDeterministicOnboardingReply(firstName: string | undefined, language: SupportedLanguage, mode?: string): string {
+  const name = firstName?.trim() || copilotText(language, 'onboardingFallbackName');
+  return copilotText(language, mode === 'study' ? 'onboardingStudyReply' : 'onboardingExploreReply', { name });
 }
 
 function isSimpleCvGenerationRequest(message: string): boolean {
@@ -191,6 +180,76 @@ function buildCvContentFromTalentContext(talentContext: any): Record<string, unk
     languages: profile.languages || undefined,
     interests: profile.sectorsOfInterest?.length ? profile.sectorsOfInterest : profile.topSectors,
   };
+}
+
+function isExplicitQuizRequest(message: string): boolean {
+  const normalized = normalizeQuizText(message);
+  return /\b(quiz|qcm|test(e)? moi|teste-moi|test moi|evalue moi|evalue-moi|évalue-moi|interroge moi|interroge-moi)\b/.test(normalized);
+}
+
+function responsePromisesQuizWithoutBlock(content: string): boolean {
+  if (extractLastQuizBlock(content)) return false;
+  const normalized = normalizeQuizText(content);
+  return (
+    /\bmini quiz\b/.test(normalized) ||
+    /\breponds juste par a b c ou d\b/.test(normalized) ||
+    /\breponds par a b c ou d\b/.test(normalized) ||
+    /\breponse a b c ou d\b/.test(normalized)
+  );
+}
+
+function inferFallbackQuizTopic(message: string, language: SupportedLanguage, sessionTitle?: string): string {
+  const normalized = normalizeQuizText(`${message} ${sessionTitle || ''}`);
+  if (/\bpython\b/.test(normalized)) return 'Python';
+  if (/\b(sql|base de donnees|database)\b/.test(normalized)) return 'SQL';
+  if (/\b(react|frontend|front end)\b/.test(normalized)) return 'React';
+  if (/\b(machine learning|ml|ia|intelligence artificielle)\b/.test(normalized)) return copilotText(language, 'topicMachineLearning');
+  if (/\b(data|donnees|donnee|analyst|analyse)\b/.test(normalized)) return copilotText(language, 'topicDataAnalysis');
+  return copilotText(language, 'topicDigitalBasics');
+}
+
+function buildFallbackQuizBlock(topic: string, language: SupportedLanguage): string {
+  const options = i18next.t('copilot:fallbackQuizOptions', {
+    lng: language,
+    returnObjects: true,
+  });
+  const quiz: QuizBlock = {
+    topic,
+    question: copilotText(language, 'fallbackQuizQuestion', { topic }),
+    options: Array.isArray(options) ? options.map(String) : [
+      'Memorize definitions without practice',
+      'Practice on a concrete case and explain your reasoning',
+      'Switch topic as soon as it gets difficult',
+      'Wait until you master everything before trying',
+    ],
+    correctAnswer: 1,
+    explanation: copilotText(language, 'fallbackQuizExplanation'),
+  };
+
+  return `\`\`\`quiz\n${JSON.stringify(quiz)}\n\`\`\``;
+}
+
+function ensureQuizBlockForExplicitRequest(
+  content: string,
+  userMessage: string,
+  language: SupportedLanguage,
+  sessionTitle?: string
+): string {
+  if (extractLastQuizBlock(content)) return content;
+  if (!isExplicitQuizRequest(userMessage) && !responsePromisesQuizWithoutBlock(content)) return content;
+
+  const topic = inferFallbackQuizTopic(userMessage, language, sessionTitle);
+  const intro = copilotText(language, 'fallbackQuizIntro');
+  const quizBlock = buildFallbackQuizBlock(topic, language);
+
+  const textWithoutEmptyPromise = content
+    .replace(/Voici un mini quiz ciblé\.\s*/gi, '')
+    .replace(/Here is a focused mini quiz\.\s*/gi, '')
+    .replace(/Réponds juste par A, B, C ou D, et je te donne la correction\.\s*/gi, '')
+    .replace(/Respond with A, B, C or D, and I will give you feedback\.\s*/gi, '')
+    .trim();
+
+  return [textWithoutEmptyPromise, intro, quizBlock].filter(Boolean).join('\n\n');
 }
 const MEMORY_MAX_SESSIONS = 12;
 const MEMORY_MAX_MESSAGES = 120;
@@ -395,11 +454,9 @@ function userReportsMissingConfirmationBlock(message: string): boolean {
 }
 
 function buildConfirmationReplayResponse(block: { rawBlock: string; confirmLabel?: string }, language?: string): string {
-  const label = block.confirmLabel || (language === 'fr' ? 'Confirmer' : 'Confirm');
-  if (language === 'fr') {
-    return `${i18next.t('copilot:confirmationReplay', { lng: 'fr', label })}\n\n${block.rawBlock}`;
-  }
-  return `${i18next.t('copilot:confirmationReplay', { lng: language || 'en', label })}\n\n${block.rawBlock}`;
+  const resolvedLanguage = resolveLanguageFromHeader(language, 'en');
+  const label = block.confirmLabel || copilotText(resolvedLanguage, 'confirmLabel');
+  return `${copilotText(resolvedLanguage, 'confirmationReplay', { label })}\n\n${block.rawBlock}`;
 }
 
 function extractMemoryKeywords(message: string): string[] {
@@ -688,19 +745,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Language preference
       resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] }),
     ]);
-    let userLanguage = inferLanguageFromUserMessage(safeMessage, preferredLanguage);
-    if (userLanguage !== 'fr') {
-      const recentLanguageContext = await pool.query(
-        `SELECT content
-         FROM copilot_messages
-         WHERE session_id = $1 AND deleted_at IS NULL
-         ORDER BY created_at DESC
-         LIMIT 6`,
-        [session.id]
-      );
-      const recentText = recentLanguageContext.rows.map((row: any) => row.content).join('\n');
-      userLanguage = inferLanguageFromUserMessage(recentText, userLanguage);
-    }
+    const userLanguage = preferredLanguage;
     const statusLanguage = resolveLanguageFromHeader(req.headers['accept-language'], userLanguage);
     const phaseLabel = (key: string) => i18next.t(`copilot:${key}`, { lng: statusLanguage });
     markPhase('context', phaseLabel('statusContext'));
@@ -944,7 +989,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     markPhase('history', phaseLabel('statusHistory'));
 
     if (!hasVoiceNote && !hasAttachments && isOnboardingStartMessage(safeMessage)) {
-      const onboardingLanguage = inferOnboardingStartLanguage(safeMessage, userLanguage);
+      const onboardingLanguage = userLanguage;
       const finalOutput = buildDeterministicOnboardingReply(talentContext.profile.firstName, onboardingLanguage, validMode);
       const insertAssistantResult = await pool.query(
         `INSERT INTO copilot_messages (session_id, role, content, tool_calls, output_data)
@@ -1015,17 +1060,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       isSimpleCvGenerationRequest(safeMessage)
     ) {
       const callId = crypto.randomUUID();
-      const preface = userLanguage === 'fr'
-        ? 'Je génère ton CV à partir de ton profil.\n\n'
-        : 'I am generating your CV from your profile.\n\n';
+      const preface = `${copilotText(userLanguage, 'cvGeneratingPreface')}\n\n`;
       const title = `CV - ${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || 'CV';
       const toolInput = {
         format: 'PDF',
         title,
         contentJson: buildCvContentFromTalentContext(talentContext),
-        instructions: userLanguage === 'fr'
-          ? 'Génère un CV simple, propre et honnête uniquement avec les données du profil. N’invente aucune expérience, formation, certification ou référence.'
-          : 'Generate a simple, clean and honest CV using only profile data. Do not fabricate experience, education, certifications, or references.',
+        instructions: copilotText(userLanguage, 'cvGenerationInstructions'),
       };
 
       sendSSE(res, { type: 'text_delta', delta: preface });
@@ -1049,8 +1090,8 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       const duration = Date.now() - toolStart;
       const isError = !!(output?.error || output?.isError || output?.success === false);
       const summary = isError
-        ? (userLanguage === 'fr' ? 'Génération du CV impossible.' : 'CV generation failed.')
-        : (userLanguage === 'fr' ? 'CV généré.' : 'CV generated.');
+        ? copilotText(userLanguage, 'cvGenerationFailed')
+        : copilotText(userLanguage, 'cvGenerated');
 
       sendSSE(res, {
         type: 'tool_end',
@@ -1066,8 +1107,8 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       });
 
       const finalOutput = isError
-        ? `${preface}${userLanguage === 'fr' ? "Je n'ai pas pu générer le CV" : 'I could not generate the CV'}: ${output?.error || 'unknown error'}`
-        : `${preface}\`\`\`entity:document\n${JSON.stringify({ id: output.id })}\n\`\`\`\n\n${userLanguage === 'fr' ? 'Ton CV est prêt et enregistré dans tes documents.' : 'Your CV is ready and saved in your documents.'}`;
+        ? `${preface}${copilotText(userLanguage, 'cvGenerationFailedReply')}: ${output?.error || copilotText(userLanguage, 'unknownError')}`
+        : `${preface}\`\`\`entity:document\n${JSON.stringify({ id: output.id })}\n\`\`\`\n\n${copilotText(userLanguage, 'cvReadySaved')}`;
       const segments = [
         { type: 'text', content: preface },
         {
@@ -1293,7 +1334,14 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         safetyRefusal: phaseLabel('safetyRefusal'),
       }
     );
-    const finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
+    let finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
+    finalOutput = ensureQuizBlockForExplicitRequest(finalOutput, safeMessage, userLanguage, session.title);
+    const persistedSegments = segments.length > 0
+      ? [
+          ...segments.filter((segment: any) => segment.type !== 'text'),
+          { type: 'text', content: finalOutput },
+        ]
+      : [{ type: 'text', content: finalOutput }];
 
     // --- TTS generation (agent-driven, study mode only) ---
     // The agent embeds ```audio_tts\n{"text":"...","instructions":"..."}\n``` blocks
@@ -1331,8 +1379,8 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         sessionId,
         sanitizeForPg(finalOutput),
         toolTrace.length > 0 ? sanitizeJsonForPg(toolTrace) : null,
-        segments.length > 0 || audioSegments.length > 0
-          ? sanitizeJsonForPg([...segments, ...audioSegments])
+        persistedSegments.length > 0 || audioSegments.length > 0
+          ? sanitizeJsonForPg([...persistedSegments, ...audioSegments])
           : null,
       ]
     );

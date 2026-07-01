@@ -20,7 +20,7 @@ try {
 } catch {
   // WebView not available — preview will use Linking.openURL fallback
 }
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 	import {
 	  Upload,
 	  FileText,
@@ -122,6 +122,12 @@ export default function DocumentsScreen() {
     load();
     return () => stopPolling();
   }, [loadDocuments, startPolling, stopPolling]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadDocuments();
+    }, [loadDocuments])
+  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

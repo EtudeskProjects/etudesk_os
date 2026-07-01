@@ -51,7 +51,7 @@ export default function OpengraphImage() {
         <div style={{ display: 'flex', gap: 36, color: '#71717A', fontSize: 26, fontWeight: 600 }}>
           <span style={{ color: '#34D399' }}>3 000 000+ formés</span>
           <span>53 pays</span>
-          <span>1687 compétences</span>
+          <span>1699 compétences</span>
         </div>
       </div>
     ),

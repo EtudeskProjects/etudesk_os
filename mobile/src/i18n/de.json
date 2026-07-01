@@ -77,7 +77,11 @@
     "limitReached": "Limit erreicht",
     "fileTooLarge": "Datei zu groß",
     "deleteTitle": "Bewerbung löschen",
-    "invalidToken": "Ungültige oder abgelaufene Sitzung. Bitte melden Sie sich erneut an."
+    "invalidToken": "Ungültige oder abgelaufene Sitzung. Bitte melden Sie sich erneut an.",
+    "time": {
+      "minutes": "Vor {{count}} Min.",
+      "hours": "Vor {{count}} Std."
+    }
   },
   "auth": {
     "login": {
@@ -866,11 +870,12 @@
   },
   "stepSolver": {
     "step": "Schritt {{current}} / {{total}}",
+    "fallbackStep": "Schritt {{index}}",
     "nextStep": "Nächster Schritt",
     "showAll": "Alle anzeigen"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[Zeitüberschreitung: Ausführung über 5 s]",
     "noOutput": "(keine Ausgabe)",
     "running": "Wird ausgeführt...",
     "run": "Ausführen",
@@ -986,7 +991,10 @@
     "quiz": {
       "correctAnswer": "Richtige Antwort!",
       "wrongAnswer": "Falsche Antwort",
-      "alreadyAnswered": "Frage bereits beantwortet"
+      "alreadyAnswered": "Frage bereits beantwortet",
+      "submissionCorrect": "Quizantwort: \"{{option}}\" - richtige Antwort.",
+      "submissionIncorrect": "Quizantwort: \"{{option}}\" - falsche Antwort.",
+      "submissionRecorded": "Quizantwort: \"{{option}}\" - Antwort gespeichert."
     },
     "flashcard": {
       "easy": "Einfach",
@@ -1049,7 +1057,14 @@
       "bookingInProgress": "Reservierung läuft…",
       "acceptInvitation": "Wird angenommen…",
       "declineInvitation": "Wird abgelehnt…",
-      "executeAction": "Aktion läuft…"
+      "executeAction": "Aktion läuft…",
+      "findCompetency": "Katalogsuche…",
+      "findCompetencyPrefix": "Katalog: {{query}}",
+      "competencyGraph": "Kompetenzverknüpfungen werden analysiert…",
+      "competencyGraphPrefix": "Kompetenzgraph: {{query}}",
+      "learningPath": "Lernpfad wird erstellt…",
+      "learningPathPrefix": "Lernpfad: {{target}}",
+      "genericTool": "Aktion läuft…"
     },
     "suggestions": {
       "orgExplore": [
@@ -1097,6 +1112,10 @@
       "privateSkill": "Privat",
       "unread": "Ungelesen",
       "read": "Gelesen"
+    },
+    "skills": {
+      "seeMore": "Mehr anzeigen ({{count}})",
+      "viewTalentProfile": "Talentprofil anzeigen"
     }
   },
   "applicationDetail": {
@@ -1773,5 +1792,15 @@
       "referral": "Wie hast du von uns erfahren?",
       "expectations": "Was sind deine Erwartungen an diese Community?"
     }
+  },
+  "exercise": {
+    "correct": "Perfekt!",
+    "incorrect": "Nicht ganz",
+    "unsupportedType": "Nicht unterstützter Übungstyp: ",
+    "title": "Interaktive Übung",
+    "submissionFillGap": "Übungsergebnis: Lückentext, {{correct}}/{{total}} richtig.",
+    "submissionMatching": "Übungsergebnis: Zuordnung, {{correct}}/{{total}} richtig.",
+    "submissionOrdering": "Übungsergebnis: Reihenfolge, {{correct}}/{{total}} richtig, alles richtig: {{allCorrect}}.",
+    "unknownType": "unbekannt"
   }
 }

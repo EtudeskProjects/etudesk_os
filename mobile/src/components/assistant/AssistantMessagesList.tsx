@@ -81,6 +81,75 @@ export function AssistantMessagesList({
   styles,
   t,
 }: AssistantMessagesListProps) {
+  const renderAssistantContent = (message: StreamingMessage, messageIndex: number) => {
+    const isLastMessage =
+      messageIndex === messages.length - 1 && !message.isStreaming && !isSending;
+
+    if (!message.isStreaming && message.content) {
+      const toolSegments = message.segments.filter((segment) => segment.type === 'tool' && segment.tool);
+      const audioSegments = message.segments.filter((segment) => segment.type === 'audio' && segment.audioUrl);
+      return (
+        <>
+          {toolSegments.map((segment, index) => (
+            <ToolBlock key={`tool-${index}-${segment.tool?.callId || segment.tool?.name}`} tool={segment.tool!} />
+          ))}
+          <MarkdownRenderer
+            content={message.content}
+            onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
+            onSkillPress={onSkillPress}
+            sessionId={sessionId || undefined}
+            interactiveConfirmation
+          />
+          {audioSegments.map((segment, index) => {
+            const audioSegment = segment as MessageSegment & { autoPlay?: boolean };
+            return (
+              <AudioBlock
+                key={`audio-${index}-${segment.audioUrl}`}
+                url={segment.audioUrl!}
+                duration={segment.audioDuration}
+                autoPlay={!!audioSegment.autoPlay}
+              />
+            );
+          })}
+        </>
+      );
+    }
+
+    return (
+      <>
+        {message.segments.map((segment, index) => {
+          if (segment.type === 'tool' && segment.tool) {
+            return <ToolBlock key={`segment-${index}`} tool={segment.tool} />;
+          }
+          if (segment.type === 'text' && segment.content) {
+            return (
+              <MarkdownRenderer
+                key={`segment-${index}`}
+                content={segment.content}
+                onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
+                onSkillPress={onSkillPress}
+                sessionId={sessionId || undefined}
+                interactiveConfirmation={!message.isStreaming}
+              />
+            );
+          }
+          if (segment.type === 'audio' && segment.audioUrl) {
+            const audioSegment = segment as MessageSegment & { autoPlay?: boolean };
+            return (
+              <AudioBlock
+                key={`segment-${index}`}
+                url={segment.audioUrl}
+                duration={segment.audioDuration}
+                autoPlay={!!audioSegment.autoPlay}
+              />
+            );
+          }
+          return null;
+        })}
+      </>
+    );
+  };
+
   return (
     <FlatList
       ref={messagesListRef}
@@ -161,39 +230,7 @@ export function AssistantMessagesList({
           ) : (
             <View style={styles.assistantMessage}>
               {message.segments.length > 0 ? (
-                <>
-                  {message.segments.map((segment, index) => {
-                    if (segment.type === 'tool' && segment.tool) {
-                      return <ToolBlock key={`segment-${index}`} tool={segment.tool} />;
-                    }
-                    if (segment.type === 'text' && segment.content) {
-                      const isLastMessage =
-                        messageIndex === messages.length - 1 && !message.isStreaming && !isSending;
-                      return (
-                        <MarkdownRenderer
-                          key={`segment-${index}`}
-                          content={segment.content}
-                          onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
-                          onSkillPress={onSkillPress}
-                          sessionId={sessionId || undefined}
-                          interactiveConfirmation={!message.isStreaming}
-                        />
-                      );
-                    }
-                    if (segment.type === 'audio' && segment.audioUrl) {
-                      const audioSegment = segment as MessageSegment & { autoPlay?: boolean };
-                      return (
-                        <AudioBlock
-                          key={`segment-${index}`}
-                          url={segment.audioUrl}
-                          duration={segment.audioDuration}
-                          autoPlay={!!audioSegment.autoPlay}
-                        />
-                      );
-                    }
-                    return null;
-                  })}
-                </>
+                renderAssistantContent(message, messageIndex)
               ) : message.isStreaming ? (
                 <ThinkingIndicator />
               ) : null}

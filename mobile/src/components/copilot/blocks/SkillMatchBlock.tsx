@@ -27,7 +27,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Check, TrendingUp } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
-import { SPACING, TYPOGRAPHY, BORDER, withOpacity } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER } from '../../../constants/theme';
 import { getSkillTypeConfig, normalizeLevel, LEVEL_SCORE, skillDisplayName } from '../../../constants/skills';
 import { SkillLevelSteps } from '../../SkillLevelSteps';
 
@@ -75,7 +75,7 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
       ? Math.round(skills.reduce((a, s) => a + (s.coverage ?? 0), 0) / skills.length)
       : Math.round((metCount / skills.length) * 100);
 
-  const gaugeColor = overall >= 80 ? colors.success : overall >= 50 ? colors.warning : colors.error;
+  const insightColor = overall >= 80 ? colors.success : overall >= 50 ? colors.warning : colors.error;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -90,10 +90,6 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
               {isCohort ? t('copilot.skillMatch.cohortVs', { subject: data.subject }) : t('copilot.skillMatch.talentVs', { subject: data.subject })}
             </Text>
           ) : null}
-        </View>
-        <View style={[styles.gauge, { borderColor: gaugeColor }]}>
-          <Text style={[styles.gaugeValue, { color: gaugeColor }]}>{overall}%</Text>
-          <Text style={[styles.gaugeLabel, { color: colors.textDisabled }]}>{t('copilot.skillMatch.coverage')}</Text>
         </View>
       </View>
 
@@ -145,7 +141,7 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
         <View style={styles.insights}>
           {data.insights.slice(0, 5).map((ins, i) => (
             <View key={i} style={styles.insightRow}>
-              <Text style={[styles.bullet, { color: gaugeColor }]}>•</Text>
+              <Text style={[styles.bullet, { color: insightColor }]}>•</Text>
               <Text style={[styles.insightText, { color: colors.textSecondary }]}>{ins}</Text>
             </View>
           ))}
@@ -163,9 +159,6 @@ const styles = StyleSheet.create({
   headerText: { flex: 1 },
   title: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   subject: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-  gauge: { alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderRadius: 999, width: 56, height: 56 },
-  gaugeValue: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.bold },
-  gaugeLabel: { fontSize: 8, textTransform: 'uppercase' },
   legend: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDotFilled: { width: 10, height: 4, borderRadius: 2 },

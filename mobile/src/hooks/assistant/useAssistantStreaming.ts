@@ -681,8 +681,8 @@ export function useAssistantStreaming({
     const timestamp = parseInt(match[1], 10);
     const diff = Date.now() - timestamp;
     if (diff < 60_000) return t('screens.gestion.justNow');
-    if (diff < 3_600_000) return `Il y a ${Math.floor(diff / 60_000)} min`;
-    if (diff < 86_400_000) return `Il y a ${Math.floor(diff / 3_600_000)}h`;
+    if (diff < 3_600_000) return t('common.time.minutes', { count: Math.floor(diff / 60_000) });
+    if (diff < 86_400_000) return t('common.time.hours', { count: Math.floor(diff / 3_600_000) });
     return new Date(timestamp).toLocaleDateString(locale || undefined, {
       day: 'numeric',
       month: 'short',

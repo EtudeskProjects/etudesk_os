@@ -15,5 +15,31 @@
   "notAuthenticated": "Nicht authentifiziert",
   "noAudioFile": "Keine Audiodatei bereitgestellt",
   "invalidAudioFormat": "Ungueltiges Audioformat oder beschaedigte Datei",
-  "noFileProvided": "Keine Datei bereitgestellt"
+  "noFileProvided": "Keine Datei bereitgestellt",
+  "documentAnalysisTitle": "Dokumentanalyse",
+  "etudeskOnboardingTitle": "Etudesk Onboarding",
+  "onboardingFallbackName": "du",
+  "onboardingStudyReply": "Willkommen, {{name}}. Sag mir in deinen eigenen Worten, was du lernen, verstehen oder üben möchtest. Es gibt keine falsche Antwort: Wir starten mit deinem Ziel und ich passe den Weg danach an.",
+  "onboardingExploreReply": "Willkommen, {{name}}. Ich bin dein Karriereguide auf Etudesk. Sag mir in deinen eigenen Worten, was du gerade aufbauen oder verbessern möchtest.",
+  "topicMachineLearning": "Grundlagen des Machine Learning",
+  "topicDataAnalysis": "Datenanalyse",
+  "topicDigitalBasics": "Digitale Grundlagen",
+  "fallbackQuizIntro": "Hier ist ein fokussiertes Mini-Quiz.",
+  "fallbackQuizQuestion": "Was ist in {{topic}} die beste Gewohnheit für nachhaltigen Fortschritt?",
+  "fallbackQuizOptions": [
+    "Definitionen auswendig lernen, ohne zu üben",
+    "An einem konkreten Fall üben und die eigene Begründung erklären",
+    "Das Thema wechseln, sobald es schwierig wird",
+    "Warten, bis man alles beherrscht, bevor man es versucht"
+  ],
+  "fallbackQuizExplanation": "Kontextbezogene Praxis zeigt echte Lücken und stärkt das Verständnis.",
+  "confirmLabel": "Bestätigen",
+  "confirmationReplay": "Ich zeige den Block hier erneut. Tippe auf **{{label}}**, um zu bestätigen.",
+  "cvGeneratingPreface": "Ich erstelle deinen CV aus deinem Profil.",
+  "cvGenerationInstructions": "Erstelle einen einfachen, sauberen und ehrlichen CV nur mit den Profildaten. Erfinde keine Erfahrungen, Ausbildungen, Zertifikate oder Referenzen.",
+  "cvGenerationFailed": "CV-Erstellung fehlgeschlagen.",
+  "cvGenerated": "CV erstellt.",
+  "cvGenerationFailedReply": "Ich konnte den CV nicht erstellen",
+  "cvReadySaved": "Dein CV ist fertig und in deinen Dokumenten gespeichert.",
+  "unknownError": "Unbekannter Fehler"
 }

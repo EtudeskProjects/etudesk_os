@@ -3,7 +3,7 @@
 > Etudesk is an AI-powered platform to learn digital skills fast and affordably, and turn them directly into real opportunities. An AI tutor teaches you; an AI career guide finds you jobs, internships, gigs and training. In your pocket, at your pace.
 
 ## What it is
-- A living referential of 1687 digital skills, updated at market speed, where every skill knows what comes before, beside and after it.
+- A living referential of 1699 digital skills, updated at market speed, where every skill knows what comes before, beside and after it.
 - AI Tutor (learn): auto-generated quizzes & flashcards, step-by-step exercises, code playground (JavaScript / Python), multimodal explanations (diagrams, audio, video).
 - AI Career Guide (advance): opportunities matched to your profile, tailored CV generation, interview preparation, communities & spaces.
 
@@ -17,7 +17,7 @@
 
 ## Key pages
 - Home: https://etudesk.com/
-- Digital skills referential (explore 1687 skills and their relations): https://etudesk.com/digital-skills
+- Digital skills referential (explore 1699 skills and their relations): https://etudesk.com/digital-skills
 - Terms: https://etudesk.com/terms
 - Privacy: https://etudesk.com/privacy
 

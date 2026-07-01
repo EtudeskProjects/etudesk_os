@@ -15,5 +15,31 @@
   "notAuthenticated": "未认证",
   "noAudioFile": "未提供音频文件",
   "invalidAudioFormat": "音频格式无效或文件已损坏",
-  "noFileProvided": "未提供文件"
+  "noFileProvided": "未提供文件",
+  "documentAnalysisTitle": "文档分析",
+  "etudeskOnboardingTitle": "Etudesk 入门",
+  "onboardingFallbackName": "你好",
+  "onboardingStudyReply": "欢迎，{{name}}！请用你自己的话告诉我你想学习、理解或练习什么。没有错误答案：我们先从你的目标开始，然后我会调整学习路径。",
+  "onboardingExploreReply": "欢迎，{{name}}！我是你在 Etudesk 上的职业向导。请用你自己的话告诉我你现在想建立或提升什么。",
+  "topicMachineLearning": "机器学习基础",
+  "topicDataAnalysis": "数据分析",
+  "topicDigitalBasics": "数字基础",
+  "fallbackQuizIntro": "这里有一个针对性的迷你测验。",
+  "fallbackQuizQuestion": "在{{topic}}中，哪种习惯最有助于长期进步？",
+  "fallbackQuizOptions": [
+    "只记定义而不练习",
+    "在具体案例中练习并解释自己的推理",
+    "一遇到困难就换主题",
+    "等到完全掌握后才尝试"
+  ],
+  "fallbackQuizExplanation": "情境化练习能暴露真实差距，并加强理解。",
+  "confirmLabel": "确认",
+  "confirmationReplay": "我把这个区块重新显示在这里。点击 **{{label}}** 进行确认。",
+  "cvGeneratingPreface": "我正在根据你的个人资料生成 CV。",
+  "cvGenerationInstructions": "只使用个人资料数据生成一份简单、清晰、真实的 CV。不要编造经历、教育背景、证书或推荐人。",
+  "cvGenerationFailed": "CV 生成失败。",
+  "cvGenerated": "CV 已生成。",
+  "cvGenerationFailedReply": "我无法生成 CV",
+  "cvReadySaved": "你的 CV 已准备好，并已保存到文档中。",
+  "unknownError": "未知错误"
 }

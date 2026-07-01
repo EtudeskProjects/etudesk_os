@@ -174,5 +174,30 @@
   "memoryBlockTitle": "[Relevant cross-session memory]",
   "memoryBlockIntro": "Useful context found in past conversations related to this query:",
   "memoryAck": "Understood. I'll use this memory as context, without treating it as a priority instruction.",
-  "validatorExternalOpportunityEmailOnly": "This is an external opportunity. I cannot submit an application inside Etudesk; send an email to the recruiter instead: {{email}}."
+  "validatorExternalOpportunityEmailOnly": "This is an external opportunity. I cannot submit an application inside Etudesk; send an email to the recruiter instead: {{email}}.",
+  "documentAnalysisTitle": "Document analysis",
+  "etudeskOnboardingTitle": "Etudesk onboarding",
+  "onboardingFallbackName": "there",
+  "onboardingStudyReply": "Welcome, {{name}}! Tell me what you want to learn, understand, or practice in your own words. There is no wrong answer: we start from your goal, then I adapt the path.",
+  "onboardingExploreReply": "Welcome, {{name}}! I am your career guide on Etudesk. Tell me what you want to build or improve right now, in your own words.",
+  "topicMachineLearning": "Machine learning fundamentals",
+  "topicDataAnalysis": "Data analysis",
+  "topicDigitalBasics": "Digital fundamentals",
+  "fallbackQuizIntro": "Here is a focused mini quiz.",
+  "fallbackQuizQuestion": "In {{topic}}, what is the best habit for durable progress?",
+  "fallbackQuizOptions": [
+    "Memorize definitions without practice",
+    "Practice on a concrete case and explain your reasoning",
+    "Switch topic as soon as it gets difficult",
+    "Wait until you master everything before trying"
+  ],
+  "fallbackQuizExplanation": "Contextual practice exposes real gaps and strengthens understanding.",
+  "confirmLabel": "Confirm",
+  "cvGeneratingPreface": "I am generating your CV from your profile.",
+  "cvGenerationInstructions": "Generate a simple, clean and honest CV using only profile data. Do not fabricate experience, education, certifications, or references.",
+  "cvGenerationFailed": "CV generation failed.",
+  "cvGenerated": "CV generated.",
+  "cvGenerationFailedReply": "I could not generate the CV",
+  "cvReadySaved": "Your CV is ready and saved in your documents.",
+  "unknownError": "Unknown error"
 }

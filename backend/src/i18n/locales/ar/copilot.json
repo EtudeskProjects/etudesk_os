@@ -15,5 +15,31 @@
   "notAuthenticated": "غير مصادق",
   "noAudioFile": "لم يتم تقديم ملف صوتي",
   "invalidAudioFormat": "صيغة الصوت غير صالحة أو الملف تالف",
-  "noFileProvided": "لم يتم تقديم أي ملف"
+  "noFileProvided": "لم يتم تقديم أي ملف",
+  "documentAnalysisTitle": "تحليل المستند",
+  "etudeskOnboardingTitle": "تهيئة Etudesk",
+  "onboardingFallbackName": "بك",
+  "onboardingStudyReply": "مرحباً {{name}}! أخبرني بكلماتك عمّا تريد تعلمه أو فهمه أو ممارسته. لا توجد إجابة خاطئة: نبدأ من هدفك ثم أعدّل المسار.",
+  "onboardingExploreReply": "مرحباً {{name}}! أنا دليلك المهني على Etudesk. أخبرني بكلماتك عمّا تريد بناءه أو تحسينه الآن.",
+  "topicMachineLearning": "أساسيات تعلم الآلة",
+  "topicDataAnalysis": "تحليل البيانات",
+  "topicDigitalBasics": "الأساسيات الرقمية",
+  "fallbackQuizIntro": "إليك اختباراً قصيراً ومركّزاً.",
+  "fallbackQuizQuestion": "في {{topic}}، ما أفضل عادة لتحقيق تقدم مستدام؟",
+  "fallbackQuizOptions": [
+    "حفظ التعريفات دون ممارسة",
+    "التدرب على حالة واقعية وشرح طريقة التفكير",
+    "تغيير الموضوع بمجرد أن يصبح صعباً",
+    "الانتظار حتى تتقن كل شيء قبل المحاولة"
+  ],
+  "fallbackQuizExplanation": "الممارسة ضمن سياق تكشف الفجوات الحقيقية وتعزز الفهم.",
+  "confirmLabel": "تأكيد",
+  "confirmationReplay": "أعرض الكتلة هنا مرة أخرى. اضغط **{{label}}** للتأكيد.",
+  "cvGeneratingPreface": "أقوم بإنشاء سيرتك الذاتية من ملفك الشخصي.",
+  "cvGenerationInstructions": "أنشئ سيرة ذاتية بسيطة وواضحة وصادقة باستخدام بيانات الملف الشخصي فقط. لا تخترع خبرات أو تعليماً أو شهادات أو مراجع.",
+  "cvGenerationFailed": "تعذر إنشاء السيرة الذاتية.",
+  "cvGenerated": "تم إنشاء السيرة الذاتية.",
+  "cvGenerationFailedReply": "لم أتمكن من إنشاء السيرة الذاتية",
+  "cvReadySaved": "سيرتك الذاتية جاهزة ومحفوظة في مستنداتك.",
+  "unknownError": "خطأ غير معروف"
 }

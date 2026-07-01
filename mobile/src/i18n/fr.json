@@ -1856,12 +1856,13 @@
   },
   "stepSolver": {
     "step": "Étape {{current}} / {{total}}",
+    "fallbackStep": "Étape {{index}}",
     "nextStep": "Étape suivante",
     "showAll": "Voir tout",
     "defaultTitle": "Résolution"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[Délai dépassé : exécution supérieure à 5 s]",
     "noOutput": "(no output)",
     "running": "Exécution...",
     "run": "Exécuter",
@@ -1875,7 +1876,11 @@
     "correct": "Parfait !",
     "incorrect": "Pas tout à fait",
     "unsupportedType": "Type d'exercice non supporté : ",
-    "title": "Exercice interactif"
+    "title": "Exercice interactif",
+    "submissionFillGap": "Résultat de l'exercice : texte à trous, {{correct}}/{{total}} correct.",
+    "submissionMatching": "Résultat de l'exercice : association, {{correct}}/{{total}} correct.",
+    "submissionOrdering": "Résultat de l'exercice : ordre, {{correct}}/{{total}} correct, tout correct : {{allCorrect}}.",
+    "unknownType": "inconnu"
   },
   "codeBlock": {
     "copyCode": "Copier le code",
@@ -2020,7 +2025,10 @@
     "quiz": {
       "correctAnswer": "Bonne réponse !",
       "wrongAnswer": "Mauvaise réponse",
-      "alreadyAnswered": "Question déjà répondue"
+      "alreadyAnswered": "Question déjà répondue",
+      "submissionCorrect": "Réponse au quiz : \"{{option}}\" - réponse correcte.",
+      "submissionIncorrect": "Réponse au quiz : \"{{option}}\" - réponse incorrecte.",
+      "submissionRecorded": "Réponse au quiz : \"{{option}}\" - réponse enregistrée."
     },
     "flashcard": {
       "easy": "Facile",
@@ -2085,7 +2093,12 @@
       "bookingInProgress": "Réservation en cours…",
       "acceptInvitation": "Acceptation…",
       "declineInvitation": "Refus…",
-      "executeAction": "Action en cours…"
+      "executeAction": "Action en cours…",
+      "competencyGraph": "Analyse des liens de compétences…",
+      "competencyGraphPrefix": "Graphe compétences : {{query}}",
+      "learningPath": "Construction du parcours…",
+      "learningPathPrefix": "Parcours : {{target}}",
+      "genericTool": "Action en cours…"
     },
     "suggestions": {
       "orgExplore": [
@@ -2137,6 +2150,10 @@
       "privateSkill": "Privée",
       "unread": "Non lue",
       "read": "Lue"
+    },
+    "skills": {
+      "seeMore": "Voir plus ({{count}})",
+      "viewTalentProfile": "Voir le profil du talent"
     }
   },
   "applicationDetail": {

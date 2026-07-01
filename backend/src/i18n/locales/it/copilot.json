@@ -15,5 +15,31 @@
   "notAuthenticated": "Non autenticato",
   "noAudioFile": "Nessun file audio fornito",
   "invalidAudioFormat": "Formato audio non valido o file corrotto",
-  "noFileProvided": "Nessun file fornito"
+  "noFileProvided": "Nessun file fornito",
+  "documentAnalysisTitle": "Analisi del documento",
+  "etudeskOnboardingTitle": "Onboarding Etudesk",
+  "onboardingFallbackName": "a te",
+  "onboardingStudyReply": "Benvenuto, {{name}}. Dimmi cosa vuoi imparare, capire o praticare con parole tue. Non c’è una risposta sbagliata: partiamo dal tuo obiettivo, poi adatto il percorso.",
+  "onboardingExploreReply": "Benvenuto, {{name}}. Sono la tua guida carriera su Etudesk. Dimmi cosa vuoi costruire o migliorare adesso, con parole tue.",
+  "topicMachineLearning": "Fondamenti di machine learning",
+  "topicDataAnalysis": "Analisi dei dati",
+  "topicDigitalBasics": "Fondamenti digitali",
+  "fallbackQuizIntro": "Ecco un mini quiz mirato.",
+  "fallbackQuizQuestion": "In {{topic}}, qual è l’abitudine migliore per progredire in modo duraturo?",
+  "fallbackQuizOptions": [
+    "Memorizzare definizioni senza fare pratica",
+    "Fare pratica su un caso concreto e spiegare il ragionamento",
+    "Cambiare argomento appena diventa difficile",
+    "Aspettare di padroneggiare tutto prima di provare"
+  ],
+  "fallbackQuizExplanation": "La pratica contestualizzata mostra le lacune reali e rafforza la comprensione.",
+  "confirmLabel": "Conferma",
+  "confirmationReplay": "Mostro di nuovo il blocco qui. Tocca **{{label}}** per confermare.",
+  "cvGeneratingPreface": "Sto generando il tuo CV dal tuo profilo.",
+  "cvGenerationInstructions": "Genera un CV semplice, pulito e onesto usando solo i dati del profilo. Non inventare esperienze, formazione, certificazioni o referenze.",
+  "cvGenerationFailed": "Generazione del CV non riuscita.",
+  "cvGenerated": "CV generato.",
+  "cvGenerationFailedReply": "Non ho potuto generare il CV",
+  "cvReadySaved": "Il tuo CV è pronto e salvato nei tuoi documenti.",
+  "unknownError": "Errore sconosciuto"
 }

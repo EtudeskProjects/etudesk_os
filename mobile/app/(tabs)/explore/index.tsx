@@ -485,7 +485,12 @@ export default function ExploreScreen() {
                   color={STATIC_COLORS.white}
                   strokeWidth={ICON.strokeWidth}
                 />
-                <Text style={[styles.categoryLabel, { color: STATIC_COLORS.white }]}>
+                <Text
+                  style={[styles.categoryLabel, { color: STATIC_COLORS.white }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.72}
+                >
                   {category.label}
                 </Text>
               </View>
@@ -918,6 +923,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     textAlign: 'center',
+    maxWidth: '100%',
   },
 
   // Content

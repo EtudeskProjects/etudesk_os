@@ -6,15 +6,17 @@
 
 import { SupportedLanguage } from '../../../i18n';
 
-const NAMESPACE_LABELS: Record<string, { fr: string; en: string }> = {
-  opportunities: { fr: 'opportunités', en: 'opportunities' },
-  communities: { fr: 'communautés', en: 'communities' },
-  spaces: { fr: 'espaces', en: 'spaces' },
-  talents: { fr: 'talents', en: 'talents' },
-  organizations: { fr: 'organisations', en: 'organizations' },
+type LocalizedLabel = Partial<Record<SupportedLanguage, string>>;
+
+const NAMESPACE_LABELS: Record<string, LocalizedLabel> = {
+  opportunities: { fr: 'opportunités', en: 'opportunities', es: 'oportunidades', it: 'opportunità', de: 'Opportunities', zh: '机会', ar: 'الفرص' },
+  communities: { fr: 'communautés', en: 'communities', es: 'comunidades', it: 'community', de: 'Communities', zh: '社区', ar: 'المجتمعات' },
+  spaces: { fr: 'espaces', en: 'spaces', es: 'espacios', it: 'spazi', de: 'Spaces', zh: '空间', ar: 'المساحات' },
+  talents: { fr: 'talents', en: 'talents', es: 'talentos', it: 'talenti', de: 'Talente', zh: '人才', ar: 'المواهب' },
+  organizations: { fr: 'organisations', en: 'organizations', es: 'organizaciones', it: 'organizzazioni', de: 'Organisationen', zh: '组织', ar: 'المنظمات' },
 };
 
-const INTENT_LABELS: Record<string, { fr: string; en: string }> = {
+const INTENT_LABELS: Record<string, LocalizedLabel> = {
   my_profile: { fr: 'Mon profil', en: 'My profile' },
   my_applications: { fr: 'Mes candidatures', en: 'My applications' },
   my_reservations: { fr: 'Mes réservations', en: 'My reservations' },
@@ -56,6 +58,241 @@ const INTENT_LABELS: Record<string, { fr: string; en: string }> = {
   update_application: { fr: 'Mise à jour candidature', en: 'Application update' },
 };
 
+function labelFor(labels: LocalizedLabel | undefined, language: SupportedLanguage): string | undefined {
+  return labels?.[language] || (language === 'en' ? labels?.en : undefined);
+}
+
+function getSummaryTranslations(language: SupportedLanguage) {
+  const translations = {
+    en: {
+      error: 'Error',
+      actionNotDone: 'Action not completed',
+      unknownError: 'Unknown error',
+      noResult: 'No results',
+      dataLoaded: 'Data loaded',
+      element: (count: number) => `${count} item${count > 1 ? 's' : ''}`,
+      result: (count: number) => `${count} result${count > 1 ? 's' : ''}`,
+      video: (count: number) => `${count} video${count > 1 ? 's' : ''} found`,
+      noVideo: 'No videos',
+      generatedDocument: 'Document generated',
+      saved: 'saved',
+      generatedImage: 'Image generated',
+      generatedDiagram: 'Diagram generated',
+      noWebSource: 'No reliable sources found',
+      webDone: 'Web search complete',
+      extractionUnavailable: 'Extraction unavailable',
+      degradedRead: 'Read (degraded mode)',
+      degradedMode: 'degraded mode',
+      documentRead: 'Document read',
+      read: 'Read',
+      referential: 'Catalog',
+      catalogSearch: 'Catalog search',
+      graph: 'Skill graph',
+      learningPath: 'Learning path',
+      alreadyKnown: 'already known',
+      missingSkills: (count: number) => `${count} missing skill${count > 1 ? 's' : ''}`,
+      skill: 'Skill',
+      skillUpdated: 'Skill updated',
+      actionDone: 'Action completed',
+      done: 'Done',
+    },
+    fr: {
+      error: 'Erreur',
+      actionNotDone: 'Action non réalisée',
+      unknownError: 'Erreur inconnue',
+      noResult: 'Aucun résultat',
+      dataLoaded: 'Données chargées',
+      element: (count: number) => `${count} élément${count > 1 ? 's' : ''}`,
+      result: (count: number) => `${count} résultat${count > 1 ? 's' : ''}`,
+      video: (count: number) => `${count} vidéo${count > 1 ? 's' : ''} trouvée${count > 1 ? 's' : ''}`,
+      noVideo: 'Aucune vidéo',
+      generatedDocument: 'Document généré',
+      saved: 'sauvegardé',
+      generatedImage: 'Image générée',
+      generatedDiagram: 'Diagramme généré',
+      noWebSource: 'Aucune source fiable trouvée',
+      webDone: 'Recherche web terminée',
+      extractionUnavailable: 'Extraction indisponible',
+      degradedRead: 'Lu (mode dégradé)',
+      degradedMode: 'mode dégradé',
+      documentRead: 'Document lu',
+      read: 'Lu',
+      referential: 'Référentiel',
+      catalogSearch: 'Recherche référentiel',
+      graph: 'Graphe compétences',
+      learningPath: 'Parcours',
+      alreadyKnown: 'déjà acquis',
+      missingSkills: (count: number) => `${count} compétence${count > 1 ? 's' : ''} à acquérir`,
+      skill: 'Compétence',
+      skillUpdated: 'Compétence mise à jour',
+      actionDone: 'Action effectuée',
+      done: 'Terminé',
+    },
+    es: {
+      error: 'Error',
+      actionNotDone: 'Acción no completada',
+      unknownError: 'Error desconocido',
+      noResult: 'Sin resultados',
+      dataLoaded: 'Datos cargados',
+      element: (count: number) => `${count} elemento${count > 1 ? 's' : ''}`,
+      result: (count: number) => `${count} resultado${count > 1 ? 's' : ''}`,
+      video: (count: number) => `${count} vídeo${count > 1 ? 's' : ''} encontrado${count > 1 ? 's' : ''}`,
+      noVideo: 'Sin vídeos',
+      generatedDocument: 'Documento generado',
+      saved: 'guardado',
+      generatedImage: 'Imagen generada',
+      generatedDiagram: 'Diagrama generado',
+      noWebSource: 'No se encontraron fuentes fiables',
+      webDone: 'Búsqueda web completada',
+      extractionUnavailable: 'Extracción no disponible',
+      degradedRead: 'Leído (modo degradado)',
+      degradedMode: 'modo degradado',
+      documentRead: 'Documento leído',
+      read: 'Leído',
+      referential: 'Catálogo',
+      catalogSearch: 'Búsqueda en catálogo',
+      graph: 'Grafo de competencias',
+      learningPath: 'Ruta de aprendizaje',
+      alreadyKnown: 'ya adquirido',
+      missingSkills: (count: number) => `${count} competencia${count > 1 ? 's' : ''} por adquirir`,
+      skill: 'Competencia',
+      skillUpdated: 'Competencia actualizada',
+      actionDone: 'Acción completada',
+      done: 'Completado',
+    },
+    it: {
+      error: 'Errore',
+      actionNotDone: 'Azione non completata',
+      unknownError: 'Errore sconosciuto',
+      noResult: 'Nessun risultato',
+      dataLoaded: 'Dati caricati',
+      element: (count: number) => `${count} elemento${count > 1 ? 'i' : ''}`,
+      result: (count: number) => `${count} risultato${count > 1 ? 'i' : ''}`,
+      video: (count: number) => `${count} video trovato${count > 1 ? 'i' : ''}`,
+      noVideo: 'Nessun video',
+      generatedDocument: 'Documento generato',
+      saved: 'salvato',
+      generatedImage: 'Immagine generata',
+      generatedDiagram: 'Diagramma generato',
+      noWebSource: 'Nessuna fonte affidabile trovata',
+      webDone: 'Ricerca web completata',
+      extractionUnavailable: 'Estrazione non disponibile',
+      degradedRead: 'Letto (modalità degradata)',
+      degradedMode: 'modalità degradata',
+      documentRead: 'Documento letto',
+      read: 'Letto',
+      referential: 'Catalogo',
+      catalogSearch: 'Ricerca catalogo',
+      graph: 'Grafo competenze',
+      learningPath: 'Percorso',
+      alreadyKnown: 'già acquisita',
+      missingSkills: (count: number) => `${count} competenza${count > 1 ? 'e' : ''} da acquisire`,
+      skill: 'Competenza',
+      skillUpdated: 'Competenza aggiornata',
+      actionDone: 'Azione completata',
+      done: 'Completato',
+    },
+    de: {
+      error: 'Fehler',
+      actionNotDone: 'Aktion nicht abgeschlossen',
+      unknownError: 'Unbekannter Fehler',
+      noResult: 'Keine Ergebnisse',
+      dataLoaded: 'Daten geladen',
+      element: (count: number) => `${count} Element${count > 1 ? 'e' : ''}`,
+      result: (count: number) => `${count} Ergebnis${count > 1 ? 'se' : ''}`,
+      video: (count: number) => `${count} Video${count > 1 ? 's' : ''} gefunden`,
+      noVideo: 'Keine Videos',
+      generatedDocument: 'Dokument erstellt',
+      saved: 'gespeichert',
+      generatedImage: 'Bild erstellt',
+      generatedDiagram: 'Diagramm erstellt',
+      noWebSource: 'Keine verlässlichen Quellen gefunden',
+      webDone: 'Websuche abgeschlossen',
+      extractionUnavailable: 'Extraktion nicht verfügbar',
+      degradedRead: 'Gelesen (eingeschränkter Modus)',
+      degradedMode: 'eingeschränkter Modus',
+      documentRead: 'Dokument gelesen',
+      read: 'Gelesen',
+      referential: 'Katalog',
+      catalogSearch: 'Katalogsuche',
+      graph: 'Kompetenzgraph',
+      learningPath: 'Lernpfad',
+      alreadyKnown: 'bereits erworben',
+      missingSkills: (count: number) => `${count} fehlende Kompetenz${count > 1 ? 'en' : ''}`,
+      skill: 'Kompetenz',
+      skillUpdated: 'Kompetenz aktualisiert',
+      actionDone: 'Aktion abgeschlossen',
+      done: 'Fertig',
+    },
+    zh: {
+      error: '错误',
+      actionNotDone: '操作未完成',
+      unknownError: '未知错误',
+      noResult: '没有结果',
+      dataLoaded: '数据已加载',
+      element: (count: number) => `${count} 项`,
+      result: (count: number) => `${count} 个结果`,
+      video: (count: number) => `找到 ${count} 个视频`,
+      noVideo: '没有视频',
+      generatedDocument: '文档已生成',
+      saved: '已保存',
+      generatedImage: '图片已生成',
+      generatedDiagram: '图表已生成',
+      noWebSource: '未找到可靠来源',
+      webDone: '网页搜索完成',
+      extractionUnavailable: '无法提取',
+      degradedRead: '已读取（降级模式）',
+      degradedMode: '降级模式',
+      documentRead: '文档已读取',
+      read: '已读取',
+      referential: '目录',
+      catalogSearch: '目录搜索',
+      graph: '技能图谱',
+      learningPath: '学习路径',
+      alreadyKnown: '已掌握',
+      missingSkills: (count: number) => `${count} 项待掌握技能`,
+      skill: '技能',
+      skillUpdated: '技能已更新',
+      actionDone: '操作已完成',
+      done: '完成',
+    },
+    ar: {
+      error: 'خطأ',
+      actionNotDone: 'لم يكتمل الإجراء',
+      unknownError: 'خطأ غير معروف',
+      noResult: 'لا توجد نتائج',
+      dataLoaded: 'تم تحميل البيانات',
+      element: (count: number) => `${count} عنصر`,
+      result: (count: number) => `${count} نتيجة`,
+      video: (count: number) => `تم العثور على ${count} فيديو`,
+      noVideo: 'لا توجد فيديوهات',
+      generatedDocument: 'تم إنشاء المستند',
+      saved: 'محفوظ',
+      generatedImage: 'تم إنشاء الصورة',
+      generatedDiagram: 'تم إنشاء المخطط',
+      noWebSource: 'لم يتم العثور على مصادر موثوقة',
+      webDone: 'اكتمل بحث الويب',
+      extractionUnavailable: 'الاستخراج غير متاح',
+      degradedRead: 'تمت القراءة (وضع محدود)',
+      degradedMode: 'وضع محدود',
+      documentRead: 'تمت قراءة المستند',
+      read: 'تمت القراءة',
+      referential: 'الفهرس',
+      catalogSearch: 'بحث في الفهرس',
+      graph: 'مخطط المهارات',
+      learningPath: 'مسار التعلم',
+      alreadyKnown: 'مكتسبة مسبقاً',
+      missingSkills: (count: number) => `${count} مهارة مطلوبة`,
+      skill: 'مهارة',
+      skillUpdated: 'تم تحديث المهارة',
+      actionDone: 'تم الإجراء',
+      done: 'تم',
+    },
+  } satisfies Record<SupportedLanguage, Record<string, string | ((count: number) => string)>>;
+
+  return translations[language] || translations.en;
+}
+
 export function generateToolSummary(
   toolName: string,
   output: unknown,
@@ -63,41 +300,7 @@ export function generateToolSummary(
   args?: Record<string, unknown>,
   language: SupportedLanguage = 'en'
 ): string {
-  const isFrench = language === 'fr';
-  const tr = {
-    error: isFrench ? 'Erreur' : 'Error',
-    actionNotDone: isFrench ? 'Action non réalisée' : 'Action not completed',
-    unknownError: isFrench ? 'Erreur inconnue' : 'Unknown error',
-    noResult: isFrench ? 'Aucun résultat' : 'No results',
-    dataLoaded: isFrench ? 'Données chargées' : 'Data loaded',
-    element: (count: number) => isFrench
-      ? `${count} élément${count > 1 ? 's' : ''}`
-      : `${count} item${count > 1 ? 's' : ''}`,
-    result: (count: number) => isFrench
-      ? `${count} résultat${count > 1 ? 's' : ''}`
-      : `${count} result${count > 1 ? 's' : ''}`,
-    video: (count: number) => isFrench
-      ? `${count} vidéo${count > 1 ? 's' : ''} trouvée${count > 1 ? 's' : ''}`
-      : `${count} video${count > 1 ? 's' : ''} found`,
-    noVideo: isFrench ? 'Aucune vidéo' : 'No videos',
-    generatedDocument: isFrench ? 'Document généré' : 'Document generated',
-    saved: isFrench ? 'sauvegardé' : 'saved',
-    generatedImage: isFrench ? 'Image générée' : 'Image generated',
-    generatedDiagram: isFrench ? 'Diagramme généré' : 'Diagram generated',
-    noWebSource: isFrench ? 'Aucune source fiable trouvée' : 'No reliable sources found',
-    webDone: isFrench ? 'Recherche web terminée' : 'Web search complete',
-    extractionUnavailable: isFrench ? 'Extraction indisponible' : 'Extraction unavailable',
-    degradedRead: isFrench ? 'Lu (mode dégradé)' : 'Read (degraded mode)',
-    documentRead: isFrench ? 'Document lu' : 'Document read',
-    read: isFrench ? 'Lu' : 'Read',
-    referential: isFrench ? 'Référentiel' : 'Catalog',
-    catalogSearch: isFrench ? 'Recherche référentiel' : 'Catalog search',
-    graph: isFrench ? 'Graphe compétences' : 'Skill graph',
-    skill: isFrench ? 'Compétence' : 'Skill',
-    skillUpdated: isFrench ? 'Compétence mise à jour' : 'Skill updated',
-    actionDone: isFrench ? 'Action effectuée' : 'Action completed',
-    done: isFrench ? 'Terminé' : 'Done',
-  };
+  const tr = getSummaryTranslations(language);
   const outputObj = (output && typeof output === 'object') ? (output as any) : null;
   if (!isError && outputObj && outputObj.success === false) {
     const msg = outputObj.error || outputObj.message || tr.actionNotDone;
@@ -117,14 +320,14 @@ export function generateToolSummary(
         const results = Array.isArray(output) ? output : (output as any)?.results;
         const count = Array.isArray(results) ? results.length : 0;
         const entity = args?.entity as string | undefined;
-        const typeLabel = entity ? NAMESPACE_LABELS[entity]?.[isFrench ? 'fr' : 'en'] || entity : '';
+        const typeLabel = entity ? labelFor(NAMESPACE_LABELS[entity], language) || '' : '';
         const countText = count > 0 ? tr.result(count) : tr.noResult;
         return typeLabel ? `${countText} · ${typeLabel}` : countText;
       }
 
       case 'sql_query': {
         const intent = args?.intent as string | undefined;
-        const intentLabel = intent ? INTENT_LABELS[intent]?.[isFrench ? 'fr' : 'en'] || intent.replace(/_/g, ' ') : '';
+        const intentLabel = intent ? labelFor(INTENT_LABELS[intent], language) || '' : '';
         let countText = tr.dataLoaded;
         if (Array.isArray(output)) {
           const count = output.length;
@@ -178,7 +381,7 @@ export function generateToolSummary(
           return docTitle ? `${tr.extractionUnavailable} · ${String(docTitle).slice(0, 60)}` : tr.extractionUnavailable;
         }
         if (extractionMode === 'salvaged') {
-          return docTitle ? `${tr.degradedRead} · ${String(docTitle).slice(0, 60)}` : `${tr.documentRead} (${isFrench ? 'mode dégradé' : 'degraded mode'})`;
+          return docTitle ? `${tr.degradedRead} · ${String(docTitle).slice(0, 60)}` : `${tr.documentRead} (${tr.degradedMode})`;
         }
         if (docTitle) return `${tr.read} · ${String(docTitle).slice(0, 60)}`;
         const name = args?.fileName || args?.name || args?.file;
@@ -200,6 +403,20 @@ export function generateToolSummary(
         return name ? `${tr.graph} · ${name}` : q ? `${tr.graph} · ${q}` : tr.graph;
       }
 
+      case 'learning_path': {
+        const name = outputObj?.competency?.name as string | undefined;
+        const target = (args?.target || args?.query || args?.goal) as string | undefined;
+        const missingCount = outputObj?.summary?.missing_count as number | undefined;
+        const alreadyKnown = outputObj?.summary?.already_known as boolean | undefined;
+        const label = name || target;
+        const status = alreadyKnown
+          ? tr.alreadyKnown
+          : typeof missingCount === 'number'
+            ? tr.missingSkills(missingCount)
+            : '';
+        return [tr.learningPath, label, status].filter(Boolean).join(' · ');
+      }
+
       case 'manage_skills': {
         // Prefer the resolved catalog skill name from the result; fall back to the query label.
         const resolvedName = outputObj?.skill?.name as string | undefined;
@@ -211,16 +428,16 @@ export function generateToolSummary(
 
       case 'execute_action': {
         const action = args?.action as string | undefined;
-        const actionLabels: Record<string, { fr: string; en: string }> = {
-          apply_opportunity: { fr: 'Candidature soumise', en: 'Application submitted' },
-          join_community: { fr: 'Communauté rejointe', en: 'Community joined' },
-          book_space: { fr: 'Espace réservé', en: 'Space booked' },
-          accept_invitation: { fr: 'Invitation acceptée', en: 'Invitation accepted' },
-          decline_invitation: { fr: 'Invitation déclinée', en: 'Invitation declined' },
-          create_agenda_trigger: { fr: 'Trigger créé', en: 'Trigger created' },
-          update_agenda_trigger: { fr: 'Trigger mis à jour', en: 'Trigger updated' },
+        const actionLabels: Record<string, LocalizedLabel> = {
+          apply_opportunity: { fr: 'Candidature soumise', en: 'Application submitted', es: 'Candidatura enviada', it: 'Candidatura inviata', de: 'Bewerbung gesendet', zh: '申请已提交', ar: 'تم إرسال الطلب' },
+          join_community: { fr: 'Communauté rejointe', en: 'Community joined', es: 'Comunidad unida', it: 'Community raggiunta', de: 'Community beigetreten', zh: '已加入社区', ar: 'تم الانضمام إلى المجتمع' },
+          book_space: { fr: 'Espace réservé', en: 'Space booked', es: 'Espacio reservado', it: 'Spazio prenotato', de: 'Space gebucht', zh: '空间已预订', ar: 'تم حجز المساحة' },
+          accept_invitation: { fr: 'Invitation acceptée', en: 'Invitation accepted', es: 'Invitación aceptada', it: 'Invito accettato', de: 'Einladung angenommen', zh: '邀请已接受', ar: 'تم قبول الدعوة' },
+          decline_invitation: { fr: 'Invitation déclinée', en: 'Invitation declined', es: 'Invitación rechazada', it: 'Invito rifiutato', de: 'Einladung abgelehnt', zh: '邀请已拒绝', ar: 'تم رفض الدعوة' },
+          create_agenda_trigger: { fr: 'Rappel créé', en: 'Reminder created', es: 'Recordatorio creado', it: 'Promemoria creato', de: 'Erinnerung erstellt', zh: '提醒已创建', ar: 'تم إنشاء التذكير' },
+          update_agenda_trigger: { fr: 'Rappel mis à jour', en: 'Reminder updated', es: 'Recordatorio actualizado', it: 'Promemoria aggiornato', de: 'Erinnerung aktualisiert', zh: '提醒已更新', ar: 'تم تحديث التذكير' },
         };
-        return action ? actionLabels[action]?.[isFrench ? 'fr' : 'en'] || tr.actionDone : tr.actionDone;
+        return action ? labelFor(actionLabels[action], language) || tr.actionDone : tr.actionDone;
       }
 
       default:

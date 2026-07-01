@@ -77,7 +77,11 @@
     "limitReached": "Límite alcanzado",
     "fileTooLarge": "Archivo demasiado grande",
     "deleteTitle": "Eliminar la candidatura",
-    "invalidToken": "Sesión inválida o expirada. Por favor, inicie sesión de nuevo."
+    "invalidToken": "Sesión inválida o expirada. Por favor, inicie sesión de nuevo.",
+    "time": {
+      "minutes": "Hace {{count}} min",
+      "hours": "Hace {{count}}h"
+    }
   },
   "auth": {
     "login": {
@@ -866,11 +870,12 @@
   },
   "stepSolver": {
     "step": "Paso {{current}} / {{total}}",
+    "fallbackStep": "Paso {{index}}",
     "nextStep": "Siguiente paso",
     "showAll": "Ver todo"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[Tiempo agotado: la ejecución superó 5 s]",
     "noOutput": "(sin salida)",
     "running": "Ejecutando...",
     "run": "Ejecutar",
@@ -986,7 +991,10 @@
     "quiz": {
       "correctAnswer": "¡Respuesta correcta!",
       "wrongAnswer": "Respuesta incorrecta",
-      "alreadyAnswered": "Pregunta ya respondida"
+      "alreadyAnswered": "Pregunta ya respondida",
+      "submissionCorrect": "Respuesta del quiz: \"{{option}}\" - respuesta correcta.",
+      "submissionIncorrect": "Respuesta del quiz: \"{{option}}\" - respuesta incorrecta.",
+      "submissionRecorded": "Respuesta del quiz: \"{{option}}\" - respuesta registrada."
     },
     "flashcard": {
       "easy": "Fácil",
@@ -1049,7 +1057,14 @@
       "bookingInProgress": "Reserva en curso…",
       "acceptInvitation": "Aceptando…",
       "declineInvitation": "Rechazando…",
-      "executeAction": "Acción en curso…"
+      "executeAction": "Acción en curso…",
+      "findCompetency": "Búsqueda en el catálogo…",
+      "findCompetencyPrefix": "Catálogo: {{query}}",
+      "competencyGraph": "Analizando vínculos de competencias…",
+      "competencyGraphPrefix": "Grafo de competencias: {{query}}",
+      "learningPath": "Construyendo ruta de aprendizaje…",
+      "learningPathPrefix": "Ruta: {{target}}",
+      "genericTool": "Acción en curso…"
     },
     "suggestions": {
       "orgExplore": [
@@ -1097,6 +1112,10 @@
       "privateSkill": "Privada",
       "unread": "No leída",
       "read": "Leída"
+    },
+    "skills": {
+      "seeMore": "Ver más ({{count}})",
+      "viewTalentProfile": "Ver perfil del talento"
     }
   },
   "applicationDetail": {
@@ -1773,5 +1792,15 @@
       "referral": "¿Cómo supiste de nosotros?",
       "expectations": "¿Cuáles son tus expectativas para esta comunidad?"
     }
+  },
+  "exercise": {
+    "correct": "¡Perfecto!",
+    "incorrect": "No del todo",
+    "unsupportedType": "Tipo de ejercicio no compatible: ",
+    "title": "Ejercicio interactivo",
+    "submissionFillGap": "Resultado del ejercicio: completar huecos, {{correct}}/{{total}} correctas.",
+    "submissionMatching": "Resultado del ejercicio: asociación, {{correct}}/{{total}} correctas.",
+    "submissionOrdering": "Resultado del ejercicio: orden, {{correct}}/{{total}} correctas, todo correcto: {{allCorrect}}.",
+    "unknownType": "desconocido"
   }
 }

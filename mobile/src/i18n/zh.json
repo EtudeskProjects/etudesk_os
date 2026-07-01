@@ -77,7 +77,11 @@
     "limitReached": "已达上限",
     "fileTooLarge": "文件太大",
     "deleteTitle": "删除申请",
-    "invalidToken": "会话无效或已过期。请重新登录。"
+    "invalidToken": "会话无效或已过期。请重新登录。",
+    "time": {
+      "minutes": "{{count}} 分钟前",
+      "hours": "{{count}} 小时前"
+    }
   },
   "auth": {
     "login": {
@@ -866,11 +870,12 @@
   },
   "stepSolver": {
     "step": "步骤 {{current}} / {{total}}",
+    "fallbackStep": "步骤 {{index}}",
     "nextStep": "下一步",
     "showAll": "查看全部"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[超时：执行超过 5 秒]",
     "noOutput": "（无输出）",
     "running": "运行中...",
     "run": "运行",
@@ -986,7 +991,10 @@
     "quiz": {
       "correctAnswer": "回答正确！",
       "wrongAnswer": "回答错误",
-      "alreadyAnswered": "已回答过此问题"
+      "alreadyAnswered": "已回答过此问题",
+      "submissionCorrect": "测验答案：“{{option}}” - 回答正确。",
+      "submissionIncorrect": "测验答案：“{{option}}” - 回答错误。",
+      "submissionRecorded": "测验答案：“{{option}}” - 答案已记录。"
     },
     "flashcard": {
       "easy": "简单",
@@ -1049,7 +1057,14 @@
       "bookingInProgress": "预订中…",
       "acceptInvitation": "接受中…",
       "declineInvitation": "拒绝中…",
-      "executeAction": "操作中…"
+      "executeAction": "操作中…",
+      "findCompetency": "正在查询目录…",
+      "findCompetencyPrefix": "目录：{{query}}",
+      "competencyGraph": "正在分析技能关联…",
+      "competencyGraphPrefix": "技能图谱：{{query}}",
+      "learningPath": "正在构建学习路径…",
+      "learningPathPrefix": "学习路径：{{target}}",
+      "genericTool": "操作中…"
     },
     "suggestions": {
       "orgExplore": [
@@ -1097,6 +1112,10 @@
       "privateSkill": "私密",
       "unread": "未读",
       "read": "已读"
+    },
+    "skills": {
+      "seeMore": "查看更多（{{count}}）",
+      "viewTalentProfile": "查看人才资料"
     }
   },
   "applicationDetail": {
@@ -1773,5 +1792,15 @@
       "referral": "你是怎么知道我们的？",
       "expectations": "你对这个社区有什么期望？"
     }
+  },
+  "exercise": {
+    "correct": "很好！",
+    "incorrect": "还不完全对",
+    "unsupportedType": "不支持的练习类型：",
+    "title": "互动练习",
+    "submissionFillGap": "练习结果：填空，{{correct}}/{{total}} 正确。",
+    "submissionMatching": "练习结果：配对，{{correct}}/{{total}} 正确。",
+    "submissionOrdering": "练习结果：排序，{{correct}}/{{total}} 正确，全部正确：{{allCorrect}}。",
+    "unknownType": "未知"
   }
 }

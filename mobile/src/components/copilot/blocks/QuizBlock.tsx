@@ -123,8 +123,12 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
     // agent (its original ordering differs). Submit the chosen TEXT + the verdict
     // computed here (we know the remapped correctAnswer) so the agent's feedback
     // matches the on-screen green/red result instead of re-grading from a letter.
-    const verdict = hasCorrectAnswer ? (index === correctAnswer ? 'correcte' : 'incorrecte') : 'enregistrée';
-    onAnswer(`Réponse au quiz : "${option}" — réponse ${verdict}.`);
+    const submissionKey = hasCorrectAnswer
+      ? index === correctAnswer
+        ? 'copilot.quiz.submissionCorrect'
+        : 'copilot.quiz.submissionIncorrect'
+      : 'copilot.quiz.submissionRecorded';
+    onAnswer(t(submissionKey, { option }));
   };
 
   const getOptionStyle = (index: number) => {

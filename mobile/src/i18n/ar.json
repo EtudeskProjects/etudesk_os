@@ -77,7 +77,11 @@
     "limitReached": "تم بلوغ الحد الأقصى",
     "fileTooLarge": "الملف كبير جدا",
     "deleteTitle": "حذف الترشيح",
-    "invalidToken": "جلسة غير صالحة أو منتهية. يرجى تسجيل الدخول مرة أخرى."
+    "invalidToken": "جلسة غير صالحة أو منتهية. يرجى تسجيل الدخول مرة أخرى.",
+    "time": {
+      "minutes": "منذ {{count}} د",
+      "hours": "منذ {{count}} س"
+    }
   },
   "auth": {
     "login": {
@@ -866,11 +870,12 @@
   },
   "stepSolver": {
     "step": "الخطوة {{current}} / {{total}}",
+    "fallbackStep": "الخطوة {{index}}",
     "nextStep": "الخطوة التالية",
     "showAll": "عرض الكل"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[انتهت المهلة: تجاوز التنفيذ 5 ثوان]",
     "noOutput": "(لا توجد مخرجات)",
     "running": "جارٍ التنفيذ...",
     "run": "تشغيل",
@@ -986,7 +991,10 @@
     "quiz": {
       "correctAnswer": "إجابة صحيحة!",
       "wrongAnswer": "إجابة خاطئة",
-      "alreadyAnswered": "تمت الإجابة على هذا السؤال"
+      "alreadyAnswered": "تمت الإجابة على هذا السؤال",
+      "submissionCorrect": "إجابة الاختبار: \"{{option}}\" - إجابة صحيحة.",
+      "submissionIncorrect": "إجابة الاختبار: \"{{option}}\" - إجابة خاطئة.",
+      "submissionRecorded": "إجابة الاختبار: \"{{option}}\" - تم تسجيل الإجابة."
     },
     "flashcard": {
       "easy": "سهل",
@@ -1049,7 +1057,14 @@
       "bookingInProgress": "جاري الحجز…",
       "acceptInvitation": "جاري القبول…",
       "declineInvitation": "جاري الرفض…",
-      "executeAction": "جاري التنفيذ…"
+      "executeAction": "جاري التنفيذ…",
+      "findCompetency": "بحث في الكتالوج…",
+      "findCompetencyPrefix": "الكتالوج: {{query}}",
+      "competencyGraph": "تحليل روابط المهارات…",
+      "competencyGraphPrefix": "مخطط المهارات: {{query}}",
+      "learningPath": "بناء مسار التعلم…",
+      "learningPathPrefix": "المسار: {{target}}",
+      "genericTool": "الإجراء قيد التنفيذ…"
     },
     "suggestions": {
       "orgExplore": [
@@ -1097,6 +1112,10 @@
       "privateSkill": "خاصة",
       "unread": "غير مقروءة",
       "read": "مقروءة"
+    },
+    "skills": {
+      "seeMore": "عرض المزيد ({{count}})",
+      "viewTalentProfile": "عرض ملف الموهبة"
     }
   },
   "applicationDetail": {
@@ -1773,5 +1792,15 @@
       "referral": "كيف سمعت عنا؟",
       "expectations": "ما هي توقعاتك من هذا المجتمع؟"
     }
+  },
+  "exercise": {
+    "correct": "ممتاز!",
+    "incorrect": "ليس تماما",
+    "unsupportedType": "نوع تمرين غير مدعوم: ",
+    "title": "تمرين تفاعلي",
+    "submissionFillGap": "نتيجة التمرين: ملء الفراغات، {{correct}}/{{total}} صحيح.",
+    "submissionMatching": "نتيجة التمرين: المطابقة، {{correct}}/{{total}} صحيح.",
+    "submissionOrdering": "نتيجة التمرين: الترتيب، {{correct}}/{{total}} صحيح، كله صحيح: {{allCorrect}}.",
+    "unknownType": "غير معروف"
   }
 }

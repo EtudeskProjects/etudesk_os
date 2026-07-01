@@ -41,12 +41,12 @@ function sanitizeText(value: unknown, max = 220): string | undefined {
   return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
 
-function sanitizeSteps(data: StepSolverBlockProps['data']): { title: string; steps: Step[] } {
+function sanitizeSteps(data: StepSolverBlockProps['data'], fallbackLabel: (index: number) => string): { title: string; steps: Step[] } {
   const title = sanitizeText(data?.title, 80) || '';
   const steps = Array.isArray(data?.steps)
     ? data.steps
         .map<Step | null>((step, index) => {
-          const label = sanitizeText(step?.label, 72) || `Étape ${index + 1}`;
+          const label = sanitizeText(step?.label, 72) || fallbackLabel(index);
           const content = sanitizeText(step?.content, 320);
           const math = sanitizeText(step?.math, 400);
           if (!content && !math) return null;
@@ -96,7 +96,7 @@ const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: str
 export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const sanitized = sanitizeSteps(data);
+  const sanitized = sanitizeSteps(data, (index) => t('stepSolver.fallbackStep', { index: index + 1 }));
   const safeSteps = sanitized.steps;
   const totalSteps = safeSteps.length;
   const [revealedCount, setRevealedCount] = useState(Math.min(1, totalSteps)); // First step always visible

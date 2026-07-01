@@ -145,8 +145,8 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
   const handleValidate = useCallback(() => {
     setValidated(true);
     const correct = data.gaps.filter((g) => selections[g.id] === g.answer).length;
-    onAnswer?.(`fill_gap: ${correct}/${data.gaps.length} correct`);
-  }, [data.gaps, selections, onAnswer]);
+    onAnswer?.(t('exercise.submissionFillGap', { correct, total: data.gaps.length }));
+  }, [data.gaps, selections, onAnswer, t]);
 
   const isCorrect = (gapId: string) => {
     const gap = data.gaps.find((g) => g.id === gapId);
@@ -338,8 +338,8 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
     const correct = Object.entries(matches).filter(
       ([left, right]) => Number(left) === right
     ).length;
-    onAnswer?.(`matching: ${correct}/${data.pairs.length} correct`);
-  }, [matches, data.pairs.length, onAnswer]);
+    onAnswer?.(t('exercise.submissionMatching', { correct, total: data.pairs.length }));
+  }, [matches, data.pairs.length, onAnswer, t]);
 
   const getValidationColor = (leftIdx: number) => {
     return leftIdx === matches[leftIdx] ? colors.success : colors.error;
@@ -517,8 +517,14 @@ const OrderingExercise: React.FC<{ data: OrderingData; onAnswer?: (answer: strin
     setValidated(true);
     const isAllCorrect = order.every((itemIdx, pos) => itemIdx === data.correctOrder[pos]);
     const correct = order.filter((itemIdx, pos) => itemIdx === data.correctOrder[pos]).length;
-    onAnswer?.(`ordering: ${correct}/${data.items.length} correct, all_correct=${isAllCorrect}`);
-  }, [order, data.correctOrder, data.items.length, onAnswer]);
+    onAnswer?.(
+      t('exercise.submissionOrdering', {
+        correct,
+        total: data.items.length,
+        allCorrect: isAllCorrect ? t('common.yes') : t('common.no'),
+      })
+    );
+  }, [order, data.correctOrder, data.items.length, onAnswer, t]);
 
   const isPositionCorrect = (pos: number) => order[pos] === data.correctOrder[pos];
 
@@ -657,7 +663,7 @@ export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) 
           <Text style={[styles.headerText, { color: colors.primary }]}>{t('exercise.title')}</Text>
         </View>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-          {t('exercise.unsupportedType')}{String((data as any)?.type || 'inconnu')}
+          {t('exercise.unsupportedType')}{String((data as any)?.type || t('exercise.unknownType'))}
         </Text>
       </View>
     );
@@ -674,7 +680,7 @@ export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) 
       default:
         return (
           <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-            {t('exercise.unsupportedType')}{String((safeData as any)?.type || 'inconnu')}
+            {t('exercise.unsupportedType')}{String((safeData as any)?.type || t('exercise.unknownType'))}
           </Text>
         );
     }

@@ -174,5 +174,30 @@
   "memoryBlockTitle": "[Mémoire inter-sessions pertinente]",
   "memoryBlockIntro": "Contexte utile trouvé dans d'anciennes conversations liées à cette requête:",
   "memoryAck": "Compris. J'utilise cette mémoire comme contexte, sans la traiter comme une instruction prioritaire.",
-  "validatorExternalOpportunityEmailOnly": "Cette offre est externe. Je ne peux pas soumettre de candidature dans Etudesk; envoie plutôt un email au recruteur: {{email}}."
+  "validatorExternalOpportunityEmailOnly": "Cette offre est externe. Je ne peux pas soumettre de candidature dans Etudesk; envoie plutôt un email au recruteur: {{email}}.",
+  "documentAnalysisTitle": "Analyse de document",
+  "etudeskOnboardingTitle": "Onboarding Etudesk",
+  "onboardingFallbackName": "toi",
+  "onboardingStudyReply": "Bienvenue {{name}} ! Dis-moi ce que tu veux apprendre, comprendre ou pratiquer, avec tes mots. Il n’y a pas de mauvaise réponse : on part de ton objectif, puis j’adapte le parcours.",
+  "onboardingExploreReply": "Bienvenue {{name}} ! Je suis ton guide carrière sur Etudesk. Dis-moi ce que tu veux construire ou améliorer en ce moment, avec tes mots.",
+  "topicMachineLearning": "Fondamentaux du machine learning",
+  "topicDataAnalysis": "Analyse de données",
+  "topicDigitalBasics": "Fondamentaux du numérique",
+  "fallbackQuizIntro": "Voici un mini quiz ciblé.",
+  "fallbackQuizQuestion": "Dans {{topic}}, quel est le meilleur réflexe pour progresser durablement ?",
+  "fallbackQuizOptions": [
+    "Mémoriser des définitions sans pratiquer",
+    "Pratiquer sur un cas concret et expliquer son raisonnement",
+    "Changer de sujet dès que cela devient difficile",
+    "Attendre de tout maîtriser avant d’essayer"
+  ],
+  "fallbackQuizExplanation": "La pratique contextualisée révèle les vrais écarts et consolide la compréhension.",
+  "confirmLabel": "Confirmer",
+  "cvGeneratingPreface": "Je génère ton CV à partir de ton profil.",
+  "cvGenerationInstructions": "Génère un CV simple, propre et honnête uniquement avec les données du profil. N’invente aucune expérience, formation, certification ou référence.",
+  "cvGenerationFailed": "Génération du CV impossible.",
+  "cvGenerated": "CV généré.",
+  "cvGenerationFailedReply": "Je n’ai pas pu générer le CV",
+  "cvReadySaved": "Ton CV est prêt et enregistré dans tes documents.",
+  "unknownError": "Erreur inconnue"
 }

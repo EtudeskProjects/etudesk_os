@@ -153,7 +153,7 @@ function parseBlocks(content: string): Block[] {
       if (data) blocks.push({ type: 'image', content: body, data });
     }
     // Chart block — accept both ```chart and direct type tags (bar, donut, stacked_bar, table, line, radar, metric)
-    else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'metric'].includes(tag)) {
+    else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'radar', 'metric'].includes(tag)) {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
     }

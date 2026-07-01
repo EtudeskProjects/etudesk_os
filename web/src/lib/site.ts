@@ -1,7 +1,7 @@
 /** Constantes globales du site vitrine Etudesk. */
 
-export const IOS_URL = 'https://etudesk.com/link/ios';
-export const ANDROID_URL = 'https://etudesk.com/link/android';
+export const IOS_URL = 'https://apps.apple.com/us/app/etudesk-os/id6761573837?pt=126968874&ct=website&mt=8';
+export const ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.etudesk.mobile&utm_source=etudesk_website&utm_medium=landing&utm_campaign=app_download';
 
 export const SOCIALS = {
   facebook: 'https://www.facebook.com/etudesk',

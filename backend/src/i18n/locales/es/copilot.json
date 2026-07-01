@@ -15,5 +15,31 @@
   "notAuthenticated": "No autenticado",
   "noAudioFile": "No se proporcionó ningún archivo de audio",
   "invalidAudioFormat": "Formato de audio inválido o archivo corrupto",
-  "noFileProvided": "No se proporcionó ningún archivo"
+  "noFileProvided": "No se proporcionó ningún archivo",
+  "documentAnalysisTitle": "Análisis de documento",
+  "etudeskOnboardingTitle": "Onboarding de Etudesk",
+  "onboardingFallbackName": "ahí",
+  "onboardingStudyReply": "Bienvenido, {{name}}. Dime qué quieres aprender, entender o practicar con tus propias palabras. No hay una mala respuesta: partimos de tu objetivo y luego adapto el recorrido.",
+  "onboardingExploreReply": "Bienvenido, {{name}}. Soy tu guía de carrera en Etudesk. Dime qué quieres construir o mejorar ahora mismo, con tus propias palabras.",
+  "topicMachineLearning": "Fundamentos de machine learning",
+  "topicDataAnalysis": "Análisis de datos",
+  "topicDigitalBasics": "Fundamentos digitales",
+  "fallbackQuizIntro": "Aquí tienes un mini quiz enfocado.",
+  "fallbackQuizQuestion": "En {{topic}}, ¿cuál es el mejor hábito para progresar de forma duradera?",
+  "fallbackQuizOptions": [
+    "Memorizar definiciones sin practicar",
+    "Practicar con un caso concreto y explicar tu razonamiento",
+    "Cambiar de tema en cuanto se vuelve difícil",
+    "Esperar a dominarlo todo antes de intentarlo"
+  ],
+  "fallbackQuizExplanation": "La práctica contextual revela las brechas reales y fortalece la comprensión.",
+  "confirmLabel": "Confirmar",
+  "confirmationReplay": "Vuelvo a mostrar el bloque aquí. Toca **{{label}}** para confirmar.",
+  "cvGeneratingPreface": "Estoy generando tu CV a partir de tu perfil.",
+  "cvGenerationInstructions": "Genera un CV sencillo, claro y honesto usando solo los datos del perfil. No inventes experiencias, formación, certificaciones ni referencias.",
+  "cvGenerationFailed": "No se pudo generar el CV.",
+  "cvGenerated": "CV generado.",
+  "cvGenerationFailedReply": "No pude generar el CV",
+  "cvReadySaved": "Tu CV está listo y guardado en tus documentos.",
+  "unknownError": "Error desconocido"
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { LangProvider } from '../contexts/LangContext';
+import Analytics from '../components/Analytics';
 
 const BASE = 'https://etudesk.com';
 const TITLE = 'Etudesk - Les compétences du digital, à la vitesse du marché';
@@ -119,6 +120,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
+        <Analytics />
         <ThemeProvider>
           <LangProvider>{children}</LangProvider>
         </ThemeProvider>

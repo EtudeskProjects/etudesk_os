@@ -217,6 +217,7 @@ class CopilotService {
         xhr.setRequestHeader('Content-Type', 'application/json');
         if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.setRequestHeader('Accept', 'text/event-stream');
+        xhr.setRequestHeader('Accept-Language', i18n.locale);
 
         let seenBytes = 0;
         let lineBuffer = ''; // Buffer for incomplete lines across chunks
@@ -309,7 +310,7 @@ class CopilotService {
                   if (data.success && data.tokens) {
                     await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
                     await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
-                    // Retry: re-send the same message (user can also tap "Réessayer")
+                    // Retry: re-send the same message (the user can also tap the localized retry action)
                     callbacks.onError(i18n.t('copilotService.sessionRefreshed'));
                   } else {
                     callbacks.onError(i18n.t('common:invalidToken'));

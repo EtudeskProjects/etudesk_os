@@ -16,7 +16,7 @@
  * This is a single, contained patch instead of editing 800+ style declarations.
  */
 import React from 'react';
-import { Text, TextInput, StyleSheet } from 'react-native';
+import { Platform, Text, TextInput, StyleSheet } from 'react-native';
 
 // Maps a CSS-style weight to the matching loaded Montserrat file.
 // Only 400/500/600/700 are bundled (see app/_layout.tsx), so heavier weights
@@ -48,13 +48,28 @@ function resolveFamily(style: unknown): string {
   return WEIGHT_TO_FAMILY[weight] || DEFAULT_FAMILY;
 }
 
+function stripAndroidSyntheticWeight(style: unknown, fontFamily: string): unknown {
+  if (Platform.OS !== 'android') return style;
+
+  const flat = (StyleSheet.flatten(style as never) || {}) as {
+    fontFamily?: string;
+    fontWeight?: string | number;
+    [key: string]: unknown;
+  };
+  const family = flat.fontFamily || fontFamily;
+  if (!family.startsWith('Montserrat_') || flat.fontWeight == null) return style;
+
+  const { fontWeight: _fontWeight, ...rest } = flat;
+  return rest;
+}
+
 let patched = false;
 
 export function applyDefaultFont(): void {
   if (patched) return;
   patched = true;
 
-  for (const Component of [Text, TextInput] as Array<{ render?: (...args: unknown[]) => React.ReactElement }>) {
+  for (const Component of [Text, TextInput] as { render?: (...args: unknown[]) => React.ReactElement }[]) {
     const original = Component.render;
     if (typeof original !== 'function') continue;
 
@@ -63,9 +78,10 @@ export function applyDefaultFont(): void {
       if (!element || !React.isValidElement(element)) return element;
       const style = (element.props as { style?: unknown }).style;
       const fontFamily = resolveFamily(style);
+      const sanitizedStyle = stripAndroidSyntheticWeight(style, fontFamily);
       // Prepend the resolved family so any explicit style still wins on merge.
       return React.cloneElement(element as React.ReactElement<{ style?: unknown }>, {
-        style: [{ fontFamily }, style],
+        style: [{ fontFamily }, sanitizedStyle],
       });
     };
   }

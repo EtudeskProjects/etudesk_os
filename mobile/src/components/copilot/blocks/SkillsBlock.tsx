@@ -44,7 +44,7 @@ interface SkillsData {
 
 export function SkillsBlock({ data, onSkillPress }: { data: SkillsData; onSkillPress?: (name: string) => void }) {
   const { colors } = useTheme();
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const router = useRouter();
 
   const skills = Array.isArray(data?.skills) ? data.skills : [];
@@ -53,9 +53,9 @@ export function SkillsBlock({ data, onSkillPress }: { data: SkillsData; onSkillP
   const hasMore = skills.length > PREVIEW_LIMIT;
   const visibleSkills = hasMore ? skills.slice(0, PREVIEW_LIMIT) : skills;
   const remaining = Math.max(0, skills.length - PREVIEW_LIMIT);
-  const seeMoreLabel = language === 'fr'
-    ? talentId ? 'Voir le profil du talent' : `Voir plus (${remaining})`
-    : talentId ? 'View talent profile' : `See more (${remaining})`;
+  const seeMoreLabel = talentId
+    ? t('copilot.skills.viewTalentProfile')
+    : t('copilot.skills.seeMore', { count: remaining });
 
   const handleSeeMore = () => {
     if (talentId) {

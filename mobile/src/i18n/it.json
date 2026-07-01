@@ -77,7 +77,11 @@
     "limitReached": "Limite raggiunto",
     "fileTooLarge": "File troppo grande",
     "deleteTitle": "Elimina la candidatura",
-    "invalidToken": "Sessione non valida o scaduta. Effettua nuovamente l'accesso."
+    "invalidToken": "Sessione non valida o scaduta. Effettua nuovamente l'accesso.",
+    "time": {
+      "minutes": "{{count}} min fa",
+      "hours": "{{count}}h fa"
+    }
   },
   "auth": {
     "login": {
@@ -866,11 +870,12 @@
   },
   "stepSolver": {
     "step": "Passaggio {{current}} / {{total}}",
+    "fallbackStep": "Passaggio {{index}}",
     "nextStep": "Passaggio successivo",
     "showAll": "Mostra tutto"
   },
   "codePlayground": {
-    "timeout": "[Timeout: execution exceeded 5s]",
+    "timeout": "[Timeout: esecuzione oltre 5 s]",
     "noOutput": "(nessun output)",
     "running": "Esecuzione...",
     "run": "Esegui",
@@ -986,7 +991,10 @@
     "quiz": {
       "correctAnswer": "Risposta corretta!",
       "wrongAnswer": "Risposta sbagliata",
-      "alreadyAnswered": "Domanda già risposta"
+      "alreadyAnswered": "Domanda già risposta",
+      "submissionCorrect": "Risposta al quiz: \"{{option}}\" - risposta corretta.",
+      "submissionIncorrect": "Risposta al quiz: \"{{option}}\" - risposta sbagliata.",
+      "submissionRecorded": "Risposta al quiz: \"{{option}}\" - risposta registrata."
     },
     "flashcard": {
       "easy": "Facile",
@@ -1049,7 +1057,14 @@
       "bookingInProgress": "Prenotazione in corso…",
       "acceptInvitation": "Accettazione…",
       "declineInvitation": "Rifiuto…",
-      "executeAction": "Azione in corso…"
+      "executeAction": "Azione in corso…",
+      "findCompetency": "Ricerca nel catalogo…",
+      "findCompetencyPrefix": "Catalogo: {{query}}",
+      "competencyGraph": "Analisi dei collegamenti tra competenze…",
+      "competencyGraphPrefix": "Grafo competenze: {{query}}",
+      "learningPath": "Creazione del percorso…",
+      "learningPathPrefix": "Percorso: {{target}}",
+      "genericTool": "Azione in corso…"
     },
     "suggestions": {
       "orgExplore": [
@@ -1097,6 +1112,10 @@
       "privateSkill": "Privata",
       "unread": "Non letta",
       "read": "Letta"
+    },
+    "skills": {
+      "seeMore": "Vedi di più ({{count}})",
+      "viewTalentProfile": "Vedi profilo del talento"
     }
   },
   "applicationDetail": {
@@ -1773,5 +1792,15 @@
       "referral": "Come hai saputo di noi?",
       "expectations": "Quali sono le tue aspettative per questa comunità?"
     }
+  },
+  "exercise": {
+    "correct": "Perfetto!",
+    "incorrect": "Non proprio",
+    "unsupportedType": "Tipo di esercizio non supportato: ",
+    "title": "Esercizio interattivo",
+    "submissionFillGap": "Risultato dell'esercizio: completamento, {{correct}}/{{total}} corrette.",
+    "submissionMatching": "Risultato dell'esercizio: abbinamento, {{correct}}/{{total}} corrette.",
+    "submissionOrdering": "Risultato dell'esercizio: ordine, {{correct}}/{{total}} corrette, tutto corretto: {{allCorrect}}.",
+    "unknownType": "sconosciuto"
   }
 }
