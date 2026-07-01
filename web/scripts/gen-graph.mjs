@@ -43,7 +43,16 @@ for (const [a, b] of edges) { deg[a]++; deg[b]++; }
 const nodes = competencies.map((c, i) => ({ index: i }));
 const links = edges.map(([s, t]) => ({ source: s, target: t }));
 
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
 const sim = forceSimulation(nodes)
+  .randomSource(seededRandom(20260701))
   .force('charge', forceManyBody().strength(-46).distanceMax(560))
   .force('link', forceLink(links).id((d) => d.index).distance(36).strength(0.3))
   .force('x', forceX(0).strength(0.013))
