@@ -10,7 +10,7 @@ import type { AgentConfig } from '../tools/tool-helper';
 import { SSEEvent, MessageSegment } from '../types';
 import { runInputGuardrail } from '../guardrails/input.guardrail';
 import { getChatClient } from '../../ai/provider';
-import { recordUsage } from '../../ai/usage.service';
+import { computeCost, recordUsage } from '../../ai/usage.service';
 import { generateToolSummary } from './tool-summary';
 import { sanitizeEntityCardsByAllowedIds, sanitizeOutput } from '../guardrails/output.guardrail';
 import { getFileBuffer } from '../../storage.service';
@@ -37,6 +37,18 @@ const RETRY_BASE_DELAY_MS = 800;
 
 function byteLength(value: unknown): number {
   return Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value ?? ''), 'utf8');
+}
+
+function estimateCopilotCostUsd(model: string, inputTokens: number, outputTokens: number, cacheReadTokens: number): number {
+  return computeCost({
+    feature: 'copilot_agent',
+    model,
+    usage: {
+      prompt_tokens: inputTokens,
+      completion_tokens: outputTokens,
+      cache_read_input_tokens: cacheReadTokens,
+    },
+  }).costUsd;
 }
 
 /**
@@ -314,6 +326,7 @@ export async function runAgentWithSSE(
   let totalOutputTokens = 0;
   let totalCacheReadTokens = 0;
   let totalCacheCreationTokens = 0;
+  let estimatedCostUsd = 0;
   let firstTokenMs = 0;
   let firstToolMs = 0;
   let promptChars = 0;
@@ -412,6 +425,15 @@ export async function runAgentWithSSE(
         const limitMsg = statusLabels.limitMaxTokens;
         logger.warn(`[copilot] Output token budget reached (${totalOutputTokens}/${AGENTIC_LIMITS.maxOutputTokensPerQuery}). Stopping run.`);
         sendSSE(res, { type: 'limit_reached', reason: 'max_tokens', message: limitMsg });
+        break;
+      }
+
+      estimatedCostUsd = estimateCopilotCostUsd(agentConfig.model, totalInputTokens, totalOutputTokens, totalCacheReadTokens);
+      if (!limitReached && estimatedCostUsd >= AGENTIC_LIMITS.maxCostUsdPerQuery) {
+        limitReached = true;
+        const limitMsg = statusLabels.limitMaxTokens;
+        logger.warn(`[copilot] Cost budget reached ($${estimatedCostUsd}/${AGENTIC_LIMITS.maxCostUsdPerQuery}). Stopping run.`);
+        sendSSE(res, { type: 'limit_reached', reason: 'max_cost', message: limitMsg });
         break;
       }
 
@@ -540,6 +562,7 @@ export async function runAgentWithSSE(
               totalInputTokens += chunk.usage.prompt_tokens || 0;
               totalOutputTokens += chunk.usage.completion_tokens || 0;
               totalCacheReadTokens += (chunk.usage as any).prompt_tokens_details?.cached_tokens || 0;
+              estimatedCostUsd = estimateCopilotCostUsd(agentConfig.model, totalInputTokens, totalOutputTokens, totalCacheReadTokens);
             }
           }
 
@@ -887,6 +910,7 @@ export async function runAgentWithSSE(
     outputTokens: totalOutputTokens,
     cacheReadTokens: totalCacheReadTokens,
     cacheCreationTokens: totalCacheCreationTokens,
+    estimatedCostUsd,
     firstTokenMs,
     firstToolMs,
     promptChars,

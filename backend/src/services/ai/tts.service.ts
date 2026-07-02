@@ -57,6 +57,7 @@ export async function generateTTS(
     feature: 'tts',
     model: MODEL_TTS,
     usage: null,
+    outputChars: truncated.length,
     scopeTalentId: usageContext?.scopeTalentId ?? null,
     scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
     sessionId: usageContext?.sessionId ?? null,

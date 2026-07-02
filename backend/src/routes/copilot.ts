@@ -66,7 +66,7 @@ import {
   debitWalletForAction,
   isInsufficientCreditsError,
 } from '../services/billing/credit.service';
-import { recordUsage } from '../services/ai/usage.service';
+import { estimateAudioSecondsFromBytes, recordUsage } from '../services/ai/usage.service';
 import { MODEL_AGENT, MODEL_STT } from '../services/ai/models';
 import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
@@ -1890,7 +1890,7 @@ router.post(
       void recordUsage({
         feature: 'audio_stt',
         model: MODEL_STT,
-        audioSeconds: 0,
+        audioSeconds: estimateAudioSecondsFromBytes(file.size, file.mimetype),
         scopeTalentId: talentId,
         billedActionCode: 'TALENT_VOICE_INSTRUCTION',
         metadata: { channel: 'copilot_transcribe', bytes: file.size, mimeType: file.mimetype },

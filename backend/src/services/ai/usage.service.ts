@@ -23,6 +23,12 @@ interface TokenPricing {
   cacheRead?: number;   // $/1M cache-read tokens when provider supports prompt caching
 }
 
+export interface CharacterPricing {
+  provider: AIProvider;
+  input: number;   // $/1M input characters
+  output: number;  // $/1M output characters
+}
+
 /**
  * Per-1M-token pricing (USD). Current provider model prices.
  * The actual provider is configured via env. Cache fields apply only where the
@@ -50,11 +56,16 @@ export const PRICING: Record<string, TokenPricing> = {
 export const STT_USD_PER_MINUTE = 0.0002;
 /** TTS cost estimate per 1M chars. */
 export const TTS_USD_PER_1M_CHARS = 0.8;
+/** TTS/STT character pricing for OpenAI-compatible audio models. */
+export const CHARACTER_PRICING: Record<string, CharacterPricing> = {
+  'gpt-4o-mini-tts': { provider: 'ai', input: 0, output: TTS_USD_PER_1M_CHARS },
+};
 /** Image cost per generated image, by FLUX variant (approx). */
 export const IMAGE_FLUX_USD: Record<string, number> = {
   'black-forest-labs/FLUX-1-schnell': 0.0011,
   'black-forest-labs/FLUX-2-dev': 0.012,
   'black-forest-labs/FLUX-2-pro': 0.015,
+  'gpt-image-1-mini': 0.0011,
 };
 
 /** Image pricing: USD per generated image. */
@@ -68,6 +79,17 @@ const FCFA_PER_USD = Number(process.env.FCFA_PER_USD || 605);
 
 export function usdToFcfa(usd: number): number {
   return usd * FCFA_PER_USD;
+}
+
+export function estimateAudioSecondsFromBytes(bytes: number, mimeType?: string | null): number {
+  if (!Number.isFinite(bytes) || bytes <= 0) return 0;
+  const normalized = (mimeType || '').toLowerCase();
+  const assumedKbps = normalized.includes('wav') || normalized.includes('wave')
+    ? 256
+    : normalized.includes('webm') || normalized.includes('ogg') || normalized.includes('opus')
+      ? 32
+      : 64;
+  return Math.max(1, Math.round((bytes * 8) / (assumedKbps * 1000)));
 }
 
 export interface RecordUsageParams {
@@ -87,6 +109,9 @@ export interface RecordUsageParams {
   images?: { count: number; quality?: 'low' | 'medium' | 'high' };
   /** For TTS/STT. */
   audioSeconds?: number;
+  /** For TTS or text-priced media APIs. */
+  inputChars?: number;
+  outputChars?: number;
   scopeTalentId?: string | null;
   scopeOrganizationId?: string | null;
   sessionId?: string | null;
@@ -101,6 +126,8 @@ interface NormalizedUsage {
   cacheReadTokens: number;
   imageCount: number;
   audioSeconds: number;
+  inputChars: number;
+  outputChars: number;
   costUsd: number;
 }
 
@@ -111,6 +138,7 @@ export function computeCost(params: RecordUsageParams): NormalizedUsage {
   const outputTokens = u.output_tokens ?? u.completion_tokens ?? 0;
   const cacheCreationTokens = u.cache_creation_input_tokens ?? 0;
   const cacheReadTokens = u.cache_read_input_tokens ?? 0;
+  const billableInputTokens = Math.max(inputTokens - cacheReadTokens, 0);
   // Embeddings report only total_tokens — treat as input.
   const embeddingTokens = !inputTokens && !outputTokens && u.total_tokens ? u.total_tokens : 0;
 
@@ -118,11 +146,11 @@ export function computeCost(params: RecordUsageParams): NormalizedUsage {
   let costUsd = 0;
 
   if (price) {
-    costUsd += ((inputTokens + embeddingTokens) / 1_000_000) * price.input;
+    costUsd += ((billableInputTokens + embeddingTokens) / 1_000_000) * price.input;
     costUsd += (outputTokens / 1_000_000) * price.output;
     costUsd += (cacheCreationTokens / 1_000_000) * (price.cacheWrite ?? price.input);
     costUsd += (cacheReadTokens / 1_000_000) * (price.cacheRead ?? price.input * 0.1);
-  } else if (!params.images && !params.audioSeconds) {
+  } else if (!params.images && !params.audioSeconds && !params.inputChars && !params.outputChars && !CHARACTER_PRICING[params.model]) {
     logger.warn(`[ai-usage] No pricing for model "${params.model}" (feature: ${params.feature}). Recording tokens with cost=0.`);
   }
 
@@ -133,8 +161,17 @@ export function computeCost(params: RecordUsageParams): NormalizedUsage {
   }
 
   const audioSeconds = params.audioSeconds ?? 0;
-  // TTS audio output billed per audio token (~$12/1M); approx 1 audio token ~ 1.5ms.
-  // We log seconds for visibility; token-based cost already covered above when usage provided.
+  if (audioSeconds > 0 && (params.model.includes('transcribe') || params.model.includes('whisper'))) {
+    costUsd += (audioSeconds / 60) * STT_USD_PER_MINUTE;
+  }
+
+  const inputChars = params.inputChars ?? 0;
+  const outputChars = params.outputChars ?? 0;
+  const characterPrice = CHARACTER_PRICING[params.model];
+  if (characterPrice) {
+    costUsd += (inputChars / 1_000_000) * characterPrice.input;
+    costUsd += (outputChars / 1_000_000) * characterPrice.output;
+  }
 
   return {
     inputTokens: inputTokens + embeddingTokens,
@@ -143,6 +180,8 @@ export function computeCost(params: RecordUsageParams): NormalizedUsage {
     cacheReadTokens,
     imageCount,
     audioSeconds,
+    inputChars,
+    outputChars,
     costUsd: Number(costUsd.toFixed(6)),
   };
 }
@@ -179,7 +218,10 @@ export async function recordUsage(params: RecordUsageParams): Promise<void> {
         c.imageCount,
         c.audioSeconds,
         c.costUsd,
-        JSON.stringify(params.metadata ?? {}),
+        JSON.stringify({
+          ...(params.metadata ?? {}),
+          ...(c.inputChars || c.outputChars ? { inputChars: c.inputChars, outputChars: c.outputChars } : {}),
+        }),
       ]
     );
   } catch (err: any) {

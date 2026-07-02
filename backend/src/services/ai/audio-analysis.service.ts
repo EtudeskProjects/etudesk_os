@@ -5,7 +5,7 @@
 import { logger } from '../../utils';
 import { getAIClient } from './provider';
 import { MODEL_SUGGESTION, MODEL_STT } from './models';
-import { recordUsage } from './usage.service';
+import { estimateAudioSecondsFromBytes, recordUsage } from './usage.service';
 import { transcribeWithProvider } from './media.client';
 
 const STUDY_PROMPT = `Tu es un assistant pédagogique. Analyse cette transcription vocale envoyée par un apprenant.
@@ -87,12 +87,12 @@ export async function analyzeAudio(
   void recordUsage({
     feature: 'audio_stt',
     model: MODEL_STT,
-    audioSeconds: 0,
+    audioSeconds: estimateAudioSecondsFromBytes(audioBuffer.length, safeMime),
     scopeTalentId: usageContext?.scopeTalentId ?? null,
     scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
     sessionId: usageContext?.sessionId ?? null,
     billedActionCode: usageContext?.billedActionCode ?? null,
-    metadata: { mode, bytes: audioBuffer.length },
+    metadata: { mode, bytes: audioBuffer.length, mimeType: safeMime },
   });
   if (!transcribedText) {
     throw new Error('No transcription result from AI provider STT');

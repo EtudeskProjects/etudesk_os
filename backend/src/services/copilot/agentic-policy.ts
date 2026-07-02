@@ -15,6 +15,7 @@ export const AGENTIC_LIMITS = {
   maxSameToolCalls: Number(process.env.COPILOT_MAX_SAME_TOOL_CALLS || 3),
   maxTurnDurationMs: Number(process.env.COPILOT_MAX_TURN_DURATION_MS || 120_000),
   maxOutputTokensPerQuery: Number(process.env.COPILOT_MAX_OUTPUT_TOKENS || 12_000),
+  maxCostUsdPerQuery: Number(process.env.COPILOT_MAX_COST_USD || 0.029),
   maxCompletionTokens: Number(process.env.COPILOT_MAX_COMPLETION_TOKENS || 1800),
 } as const;
 
