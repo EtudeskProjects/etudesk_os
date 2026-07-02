@@ -13,6 +13,11 @@ import {
   DocumentType,
   VerificationResult,
 } from '../services/kyc-verification.service';
+import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../services/billing/credit.service';
 
 const router = Router();
 
@@ -110,6 +115,25 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
 
     logger.info(`📋 KYC submission received for talent ${req.talentId}`);
 
+    try {
+      await debitWalletForAction({
+        scope: 'TALENT',
+        ownerId: req.talentId,
+        actionCode: 'TALENT_KYC_VERIFICATION',
+        idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'kyc_verification'),
+        metadata: { documentType: document_type },
+        createdBy: req.talentId,
+      });
+    } catch (debitError) {
+      if (isInsufficientCreditsError(debitError)) {
+        return res.status(402).json({
+          error: req.t('billing:insufficientCredits'),
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
+
     // Verify document with OpenAI vision
     let verificationResult: VerificationResult;
     try {
@@ -117,7 +141,8 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
         req.talentId,
         document_type as DocumentType,
         front_image_url,
-        back_image_url
+        back_image_url,
+        'TALENT_KYC_VERIFICATION'
       );
     } catch (verifyError) {
       logger.error('Verification service error:', verifyError);

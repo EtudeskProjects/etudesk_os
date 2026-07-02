@@ -24,6 +24,11 @@ import { upsertSpaceEmbedding, deletePgVector } from '../../services/embedding.s
 import { setSpaceSkills } from '../../services/skills/entity-skills.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
+import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../../services/billing/credit.service';
 
 const router = Router();
 
@@ -68,6 +73,25 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     }
 
     const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
+    try {
+      await debitWalletForAction({
+        scope: 'ORGANIZATION',
+        ownerId: organization_id,
+        actionCode: 'ORG_FORM_SUGGESTION',
+        idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'space_form_suggestion'),
+        metadata: { channel: 'space_generate', type, name: String(name || '').slice(0, 120) },
+        createdBy: talentId,
+      });
+    } catch (debitError) {
+      if (isInsufficientCreditsError(debitError)) {
+        return res.status(402).json({
+          error: req.t('billing:insufficientOrgCredits'),
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
+
     const input = { name, type, organization_id, existing_data, language };
     const result = await generateSpaceSuggestion(input);
 

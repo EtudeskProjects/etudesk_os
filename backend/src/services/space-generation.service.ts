@@ -145,7 +145,13 @@ export async function generateSpaceSuggestion(
 
     logger.info(`[SpaceGeneration] Completed in ${Date.now() - startTime}ms`);
 
-    void recordUsage({ feature: 'form_suggestion', model: MODEL_SUGGESTION, usage: completion.usage, scopeOrganizationId: input.organization_id });
+    void recordUsage({
+      feature: 'form_suggestion',
+      model: MODEL_SUGGESTION,
+      usage: completion.usage,
+      scopeOrganizationId: input.organization_id,
+      billedActionCode: 'ORG_FORM_SUGGESTION',
+    });
 
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {

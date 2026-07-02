@@ -34,7 +34,8 @@ Language: Follow the language of the provided text. If the text mixes languages,
 export async function generateTTS(
   text: string,
   voice: TTSVoice = 'coral',
-  instructions?: string
+  instructions?: string,
+  usageContext?: { billedActionCode?: string | null; scopeTalentId?: string | null; scopeOrganizationId?: string | null; sessionId?: string | null }
 ): Promise<Buffer> {
   // Truncate to ~150 words (~1 min audio)
   const words = text.split(/\s+/);
@@ -52,7 +53,16 @@ export async function generateTTS(
     instructions: finalInstructions,
   });
 
-  void recordUsage({ feature: 'tts', model: MODEL_TTS, usage: null, metadata: { chars: truncated.length, bytes: buffer.length, voice } });
+  void recordUsage({
+    feature: 'tts',
+    model: MODEL_TTS,
+    usage: null,
+    scopeTalentId: usageContext?.scopeTalentId ?? null,
+    scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+    sessionId: usageContext?.sessionId ?? null,
+    billedActionCode: usageContext?.billedActionCode ?? null,
+    metadata: { chars: truncated.length, bytes: buffer.length, voice },
+  });
 
   logger.info(`[TTS] Generated ${buffer.length} bytes MP3`);
   return buffer;

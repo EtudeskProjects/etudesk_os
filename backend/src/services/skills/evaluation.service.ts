@@ -15,6 +15,7 @@ import { pool } from '../database';
 import { logger } from '../../utils';
 import { getAIClient } from '../ai/provider';
 import { MODEL_SEARCH } from '../ai/models';
+import { recordUsage } from '../ai/usage.service';
 import * as catalog from './catalog.service';
 import {
   CatalogType,
@@ -152,7 +153,8 @@ function evidenceHash(input: {
  * Only called for targets that have signals but no pre-supplied axes.
  */
 export async function readDirectEvidenceBatch(
-  targets: Array<{ slug: string; type: CatalogType; name: string; signals: Signal[]; neighbors: catalog.Neighbor[] }>
+  targets: Array<{ slug: string; type: CatalogType; name: string; signals: Signal[]; neighbors: catalog.Neighbor[] }>,
+  usageContext?: { billedActionCode?: string | null; scopeTalentId?: string | null; scopeOrganizationId?: string | null }
 ): Promise<Map<string, AxisReading & { lensLevel: number; rationale: string }>> {
   const out = new Map<string, AxisReading & { lensLevel: number; rationale: string }>();
   if (targets.length === 0) return out;
@@ -183,6 +185,14 @@ Output STRICT JSON: {"items":[{"competency_id","A","C","I","T","lens_level","rat
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
+      });
+      void recordUsage({
+        feature: 'skill_evaluation',
+        model: MODEL_SEARCH,
+        usage: resp.usage,
+        scopeTalentId: usageContext?.scopeTalentId ?? null,
+        scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+        billedActionCode: usageContext?.billedActionCode ?? null,
       });
       const raw = resp.choices[0]?.message?.content || '{}';
       const parsed = JSON.parse(raw) as { items?: LLMDirectItem[] };
@@ -360,6 +370,8 @@ export interface EvaluateResult {
 export async function evaluateBatch(input: {
   talentId: string;
   targets: EvalTarget[];
+  billedActionCode?: string | null;
+  scopeOrganizationId?: string | null;
 }): Promise<EvaluateResult[]> {
   const { talentId, targets } = input;
   const results: EvaluateResult[] = [];
@@ -387,7 +399,11 @@ export async function evaluateBatch(input: {
         neighbors: await catalog.getNeighbors(m.comp!.slug),
       }))
     );
-    llmReadings = await readDirectEvidenceBatch(withNeighbors);
+    llmReadings = await readDirectEvidenceBatch(withNeighbors, {
+      billedActionCode: input.billedActionCode ?? null,
+      scopeTalentId: talentId,
+      scopeOrganizationId: input.scopeOrganizationId ?? null,
+    });
   }
 
   // Load current active neighbor state for graph inference

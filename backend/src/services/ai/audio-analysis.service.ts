@@ -51,7 +51,8 @@ Formate ta réponse ainsi:
 export async function analyzeAudio(
   audioBase64: string,
   mimeType: string,
-  mode: 'study' | 'explore' | 'org'
+  mode: 'study' | 'explore' | 'org',
+  usageContext?: { billedActionCode?: string | null; scopeTalentId?: string | null; scopeOrganizationId?: string | null; sessionId?: string | null }
 ): Promise<string> {
   const aiClient = getAIClient();
 
@@ -83,7 +84,16 @@ export async function analyzeAudio(
     filename: `audio.${ext}`,
     mimeType: safeMime,
   });
-  void recordUsage({ feature: 'audio_stt', model: MODEL_STT, audioSeconds: 0, metadata: { mode, bytes: audioBuffer.length } });
+  void recordUsage({
+    feature: 'audio_stt',
+    model: MODEL_STT,
+    audioSeconds: 0,
+    scopeTalentId: usageContext?.scopeTalentId ?? null,
+    scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+    sessionId: usageContext?.sessionId ?? null,
+    billedActionCode: usageContext?.billedActionCode ?? null,
+    metadata: { mode, bytes: audioBuffer.length },
+  });
   if (!transcribedText) {
     throw new Error('No transcription result from AI provider STT');
   }
@@ -102,7 +112,15 @@ export async function analyzeAudio(
     max_tokens: 1024,
   });
 
-  void recordUsage({ feature: 'audio_analysis', model: MODEL_SUGGESTION, usage: completion.usage });
+  void recordUsage({
+    feature: 'audio_analysis',
+    model: MODEL_SUGGESTION,
+    usage: completion.usage,
+    scopeTalentId: usageContext?.scopeTalentId ?? null,
+    scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+    sessionId: usageContext?.sessionId ?? null,
+    billedActionCode: usageContext?.billedActionCode ?? null,
+  });
 
   const text = completion.choices?.[0]?.message?.content?.trim();
   if (!text) {

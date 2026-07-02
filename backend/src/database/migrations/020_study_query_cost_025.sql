@@ -1,4 +1,4 @@
--- Reduce Study query cost from 0.50 to 0.25 credits
+-- Normalize Study query cost to 1 credit.
 UPDATE credit_action_catalog
-SET credits = 0.25
+SET credits = 1
 WHERE action_code = 'TALENT_ASSISTANT_STUDY_QUERY';

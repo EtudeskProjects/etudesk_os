@@ -23,7 +23,11 @@ import {
 } from '../../utils';
 import { getLocaleForLanguage, normalizeLanguage } from '../../i18n';
 import { rankApplications } from '../../services/matching.service';
-import { debitWalletForAction } from '../../services/billing/credit.service';
+import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../../services/billing/credit.service';
 import { getApplicationRecommendation } from '../../services/recommendation.service';
 import * as notificationService from '../../services/notification.service';
 import { validateFromOpportunity } from '../../services/skills/skill-validation.service';
@@ -290,7 +294,7 @@ router.get('/:id/recommendation', authMiddleware, validate(uuidParamSchema, 'par
     const talentId = req.talentId;
 
     const accessCheck = await pool.query(`
-      SELECT a.id FROM opportunity_applications a
+      SELECT a.id, op.poster_organization_id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
       JOIN opportunity_posters op ON o.id = op.opportunity_id
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
@@ -302,7 +306,31 @@ router.get('/:id/recommendation', authMiddleware, validate(uuidParamSchema, 'par
       throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
-    const recommendation = await getApplicationRecommendation(id);
+    let recommendation: string | null;
+    try {
+      const posterOrgId = accessCheck.rows[0].poster_organization_id;
+      recommendation = await getApplicationRecommendation(
+        id,
+        posterOrgId
+          ? {
+              scope: 'ORGANIZATION',
+              ownerId: posterOrgId,
+              actionCode: 'ORG_APPLICATION_RECOMMENDATION',
+              idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'app_recommendation'),
+              metadata: { applicationId: id },
+              createdBy: talentId,
+            }
+          : undefined
+      );
+    } catch (debitError) {
+      if (isInsufficientCreditsError(debitError)) {
+        return res.status(402).json({
+          error: req.t('billing:insufficientOrgCredits'),
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
 
     if (!recommendation) {
       return res.status(404).json({ error: req.t('applications:unableToGenerateRecommendation') });

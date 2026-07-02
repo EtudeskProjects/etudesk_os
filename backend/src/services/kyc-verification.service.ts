@@ -245,7 +245,8 @@ export async function verifyKYCDocument(
   talentId: string,
   expectedDocType: DocumentType,
   frontImageUrl: string,
-  backImageUrl?: string
+  backImageUrl?: string,
+  billedActionCode?: string | null
 ): Promise<VerificationResult> {
   logger.info(`Starting KYC verification for talent ${talentId}`);
 
@@ -333,7 +334,13 @@ export async function verifyKYCDocument(
       ],
     });
 
-    void recordUsage({ feature: 'kyc', model: MODEL_SEARCH, usage: completion.usage, scopeTalentId: talentId });
+    void recordUsage({
+      feature: 'kyc',
+      model: MODEL_SEARCH,
+      usage: completion.usage,
+      scopeTalentId: talentId,
+      billedActionCode: billedActionCode ?? null,
+    });
 
     const analysisText = completion.choices[0]?.message?.content?.trim();
     if (!analysisText) {

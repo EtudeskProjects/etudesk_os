@@ -7,6 +7,7 @@ import { getSuggestionClient } from './ai/provider';
 import { MODEL_MATCH } from './ai/models';
 import { buildRecommendationPrompt, RECOMMENDATION_SYSTEM_PROMPT } from './ai/prompts/recommendation.prompt';
 import { recordUsage } from './ai/usage.service';
+import { BillingScope, debitWalletForAction, isInsufficientCreditsError } from './billing/credit.service';
 import { getLanguageDisplayName, resolveTalentLanguage } from './language-preference.service';
 import { SupportedLanguage } from '../i18n';
 
@@ -16,6 +17,14 @@ import { logger } from '../utils';
 const recommendationCache = new Map<string, { text: string; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
+interface RecommendationBillingContext {
+  scope: BillingScope;
+  ownerId: string;
+  actionCode: string;
+  idempotencyKey: string;
+  createdBy?: string | null;
+  metadata?: Record<string, unknown>;
+}
 
 export interface ApplicationForRecommendation {
   id: string;
@@ -47,7 +56,8 @@ export interface ApplicationForRecommendation {
  * Generate a 30-word recommendation for an application
  */
 export async function generateRecommendation(
-  application: ApplicationForRecommendation
+  application: ApplicationForRecommendation,
+  billing?: RecommendationBillingContext
 ): Promise<string> {
   // Check cache first
   const cacheKey = `reco:${application.id}`;
@@ -97,6 +107,17 @@ export async function generateRecommendation(
   });
 
   try {
+    if (billing) {
+      await debitWalletForAction({
+        scope: billing.scope,
+        ownerId: billing.ownerId,
+        actionCode: billing.actionCode,
+        idempotencyKey: billing.idempotencyKey,
+        metadata: billing.metadata,
+        createdBy: billing.createdBy,
+      });
+    }
+
     const client = getSuggestionClient();
     const completion = await client.chat.completions.create({
       model: MODEL_MATCH,
@@ -107,7 +128,14 @@ export async function generateRecommendation(
       ],
     });
 
-    void recordUsage({ feature: 'recommendation', model: MODEL_MATCH, usage: completion.usage as any });
+    void recordUsage({
+      feature: 'recommendation',
+      model: MODEL_MATCH,
+      usage: completion.usage as any,
+      scopeOrganizationId: billing?.scope === 'ORGANIZATION' ? billing.ownerId : null,
+      scopeTalentId: billing?.scope === 'TALENT' ? billing.ownerId : null,
+      billedActionCode: billing?.actionCode ?? null,
+    });
 
     let text = completion.choices[0]?.message?.content?.trim() || '';
 
@@ -185,7 +213,10 @@ function generateFallbackRecommendation(
 /**
  * Get recommendation for an application (with lazy loading)
  */
-export async function getApplicationRecommendation(applicationId: string): Promise<string | null> {
+export async function getApplicationRecommendation(
+  applicationId: string,
+  billing?: RecommendationBillingContext
+): Promise<string | null> {
   try {
     // Fetch application with talent and opportunity data
     const result = await pool.query(`
@@ -232,10 +263,11 @@ export async function getApplicationRecommendation(applicationId: string): Promi
       id: row.id,
       talent: row.talent,
       opportunity: row.opportunity,
-    });
+    }, billing);
 
     return recommendation;
   } catch (error) {
+    if (isInsufficientCreditsError(error)) throw error;
     logger.error('Error getting application recommendation:', error);
     return null;
   }

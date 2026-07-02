@@ -60,8 +60,8 @@ export const homeCopy = {
     f6t: 'Onboarding express', f6d: 'Connexion email + code. Profil en quelques étapes, sans test d\'admission.',
 
     creditsT: 'Commence avec 20 crédits offerts',
-    creditsD: 'Le tuteur coûte 0,25 crédit par question. Quiz, flashcards, diagrammes, recherche et candidatures sont gratuits. Recharge à ton rythme, sans abonnement.',
-    creditsRows: [['Apprendre (tuteur)', '0,25 crédit'], ['Avancer (guide carrière)', '1 crédit'], ['Génération de documents', '1 crédit'], ['Note vocale', '0,25 crédit'], ['Quiz / Flashcards / Diagrammes', 'Gratuit'], ['Recherche web / vidéo', 'Gratuit'], ['Postuler / Réserver / Adhérer', 'Gratuit']],
+    creditsD: 'Chaque requête IA coûte 1 crédit. Quiz, flashcards, diagrammes, recherche et candidatures restent gratuits. Recharge à ton rythme, sans abonnement.',
+    creditsRows: [['Assistant Explorer', '1 crédit'], ['Assistant Study', '1 crédit'], ['Assistant Manager', '1 crédit'], ['Suggestions IA de formulaires', '1 crédit'], ['Génération de documents', '1 crédit'], ['Génération d’images', '1 crédit'], ['Quiz / Flashcards / Diagrammes', 'Gratuit'], ['Recherche web / vidéo', 'Gratuit'], ['Postuler / Réserver / Adhérer', 'Gratuit']],
 
     histTitle: 'Notre histoire',
     histBody: [
@@ -135,8 +135,8 @@ export const homeCopy = {
     f6t: 'Express onboarding', f6d: 'Email login + code. Profile in a few steps, no admission test.',
 
     creditsT: 'Start with 20 free credits',
-    creditsD: 'The tutor costs 0.25 credit per question. Quizzes, flashcards, diagrams, search and applications are free. Top up at your pace, no subscription.',
-    creditsRows: [['Learn (tutor)', '0.25 credit'], ['Advance (career guide)', '1 credit'], ['Document generation', '1 credit'], ['Voice note', '0.25 credit'], ['Quiz / Flashcards / Diagrams', 'Free'], ['Web / video search', 'Free'], ['Apply / Book / Join', 'Free']],
+    creditsD: 'Each AI request costs 1 credit. Quizzes, flashcards, diagrams, search and applications remain free. Top up at your pace, no subscription.',
+    creditsRows: [['Assistant Explorer', '1 credit'], ['Assistant Study', '1 credit'], ['Assistant Manager', '1 credit'], ['AI form suggestions', '1 credit'], ['Document generation', '1 credit'], ['Image generation', '1 credit'], ['Quiz / Flashcards / Diagrams', 'Free'], ['Web / video search', 'Free'], ['Apply / Book / Join', 'Free']],
 
     histTitle: 'Our story',
     histBody: [

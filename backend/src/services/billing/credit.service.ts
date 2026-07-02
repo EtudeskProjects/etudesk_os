@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { PoolClient, QueryResult } from 'pg';
 import { pool } from '../database';
 
@@ -26,6 +27,19 @@ export interface LedgerEntry {
   metadata: Record<string, unknown>;
   created_by: string | null;
   created_at: string;
+}
+
+export function isInsufficientCreditsError(error: unknown): boolean {
+  return String((error as any)?.message || '').includes('INSUFFICIENT_CREDITS');
+}
+
+export function buildBillingIdempotencyKey(
+  headerValue: string | string[] | undefined,
+  prefix: string
+): string {
+  const requestKey = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+  if (requestKey) return `${prefix}_${requestKey}`;
+  return `${prefix}_${crypto.randomUUID()}`;
 }
 
 interface GetLedgerParams {

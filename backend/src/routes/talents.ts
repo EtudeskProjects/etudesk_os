@@ -13,6 +13,12 @@ import { MODEL_SUGGESTION } from '../services/ai/models';
 import { getSuggestionClient } from '../services/ai/provider';
 import { buildBioGenSystemPrompt } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
+import { recordUsage } from '../services/ai/usage.service';
+import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../services/billing/credit.service';
 import { normalizeCountryCode } from '../constants/countries';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
@@ -250,13 +256,15 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
  */
 router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.talentId) {
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
+    }
+
     let contextText: string | null = null;
 
     // If talent exists, use TalentObject
-    if (req.talentId) {
-      const talentObj = await buildTalentObject(req.talentId, true);
-      if (talentObj) contextText = talentObjectToText(talentObj);
-    }
+    const talentObj = await buildTalentObject(req.talentId, true);
+    if (talentObj) contextText = talentObjectToText(talentObj);
 
     // Fallback: body data (for create-profile before talent exists)
     if (!contextText) {
@@ -276,6 +284,25 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
 
     const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const languageName = getLanguageDisplayName(language);
+    try {
+      await debitWalletForAction({
+        scope: 'TALENT',
+        ownerId: req.talentId,
+        actionCode: 'TALENT_PROFILE_BIO_SUGGESTION',
+        idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'profile_bio_suggestion'),
+        metadata: { channel: 'talent_generate_bio' },
+        createdBy: req.talentId,
+      });
+    } catch (debitError) {
+      if (isInsufficientCreditsError(debitError)) {
+        return res.status(402).json({
+          error: req.t('billing:insufficientCredits'),
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
+
     const suggestionClient = getSuggestionClient();
     const completion = await suggestionClient.chat.completions.create({
       model: MODEL_SUGGESTION,
@@ -283,6 +310,14 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
         { role: 'system', content: buildBioGenSystemPrompt(languageName) },
         { role: 'user', content: `Generate a professional bio for this profile in ${languageName}:\n${contextText}` },
       ],
+    });
+
+    void recordUsage({
+      feature: 'profile_bio_suggestion',
+      model: MODEL_SUGGESTION,
+      usage: completion.usage,
+      scopeTalentId: req.talentId,
+      billedActionCode: 'TALENT_PROFILE_BIO_SUGGESTION',
     });
 
     const choice = completion.choices[0];

@@ -951,7 +951,11 @@ function stableStringify(value: any): string {
 /**
  * Generate a session title using the fast model
  */
-export async function generateSessionTitle(message: string, language: SupportedLanguage = 'en'): Promise<string> {
+export async function generateSessionTitle(
+  message: string,
+  language: SupportedLanguage = 'en',
+  usageContext?: { billedActionCode?: string | null; scopeTalentId?: string | null; scopeOrganizationId?: string | null; sessionId?: string | null }
+): Promise<string> {
   try {
     const { MODEL_FAST } = await import('../../ai/models');
     const client = getChatClient();
@@ -967,7 +971,15 @@ export async function generateSessionTitle(message: string, language: SupportedL
       ],
     });
 
-    void recordUsage({ feature: 'session_title', model: MODEL_FAST, usage: response.usage as any });
+    void recordUsage({
+      feature: 'session_title',
+      model: MODEL_FAST,
+      usage: response.usage as any,
+      scopeTalentId: usageContext?.scopeTalentId ?? null,
+      scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+      sessionId: usageContext?.sessionId ?? null,
+      billedActionCode: usageContext?.billedActionCode ?? null,
+    });
 
     const raw = (response.choices[0]?.message?.content || message.slice(0, 50)).trim();
     // Strip any markdown formatting (**, *, #, quotes)

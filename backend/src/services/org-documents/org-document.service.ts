@@ -13,6 +13,7 @@ import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
 import { getAIClient } from '../ai/provider';
+import { recordUsage } from '../ai/usage.service';
 import { buildOrgExtractionPrompt, ORG_EXTRACTION_SYSTEM_PROMPT } from '../ai/prompts/org-extraction.prompt';
 import { DOCUMENT_STATUS, DocumentStatus } from '../../constants/documents';
 import {
@@ -248,10 +249,14 @@ export async function processOrgDocumentExtraction(
   mimeType: string
 ): Promise<void> {
   try {
-    await pool.query(
-      `UPDATE organization_documents SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+    const docRes = await pool.query(
+      `UPDATE organization_documents
+       SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING organization_id`,
       [DOCUMENT_STATUS.PROCESSING, documentId]
     );
+    const organizationId = docRes.rows[0]?.organization_id ?? null;
 
     const fileBuffer = await getFileBuffer(fileUrl);
     const base64Data = fileBuffer.toString('base64');
@@ -299,6 +304,14 @@ export async function processOrgDocumentExtraction(
         { role: 'system', content: ORG_EXTRACTION_SYSTEM_PROMPT },
         { role: 'user', content: contentParts },
       ],
+    });
+
+    void recordUsage({
+      feature: 'document_extraction',
+      model: MODEL_SEARCH,
+      usage: completion.usage,
+      scopeOrganizationId: organizationId,
+      billedActionCode: 'ORG_DOCUMENT_UPLOAD',
     });
 
     const content = completion.choices[0]?.message?.content?.trim();

@@ -61,9 +61,13 @@ import {
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { createGenerateDocumentTool } from '../services/copilot/tools/generate-document.tool';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
-import { debitWalletForAction } from '../services/billing/credit.service';
+import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../services/billing/credit.service';
 import { recordUsage } from '../services/ai/usage.service';
-import { MODEL_AGENT } from '../services/ai/models';
+import { MODEL_AGENT, MODEL_STT } from '../services/ai/models';
 import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
@@ -672,6 +676,11 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const debitKey = requestIdempotencyKey
       ? `copilot_chat_${requestIdempotencyKey}`
       : `copilot_chat_${crypto.randomUUID()}`;
+    const copilotBilledActionCode = organizationId
+      ? 'ORG_ASSISTANT_MANAGER_QUERY'
+      : validMode === COPILOT_MODES.STUDY
+        ? 'TALENT_ASSISTANT_STUDY_QUERY'
+        : 'TALENT_ASSISTANT_EXPLORER_QUERY';
 
     try {
       if (organizationId) {
@@ -685,7 +694,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         await debitWalletForAction({
           scope: 'ORGANIZATION',
           ownerId: orgOwner,
-          actionCode: 'ORG_ASSISTANT_MANAGER_QUERY',
+          actionCode: copilotBilledActionCode,
           idempotencyKey: debitKey,
           metadata: {
             mode: validMode,
@@ -694,14 +703,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
           createdBy: talentId,
         });
       } else {
-        const actionCode = validMode === COPILOT_MODES.STUDY
-          ? 'TALENT_ASSISTANT_STUDY_QUERY'
-          : 'TALENT_ASSISTANT_EXPLORER_QUERY';
-
         await debitWalletForAction({
           scope: 'TALENT',
           ownerId: talentId,
-          actionCode,
+          actionCode: copilotBilledActionCode,
           idempotencyKey: debitKey,
           metadata: {
             mode: validMode,
@@ -973,7 +978,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       content: r.content,
     }));
     const [summarizedHistory, crossSessionMemory] = await Promise.all([
-      summarizeHistoryIfNeeded(rawHistory, userLanguage),
+      summarizeHistoryIfNeeded(rawHistory, userLanguage, {
+        billedActionCode: copilotBilledActionCode,
+        scopeTalentId: talentId,
+        scopeOrganizationId: organizationId || null,
+        sessionId,
+      }),
       loadCrossSessionMemory({
         talentId,
         organizationId,
@@ -1203,7 +1213,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         const audioBuffer = await getFileBuffer(voiceNoteUrl);
         const audioBase64 = audioBuffer.toString('base64');
         const audioMode = validMode === COPILOT_MODES.STUDY ? 'study' : (validMode === COPILOT_MODES.ORG ? 'org' : 'explore');
-        voiceNoteAnalysis = await analyzeAudio(audioBase64, voiceNoteMimeType, audioMode as 'study' | 'explore' | 'org');
+        voiceNoteAnalysis = await analyzeAudio(audioBase64, voiceNoteMimeType, audioMode as 'study' | 'explore' | 'org', {
+          billedActionCode: copilotBilledActionCode,
+          scopeTalentId: talentId,
+          scopeOrganizationId: organizationId || null,
+          sessionId,
+        });
         agentMessage = buildStoredUserMessage(safeMessage, voiceNoteAnalysis);
         await pool.query(
           `UPDATE copilot_messages
@@ -1284,7 +1299,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         const deterministicTitle = buildDeterministicSessionTitle(safeMessage, userLanguage, hasAttachments);
         const titlePromise = deterministicTitle
           ? Promise.resolve(deterministicTitle)
-          : generateSessionTitle(safeMessage, userLanguage);
+          : generateSessionTitle(safeMessage, userLanguage, {
+              billedActionCode: copilotBilledActionCode,
+              scopeTalentId: talentId,
+              scopeOrganizationId: organizationId || null,
+              sessionId,
+            });
 
         titlePromise.then((title) => {
           copilotService.updateSessionTitle(sessionId, title).catch(() => { });
@@ -1359,7 +1379,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
           if (!ttsText || ttsText.length < 5) continue;
           const ttsInstructions = ttsData.instructions || undefined; // Falls back to DEFAULT_INSTRUCTIONS in tts.service.ts
           const ttsVoice = ttsData.voice || 'coral';
-          const ttsBuffer = await generateTTS(ttsText, ttsVoice, ttsInstructions);
+          const ttsBuffer = await generateTTS(ttsText, ttsVoice, ttsInstructions, {
+            billedActionCode: copilotBilledActionCode,
+            scopeTalentId: talentId,
+            scopeOrganizationId: organizationId || null,
+            sessionId,
+          });
           const audioPath = `copilot/tts/${sessionId}/${Date.now()}.mp3`;
           const audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
           const estimatedDuration = Math.ceil(ttsText.split(/\s+/).length / 2.5);
@@ -1465,11 +1490,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     ).catch((err) => logger.error('[copilot] Failed to persist trace:', err));
 
     // COGS accounting — record this billed query's Sonnet spend (incl. cache write)
-    const billedActionCode = organizationId
-      ? 'ORG_ASSISTANT_MANAGER_QUERY'
-      : validMode === COPILOT_MODES.STUDY
-        ? 'TALENT_ASSISTANT_STUDY_QUERY'
-        : 'TALENT_ASSISTANT_EXPLORER_QUERY';
     void recordUsage({
       feature: 'copilot_agent',
       model: MODEL_AGENT,
@@ -1482,7 +1502,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       scopeTalentId: talentId,
       scopeOrganizationId: organizationId || null,
       sessionId,
-      billedActionCode,
+      billedActionCode: copilotBilledActionCode,
       metadata: { mode: validMode, turns: traceMetrics.turnCount, tools: traceMetrics.toolCount },
     });
 
@@ -1492,7 +1512,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       const deterministicTitle = buildDeterministicSessionTitle(safeMessage, userLanguage, hasAttachments);
       const titlePromise = deterministicTitle
         ? Promise.resolve(deterministicTitle)
-        : generateSessionTitle(safeMessage, userLanguage);
+        : generateSessionTitle(safeMessage, userLanguage, {
+            billedActionCode: copilotBilledActionCode,
+            scopeTalentId: talentId,
+            scopeOrganizationId: organizationId || null,
+            sessionId,
+          });
 
       titlePromise.then((title) => {
         copilotService.updateSessionTitle(sessionId, title).catch(() => { });
@@ -1835,6 +1860,25 @@ router.post(
       }
 
       const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
+      try {
+        await debitWalletForAction({
+          scope: 'TALENT',
+          ownerId: talentId,
+          actionCode: 'TALENT_VOICE_INSTRUCTION',
+          idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'copilot_transcribe'),
+          metadata: { fileName: file.originalname || 'audio', mimeType: file.mimetype, bytes: file.size },
+          createdBy: talentId,
+        });
+      } catch (debitError) {
+        if (isInsufficientCreditsError(debitError)) {
+          return res.status(402).json({
+            error: req.t('billing:insufficientCredits'),
+            code: 'INSUFFICIENT_CREDITS',
+          });
+        }
+        throw debitError;
+      }
+
       const { transcribeWithProvider } = await import('../services/ai/media.client');
       const result = await transcribeWithProvider({
         buffer: file.buffer,
@@ -1843,6 +1887,14 @@ router.post(
         language,
       });
       const transcription = result || '';
+      void recordUsage({
+        feature: 'audio_stt',
+        model: MODEL_STT,
+        audioSeconds: 0,
+        scopeTalentId: talentId,
+        billedActionCode: 'TALENT_VOICE_INSTRUCTION',
+        metadata: { channel: 'copilot_transcribe', bytes: file.size, mimeType: file.mimetype },
+      });
 
       logger.info(`Audio transcribed for talent ${talentId}: ${transcription.slice(0, 50)}...`);
 

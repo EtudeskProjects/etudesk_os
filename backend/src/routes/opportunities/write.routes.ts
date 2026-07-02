@@ -18,6 +18,11 @@ import { setOpportunitySkills } from '../../services/skills/entity-skills.servic
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { resolveTalentLanguage } from '../../services/language-preference.service';
 import {
+  buildBillingIdempotencyKey,
+  debitWalletForAction,
+  isInsufficientCreditsError,
+} from '../../services/billing/credit.service';
+import {
   handleRouteError,
   createNotFoundError,
   createForbiddenError,
@@ -98,6 +103,25 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     }
 
     const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
+    try {
+      await debitWalletForAction({
+        scope: 'ORGANIZATION',
+        ownerId: organization_id,
+        actionCode: 'ORG_FORM_SUGGESTION',
+        idempotencyKey: buildBillingIdempotencyKey(req.headers['x-idempotency-key'], 'opp_form_suggestion'),
+        metadata: { channel: 'opportunity_generate', type, title: String(title || '').slice(0, 120) },
+        createdBy: talentId,
+      });
+    } catch (debitError) {
+      if (isInsufficientCreditsError(debitError)) {
+        return res.status(402).json({
+          error: req.t('billing:insufficientOrgCredits'),
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
+
     const input: GenerationInput = { title, type, organization_id, existing_data, language };
     const result = await generateOpportunitySuggestion(input);
 

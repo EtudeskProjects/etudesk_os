@@ -39,7 +39,8 @@ Start with "[Résumé]" header. Omit greetings and pleasantries.`;
  */
 export async function summarizeHistoryIfNeeded(
   history: Array<{ role: string; content: string }>,
-  language: SupportedLanguage = 'en'
+  language: SupportedLanguage = 'en',
+  usageContext?: { billedActionCode?: string | null; scopeTalentId?: string | null; scopeOrganizationId?: string | null; sessionId?: string | null }
 ): Promise<Array<{ role: string; content: string }>> {
   if (history.length <= SUMMARY_THRESHOLD) {
     return history;
@@ -66,7 +67,15 @@ export async function summarizeHistoryIfNeeded(
       ],
     });
 
-    void recordUsage({ feature: 'session_summarizer', model: MODEL_FAST, usage: response.usage as any });
+    void recordUsage({
+      feature: 'session_summarizer',
+      model: MODEL_FAST,
+      usage: response.usage as any,
+      scopeTalentId: usageContext?.scopeTalentId ?? null,
+      scopeOrganizationId: usageContext?.scopeOrganizationId ?? null,
+      sessionId: usageContext?.sessionId ?? null,
+      billedActionCode: usageContext?.billedActionCode ?? null,
+    });
 
     const summary = (response.choices[0]?.message?.content || '').trim();
 
