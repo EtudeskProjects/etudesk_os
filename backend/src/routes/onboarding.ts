@@ -13,7 +13,7 @@ import { generateTokens } from '../services/auth.service';
 import { sendWelcomeEmail } from '../services/email.service';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
-import { creditWallet } from '../services/billing/credit.service';
+import { creditWallet, getOnboardingWelcomeBonusCredits, WELCOME_TOTAL_CREDITS } from '../services/billing/credit.service';
 
 import { logger } from '../utils';
 import { normalizeLanguage } from '../i18n';
@@ -242,15 +242,18 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
         [talentId, req.userId]
       );
 
-      // Grant 20 welcome credits
-      await creditWallet({
-        scope: 'TALENT',
-        ownerId: talentId,
-        credits: 20,
-        sourceType: 'ADJUSTMENT',
-        idempotencyKey: `welcome_bonus_talent_${talentId}`,
-        metadata: { reason: 'welcome_bonus' },
-      }, client);
+      // Grant the onboarding remainder so the default welcome total is 30 credits.
+      const welcomeBonusCredits = getOnboardingWelcomeBonusCredits();
+      if (welcomeBonusCredits > 0) {
+        await creditWallet({
+          scope: 'TALENT',
+          ownerId: talentId,
+          credits: welcomeBonusCredits,
+          sourceType: 'ADJUSTMENT',
+          idempotencyKey: `welcome_bonus_talent_${talentId}`,
+          metadata: { reason: 'welcome_bonus', welcomeTotalCredits: WELCOME_TOTAL_CREDITS },
+        }, client);
+      }
 
       await client.query('COMMIT');
 

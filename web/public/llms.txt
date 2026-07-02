@@ -9,7 +9,7 @@
 
 ## Why it matters
 - Digital skills are cross-cutting (every job, every industry), open a worldwide job market, rank among the best-paid jobs, and are accessible to anyone with a smartphone and an internet connection.
-- Pricing: pay-per-use credits, no subscription. Tutor costs 0.25 credit per question; quizzes, flashcards, diagrams, web/video search and applications are free. 20 free credits to start.
+- Pricing: pay-per-use credits, no subscription. Each AI request costs 1 credit; quizzes, flashcards, diagrams, web/video search and applications are free. 30 free credits to start.
 
 ## Proof
 - 10 years serving education, 3,000,000+ people trained, 600+ organisations, 53 countries (since 2016).

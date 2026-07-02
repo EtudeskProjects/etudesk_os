@@ -2,6 +2,9 @@ import crypto from 'crypto';
 import { PoolClient, QueryResult } from 'pg';
 import { pool } from '../database';
 
+export const BASE_WALLET_CREDITS = Number(process.env.WELCOME_CREDITS ?? 10);
+export const WELCOME_TOTAL_CREDITS = Number(process.env.WELCOME_TOTAL_CREDITS ?? 30);
+
 export type BillingScope = 'TALENT' | 'ORGANIZATION';
 
 export interface WalletBalance {
@@ -80,15 +83,18 @@ async function ensureWalletExists(
 ): Promise<void> {
   const executor = client ?? pool;
   const { table, ownerColumn } = getWalletConfig(scope);
-  // Free credits granted once per wallet on first touch. Tunable via env.
-  // Lowered from 20 -> 10 to cut the multi-account faucet (each credit is real compute).
-  const WELCOME_CREDITS = Number(process.env.WELCOME_CREDITS ?? 10);
+  // Base credits granted once per wallet on first touch. The onboarding flow
+  // adds the remainder so the default welcome total is 30 credits.
   await executor.query(
     `INSERT INTO ${table} (${ownerColumn}, balance_credits, updated_at)
-     VALUES ($1, ${WELCOME_CREDITS}, NOW())
+     VALUES ($1, ${BASE_WALLET_CREDITS}, NOW())
      ON CONFLICT (${ownerColumn}) DO NOTHING`,
     [ownerId]
   );
+}
+
+export function getOnboardingWelcomeBonusCredits(): number {
+  return Math.max(0, WELCOME_TOTAL_CREDITS - BASE_WALLET_CREDITS);
 }
 
 export async function getWalletBalance(scope: BillingScope, ownerId: string): Promise<WalletBalance> {

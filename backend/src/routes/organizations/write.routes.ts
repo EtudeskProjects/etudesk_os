@@ -10,7 +10,7 @@ import { authMiddleware, isAdmin, AuthRequest } from '../../middleware/auth.midd
 import { validate, createOrganizationSchema, updateOrganizationSchema, uuidParamSchema } from '../../middleware/validation.middleware';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { normalizeCountryCode } from '../../constants/countries';
-import { creditWallet } from '../../services/billing/credit.service';
+import { creditWallet, getOnboardingWelcomeBonusCredits, WELCOME_TOTAL_CREDITS } from '../../services/billing/credit.service';
 import {
   handleRouteError,
   createNotFoundError,
@@ -129,15 +129,18 @@ router.post('/', authMiddleware, validate(createOrganizationSchema), async (req:
         ['organization:*', 'members:*', 'opportunities:*', 'billing:*']
       ]);
 
-      // Grant 20 welcome credits
-      await creditWallet({
-        scope: 'ORGANIZATION',
-        ownerId: id,
-        credits: 20,
-        sourceType: 'ADJUSTMENT',
-        idempotencyKey: `welcome_bonus_org_${id}`,
-        metadata: { reason: 'welcome_bonus' },
-      }, client);
+      // Grant the onboarding remainder so the default welcome total is 30 credits.
+      const welcomeBonusCredits = getOnboardingWelcomeBonusCredits();
+      if (welcomeBonusCredits > 0) {
+        await creditWallet({
+          scope: 'ORGANIZATION',
+          ownerId: id,
+          credits: welcomeBonusCredits,
+          sourceType: 'ADJUSTMENT',
+          idempotencyKey: `welcome_bonus_org_${id}`,
+          metadata: { reason: 'welcome_bonus', welcomeTotalCredits: WELCOME_TOTAL_CREDITS },
+        }, client);
+      }
 
       await client.query('COMMIT');
 

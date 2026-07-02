@@ -86,7 +86,7 @@ L'application **Etudesk OS** met le referentiel en action via une experience IA,
 
 ### Acces et modele
 
-- **Les 20 premiers credits sont offerts** a l'inscription : c'est le principal levier de conversion. Combine au cout tres bas du tuteur, cela represente un large volume de formation offert (voir section 9).
+- **Les 30 premiers credits sont offerts** a l'inscription : c'est le principal levier de conversion. Combine aux actions gratuites, cela represente un large volume de formation offert (voir section 9).
 - **Recharge prepayee en FCFA** (Mobile Money / Paystack), a son rythme, sans abonnement impose.
 - **Etudesk OS n'est accessible que sur les stores** (iOS / Android). Le site presente, explique et renvoie vers les stores ; il n'y a aucune application web fonctionnelle. Seule exception interactive publique : l'observatoire **Digital Skills**.
 
@@ -97,7 +97,7 @@ L'application **Etudesk OS** met le referentiel en action via une experience IA,
 1. **Affirmer la promesse** : se former aux competences du digital a la vitesse du marche, et les transformer en opportunites.
 2. **Faire comprendre la boucle** : un meme referentiel, un tuteur pour apprendre, un guide pour avancer.
 3. **Prouver le serieux** : exposer le referentiel vivant (Digital Skills) et l'heritage (50 000+ formes, 17 pays).
-4. **Convertir** : telechargements de l'app, portes par l'argument des 20 credits offerts.
+4. **Convertir** : telechargements de l'app, portes par l'argument des 30 credits offerts.
 5. **Referencer (SEO)** : pages competences et Stories pour capter la recherche organique des jeunes talents francophones.
 6. **Incarner la marque** : epure, accessible, moderne, grand public.
 
@@ -198,12 +198,12 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 
 ### 8.1 Accueil `/`
 
-**Objectif** : poser la promesse (apprendre + avancer sur une carte vivante) et pousser le telechargement avec les 20 credits offerts.
+**Objectif** : poser la promesse (apprendre + avancer sur une carte vivante) et pousser le telechargement avec les 30 credits offerts.
 
 1. **Hero** : video de fond + overlay.
    - Titre : la promesse, par exemple "Les competences du digital, a la vitesse du marche."
    - Sous-titre : ton tuteur IA t'explique, ton guide carriere IA te trouve l'opportunite.
-   - Badge : **"20 credits offerts a l'inscription"**.
+   - Badge : **"30 credits offerts a l'inscription"**.
    - CTA stores.
 2. **La boucle** (coeur du message) : un meme referentiel, deux gestes.
    - **Apprendre - le tuteur** : explications, quiz, exercices, contextualises sur ton profil.
@@ -212,7 +212,7 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 3. **Le referentiel vivant** : bandeau de preuve (1211 competences, 16 familles, 5 types, mis a jour en continu), apercu, CTA "Explorer l'observatoire" -> `/digital-skills`.
 4. **Comment ca marche** : 3 etapes (Cree ton profil -> Forme-toi sur les competences du marche -> Avance vers des opportunites).
 5. **Preuve et confiance** : heritage (50 000+ formes, 17 pays depuis 2016), demarrage gratuit, francais natif, paiement FCFA, rigueur d'evaluation.
-6. **CTA final stores** + rappel des 20 credits offerts.
+6. **CTA final stores** + rappel des 30 credits offerts.
 7. **Footer**.
 
 ### 8.2 Digital Skills `/digital-skills`
@@ -252,7 +252,7 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 
 **Objectif** : presenter l'application. Aucune fonctionnalite web : chaque bloc se termine par un CTA store.
 
-1. **Hero produit** : mockups, "Disponible sur iOS et Android", 20 credits offerts.
+1. **Hero produit** : mockups, "Disponible sur iOS et Android", 30 credits offerts.
 2. **L'experience IA, branchee sur le referentiel** (section phare), presentee par ce qu'elle permet :
    - **Apprendre (tuteur)** : plans d'apprentissage, explications, certifications utiles. Pratique riche : quiz, flashcards, exercices, resolution pas a pas, playground de code (JS/Python), diagrammes, audio, recommandations video.
    - **Avancer (guide carriere)** : opportunites adaptees, generation de CV, preparation d'entretiens, recommandations de communautes et d'espaces. Matching sur compatibilite reelle.
@@ -262,7 +262,7 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 6. **Multimodal** : texte, voix (transcription), pieces jointes (PDF/images).
 7. **Multilingue** : plusieurs langues (FR, EN et au-dela).
 8. **Onboarding express** : connexion email + code, profil en quelques etapes.
-9. **Modele simple** : les 20 credits offerts, recharge en FCFA (voir section 9).
+9. **Modele simple** : les 30 credits offerts, recharge en FCFA (voir section 9).
 10. **CTA stores final** + QR code (desktop -> mobile).
 
 ### 8.4 Stories `/stories`
@@ -303,14 +303,14 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 
 ## 9. Modele de credits (valeurs reelles a refleter)
 
-- **20 credits offerts** a l'inscription.
+- **30 credits offerts** a l'inscription.
 - **Recharge prepayee en FCFA** (Mobile Money / Paystack), sans abonnement.
 
 Cout par action (talent) :
 
 | Action | Cout (credits) |
 |--------|---------------|
-| Apprendre - tuteur (requete) | **0,25** |
+| Apprendre - tuteur (requete) | **1** |
 | Avancer - guide carriere (requete) | 1 |
 | Generation de document (CV, etc.) | 1 |
 | Generation d'image | 1 |
@@ -319,7 +319,7 @@ Cout par action (talent) :
 | Instruction vocale | **0** |
 | Postuler / Reserver / Adherer | **0** |
 
-**Argument cle** : 20 credits offerts + tuteur a 0,25 credit/question + quiz, flashcards et diagrammes gratuits = un large volume de formation offert des l'inscription. A mettre en avant. La grille de recharge chiffree sera publiee une fois figee.
+**Argument cle** : 30 credits offerts + requete IA a 1 credit + quiz, flashcards et diagrammes gratuits = un large volume de formation offert des l'inscription. A mettre en avant. La grille de recharge chiffree sera publiee une fois figee.
 
 ---
 
@@ -384,7 +384,7 @@ Accroches et formulations qui resonnent avec la cible. A piocher selon l'emplace
 
 **Acces / friction zero**
 - "Commence gratuitement, depuis ton telephone."
-- "20 credits offerts. Aucune carte requise."
+- "30 credits offerts. Aucune carte requise."
 - "Paie en FCFA, a ton rythme. Sans abonnement."
 
 **Cible / aspiration**
@@ -404,7 +404,7 @@ Accroches et formulations qui resonnent avec la cible. A piocher selon l'emplace
 | Lot | Contenu | Priorite |
 |-----|---------|---------|
 | **L0 - Socle** | `globals.css` (design system monochrome + 5 couleurs de type), composants partages (Header, Footer, StoreButtons), i18n centralise, redirection `/observatoire`. | P1 |
-| **L1 - Accueil** | Landing autour de la boucle (apprendre + avancer) et des 20 credits offerts. | P1 |
+| **L1 - Accueil** | Landing autour de la boucle (apprendre + avancer) et des 30 credits offerts. | P1 |
 | **L2 - Digital Skills** | Observatoire `/digital-skills` : couleurs + icones par type, familles monochromes, decouvrabilite via les relations (prerequis / voisines / associees), filtres clairs, mobile-first. `edges.json` + script de generation. | P1 |
 | **L3 - Etudesk OS** | Page produit (experience IA, ecosysteme, credits, store-only). | P2 |
 | **L4 - Stories** | Blog MDX (liste, article, SEO, sitemap). | P2 |
