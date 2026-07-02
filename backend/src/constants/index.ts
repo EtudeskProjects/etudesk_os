@@ -56,10 +56,8 @@ export const CURRENCY_CONFIG: Record<SupportedCurrency, {
   creditsPerUnit: number;
   paystackCurrency: string;
 }> = {
-  // 1 credit = 100 FCFA (XOF) = $0.20 (USD). The two rates must stay consistent
-  // with the CREDIT_PACKS below. USD was previously 0.5 (a 10x undercredit bug:
-  // $5 gave 2.5 credits instead of the advertised 25).
-  XOF: { minTalent: 2000, minOrg: 10000, label: 'FCFA', creditsPerUnit: 0.01, paystackCurrency: 'XOF' },
+  // XOF: 2000 FCFA = 100 credits. USD remains 5 credits per $1.
+  XOF: { minTalent: 2000, minOrg: 10000, label: 'FCFA', creditsPerUnit: 0.05, paystackCurrency: 'XOF' },
   USD: { minTalent: 5, minOrg: 20, label: 'USD', creditsPerUnit: 5, paystackCurrency: 'USD' },
 } as const;
 
@@ -71,10 +69,10 @@ export const CREDIT_PACKS_USD = [
 ] as const;
 
 export const CREDIT_PACKS_XOF = [
-  { name: 'Starter', amount: 2000, credits: 20, bonus: 0 },
-  { name: 'Pro', amount: 5000, credits: 55, bonus: 10 },
-  { name: 'Business', amount: 10000, credits: 120, bonus: 20 },
-  { name: 'Enterprise', amount: 25000, credits: 320, bonus: 28 },
+  { name: 'Starter', amount: 2000, credits: 100, bonus: 0 },
+  { name: 'Pro', amount: 5000, credits: 250, bonus: 0 },
+  { name: 'Business', amount: 10000, credits: 500, bonus: 0 },
+  { name: 'Enterprise', amount: 25000, credits: 1250, bonus: 0 },
 ] as const;
 
 export function isSupportedCurrency(value: unknown): value is SupportedCurrency {

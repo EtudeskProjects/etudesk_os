@@ -84,7 +84,7 @@ export function getSkillContent(slug: string, lang: Lang): SkillContent | null {
     if (sib.length) paragraphs.push(`Compétences voisines, dans la même famille : ${readableList(N(sib), lang)}.`);
     if (rel.length) paragraphs.push(`Sur le terrain, ${name} est souvent mobilisée avec ${readableList(N(rel), lang)}.`);
     if (!pre.length && !leads.length && !sib.length && !rel.length) {
-      paragraphs.push(`${name} s'apprend pas à pas avec ton tuteur IA : quiz, flashcards, exercices résolus et explications multimodales, sans abonnement et avec 20 crédits offerts pour démarrer.`);
+      paragraphs.push(`${name} s'apprend pas à pas avec ton tuteur IA : quiz, flashcards, exercices résolus et explications multimodales, sans abonnement et avec 100 crédits offerts pour démarrer.`);
     }
   } else {
     intro = `${name} is part of Etudesk's digital skills referential, in the "${familyLabel}" family (${typeLabel}). Learn ${name} with your AI tutor, at your own pace, and turn it into real opportunities with your AI career guide.`;
@@ -93,7 +93,7 @@ export function getSkillContent(slug: string, lang: Lang): SkillContent | null {
     if (sib.length) paragraphs.push(`Neighbouring skills, in the same family: ${readableList(N(sib), lang)}.`);
     if (rel.length) paragraphs.push(`In practice, ${name} is often used together with ${readableList(N(rel), lang)}.`);
     if (!pre.length && !leads.length && !sib.length && !rel.length) {
-      paragraphs.push(`${name} is learned step by step with your AI tutor: quizzes, flashcards, solved exercises and multimodal explanations, no subscription and 20 free credits to start.`);
+      paragraphs.push(`${name} is learned step by step with your AI tutor: quizzes, flashcards, solved exercises and multimodal explanations, no subscription and 100 free credits to start.`);
     }
   }
 
@@ -102,8 +102,8 @@ export function getSkillContent(slug: string, lang: Lang): SkillContent | null {
     : `Learn ${name} - ${familyLabel}`;
 
   const metaDescription = lang === 'fr'
-    ? `${name} : ${typeLabel.toLowerCase()} de la famille ${familyLabel}. Apprends-la avec le tuteur IA Etudesk${leads.length ? ` et débloque ${readableList(N(leads), lang, 3)}` : ''}. Sans abonnement, 20 crédits offerts.`.slice(0, 158)
-    : `${name}: ${typeLabel.toLowerCase()} in the ${familyLabel} family. Learn it with the Etudesk AI tutor${leads.length ? ` and unlock ${readableList(N(leads), lang, 3)}` : ''}. No subscription, 20 free credits.`.slice(0, 158);
+    ? `${name} : ${typeLabel.toLowerCase()} de la famille ${familyLabel}. Apprends-la avec le tuteur IA Etudesk${leads.length ? ` et débloque ${readableList(N(leads), lang, 3)}` : ''}. Sans abonnement, 100 crédits offerts.`.slice(0, 158)
+    : `${name}: ${typeLabel.toLowerCase()} in the ${familyLabel} family. Learn it with the Etudesk AI tutor${leads.length ? ` and unlock ${readableList(N(leads), lang, 3)}` : ''}. No subscription, 100 free credits.`.slice(0, 158);
 
   return {
     slug,

@@ -79,8 +79,8 @@ export default function SkillView({ lang, content }: Props) {
           <h2>{fr ? `Apprends ${content.name} avec ton tuteur IA` : `Learn ${content.name} with your AI tutor`}</h2>
           <p>
             {fr
-              ? 'Quiz, flashcards, exercices résolus et explications multimodales. Sans abonnement, 20 crédits offerts.'
-              : 'Quizzes, flashcards, solved exercises and multimodal explanations. No subscription, 20 free credits.'}
+              ? 'Quiz, flashcards, exercices résolus et explications multimodales. Sans abonnement, 100 crédits offerts.'
+              : 'Quizzes, flashcards, solved exercises and multimodal explanations. No subscription, 100 free credits.'}
           </p>
           <div className="foot-actions">
             <StoreButtons variant="brand" size="lg" />
