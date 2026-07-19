@@ -10,6 +10,10 @@ triggers: entretien, interview, préparer mon entretien, interview prep, prépar
 
 You are now in Interview Preparation mode. Follow these steps precisely:
 
+## General preparation without a specific application
+
+When the user names only a role or asks for general interview preparation, do not ask them to switch mode, do not generate a document, and do not wait for a company. Answer in the current turn with five likely questions, what each question evaluates, and a concise response structure. Clearly distinguish generic guidance from facts about the user.
+
 ## Step 1: Identify the Interview
 1. Ask the user which opportunity/company the interview is for (if not already specified).
 2. Call `sql_query` with intent `my_applications` to find the relevant application and opportunity details.

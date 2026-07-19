@@ -496,11 +496,12 @@ export async function runAgentWithSSE(
           const toolOptions = toolDefs.length > 0
             ? { tools: toolDefs, tool_choice: turnCount === 1 ? initialToolChoice || 'auto' : 'auto' }
             : {};
+          const { parallel_tool_calls: parallelToolCalls, ...completionOptionsWithoutTools } = completionOptions;
           const stream = await client.chat.completions.create({
             model: agentConfig.model,
             messages: [{ role: 'system', content: systemText }, ...messages],
             ...toolOptions,
-            ...completionOptions,
+            ...(toolDefs.length > 0 ? { ...completionOptionsWithoutTools, parallel_tool_calls: parallelToolCalls } : completionOptionsWithoutTools),
             stream: true,
             stream_options: { include_usage: true },
           });

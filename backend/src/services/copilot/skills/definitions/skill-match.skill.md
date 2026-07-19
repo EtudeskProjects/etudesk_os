@@ -11,6 +11,10 @@ priority: 8
 
 Objectif : rendre UN block `skill_match` qui compare des niveaux ACTUELS à des CIBLES (compétences du référentiel uniquement), avec des insights actionnables. Pour un talent, ne calcule pas et ne fournis pas de score global ni de champ `coverage`.
 
+## Condition d'application
+
+Utilise ce workflow uniquement si la demande compare explicitement le profil à un poste, une offre, un métier cible ou des compétences cibles. Une explication, un plan d'apprentissage générique ou un programme de 30/60/90 jours n'est pas un skill match. Si ce workflow est activé pour une telle demande, réponds directement à la demande au lieu de la rediriger vers le mode Étudier.
+
 Détecte le scope :
 - **talent** (mode Explorer) : les compétences du talent vs un poste/métier qui l'intéresse.
 - **cohort** (mode Gérer) : l'agrégat des compétences du vivier/cohorte vs une cible.
