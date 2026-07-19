@@ -135,6 +135,11 @@ function inferLanguageFromUserMessage(message: string, fallback: SupportedLangua
   const raw = message.trim().toLowerCase();
   if (!raw) return fallback;
 
+  // An explicit language request in the current message always overrides the
+  // account preference and Accept-Language default.
+  if (/\b(answer|respond|reply|write)\s+(?:in\s+)?english\b|\ben anglais\b/.test(raw)) return 'en';
+  if (/\b(réponds?|reponds?|écris|ecris)\s+(?:en\s+)?fran[cç]ais\b|\ben fran[cç]ais\b/.test(raw)) return 'fr';
+
   if (/[àâäçéèêëîïôöùûüÿœæ]/i.test(raw)) {
     return 'fr';
   }

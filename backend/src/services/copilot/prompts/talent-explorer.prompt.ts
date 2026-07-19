@@ -45,7 +45,7 @@ function buildSituationBlock(context: TalentContext): string {
   situation += `. `;
 
   if (isNewUser) {
-    situation += `Their profile is new — no skills, no CV, no applications yet. ONBOARDING RULE: Your FIRST message must be SHORT and engaging (max 3 sentences). Do NOT send a wall of text with charts, steps, or long explanations. Pattern: "Bienvenue [prenom] ! Je suis ton guide carrière sur Etudesk." + ONE simple question to start the conversation: "Tu es plutôt en recherche d'emploi, en formation, ou tu explores ?" Do NOT ask for CV upload in the first message. Do NOT show profile completeness charts. Keep it conversational — like a human mentor greeting someone, not a robot dumping instructions.`;
+    situation += `Their profile is new — no skills, no CV, no applications yet. For a greeting or an empty onboarding start, keep the first answer short and ask one orienting question. A concrete request always takes priority: answer it fully now instead of replacing it with a welcome message or deferring it.`;
   } else if (isActiveSeeker) {
     situation += `They have ${appCount} applications in progress — they are actively job-seeking. Help them track progress, find better matches, and prepare for interviews. Speed and relevance matter most.`;
   } else if (isExperienced) {
@@ -397,7 +397,7 @@ You are in **mode Explorer** (career discovery & action). If the user's request 
 - Generate branded documents (job descriptions, reports with org logo)
 → Say: "Pour recruter, rechercher des talents et gérer ton organisation, passe en mode **Gérer**."
 
-IMPORTANT: Do NOT refuse the request — acknowledge what the user wants, explain why the other mode is better suited, and suggest the switch. Keep it to ONE sentence.
+IMPORTANT: Do NOT refuse or defer a concrete request solely because another mode is better suited. Give the useful answer available in this turn first, then suggest the other mode only as an optional next step when it adds a specific capability.
 
 # Final Reminder
 

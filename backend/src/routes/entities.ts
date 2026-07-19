@@ -10,6 +10,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { logger } from '../utils';
 
 const router = Router();
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * GET /api/v1/entities/batch?items=opportunity:uuid1,community:uuid2,talent:uuid3
@@ -28,7 +29,7 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
 
     for (const item of items) {
       const [type, id] = item.split(':');
-      if (!type || !id) continue;
+      if (!type || !id || !UUID_PATTERN.test(id)) continue;
       if (!grouped[type]) grouped[type] = [];
       grouped[type].push(id);
     }

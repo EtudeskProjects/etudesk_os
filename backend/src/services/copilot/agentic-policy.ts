@@ -250,7 +250,10 @@ export function inferInitialToolChoice(
 export function inferRequiredCompletionTool(mode: AgentConfig['mode'], message: string): string | undefined {
   const m = message.toLowerCase();
 
-  if (mode === 'explore' && /\b(cv|curriculum|resume|résumé)\b/.test(m)) {
+  const asksForCvDocument = /\b(cv|curriculum|resume|résumé)\b/.test(m)
+    && /\b(génère|genere|crée|cree|prépare|prepare|construis|build|generate|create|rédige|redige)\b/.test(m);
+
+  if (mode === 'explore' && asksForCvDocument) {
     return 'generate_document';
   }
 

@@ -493,11 +493,13 @@ export async function runAgentWithSSE(
         };
 
         try {
+          const toolOptions = toolDefs.length > 0
+            ? { tools: toolDefs, tool_choice: turnCount === 1 ? initialToolChoice || 'auto' : 'auto' }
+            : {};
           const stream = await client.chat.completions.create({
             model: agentConfig.model,
             messages: [{ role: 'system', content: systemText }, ...messages],
-            tools: toolDefs.length > 0 ? toolDefs : undefined,
-            tool_choice: turnCount === 1 ? initialToolChoice || 'auto' : 'auto',
+            ...toolOptions,
             ...completionOptions,
             stream: true,
             stream_options: { include_usage: true },
