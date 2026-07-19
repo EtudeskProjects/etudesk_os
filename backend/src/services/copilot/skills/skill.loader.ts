@@ -316,7 +316,10 @@ export async function detectSkillFromMessage(
       instructions: bestMatch.instructions,
     };
   } catch (error: any) {
-    throw new Error(`Skill detection failed: ${error.message}`);
+    // Semantic routing enriches a turn; it must never make the Copilot
+    // unavailable. The base agent prompt remains complete without a skill.
+    logger.warn(`[skill.loader] Semantic detection unavailable: ${error.message}`);
+    return null;
   }
 }
 

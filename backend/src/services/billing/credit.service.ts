@@ -193,6 +193,27 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
 
     const { table, ownerColumn } = getWalletConfig(scope);
 
+    // Idempotency must be checked before mutating a balance. The old ordering
+    // incremented the wallet even when the ledger entry already existed.
+    if (idempotencyKey) {
+      const existing = await client.query(
+        `SELECT 1 FROM credit_ledger WHERE idempotency_key = $1`,
+        [idempotencyKey]
+      );
+      if (existing.rows.length > 0) {
+        const wallet = await client.query(
+          `SELECT balance_credits, updated_at FROM ${table} WHERE ${ownerColumn} = $1`,
+          [ownerId]
+        );
+        return {
+          scope,
+          ownerId,
+          balanceCredits: Number(wallet.rows[0]?.balance_credits ?? 0),
+          updatedAt: wallet.rows[0]?.updated_at ?? new Date(),
+        };
+      }
+    }
+
     await ensureWalletExists(scope, ownerId, client);
 
     const walletUpdate = await client.query(
@@ -203,21 +224,6 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
        RETURNING balance_credits, updated_at`,
       [credits, ownerId]
     );
-
-    if (idempotencyKey) {
-      const existing = await client.query(
-        `SELECT id FROM credit_ledger WHERE idempotency_key = $1`,
-        [idempotencyKey]
-      );
-      if (existing.rows.length > 0) {
-        return {
-          scope,
-          ownerId,
-          balanceCredits: Number(walletUpdate.rows[0].balance_credits),
-          updatedAt: walletUpdate.rows[0].updated_at,
-        };
-      }
-    }
 
     await client.query(
       `INSERT INTO credit_ledger (
