@@ -33,6 +33,7 @@ backend/generated-images/
 
 # Test/audit outputs
 **/tools-audit-results.json
+tmp/
 
 # Android debug keystore (generated locally)
 *.keystore
