@@ -861,6 +861,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // If replacing a previous exchange (edit & resend), soft-delete the last user message + its assistant response
     if (replaceLastExchange) {
+      // Provider-side state contains the exchange being replaced. Its next
+      // request must rebuild from the authoritative persisted transcript.
+      delete sessionContext.openaiResponseId;
+      await persistSessionContext(sessionId, sessionContext);
       const lastUserMsg = await pool.query(
         `SELECT created_at FROM copilot_messages
          WHERE session_id = $1 AND role = 'user' AND deleted_at IS NULL
@@ -1212,7 +1216,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
     markPhase('agent_start', phaseLabel('statusAgentStart'));
-    const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
+    const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics, providerResponseId } = await runAgentWithSSE(
       agent,
       agentMessage,
       history,
@@ -1231,8 +1235,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         providerOverloaded: phaseLabel('providerOverloaded'),
         providerUnavailable: phaseLabel('providerUnavailable'),
         safetyRefusal: phaseLabel('safetyRefusal'),
-      }
+      },
+      typeof sessionContext.openaiResponseId === 'string' ? sessionContext.openaiResponseId : undefined,
     );
+    if (providerResponseId) {
+      sessionContext.openaiResponseId = providerResponseId;
+      await persistSessionContext(sessionId, sessionContext);
+    }
     let finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
     const persistedSegments = segments.length > 0
       ? [

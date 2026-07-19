@@ -20,7 +20,7 @@ import { getLanguageDisplayName } from '../../language-preference.service';
 import {
   AGENTIC_LIMITS,
   buildAgentSystemText,
-  buildChatCompletionTools,
+  buildResponsesTools,
   buildMissingRequiredToolMessage,
   buildToolPreface,
   enforceToolCallLimit,
@@ -249,8 +249,36 @@ function buildMessages(
   return merged;
 }
 
+/** Convert the persisted transcript to native Responses input. */
+function buildResponsesInput(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>,
+  imageBuffers?: Array<{ mimeType: string; base64: string; name: string }>,
+  includeHistory = true,
+): any[] {
+  const chatMessages = buildMessages(
+    includeHistory ? history : [],
+    message,
+    attachments,
+    imageBuffers,
+  );
+
+  return chatMessages.map((entry: any) => {
+    if (!Array.isArray(entry.content)) return entry;
+    return {
+      ...entry,
+      content: entry.content.map((part: any) => {
+        if (part.type === 'text') return { type: 'input_text', text: part.text };
+        if (part.type === 'image_url') return { type: 'input_image', image_url: part.image_url?.url };
+        return part;
+      }),
+    };
+  });
+}
+
 /**
- * Run an agent with SSE streaming using OpenAI-compatible chat completions.
+ * Run an agent with SSE streaming using the OpenAI Responses API.
  * Manual agentic loop: stream → collect tool_use → execute → re-submit.
  */
 export async function runAgentWithSSE(
@@ -285,7 +313,8 @@ export async function runAgentWithSSE(
     providerOverloaded: 'The AI service is temporarily busy. Please try again in a few seconds.',
     providerUnavailable: 'The AI service is temporarily unavailable. Please try again in a few seconds.',
     safetyRefusal: 'I cannot help with that request. Rephrase it or ask another question.',
-  }
+  },
+  previousResponseId?: string,
 ): Promise<{
   finalOutput: string;
   toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }>;
@@ -310,10 +339,12 @@ export async function runAgentWithSSE(
     promptChars: number;
     toolSchemaChars: number;
   };
+  providerResponseId?: string;
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
   const segments: MessageSegment[] = [];
   let finalOutput = '';
+  let providerResponseId = previousResponseId;
   let toolCallCounter = 0;
   let toolErrorCounter = 0;
   const turnStart = Date.now();
@@ -367,8 +398,16 @@ export async function runAgentWithSSE(
       }
     }
 
-    // Build chat messages
-    const messages = buildMessages(history, message, attachments, imageBuffers);
+    // Reuse provider-side state once a session has an OpenAI response id.
+    // Legacy sessions start from their durable PostgreSQL transcript once.
+    let responseInput = buildResponsesInput(
+      history,
+      message,
+      attachments,
+      imageBuffers,
+      !previousResponseId,
+    );
+    let activePreviousResponseId = providerResponseId;
 
     // Check guardrail result
     const guardrailResult = await guardrailPromise;
@@ -394,11 +433,9 @@ export async function runAgentWithSSE(
 
     // --- Agentic loop ---
     const client = getChatClient();
-    // Convert internal tool defs (name/description/input_schema) to chat-completion tools
-    // function-tool format (type:function, function:{name,description,parameters}).
     const selectedToolProfile = selectToolsForMessage(agentConfig.mode, message, agentConfig.tools);
     const activeTools = selectedToolProfile.tools;
-    const toolDefs = buildChatCompletionTools(activeTools);
+    const toolDefs = buildResponsesTools(activeTools);
     const completionOptions = getAgentCompletionOptions();
     const initialToolChoice = inferInitialToolChoice(agentConfig.mode, message);
     const requiredCompletionTool = inferRequiredCompletionTool(agentConfig.mode, message);
@@ -444,14 +481,14 @@ export async function runAgentWithSSE(
         label: statusLabels.writing,
         elapsedMs: Date.now() - turnStart,
       });
-      let response: { stopReason: string; assistantMessage: OpenAI.Chat.ChatCompletionMessageParam } | null = null;
+      let response: { stopReason: string; providerResponseId?: string } | null = null;
       let currentTurnText = '';
       let toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
       const maxAttempts = MAX_PROVIDER_RETRIES + 1;
 
       const systemText = buildAgentSystemText(agentConfig);
       if (turnCount === 1) {
-        promptChars = byteLength(systemText) + byteLength(messages);
+        promptChars = byteLength(systemText) + byteLength(responseInput);
         logger.info(`[copilot] payload: promptChars=${promptChars}, toolSchemaChars=${toolSchemaChars}, tools=${toolDefs.length}/${agentConfig.tools.length}, toolProfile=${selectedToolProfile.reason}, history=${history.length}, maxTokens=${completionOptions.max_completion_tokens}`);
       }
 
@@ -459,8 +496,7 @@ export async function runAgentWithSSE(
         let attemptProducedOutput = false;
         currentTurnText = '';
         toolUseBlocks = [];
-        // tool_calls arrive across streaming deltas, keyed by their index.
-        const toolCallAccum: Record<number, { id: string; name: string; args: string }> = {};
+        const toolCallAccum: Record<string, { id: string; name: string; args: string }> = {};
         let finishReason: string | null = null;
         let textBuffer = '';
         let bufferTimer: ReturnType<typeof setTimeout> | null = null;
@@ -493,36 +529,26 @@ export async function runAgentWithSSE(
         };
 
         try {
-          const toolOptions = toolDefs.length > 0
-            ? { tools: toolDefs, tool_choice: turnCount === 1 ? initialToolChoice || 'auto' : 'auto' }
-            : {};
-          const { parallel_tool_calls: parallelToolCalls, ...completionOptionsWithoutTools } = completionOptions;
-          const stream = await client.chat.completions.create({
+          const toolChoice = turnCount === 1 && initialToolChoice && typeof initialToolChoice === 'object'
+            ? { type: 'function', name: (initialToolChoice as any).function.name }
+            : 'auto';
+          const stream = await (client.responses.create as any)({
             model: agentConfig.model,
-            // Keep the invariant system prefix first. GPT-5.6 can then reuse
-            // it across sessions without changing the mobile SSE contract.
-            messages: [{
-              role: 'system',
-              content: [{
-                type: 'text',
-                text: systemText,
-                prompt_cache_breakpoint: { mode: 'explicit' },
-              }],
-            } as any, ...messages],
-            ...toolOptions,
-            ...(toolDefs.length > 0 ? { ...completionOptionsWithoutTools, parallel_tool_calls: parallelToolCalls } : completionOptionsWithoutTools),
+            instructions: systemText,
+            input: responseInput,
+            ...(activePreviousResponseId ? { previous_response_id: activePreviousResponseId } : {}),
+            ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: toolChoice, parallel_tool_calls: completionOptions.parallel_tool_calls } : {}),
+            max_output_tokens: completionOptions.max_completion_tokens,
+            reasoning: { effort: 'low' },
             prompt_cache_key: `copilot:${agentConfig.mode}:${selectedToolProfile.reason}`,
             prompt_cache_options: { mode: 'implicit', ttl: '30m' },
             stream: true,
-            stream_options: { include_usage: true },
           });
           logger.info(`[copilot] phase:provider_stream_open ${Date.now() - turnStart}ms`);
 
-          for await (const chunk of stream) {
-            const choice = chunk.choices?.[0];
-            if (choice) {
-              const delta = choice.delta;
-              if (delta?.content) {
+          for await (const event of stream) {
+            if (event.type === 'response.output_text.delta' && event.delta) {
+              const delta = event.delta as string;
                 if (!firstTokenMs) {
                   firstTokenMs = Date.now() - turnStart;
                   sendSSE(res, {
@@ -532,22 +558,22 @@ export async function runAgentWithSSE(
                     elapsedMs: firstTokenMs,
                   });
                 }
-                finalOutput += delta.content;
-                currentTurnText += delta.content;
-                textBuffer += delta.content;
+                finalOutput += delta;
+                currentTurnText += delta;
+                textBuffer += delta;
 
                 const lastSeg = segments[segments.length - 1];
                 if (lastSeg && lastSeg.type === 'text') {
-                  lastSeg.content = (lastSeg.content || '') + delta.content;
+                  lastSeg.content = (lastSeg.content || '') + delta;
                 } else {
-                  segments.push({ type: 'text', content: delta.content });
+                  segments.push({ type: 'text', content: delta });
                 }
 
                 if (!bufferTimer) {
                   bufferTimer = setTimeout(flushTextBuffer, SSE_BUFFER_FLUSH_MS);
                 }
-              }
-              if (delta?.tool_calls) {
+            }
+            if (event.type === 'response.output_item.done' && event.item?.type === 'function_call') {
                 if (!firstToolMs) {
                   firstToolMs = Date.now() - turnStart;
                   sendSSE(res, {
@@ -557,38 +583,31 @@ export async function runAgentWithSSE(
                     elapsedMs: firstToolMs,
                   });
                 }
-                for (const tc of delta.tool_calls) {
-                  const idx = tc.index ?? 0;
-                  if (!toolCallAccum[idx]) {
-                    flushTextBuffer();
-                    toolCallAccum[idx] = { id: tc.id || '', name: '', args: '' };
-                    attemptProducedOutput = true;
-                  }
-                  if (tc.id) toolCallAccum[idx].id = tc.id;
-                  if (tc.function?.name) toolCallAccum[idx].name += tc.function.name;
-                  if (tc.function?.arguments) toolCallAccum[idx].args += tc.function.arguments;
-                }
-              }
-              if (choice.finish_reason) finishReason = choice.finish_reason;
+              flushTextBuffer();
+              toolCallAccum[event.item.call_id] = {
+                id: event.item.call_id,
+                name: event.item.name,
+                args: event.item.arguments || '{}',
+              };
+              attemptProducedOutput = true;
             }
-            // Final usage chunk (stream_options.include_usage)
-            if (chunk.usage) {
-              totalInputTokens += chunk.usage.prompt_tokens || 0;
-              totalOutputTokens += chunk.usage.completion_tokens || 0;
-              totalCacheReadTokens += (chunk.usage as any).prompt_tokens_details?.cached_tokens || 0;
-              totalCacheCreationTokens += (chunk.usage as any).prompt_tokens_details?.cache_write_tokens || 0;
+            if (event.type === 'response.completed') {
+              const usage = event.response?.usage;
+              totalInputTokens += usage?.input_tokens || 0;
+              totalOutputTokens += usage?.output_tokens || 0;
+              totalCacheReadTokens += usage?.input_tokens_details?.cached_tokens || 0;
+              totalCacheCreationTokens += usage?.input_tokens_details?.cache_write_tokens || 0;
               estimatedCostUsd = estimateCopilotCostUsd(agentConfig.model, totalInputTokens, totalOutputTokens, totalCacheReadTokens);
+              finishReason = event.response?.status || 'completed';
+              activePreviousResponseId = event.response?.id || activePreviousResponseId;
+              providerResponseId = activePreviousResponseId;
             }
           }
 
           flushTextBuffer();
 
-          // Finalize tool calls (ordered by streaming index).
-          toolUseBlocks = Object.keys(toolCallAccum)
-            .map(Number)
-            .sort((a, b) => a - b)
-            .map((k) => {
-              const t = toolCallAccum[k];
+          toolUseBlocks = Object.values(toolCallAccum)
+            .map((t) => {
               let parsedInput: any = {};
               try {
                 parsedInput = JSON.parse(t.args || '{}');
@@ -598,20 +617,7 @@ export async function runAgentWithSSE(
               return { id: t.id, name: t.name, input: parsedInput };
             });
 
-          // Build the assistant message to replay on the next turn.
-          const assistantMessage: OpenAI.Chat.ChatCompletionMessageParam = toolUseBlocks.length > 0
-            ? {
-                role: 'assistant',
-                content: currentTurnText || null,
-                tool_calls: toolUseBlocks.map((t) => ({
-                  id: t.id,
-                  type: 'function' as const,
-                  function: { name: t.name, arguments: JSON.stringify(t.input) },
-                })),
-              }
-            : { role: 'assistant', content: currentTurnText || '' };
-
-          response = { stopReason: finishReason || 'stop', assistantMessage };
+          response = { stopReason: finishReason || 'completed', providerResponseId: activePreviousResponseId };
           break;
         } catch (streamError: any) {
           const isRetriable = isOverloadedProviderError(streamError) && !attemptProducedOutput && attempt < maxAttempts;
@@ -631,7 +637,7 @@ export async function runAgentWithSSE(
       // Safety refusal (some models can return stop_reason: 'refusal' avec un
       // content vide). Sans ce garde-fou, on renvoyait une reponse vide a
       // l'utilisateur. On surface un message propre + log.
-      if (response.stopReason === 'content_filter' && !finalOutput.trim()) {
+      if ((response.stopReason === 'content_filter' || response.stopReason === 'incomplete') && !finalOutput.trim()) {
         const refusalMsg = statusLabels.safetyRefusal;
         finalOutput = refusalMsg;
         segments.push({ type: 'text', content: refusalMsg });
@@ -650,8 +656,7 @@ export async function runAgentWithSSE(
         !toolTrace.some((t) => t.name === requiredCompletionTool)
       ) {
         requiredToolRetryUsed = true;
-        messages.push(response.assistantMessage);
-        messages.push({ role: 'user', content: buildMissingRequiredToolMessage(requiredCompletionTool) });
+        responseInput = [{ role: 'user', content: buildMissingRequiredToolMessage(requiredCompletionTool) }];
         continue;
       }
 
@@ -663,10 +668,7 @@ export async function runAgentWithSSE(
       }
 
       // --- Execute tool calls ---
-      // Add assistant message (with tool_calls) to conversation
-      messages.push(response.assistantMessage);
-
-      const toolResults: OpenAI.Chat.ChatCompletionToolMessageParam[] = [];
+      const toolResults: any[] = [];
 
       for (const toolUse of toolUseBlocks) {
         toolCallCounter++;
@@ -698,9 +700,9 @@ export async function runAgentWithSSE(
           sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
           // Return cached error for remaining tool results
           toolResults.push({
-            role: 'tool',
-            tool_call_id: toolUse.id,
-            content: JSON.stringify({ error: 'Tool loop detected. Stopping.' }),
+            type: 'function_call_output',
+            call_id: toolUse.id,
+            output: JSON.stringify({ error: 'Tool loop detected. Stopping.' }),
           });
           continue;
         }
@@ -830,14 +832,15 @@ export async function runAgentWithSSE(
           ? rawContent.slice(0, 8000) + '\n... [trimmed — ' + rawContent.length + ' chars total]'
           : rawContent || '[no output]';
         toolResults.push({
-          role: 'tool',
-          tool_call_id: toolUse.id,
-          content: trimmedContent || '[no output]',
+          type: 'function_call_output',
+          call_id: toolUse.id,
+          output: trimmedContent || '[no output]',
         });
       }
 
-      // Add tool result messages (one per tool call) to the conversation
-      messages.push(...toolResults);
+      // Responses retains the model output and reasoning under the previous
+      // response id; only the corresponding function results are re-sent.
+      responseInput = toolResults;
 
       // If limit reached, break out of the loop
       if (limitReached) break;
@@ -932,7 +935,7 @@ export async function runAgentWithSSE(
     toolSchemaChars,
   };
 
-  return { finalOutput, toolTrace, segments, traceMetrics };
+  return { finalOutput, toolTrace, segments, traceMetrics, providerResponseId };
 }
 
 /**
