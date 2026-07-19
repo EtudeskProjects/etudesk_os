@@ -178,7 +178,7 @@
   "auth": {
     "login": {
       "title": "Sign in",
-      "subtitle": "Opportunities, communities and spaces — all in one place",
+      "subtitle": "Opportunities, communities and spaces, all in one place",
       "continueWith": "Continue with",
       "emailPlaceholder": "Email address",
       "passwordPlaceholder": "Password",
@@ -3120,10 +3120,12 @@
       "VIDEO_CONFERENCE": "Video conferencing",
       "COMPUTERS": "Computers",
       "PRINTERS": "Printers",
-      "PHONE": "Phone"
+      "PHONE": "Phone",
+      "DESKS": "Desks"
     },
     "spaceAmenities": {
       "WIFI": "Wi-Fi",
+      "POWER_OUTLETS": "Power outlets",
       "AIR_CONDITIONING": "Air conditioning",
       "HEATING": "Heating",
       "PARKING": "Parking",

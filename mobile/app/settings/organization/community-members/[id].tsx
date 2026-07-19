@@ -96,8 +96,9 @@ export default function CommunityMembersScreen() {
   }, [communityId]);
 
   const handleUpdateStatus = async (membershipId: string, newStatus: MemberStatus, rejectionReason?: string) => {
+    if (!communityId) return;
     try {
-      await communityService.updateMembershipStatus(membershipId, newStatus, rejectionReason);
+      await communityService.updateMembershipStatus(communityId, membershipId, newStatus, rejectionReason);
       setMembers((prev) =>
         prev.map((m) => (m.id === membershipId ? { ...m, status: newStatus } : m))
       );
@@ -138,7 +139,7 @@ export default function CommunityMembersScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await communityService.deleteMember(member.id);
+              await communityService.deleteMember(communityId, member.id);
               setMembers((prev) => prev.filter((m) => m.id !== member.id));
               handleRefresh();
             } catch (error: any) {

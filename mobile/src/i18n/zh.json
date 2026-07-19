@@ -86,7 +86,7 @@
   "auth": {
     "login": {
       "title": "登录",
-      "subtitle": "机会、社区和空间——一切尽在这里",
+      "subtitle": "机会、社区和空间，一切尽在这里",
       "continueWith": "继续使用",
       "emailPlaceholder": "邮箱地址",
       "passwordPlaceholder": "密码",
@@ -1693,10 +1693,12 @@
       "VIDEO_CONFERENCE": "视频会议",
       "COMPUTERS": "电脑",
       "PRINTERS": "打印机",
-      "PHONE": "电话"
+      "PHONE": "电话",
+      "DESKS": "办公桌"
     },
     "spaceAmenities": {
       "WIFI": "Wi-Fi",
+      "POWER_OUTLETS": "电源插座",
       "AIR_CONDITIONING": "空调",
       "HEATING": "暖气",
       "PARKING": "停车场",

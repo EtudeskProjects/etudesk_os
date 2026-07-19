@@ -1,7 +1,9 @@
 import { MODEL_STT, MODEL_TTS } from './models';
+import { getAIClient } from './provider';
 
 const AI_API_KEY = process.env.AI_API_KEY || '';
 const AI_INFERENCE_BASE_URL = process.env.AI_INFERENCE_BASE_URL || '';
+const USE_OPENAI_AUDIO = !process.env.AI_BASE_URL;
 
 function inferenceUrl(model: string): string {
   return `${AI_INFERENCE_BASE_URL}/${model}`;
@@ -29,6 +31,16 @@ export async function transcribeWithProvider(params: {
   mimeType: string;
   language?: string;
 }): Promise<string> {
+  if (USE_OPENAI_AUDIO) {
+    const transcription = await getAIClient().audio.transcriptions.create({
+      file: new File([params.buffer], params.filename, { type: params.mimeType }),
+      model: MODEL_STT,
+      ...(params.language ? { language: params.language } : {}),
+    });
+    if (!transcription.text?.trim()) throw new Error('OpenAI STT returned an empty transcription');
+    return transcription.text.trim();
+  }
+
   const form = new FormData();
   form.append('audio', new Blob([params.buffer], { type: params.mimeType }), params.filename);
   form.append('file', new Blob([params.buffer], { type: params.mimeType }), params.filename);
@@ -46,6 +58,17 @@ export async function textToSpeechWithProvider(params: {
   voice?: string;
   instructions?: string;
 }): Promise<Buffer> {
+  if (USE_OPENAI_AUDIO) {
+    const response = await getAIClient().audio.speech.create({
+      model: MODEL_TTS,
+      voice: (params.voice || 'coral') as any,
+      input: params.text,
+      ...(params.instructions ? { instructions: params.instructions } : {}),
+      response_format: 'mp3',
+    });
+    return Buffer.from(await response.arrayBuffer());
+  }
+
   const response = await providerFetch(MODEL_TTS, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

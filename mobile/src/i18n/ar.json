@@ -86,7 +86,7 @@
   "auth": {
     "login": {
       "title": "تسجيل الدخول",
-      "subtitle": "فرص، مجتمعات ومساحات — كل شيء هنا",
+      "subtitle": "فرص، مجتمعات ومساحات، كل شيء هنا",
       "continueWith": "المتابعة عبر",
       "emailPlaceholder": "البريد الإلكتروني",
       "passwordPlaceholder": "كلمة المرور",
@@ -1693,10 +1693,12 @@
       "VIDEO_CONFERENCE": "مؤتمرات فيديو",
       "COMPUTERS": "حواسيب",
       "PRINTERS": "طابعات",
-      "PHONE": "هاتف"
+      "PHONE": "هاتف",
+      "DESKS": "مكاتب"
     },
     "spaceAmenities": {
       "WIFI": "Wi-Fi",
+      "POWER_OUTLETS": "مقابس كهربائية",
       "AIR_CONDITIONING": "تكييف",
       "HEATING": "تدفئة",
       "PARKING": "موقف سيارات",

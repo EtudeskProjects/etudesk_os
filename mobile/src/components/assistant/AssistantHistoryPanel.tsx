@@ -1,5 +1,5 @@
 import { Modal, Pressable, SectionList, Text, TextInput, View } from 'react-native';
-import { BookOpen, Compass, Pin, PinOff, Trash2, X } from 'lucide-react-native';
+import { BrainCircuit, Pin, PinOff, Telescope, Trash2, X } from 'lucide-react-native';
 import { ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { formatRelativeTime } from '../../utils/date';
 import { SessionSummary } from '../../services/copilotService';
@@ -8,8 +8,8 @@ import { Button, IconButton, SelectCard } from '../ui';
 type Mode = 'explore' | 'study';
 
 const MODE_ICONS = {
-  explore: Compass,
-  study: BookOpen,
+  explore: Telescope,
+  study: BrainCircuit,
 };
 
 interface AssistantHistoryPanelProps {
@@ -136,7 +136,8 @@ export function AssistantHistoryPanel({
         }
         renderItem={({ item: session }) => {
           const sessionMode = (session.mode as Mode) || 'explore';
-          const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
+          const SessionModeIcon = MODE_ICONS[sessionMode] || Telescope;
+          const modeColor = modeColors[sessionMode]?.text || colors.primary;
 
           return (
             <SelectCard
@@ -152,15 +153,12 @@ export function AssistantHistoryPanel({
               accessibilityLabel={session.title || t('screens.assistant.untitledSession')}
             >
               <View style={styles.historyItemContent}>
-                <View
-                  style={[
-                    styles.historyModeBadge,
-                    { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
-                  ]}
-                >
+                <View style={styles.historyModeBadge}>
+                  <View style={[styles.historyModeRail, { backgroundColor: modeColor }]} />
                   <SessionModeIcon
-                    size={14}
-                    color={modeColors[sessionMode]?.text || colors.textSecondary}
+                    size={22}
+                    color={modeColor}
+                    strokeWidth={ICON.strokeWidthThick}
                   />
                 </View>
                 <View style={styles.historyItemText}>

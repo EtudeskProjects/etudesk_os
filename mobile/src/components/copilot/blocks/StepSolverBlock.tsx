@@ -103,6 +103,16 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   const allRevealed = totalSteps === 0 || revealedCount >= totalSteps;
   const isSingleStep = totalSteps <= 1;
 
+  const revealNext = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setRevealedCount((c) => Math.min(c + 1, totalSteps));
+  }, [totalSteps]);
+
+  const revealAll = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setRevealedCount(totalSteps);
+  }, [totalSteps]);
+
   if (totalSteps === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -113,16 +123,6 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
       </View>
     );
   }
-
-  const revealNext = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setRevealedCount((c) => Math.min(c + 1, totalSteps));
-  }, [totalSteps]);
-
-  const revealAll = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setRevealedCount(totalSteps);
-  }, [totalSteps]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>

@@ -376,7 +376,7 @@ export default function MyCommunityDetailsScreen() {
                 Pas encore de messages
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                L'organisation vous contactera si elle souhaite échanger avec vous.
+                {"L'organisation vous contactera si elle souhaite échanger avec vous."}
               </Text>
             </View>
           ) : (
@@ -405,7 +405,7 @@ export default function MyCommunityDetailsScreen() {
         ) : (
           <View style={[styles.waitingMessage, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
             <Text style={[styles.waitingText, { color: colors.gray500 }]}>
-              L'organisation doit vous contacter en premier
+              {"L'organisation doit vous contacter en premier"}
             </Text>
           </View>
         )}

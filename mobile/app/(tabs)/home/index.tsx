@@ -66,12 +66,6 @@ export default function EcosystemScreen() {
   const { user } = useAuth();
   const { isOrganizationSpace } = useSpace();
 
-  // There is a dedicated organization dashboard at `/(tabs)/gestion`.
-  // Prevent duplicate "org home" screens: redirect org space away from this Talent home.
-  if (isOrganizationSpace) {
-    return <Redirect href="/(tabs)/gestion" />;
-  }
-
   // State
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -364,6 +358,11 @@ export default function EcosystemScreen() {
 
   // Load data
   useEffect(() => {
+    if (isOrganizationSpace) {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     const loadData = async () => {
       setIsLoading(true);
@@ -376,12 +375,13 @@ export default function EcosystemScreen() {
     return () => {
       isMounted = false;
     };
-  }, [loadQuickActionCounts, loadNotifications, loadDailyObjective]);
+  }, [isOrganizationSpace, loadQuickActionCounts, loadNotifications, loadDailyObjective]);
 
   useFocusEffect(
     useCallback(() => {
+      if (isOrganizationSpace) return;
       void loadQuickActionCounts();
-    }, [loadQuickActionCounts])
+    }, [isOrganizationSpace, loadQuickActionCounts])
   );
 
 // Render Talent Content
@@ -473,8 +473,8 @@ const renderTalentContent = () => (
               <Text style={[styles.quickActionLabel, { color: action.theme.text }]} numberOfLines={2}>
                 {action.label}
               </Text>
-              {action.count !== undefined && (
-                <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
+              {typeof action.count === 'number' && action.count > 0 && (
+                <View style={[styles.quickActionBadge, { backgroundColor: colors.error }]}>
                   <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
                     {formatCompactNumber(action.count)}
                   </Text>
@@ -596,6 +596,12 @@ const renderTalentContent = () => (
     </View>
   </>
 );
+
+// There is a dedicated organization dashboard at `/(tabs)/gestion`.
+// Prevent duplicate "org home" screens: redirect org space away from this Talent home.
+if (isOrganizationSpace) {
+  return <Redirect href="/(tabs)/gestion" />;
+}
 
 return (
   <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>

@@ -13,6 +13,8 @@ import { api } from '../services/api';
 interface I18nContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  /** Synchronise une préférence déjà connue (session restaurée) sans appel API. */
+  syncLanguage: (lang: Language) => void;
   t: (key: string, options?: Record<string, string | number>) => string;
   locale: string;
 }
@@ -27,10 +29,17 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
 
   const applyLanguage = useCallback(async (lang: Language) => {
-    setLanguageState(lang);
     setI18nLanguage(lang);
+    // Keep the translation engine and the displayed language selector in sync
+    // within the same render cycle.
+    setLanguageState(lang);
     await AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
   }, []);
+
+  const syncLanguage = useCallback((lang: Language) => {
+    const normalizedLanguage = isValidLanguage(lang) ? lang : DEFAULT_LANGUAGE;
+    void applyLanguage(normalizedLanguage);
+  }, [applyLanguage]);
 
   const syncStoredUserLanguage = useCallback(async (lang: Language) => {
     const existingUser = await api.getUser<Record<string, unknown>>();
@@ -103,6 +112,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const value: I18nContextType = {
     language,
     setLanguage,
+    syncLanguage,
     t,
     locale: getLocaleForLanguage(language),
   };

@@ -449,7 +449,7 @@ export default function InvitationsScreen() {
                 {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
-                "{inv.message}"
+                {`"${inv.message}"`}
               </Text>
             </View>
           )}
@@ -559,7 +559,7 @@ export default function InvitationsScreen() {
                 {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
-                "{inv.message}"
+                {`"${inv.message}"`}
               </Text>
             </View>
           )}
@@ -666,7 +666,7 @@ export default function InvitationsScreen() {
                 {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
-                "{inv.message}"
+                {`"${inv.message}"`}
               </Text>
             </View>
           )}

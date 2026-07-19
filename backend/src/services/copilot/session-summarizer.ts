@@ -60,7 +60,7 @@ export async function summarizeHistoryIfNeeded(
     const languageName = getLanguageDisplayName(language);
     const response = await client.chat.completions.create({
       model: MODEL_FAST,
-      max_tokens: 512,
+      max_completion_tokens: 512,
       messages: [
         { role: 'system', content: buildSystemPrompt(languageName) },
         { role: 'user', content: conversationText },
@@ -91,7 +91,6 @@ export async function summarizeHistoryIfNeeded(
     ];
   } catch (error: any) {
     logger.error(`[session-summarizer] Error: ${error.message}`);
-    // Fallback: just return recent messages to avoid token overflow
-    return history.slice(-KEEP_RECENT);
+    throw error;
   }
 }

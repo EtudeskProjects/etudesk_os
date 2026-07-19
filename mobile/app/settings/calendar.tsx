@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.lg,
     paddingTop: 20,
     paddingBottom: 36,
   },

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -43,7 +43,7 @@ export default function AccountScreen() {
   const isKYCVerified = kycStatus === 'VERIFIED';
   const { colors } = useTheme();
 
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { currentSpace, selectedOrgId, selectedOrg, userOrganizations, setSpace } = useSpace();
   const { signOut, user } = useAuth();
   const alerts = useAlert();
@@ -53,7 +53,7 @@ export default function AccountScreen() {
       const response = await kycService.getStatus();
       const status = response.data?.status || 'NONE';
       setKycStatus(status);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
   };
@@ -281,8 +281,20 @@ export default function AccountScreen() {
                 </View>
               )}
               <View style={styles.profileInfo}>
-                <Text style={[styles.profileName, { color: colors.textPrimary }]}>{getUserDisplayName()}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email && !user.email.includes('@etudesk.local') ? user.email : user?.phone || ''}</Text>
+                <Text
+                  style={[styles.profileName, { color: colors.textPrimary }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {getUserDisplayName()}
+                </Text>
+                <Text
+                  style={[styles.profileEmail, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {user?.email && !user.email.includes('@etudesk.local') ? user.email : user?.phone || ''}
+                </Text>
               </View>
             </>
           ) : (
@@ -295,8 +307,20 @@ export default function AccountScreen() {
                 </View>
               )}
               <View style={styles.profileInfo}>
-                <Text style={[styles.profileName, { color: colors.textPrimary }]}>{selectedOrg?.name}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{selectedOrg?.type} • {selectedOrg?.role === 'ADMIN' ? t('screens.settings.admin') : t('screens.settings.member')}</Text>
+                <Text
+                  style={[styles.profileName, { color: colors.textPrimary }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {selectedOrg?.name}
+                </Text>
+                <Text
+                  style={[styles.profileEmail, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {selectedOrg?.type} • {selectedOrg?.role === 'ADMIN' ? t('screens.settings.admin') : t('screens.settings.member')}
+                </Text>
               </View>
             </>
           )}
@@ -439,7 +463,7 @@ export default function AccountScreen() {
                   selected={false}
                   accessibilityLabel={item.label}
                 >
-                  <View style={[styles.menuItemIcon, { backgroundColor: colors.gray100 }]}>
+                  <View style={styles.menuItemIcon}>
                     <IconComponent
                       size={ICON.size.md}
                       color={colors.textSecondary}
@@ -586,6 +610,7 @@ const styles = StyleSheet.create({
 
   profileInfo: {
     flex: 1,
+    minWidth: 0,
     marginLeft: SPACING.md,
   },
 
@@ -674,16 +699,15 @@ const styles = StyleSheet.create({
   },
 
   menuItemIcon: {
-    width: 40,
-    height: 40,
+    width: ICON.size.md,
+    height: ICON.size.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BORDER.radius.sm,
   },
 
   menuItemContent: {
     flex: 1,
-    marginLeft: SPACING.md,
+    marginLeft: SPACING.sm,
   },
 
   menuItemLabel: {

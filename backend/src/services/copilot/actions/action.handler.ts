@@ -24,6 +24,8 @@ import {
 } from './action.validators';
 import { resolveAgendaSchedule } from '../../agenda-scheduling.service';
 import { validateFromCommunity } from '../../skills/skill-validation.service';
+import { debitWalletForAction } from '../../billing/credit.service';
+import { normalizeSpaceFeatures } from '../../../types/space.types';
 
 export interface ActionRequest {
   action: string;
@@ -361,6 +363,13 @@ export async function handleConfirmation(
           return { success: false, message: validation.error! };
         }
 
+        const features = normalizeSpaceFeatures(data || {});
+        if (features.invalid.length > 0) {
+          return { success: false, message: `Invalid space feature values: ${features.invalid.join(', ')}` };
+        }
+        data!.equipment = features.equipment;
+        data!.amenities = features.amenities;
+
         const id = uuidv4();
         const name = data!.name;
         const slug = generateSlug(name) + '-' + id.slice(0, 8);
@@ -540,11 +549,13 @@ export async function handleConfirmation(
         const VALID_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH']);
 
         // Accept "code" or "type" (agent sometimes sends "type" instead of "code")
-        const rawCode = (data.code || data.type || 'CUSTOM').toUpperCase();
+        const rawCode = String(data.code || data.type || 'CUSTOM').trim().toUpperCase();
         const triggerCode = VALID_CODES.has(rawCode) ? rawCode : 'CUSTOM';
         const priority = VALID_PRIORITIES.has(data.priority) ? data.priority : 'NORMAL';
+        const organizationId = data.organizationId || data.organization_id || null;
         // Default dueAt to 7 days from now if not provided
-        let dueAt = data.dueAt ? new Date(data.dueAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const dueAtRaw = data.dueAt || data.due_at;
+        let dueAt = dueAtRaw ? new Date(dueAtRaw) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         if (isNaN(dueAt.getTime())) {
           return { success: false, message: tr('copilot:actionTriggerInvalidDate') };
         }
@@ -566,9 +577,11 @@ export async function handleConfirmation(
             }
           }
         }
+        const scope = organizationId ? 'ORGANIZATION' : 'TALENT';
         const scheduled = await resolveAgendaSchedule({
-          scope: 'TALENT',
+          scope,
           talentId,
+          organizationId: organizationId ? String(organizationId) : undefined,
           requestedDueAt: dueAt,
           latestAllowedAt,
         });
@@ -586,20 +599,63 @@ export async function handleConfirmation(
           },
         };
 
-        const result = await pool.query(
-          `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, status, priority, metadata, created_by)
-           VALUES ('TALENT', $1, $2, $3, $4, $5, 'PENDING', $6, $7, $1)
-           RETURNING id`,
-          [
-            talentId,
-            triggerCode,
-            data.title.slice(0, 200),
-            data.description?.slice(0, 500) || null,
-            dueAt.toISOString(),
-            priority,
-            JSON.stringify(metadata),
-          ]
-        );
+        let result;
+        if (organizationId) {
+          const membership = await pool.query(
+            `SELECT 1 FROM organization_members WHERE organization_id = $1::uuid AND talent_id = $2::uuid AND status = 'ACTIVE' LIMIT 1`,
+            [String(organizationId), talentId]
+          );
+          if (membership.rows.length === 0) {
+            return { success: false, message: tr('copilot:toolOrgAccessDenied') };
+          }
+
+          try {
+            await debitWalletForAction({
+              scope: 'ORGANIZATION',
+              ownerId: String(organizationId),
+              actionCode: 'ORG_SCHEDULED_TASK',
+              idempotencyKey: `org_sched_confirm_${organizationId}_${triggerCode}_${dueAt.toISOString()}`,
+              metadata: { channel: 'copilot_confirm', code: triggerCode, title: data.title },
+              createdBy: talentId,
+            });
+          } catch (debitError: any) {
+            if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+              return { success: false, message: tr('billing:insufficientCredits') };
+            }
+            throw debitError;
+          }
+
+          result = await pool.query(
+            `INSERT INTO agenda_triggers (scope, organization_id, code, title, description, due_at, status, priority, metadata, created_by)
+             VALUES ('ORGANIZATION', $1::uuid, $2, $3, $4, $5, 'PENDING', $6, $7::jsonb, $8::uuid)
+             RETURNING id`,
+            [
+              String(organizationId),
+              triggerCode,
+              data.title.slice(0, 200),
+              data.description?.slice(0, 500) || null,
+              dueAt.toISOString(),
+              priority,
+              JSON.stringify(metadata),
+              talentId,
+            ]
+          );
+        } else {
+          result = await pool.query(
+            `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, status, priority, metadata, created_by)
+             VALUES ('TALENT', $1::uuid, $2, $3, $4, $5, 'PENDING', $6, $7::jsonb, $1::uuid)
+             RETURNING id`,
+            [
+              talentId,
+              triggerCode,
+              data.title.slice(0, 200),
+              data.description?.slice(0, 500) || null,
+              dueAt.toISOString(),
+              priority,
+              JSON.stringify(metadata),
+            ]
+          );
+        }
 
         const dateLocale = (language || 'en').startsWith('fr') ? 'fr-FR' : 'en-GB';
         const message = tr('copilot:actionTriggerCreated', {
@@ -632,13 +688,27 @@ export async function handleConfirmation(
           return { success: false, message: tr('copilot:actionUpdateNoData') };
         }
 
-        // Verify the trigger belongs to this talent
+        // Verify the trigger belongs to this talent or an organization they can access.
         const existing = await pool.query(
-          `SELECT id, status, code, metadata FROM agenda_triggers WHERE id = $1 AND talent_id = $2`,
-          [resolvedEntityId, talentId]
+          `SELECT id, scope, talent_id, organization_id, status, code, metadata FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
+          [resolvedEntityId]
         );
         if (existing.rows.length === 0) {
           return { success: false, message: tr('copilot:actionTriggerNotFoundOrUnauthorized') };
+        }
+        const row = existing.rows[0];
+        if (row.scope === 'TALENT') {
+          if (String(row.talent_id) !== String(talentId)) {
+            return { success: false, message: tr('copilot:actionTriggerNotFoundOrUnauthorized') };
+          }
+        } else {
+          const membership = await pool.query(
+            `SELECT 1 FROM organization_members WHERE organization_id = $1::uuid AND talent_id = $2::uuid AND status = 'ACTIVE' LIMIT 1`,
+            [String(row.organization_id), talentId]
+          );
+          if (membership.rows.length === 0) {
+            return { success: false, message: tr('copilot:actionTriggerNotFoundOrUnauthorized') };
+          }
         }
 
         const updates: string[] = [];
@@ -646,25 +716,28 @@ export async function handleConfirmation(
         let idx = 1;
         let metadataPatch = data.metadata && typeof data.metadata === 'object' ? { ...data.metadata } : null;
 
-        if (data.status && ['PENDING', 'COMPLETED', 'CANCELLED', 'SNOOZED'].includes(data.status)) {
+        if (data.status && ['PENDING', 'DONE', 'CANCELED'].includes(data.status)) {
           updates.push(`status = $${idx}`);
           vals.push(data.status);
           idx++;
-          if (data.status === 'COMPLETED') {
+          if (data.status === 'DONE') {
             updates.push(`completed_at = NOW()`);
+          } else {
+            updates.push(`completed_at = NULL`);
           }
         }
-        if (data.dueAt) {
-          let newDue = new Date(data.dueAt);
+        const dueAtRaw = data.dueAt || data.due_at;
+        if (dueAtRaw) {
+          let newDue = new Date(dueAtRaw);
           if (!isNaN(newDue.getTime())) {
-            const row = existing.rows[0];
             const metadata = row.metadata && typeof row.metadata === 'object' ? { ...row.metadata } : {};
             const latestAllowedAt = row.code === 'FOLLOW_UP' && metadata.adjusted_due_at
               ? new Date(String(metadata.adjusted_due_at))
               : null;
             const scheduled = await resolveAgendaSchedule({
-              scope: 'TALENT',
+              scope: row.scope,
               talentId,
+              organizationId: row.organization_id ? String(row.organization_id) : undefined,
               requestedDueAt: newDue,
               excludeTriggerId: resolvedEntityId,
               latestAllowedAt: latestAllowedAt && !isNaN(latestAllowedAt.getTime()) ? latestAllowedAt : null,

@@ -21,4 +21,3 @@ export { CardBadgeRow, CardBadge } from './CardBadge';
 export { CardContent } from './CardContent';
 export { CardHeader } from './CardHeader';
 export { CardMetaRow } from './CardMetaRow';
-export type { MetaItem } from './CardMetaRow';

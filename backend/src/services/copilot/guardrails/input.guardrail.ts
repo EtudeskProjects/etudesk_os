@@ -71,7 +71,7 @@ export async function runInputGuardrail(
     const client = getChatClient();
     const response = await client.chat.completions.create({
       model: MODEL_FAST,
-      max_tokens: 10,
+      max_completion_tokens: 10,
       messages: [
         { role: 'system', content: CLASSIFIER_PROMPT },
         { role: 'user', content: userMessage.slice(0, 500) },

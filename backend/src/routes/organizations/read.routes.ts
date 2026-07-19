@@ -16,6 +16,30 @@ const router = Router();
 
 type QueryParam = string | number | boolean | null | Date;
 
+const organizationPublicColumns = (alias: string): string => `
+  ${alias}.id,
+  ${alias}.name,
+  ${alias}.slug,
+  ${alias}.types,
+  ${alias}.sectors,
+  ${alias}.description,
+  ${alias}.logo_url,
+  ${alias}.website_url,
+  ${alias}.contact_email,
+  ${alias}.contact_phone,
+  ${alias}.goals,
+  ${alias}.headquarters_city,
+  ${alias}.headquarters_region,
+  ${alias}.headquarters_country,
+  ${alias}.headquarters_coordinates,
+  ${alias}.verification_status,
+  ${alias}.is_visible,
+  ${alias}.culture_summary,
+  ${alias}.created_by,
+  ${alias}.created_at,
+  ${alias}.updated_at
+`;
+
 /**
  * GET /api/organizations - List all organizations
  */
@@ -59,7 +83,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     // Assuming for general listing we also hide them.
 
     let query = `
-      SELECT org.*,
+      SELECT ${organizationPublicColumns('org')},
         (SELECT COUNT(*) FROM organization_members WHERE organization_id = org.id) as member_count,
         ${matchFragment.sql} as match_score
       FROM organizations org
@@ -106,7 +130,7 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     const result = await pool.query(`
-      SELECT o.*,
+      SELECT ${organizationPublicColumns('o')},
         om.role as user_role,
         (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count,
         o.headquarters_coordinates[0] as headquarters_longitude,
@@ -131,7 +155,7 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(`
-      SELECT o.*,
+      SELECT ${organizationPublicColumns('o')},
         (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count,
         o.headquarters_coordinates[0] as headquarters_longitude,
         o.headquarters_coordinates[1] as headquarters_latitude

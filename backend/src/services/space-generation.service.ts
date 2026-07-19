@@ -11,7 +11,7 @@ import {
   Sector,
   SECTORS,
 } from '../types/models';
-import { SpaceType, SPACE_TYPES } from '../types/space.types';
+import { SpaceType, SPACE_TYPES, normalizeSpaceFeatures } from '../types/space.types';
 import { buildSpaceGenPrompt, buildSpaceGenSystemPrompt } from './ai/prompts/space-gen.prompt';
 import { toTOON } from './ai/toon';
 import { resolveSkillSuggestions, type ResolvedSkillSuggestion } from './skills/catalog.service';
@@ -170,6 +170,13 @@ export async function generateSpaceSuggestion(
         .filter(s => Object.values(SECTORS).includes(s as Sector))
         .slice(0, 5) as Sector[];
     }
+
+    // AI suggestions must use the same canonical feature identifiers as forms
+    // and API writes. Unknown suggestions are discarded instead of leaking
+    // free-text values into the database.
+    const features = normalizeSpaceFeatures(generatedData);
+    generatedData.equipment = features.equipment;
+    generatedData.amenities = features.amenities;
 
     // Resolve suggested skills to the referential (catalog = single source of truth).
     generatedData.skills = await resolveSkillSuggestions(generatedData.skills as any);

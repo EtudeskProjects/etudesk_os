@@ -9,6 +9,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { LANGUAGE_OPTIONS } from '../../src/i18n';
 import { useState } from 'react';
+import { trackProductEvent } from '../../src/services/productEventService';
 
 const { height } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ export default function WelcomeScreen() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleStart = () => {
+    void trackProductEvent('welcome_started');
     finishWelcome();
     router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
   };

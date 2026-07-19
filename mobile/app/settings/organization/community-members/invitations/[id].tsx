@@ -185,7 +185,7 @@ export default function CommunityInvitationsScreen() {
         {item.message && (
           <View style={[styles.messageContainer, { backgroundColor: colors.gray50 }]}>
             <Text style={[styles.messageText, { color: colors.textSecondary }]} numberOfLines={2}>
-              "{item.message}"
+              {`"${item.message}"`}
             </Text>
           </View>
         )}

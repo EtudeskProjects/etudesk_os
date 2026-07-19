@@ -321,28 +321,6 @@ export function createOrgFileReaderTool(orgId: string) {
           [cleanId, orgId]
         );
 
-        // 2. Fallback: try talent_documents IF the talent has a verified interaction with this org
-        if (result.rows.length === 0) {
-          result = await pool.query(
-            `SELECT td.id, td.title, td.original_filename, td.mime_type, td.file_url, td.document_type, td.description
-             FROM talent_documents td
-             WHERE td.id = $1 AND td.deleted_at IS NULL
-               AND EXISTS (
-                 SELECT 1 FROM opportunity_applications a
-                   JOIN opportunities o ON o.id = a.opportunity_id
-                 WHERE a.talent_id = td.talent_id AND o.organization_id = $2
-                 UNION ALL
-                 SELECT 1 FROM community_members cm
-                   JOIN communities c ON c.id = cm.community_id
-                 WHERE cm.talent_id = td.talent_id AND c.organization_id = $2
-                 UNION ALL
-                 SELECT 1 FROM organization_members om
-                 WHERE om.talent_id = td.talent_id AND om.organization_id = $2
-               )`,
-            [cleanId, orgId]
-          );
-        }
-
         if (result.rows.length === 0) {
           return {
             success: false,

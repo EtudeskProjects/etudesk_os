@@ -9,14 +9,14 @@ export function generateStaticParams() {
 
 const META: Record<Locale, { title: string; description: string }> = {
   fr: {
-    title: 'Etudesk - Les compétences du digital, à la vitesse du marché',
+    title: 'Etudesk - Les compétences numériques qui font avancer votre travail',
     description:
-      'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales.',
+      'Découvrez, pratiquez et valorisez les compétences numériques qui améliorent votre travail et ouvrent de nouvelles opportunités.',
   },
   en: {
-    title: 'Etudesk - Digital skills, at the speed of the market',
+    title: 'Etudesk - Digital skills that move your work forward',
     description:
-      'Etudesk helps every talent discover, learn and showcase the digital skills that open local and international opportunities.',
+      'Discover, practise and showcase digital skills that improve your work and open new opportunities.',
   },
 };
 const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';

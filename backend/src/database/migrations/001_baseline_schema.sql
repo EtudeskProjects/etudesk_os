@@ -1038,6 +1038,13 @@ CREATE TABLE notification_preferences (
     push_new_message BOOLEAN DEFAULT TRUE,
     push_new_application BOOLEAN DEFAULT TRUE,
     push_interview_reminder BOOLEAN DEFAULT TRUE,
+    push_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    email_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    sms_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    notify_opportunities BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_messages BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_applications BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_reminders BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(talent_id)

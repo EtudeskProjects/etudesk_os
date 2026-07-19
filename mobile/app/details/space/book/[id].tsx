@@ -601,7 +601,7 @@ export default function BookSpaceScreen() {
             Vérifiez votre profil
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Ces informations seront partagées avec le gestionnaire de l'espace
+            {"Ces informations seront partagées avec le gestionnaire de l'espace"}
           </Text>
         </View>
 
@@ -805,7 +805,7 @@ export default function BookSpaceScreen() {
               Aucune disponibilite configuree
             </Text>
             <Text style={[styles.stepDescription, { color: colors.textSecondary, textAlign: 'center' }]}>
-              Le proprietaire de cet espace n'a pas encore configure ses disponibilites. Veuillez reessayer plus tard ou contacter le proprietaire.
+              {"Le proprietaire de cet espace n'a pas encore configure ses disponibilites. Veuillez reessayer plus tard ou contacter le proprietaire."}
             </Text>
           </View>
           <Button
@@ -827,7 +827,7 @@ export default function BookSpaceScreen() {
             Choisissez votre creneau
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Selectionnez la date et l'heure de votre reservation
+            {"Selectionnez la date et l'heure de votre reservation"}
           </Text>
         </View>
 
@@ -1111,10 +1111,10 @@ export default function BookSpaceScreen() {
         <View style={styles.stepHeader}>
           <Shield size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Regles de l'espace
+            {"Regles de l'espace"}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Lisez et acceptez les conditions d'utilisation
+            {"Lisez et acceptez les conditions d'utilisation"}
           </Text>
         </View>
 
@@ -1400,7 +1400,7 @@ export default function BookSpaceScreen() {
                 <View style={[styles.paymentInfo, { backgroundColor: colors.gray100 }]}>
                   <Info size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.paymentInfoText, { color: colors.gray600 }]}>
-                    Votre reservation sera soumise a validation par l'administration. Vous recevrez une notification pour proceder au paiement une fois approuvee.
+                    {"Votre reservation sera soumise a validation par l'administration. Vous recevrez une notification pour proceder au paiement une fois approuvee."}
                   </Text>
                 </View>
               )}
@@ -1425,7 +1425,7 @@ export default function BookSpaceScreen() {
           Reservation envoyee !
         </Text>
         <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-          Votre demande de reservation pour "{space?.name}" a ete envoyee avec succes.
+          {`Votre demande de reservation pour "${space?.name}" a ete envoyee avec succes.`}
           {!isFreeSpace && ' Vous recevrez une notification une fois votre reservation validee par l\'administration.'}
         </Text>
 
@@ -1559,7 +1559,7 @@ export default function BookSpaceScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Cet espace n'est pas reservable
+          {"Cet espace n'est pas reservable"}
         </Text>
         <Button title="Retour" onPress={() => router.back()} />
       </SafeAreaView>

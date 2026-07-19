@@ -376,7 +376,7 @@ Le dégroupage crée des services isolés. La vraie valeur vient du **re-bundlin
 
 ## 5. Pricing & Crédits (modèle V2)
 
-La référence active est `Etudesk_SAS/produit/etudesk_os/docs/ECONOMIC_MODEL_2026.md`.
+La référence active est `docs/ECONOMIC_MODEL_2026.md`.
 
 Résumé opérationnel:
 
@@ -391,10 +391,10 @@ Barème crédits (extrait):
 | Scope | Action | Crédits |
 |---|---|---:|
 | Talent | Assistant Explorer (requête) | 1 |
-| Talent | Assistant Study (requête) | 0,5 |
+| Talent | Assistant Study (requête) | 1 |
 | Talent | Génération de document / image / upload document | 1 |
 | Organisation | Assistant Manager (requête) | 1 |
-| Organisation | Analyse et scoring d'application | 0,5 |
+| Organisation | Analyse et scoring d'application | 1 |
 | Tous | Recherche web / Instruction vocale | 0 |
 
 ---

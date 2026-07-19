@@ -196,6 +196,7 @@ export const SPACE_EQUIPMENT = [
   'COMPUTERS',
   'PRINTERS',
   'PHONE',
+  'DESKS',
 ] as const;
 
 export type SpaceEquipment = (typeof SPACE_EQUIPMENT)[number];
@@ -217,11 +218,13 @@ export function getSpaceEquipmentData(): Array<{ id: SpaceEquipment; label: stri
     { id: 'COMPUTERS', label: getSpaceEquipmentLabel('COMPUTERS'), icon: 'laptop' },
     { id: 'PRINTERS', label: getSpaceEquipmentLabel('PRINTERS'), icon: 'printer' },
     { id: 'PHONE', label: getSpaceEquipmentLabel('PHONE'), icon: 'phone' },
+    { id: 'DESKS', label: getSpaceEquipmentLabel('DESKS'), icon: 'layout-grid' },
   ];
 }
 
 export const SPACE_AMENITIES = [
   'WIFI',
+  'POWER_OUTLETS',
   'AIR_CONDITIONING',
   'HEATING',
   'PARKING',
@@ -243,6 +246,7 @@ export const getSpaceAmenityLabel = (amenity: string): string =>
 export function getSpaceAmenityData(): Array<{ id: SpaceAmenity; label: string; icon: string }> {
   return [
     { id: 'WIFI', label: getSpaceAmenityLabel('WIFI'), icon: 'wifi' },
+    { id: 'POWER_OUTLETS', label: getSpaceAmenityLabel('POWER_OUTLETS'), icon: 'plug' },
     { id: 'AIR_CONDITIONING', label: getSpaceAmenityLabel('AIR_CONDITIONING'), icon: 'thermometer' },
     { id: 'HEATING', label: getSpaceAmenityLabel('HEATING'), icon: 'flame' },
     { id: 'PARKING', label: getSpaceAmenityLabel('PARKING'), icon: 'car' },

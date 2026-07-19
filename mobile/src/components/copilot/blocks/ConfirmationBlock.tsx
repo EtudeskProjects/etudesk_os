@@ -210,6 +210,7 @@ function SpacePreview({ data, colors, headerTitle }: { data: Record<string, any>
   const locationStr = sanitizeText(data.city ? `${data.city}${data.country ? ', ' + data.country : ''}` : null);
   const name = sanitizeText(data.name, 88);
   const equipment = sanitizeList(data.equipment, 5);
+  const amenities = sanitizeList(data.amenities, 5);
   const description = sanitizeText(data.description, 160);
 
   return (
@@ -241,7 +242,17 @@ function SpacePreview({ data, colors, headerTitle }: { data: Record<string, any>
         <View style={styles.chipsRow}>
           {equipment.map((e: string, i: number) => (
             <View key={i} style={[styles.sectorChip, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-              <Text style={[styles.sectorChipText, { color: colors.primary }]}>{e}</Text>
+              <Text style={[styles.sectorChipText, { color: colors.primary }]}>{getLabel('spaceEquipment', e) || e}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {amenities.length > 0 && (
+        <View style={styles.chipsRow}>
+          {amenities.map((amenity: string, i: number) => (
+            <View key={i} style={[styles.sectorChip, { backgroundColor: withOpacity(colors.success, OPACITY[10]) }]}>
+              <Text style={[styles.sectorChipText, { color: colors.success }]}>{getLabel('spaceAmenities', amenity) || amenity}</Text>
             </View>
           ))}
         </View>

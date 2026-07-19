@@ -178,7 +178,7 @@
   "auth": {
     "login": {
       "title": "Connexion",
-      "subtitle": "Opportunités, communautés et espaces — tout est là",
+      "subtitle": "Opportunités, communautés et espaces, tout est là",
       "continueWith": "Continuer avec",
       "emailPlaceholder": "Adresse email",
       "passwordPlaceholder": "Mot de passe",
@@ -3143,10 +3143,12 @@
       "VIDEO_CONFERENCE": "Visioconférence",
       "COMPUTERS": "Ordinateurs",
       "PRINTERS": "Imprimantes",
-      "PHONE": "Téléphone"
+      "PHONE": "Téléphone",
+      "DESKS": "Bureaux"
     },
     "spaceAmenities": {
       "WIFI": "Wi-Fi",
+      "POWER_OUTLETS": "Prises électriques",
       "AIR_CONDITIONING": "Climatisation",
       "HEATING": "Chauffage",
       "PARKING": "Parking",

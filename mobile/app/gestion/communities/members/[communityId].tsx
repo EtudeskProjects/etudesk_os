@@ -94,8 +94,9 @@ export default function CommunityMembersScreen() {
   }, [communityId]);
 
   const handleUpdateStatus = async (membershipId: string, newStatus: MemberStatus) => {
+    if (!communityId) return;
     try {
-      await communityService.updateMembershipStatus(membershipId, newStatus);
+      await communityService.updateMembershipStatus(communityId, membershipId, newStatus);
       setMembers((prev) =>
         prev.map((m) => (m.id === membershipId ? { ...m, status: newStatus } : m))
       );
@@ -106,6 +107,7 @@ export default function CommunityMembersScreen() {
   };
 
   const handleDeleteMember = (membershipId: string, memberName: string) => {
+    if (!communityId) return;
     void alerts.showAlert({ title: t('gestion.membersList.deleteTitle'), message: t('gestion.membersList.deleteConfirm', { name: memberName }), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -113,7 +115,7 @@ export default function CommunityMembersScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await communityService.deleteMember(membershipId);
+              await communityService.deleteMember(communityId, membershipId);
               setMembers((prev) => prev.filter((m) => m.id !== membershipId));
               void alerts.alert(t('common.success'), t('gestion.members.removeSuccess'));
             } catch (error: any) {

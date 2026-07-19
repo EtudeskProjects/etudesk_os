@@ -17,12 +17,14 @@
     "seed:competency-embeddings": "tsx src/scripts/seed-competency-embeddings.ts",
     "seed:minimal": "tsx src/scripts/seed-minimal.ts",
     "seed:demo": "tsx src/scripts/seed-demo.ts",
+    "seed:launch-communities": "tsx src/scripts/seed-launch-communities.ts",
     "seed:pgvector": "tsx src/scripts/seed-pgvector.ts",
     "pgvector:reset:seed": "tsx src/scripts/pgvector-reset-and-seed.ts",
     "validate:skills": "tsx scripts/validate-skills.ts",
     "test:skills": "tsx src/services/copilot/skills/__tests__/skill-loader.test.ts",
     "test:evaluation": "tsx src/services/skills/__tests__/evaluation.test.ts",
-    "test:copilot": "tsx src/services/copilot/tools/__tests__/tools-audit.ts"
+    "test:copilot": "tsx src/services/copilot/tools/__tests__/tools-audit.ts",
+    "test:copilot-runtime": "tsx src/services/copilot/__tests__/runtime-contracts.test.ts"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",
@@ -44,7 +46,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.12",
-    "openai": "^6.45.0",
+    "openai": "^6.48.0",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.17.2",
     "pg": "^8.13.0",

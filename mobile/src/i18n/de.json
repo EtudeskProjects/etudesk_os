@@ -86,7 +86,7 @@
   "auth": {
     "login": {
       "title": "Anmeldung",
-      "subtitle": "Chancen, Communities und Räume — alles an einem Ort",
+      "subtitle": "Chancen, Communities und Räume, alles an einem Ort",
       "continueWith": "Weiter mit",
       "emailPlaceholder": "E-Mail-Adresse",
       "passwordPlaceholder": "Passwort",
@@ -1693,10 +1693,12 @@
       "VIDEO_CONFERENCE": "Videokonferenz",
       "COMPUTERS": "Computer",
       "PRINTERS": "Drucker",
-      "PHONE": "Telefon"
+      "PHONE": "Telefon",
+      "DESKS": "Schreibtische"
     },
     "spaceAmenities": {
       "WIFI": "Wi-Fi",
+      "POWER_OUTLETS": "Steckdosen",
       "AIR_CONDITIONING": "Klimaanlage",
       "HEATING": "Heizung",
       "PARKING": "Parkplatz",

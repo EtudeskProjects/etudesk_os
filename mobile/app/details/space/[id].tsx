@@ -58,6 +58,7 @@ import {
   Headphones,
   EyeOff,
   Projector,
+  Plug,
   Banknote,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
@@ -108,11 +109,13 @@ const EQUIPMENT_ICONS: Record<string, any> = {
   COMPUTERS: Laptop,
   PRINTERS: Printer,
   PHONE: PhoneIcon,
+  DESKS: Ruler,
 };
 
 // Amenity icons mapping
 const AMENITY_ICONS: Record<string, any> = {
   WIFI: Wifi,
+  POWER_OUTLETS: Plug,
   AIR_CONDITIONING: Thermometer,
   HEATING: Flame,
   PARKING: Car,
@@ -140,6 +143,11 @@ const ACCESSIBILITY_ICONS: Record<string, any> = {
 
 // Description text limit for expandable text
 const DESCRIPTION_LIMIT = 200;
+
+// A feature can be imported in both data groups (for example WIFI).  Amenities
+// are the user-facing source of truth, so avoid showing the same benefit twice.
+const normalizeFeatureKey = (value: string): string =>
+  value.trim().toUpperCase().replace(/[\s-]+/g, '_');
 
 export default function SpaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -347,6 +355,10 @@ export default function SpaceDetailScreen() {
   })();
 
   const shouldTruncateDescription = space.description && space.description.length > DESCRIPTION_LIMIT;
+  const amenityKeys = new Set((space.amenities ?? []).map(normalizeFeatureKey));
+  const visibleEquipment = (space.equipment ?? []).filter(
+    (item) => !amenityKeys.has(normalizeFeatureKey(item))
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -571,7 +583,7 @@ export default function SpaceDetailScreen() {
                   <View style={styles.priceLeft}>
                     <Banknote size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Mode d'encaissement</Text>
+                      <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{"Mode d'encaissement"}</Text>
                       <Text style={[styles.priceValue, { color: colors.textPrimary, marginTop: 2 }]}>{space.payment_collection_info}</Text>
                     </View>
                   </View>
@@ -614,11 +626,11 @@ export default function SpaceDetailScreen() {
           <EntitySkillTags skills={space.skills} title={t('space.skills')} showRequirement={false} />
 
           {/* Equipment Section */}
-          {space.equipment && space.equipment.length > 0 && (
+          {visibleEquipment.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.equipment')}</Text>
               <View style={styles.itemsGrid}>
-                {space.equipment.map((item, index) => {
+                {visibleEquipment.map((item, index) => {
                   const IconComponent = EQUIPMENT_ICONS[item] || CheckCircle;
                   return (
                     <View key={index} style={[styles.gridItem, { backgroundColor: colors.gray50 }]}>

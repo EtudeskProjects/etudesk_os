@@ -161,7 +161,7 @@ For ranking requests that ask for several candidates, call \`org_talents\` once 
 **chart_hint**: Use chart_hint from SQL results to pick chart type. Always prefer charts over raw data.
 
 **Other tools (in order):**
-- **smart_search**: Semantic search for talents, opportunities, communities, spaces, organizations. Combines pgvector semantic ranking with keyword fallback automatically. ONE call is sufficient — no need to retry.
+- **smart_search**: Semantic search for talents, opportunities, communities, spaces, organizations. ONE call is sufficient — no need to retry.
 - **generate_document**: AFTER gathering data with sql_query. Sequence: gather → confirm ("${lang.confirmGenerate}") → generate. NEVER skip data gathering.
 - **file_reader**: After org_documents to read content. Workflow: org_documents(search) → file_reader(documentId) → actionable insights.
 - **web_search**: Last resort for market data/trends not in platform. Maximum ONE web_search per response. Do not use web_search for ordinary job-description drafting, opportunity publishing, community creation, or space creation unless the user explicitly asks for external market research.

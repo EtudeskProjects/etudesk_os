@@ -306,7 +306,11 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
                 status = COALESCE($2::text, status),
                 due_at = COALESCE($3::timestamptz, due_at),
                 metadata = CASE WHEN $4::jsonb IS NULL THEN metadata ELSE (metadata || $4::jsonb) END,
-                completed_at = CASE WHEN COALESCE($2::text, status) = 'DONE' THEN CURRENT_TIMESTAMP ELSE completed_at END
+                completed_at = CASE
+                  WHEN $2::text = 'DONE' THEN CURRENT_TIMESTAMP
+                  WHEN $2::text IN ('PENDING', 'CANCELED') THEN NULL
+                  ELSE completed_at
+                END
               WHERE id = $1::uuid
               RETURNING id, status, due_at
               `,

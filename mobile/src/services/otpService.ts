@@ -43,10 +43,7 @@ async function sendOTP(email: string): Promise<void> {
 
 async function sendWhatsAppOTP(phone: string): Promise<void> {
   try {
-    await api.publicPost<{ success?: boolean; error?: string }>('/auth/request-otp', {
-      phone,
-      channel: 'whatsapp',
-    });
+    await api.publicPost<{ success?: boolean; error?: string }>('/auth/request-whatsapp-otp', { phone });
 
     logger.info(LOG_SOURCE, `WhatsApp OTP sent to ${phone}`);
   } catch (error: any) {
@@ -131,6 +128,22 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
     return { success: false, needsOnboarding: false };
   } catch (error) {
     logger.error(LOG_SOURCE, 'OTP verification error', error, { email });
+    return { success: false, needsOnboarding: false };
+  }
+}
+
+async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTPResult> {
+  try {
+    const { ok, status, data } = await api.rawRequest<AuthSessionPayload>('POST', '/auth/verify-whatsapp-otp', { phone, code });
+    if (!ok || !data.success || !data.tokens) {
+      logger.apiError(LOG_SOURCE, status, data.error || 'WhatsApp OTP verification failed', '/api/auth/verify-whatsapp-otp');
+      return { success: false, needsOnboarding: false };
+    }
+    return (await storeAuthSession(data))
+      ? { success: true, needsOnboarding: data.needsOnboarding ?? false, user: data.user }
+      : { success: false, needsOnboarding: false };
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'WhatsApp OTP verification error', error, { phone });
     return { success: false, needsOnboarding: false };
   }
 }
@@ -322,6 +335,7 @@ export const otpService = {
   sendOTP,
   sendWhatsAppOTP,
   verifyOTP,
+  verifyWhatsAppOTP,
   signInWithGoogle,
   getAccessToken,
   getUser,

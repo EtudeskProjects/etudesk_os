@@ -109,7 +109,7 @@ export async function analyzeAudio(
       { role: 'system', content: prompt },
       { role: 'user', content: transcribedText },
     ],
-    max_tokens: 1024,
+    max_completion_tokens: 1024,
   });
 
   void recordUsage({

@@ -250,7 +250,7 @@ function getImageUrl(type: string, data: Record<string, any>): string | undefine
   }
 }
 
-export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: initialData }) => {
+export const EntityCard: React.FC<EntityCardProps> = React.memo(function EntityCard({ type, data: initialData }) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -300,10 +300,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     if (documentAction) return;
 
     if (!documentFileUrl) {
-      const id = data.id;
-      if (id && action === 'view') {
-        router.push(`/details/document/${id}` as any);
-      }
+      Alert.alert(t('common.error'), t('common.downloadError'));
       return;
     }
 
@@ -391,7 +388,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
         if (documentFileUrl) {
           void runDocumentAction('view');
         } else {
-          router.push(`/details/document/${id}` as any);
+          Alert.alert(t('common.error'), t('common.downloadError'));
         }
         break;
     }

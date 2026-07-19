@@ -36,6 +36,25 @@ const KNOWN_COMPONENT_BLOCKS = new Set([
   'steps',
 ]);
 
+/**
+ * Components are parsed by the mobile client. A malformed JSON block is worse
+ * than plain text because it can make a rich card unusable. Keep ordinary code
+ * fences untouched, but remove invalid known component blocks before they reach
+ * the client. The model's surrounding explanation remains visible.
+ */
+function removeMalformedComponentBlocks(text: string): string {
+  return text.replace(/```([a-z_]+)\s*\n([\s\S]*?)```/g, (full, component, raw) => {
+    if (!KNOWN_COMPONENT_BLOCKS.has(component)) return full;
+    try {
+      const payload = JSON.parse(raw.trim());
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return '';
+      return full;
+    } catch {
+      return '';
+    }
+  });
+}
+
 function getAllowedEntityTypes(mode?: string): Set<string> {
   if (mode === 'study') return new Set();
   if (mode === 'org') return new Set(['talent', 'opportunity', 'document', 'event', 'skill', 'notification', 'maps']);
@@ -185,7 +204,7 @@ function extractModeFromAgent(agent: any): string | undefined {
  */
 export function sanitizeOutput(text: string, mode?: string): string {
   if (!text) return text;
-  let result = text;
+  let result = removeMalformedComponentBlocks(text);
   const allowedEntityTypes = getAllowedEntityTypes(mode);
   const allowedComponentBlocks = getAllowedComponentBlocks(mode);
 

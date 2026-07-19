@@ -2,6 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
 
 import { logger } from '../utils';
+import { CANONICAL_GOALS, CANONICAL_PROFILE_TAGS, CANONICAL_SECTORS, normalizeClosedTags } from '../constants/tag-taxonomy';
+
+const canonicalTagArray = (allowed: readonly string[], max: number, message: string) =>
+  z.array(z.string()).max(max, message).transform((values, ctx) => {
+    const normalized = normalizeClosedTags(values, allowed);
+    if (!normalized) {
+      ctx.addIssue({ code: 'custom', message });
+      return z.NEVER;
+    }
+    return normalized;
+  });
 /**
  * Validation middleware factory
  * Creates a middleware that validates request body/params/query against a Zod schema
@@ -138,6 +149,7 @@ const baseOpportunitySchema = z.object({
   deadline: z.string().optional(),
   start_date: z.string().optional(),
   duration: z.string().max(100).optional(),
+  sectors: canonicalTagArray(CANONICAL_SECTORS, 5, 'validation:onboarding.maxSectors').optional(),
   status: z.enum(['DRAFT', 'OPEN', 'PAUSED', 'FILLED', 'EXPIRED']).optional(),
   application_mode: z.enum(['IN_APP', 'EMAIL']).optional(),
   external_apply_email: z.string().email().optional(),
@@ -210,6 +222,14 @@ export const verifyOtpSchema = z.object({
     .regex(/^\d{6}$/, 'validation:auth.codeDigits')
 });
 
+export const requestWhatsAppOtpSchema = z.object({
+  phone: z.string().min(8, 'validation:onboarding.phoneMinLength').max(20, 'validation:onboarding.phoneTooLong'),
+});
+
+export const verifyWhatsAppOtpSchema = requestWhatsAppOtpSchema.extend({
+  code: z.string().length(6, 'validation:auth.codeLength').regex(/^\d{6}$/, 'validation:auth.codeDigits'),
+});
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'validation:auth.refreshTokenRequired')
 });
@@ -219,28 +239,6 @@ export const googleAuthSchema = z.object({
 });
 
 // --- Onboarding Schemas ---
-
-const VALID_PROFILE_TAGS = [
-  'STUDENT', 'PUPIL', 'JOB_SEEKER', 'SALARIED', 'ENTREPRENEUR',
-  'CIVIL_SERVANT', 'MANAGER', 'CONSULTANT', 'INVESTOR',
-  'CONTENT_CREATOR', 'COACH', 'RETIRED',
-] as const;
-
-const VALID_GOALS = [
-  'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
-  'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
-  'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
-] as const;
-
-const VALID_SECTORS = [
-  'AGRICULTURE', 'RESOURCES', 'ENERGY', 'ENVIRONMENT', 'INDUSTRY',
-  'CONSTRUCTION', 'TRANSPORT', 'COMMERCE', 'FINANCE', 'DIGITAL',
-  'MEDIA', 'TOURISM', 'HEALTH', 'EDUCATION', 'PROFESSIONAL_SERVICES',
-  'RESEARCH', 'PUBLIC', 'SECURITY', 'SOCIAL_IMPACT', 'PERSONAL_SERVICES',
-  'CRAFTS',
-  // Legacy values (backward compat)
-  'TECH', 'RETAIL', 'SERVICES', 'HOSPITALITY', 'OTHER'
-] as const;
 
 export const onboardingSchema = z.object({
   firstName: z.string()
@@ -266,15 +264,9 @@ export const onboardingSchema = z.object({
   country: z.string()
     .length(2, 'validation:common.countryCodeFormat')
     .optional(),
-  profileTags: z.array(z.enum(VALID_PROFILE_TAGS))
-    .max(3, 'validation:onboarding.maxProfileTags')
-    .optional(),
-  goals: z.array(z.enum(VALID_GOALS))
-    .max(3, 'validation:onboarding.maxGoals')
-    .optional(),
-  sectors: z.array(z.enum(VALID_SECTORS))
-    .max(5, 'validation:onboarding.maxSectors')
-    .optional(),
+  profileTags: canonicalTagArray(CANONICAL_PROFILE_TAGS, 3, 'validation:onboarding.maxProfileTags').optional(),
+  goals: canonicalTagArray(CANONICAL_GOALS, 3, 'validation:onboarding.maxGoals').optional(),
+  sectors: canonicalTagArray(CANONICAL_SECTORS, 5, 'validation:onboarding.maxSectors').optional(),
   gender: z.string().max(20).optional(),
   remoteReady: z.boolean().optional(),
   willingToRelocate: z.boolean().optional(),
@@ -311,7 +303,7 @@ export const createCommunitySchema = z.object({
   monthly_price: z.number().min(0).optional(),
   currency: z.string().length(3, 'validation:common.currencyFormat').optional(),
   trial_days: z.number().int().min(0).max(90).optional(),
-  sectors: z.array(z.string()).max(10).optional(),
+  sectors: canonicalTagArray(CANONICAL_SECTORS, 5, 'validation:onboarding.maxSectors').optional(),
   rules: z.string().max(10000).optional(),
   tags: z.array(z.string()).max(10).optional(),
   application_questions: z.unknown().optional(),
@@ -369,8 +361,8 @@ export const createOrganizationSchema = z.object({
     longitude: z.number(),
     latitude: z.number(),
   }).optional(),
-  sectors: z.array(z.string()).max(10).optional(),
-  goals: z.array(z.string()).max(10).optional(),
+  sectors: canonicalTagArray(CANONICAL_SECTORS, 5, 'validation:onboarding.maxSectors').optional(),
+  goals: canonicalTagArray(CANONICAL_GOALS, 3, 'validation:onboarding.maxGoals').optional(),
 });
 
 export const updateOrganizationSchema = createOrganizationSchema.partial();
@@ -402,9 +394,9 @@ export const updateTalentSchema = z.object({
   city: z.string().max(100).optional(),
   region: z.string().max(100).optional(),
   country: z.string().max(10).optional(),
-  profile_tags: z.array(z.enum(VALID_PROFILE_TAGS)).max(3).optional(),
-  goals: z.array(z.enum(VALID_GOALS)).max(3).optional(),
-  sectors: z.array(z.enum(VALID_SECTORS)).max(5).optional(),
+  profile_tags: canonicalTagArray(CANONICAL_PROFILE_TAGS, 3, 'validation:onboarding.maxProfileTags').optional(),
+  goals: canonicalTagArray(CANONICAL_GOALS, 3, 'validation:onboarding.maxGoals').optional(),
+  sectors: canonicalTagArray(CANONICAL_SECTORS, 5, 'validation:onboarding.maxSectors').optional(),
   remote_ready: z.boolean().optional(),
   willing_to_relocate: z.boolean().optional(),
 });

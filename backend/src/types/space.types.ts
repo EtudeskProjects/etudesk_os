@@ -143,12 +143,14 @@ export const SPACE_EQUIPMENT = [
   'COMPUTERS',
   'PRINTERS',
   'PHONE',
+  'DESKS',
 ] as const;
 
 export type SpaceEquipment = (typeof SPACE_EQUIPMENT)[number];
 
 export const SPACE_AMENITIES = [
   'WIFI',
+  'POWER_OUTLETS',
   'AIR_CONDITIONING',
   'HEATING',
   'PARKING',
@@ -163,6 +165,67 @@ export const SPACE_AMENITIES = [
 ] as const;
 
 export type SpaceAmenity = (typeof SPACE_AMENITIES)[number];
+
+/**
+ * Canonicalize space features at every write boundary.
+ *
+ * Stored values are always UPPER_SNAKE_CASE. WIFI and POWER_OUTLETS are
+ * amenities (place infrastructure), never activity equipment. The aliases
+ * keep legacy forms, seeds and AI suggestions compatible while the database
+ * converges on a single referential.
+ */
+const SPACE_FEATURE_ALIASES: Record<string, string> = {
+  PROJECTOR: 'VIDEOPROJECTOR',
+  VIDEO_PROJECTOR: 'VIDEOPROJECTOR',
+  DESK: 'DESKS',
+  WORK_DESK: 'DESKS',
+  COMPUTER: 'COMPUTERS',
+  PRINTER: 'PRINTERS',
+  SPEAKER: 'SOUND_SYSTEM',
+  RESTROOM: 'RESTROOMS',
+  TOILETS: 'RESTROOMS',
+  WI_FI: 'WIFI',
+  INTERNET: 'WIFI',
+  ELECTRICAL_OUTLETS: 'POWER_OUTLETS',
+};
+
+const normalizeFeatureKey = (value: string): string =>
+  SPACE_FEATURE_ALIASES[value.trim().toUpperCase().replace(/[\s-]+/g, '_')]
+  || value.trim().toUpperCase().replace(/[\s-]+/g, '_');
+
+export interface NormalizedSpaceFeatures {
+  equipment: SpaceEquipment[];
+  amenities: SpaceAmenity[];
+  invalid: string[];
+}
+
+export function normalizeSpaceFeatures(input: {
+  equipment?: unknown;
+  amenities?: unknown;
+}): NormalizedSpaceFeatures {
+  const equipment: SpaceEquipment[] = [];
+  const amenities: SpaceAmenity[] = [];
+  const invalid: string[] = [];
+  const knownEquipment = new Set<string>(SPACE_EQUIPMENT);
+  const knownAmenities = new Set<string>(SPACE_AMENITIES);
+
+  const add = (value: unknown) => {
+    if (typeof value !== 'string' || !value.trim()) return;
+    const key = normalizeFeatureKey(value);
+    if (knownEquipment.has(key)) {
+      if (!equipment.includes(key as SpaceEquipment)) equipment.push(key as SpaceEquipment);
+    } else if (knownAmenities.has(key)) {
+      if (!amenities.includes(key as SpaceAmenity)) amenities.push(key as SpaceAmenity);
+    } else {
+      invalid.push(value);
+    }
+  };
+
+  if (Array.isArray(input.equipment)) input.equipment.forEach(add);
+  if (Array.isArray(input.amenities)) input.amenities.forEach(add);
+
+  return { equipment, amenities, invalid };
+}
 
 export const ACCESSIBILITY_FEATURES = [
   'WHEELCHAIR_ACCESS',

@@ -12,7 +12,8 @@ import { onboardingService } from '../services/onboardingService';
 import { notificationService } from '../services/notificationService';
 import { logger } from '../services/logService';
 import { STORAGE_KEYS as APP_STORAGE_KEYS } from '../constants/config';
-import { isValidLanguage, setLanguage as setI18nLanguage } from '../i18n';
+import { isValidLanguage } from '../i18n';
+import { useI18n } from './I18nContext';
 
 const LOG_SOURCE = 'Auth';
 
@@ -30,6 +31,7 @@ export interface AuthState {
 interface AuthContextType extends AuthState {
   // Actions
   signIn: (email: string, code: string) => Promise<boolean>;
+  signInWithWhatsApp: (phone: string, code: string) => Promise<boolean>;
   signInGoogle: (idToken: string) => Promise<boolean>;
   signOut: (allDevices?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -45,16 +47,6 @@ const STORAGE_KEYS = {
   ONBOARDING_SHOWN: 'onboarding_shown',
   POST_ONBOARDING_WELCOME_PENDING: 'post_onboarding_welcome_pending',
 };
-
-async function syncAppLanguageFromUser(user: User | null): Promise<void> {
-  const preferredLanguage = user?.preferredLanguage;
-  if (!preferredLanguage || !isValidLanguage(preferredLanguage)) {
-    return;
-  }
-
-  await AsyncStorage.setItem(APP_STORAGE_KEYS.LANGUAGE, preferredLanguage).catch(() => {});
-  setI18nLanguage(preferredLanguage);
-}
 
 // --- Context ---
 
@@ -77,6 +69,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const router = useRouter();
   const segments = useSegments();
+  const { syncLanguage } = useI18n();
+
+  const syncAppLanguageFromUser = useCallback(async (user: User | null): Promise<void> => {
+    const preferredLanguage = user?.preferredLanguage;
+    if (!preferredLanguage || !isValidLanguage(preferredLanguage)) {
+      return;
+    }
+
+    await AsyncStorage.setItem(APP_STORAGE_KEYS.LANGUAGE, preferredLanguage).catch(() => {});
+    syncLanguage(preferredLanguage);
+  }, [syncLanguage]);
 
   // INITIALIZATION - Check auth state on mount
   useEffect(() => {
@@ -276,6 +279,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const signInWithWhatsApp = useCallback(async (phone: string, code: string): Promise<boolean> => {
+    const result = await otpService.verifyWhatsAppOTP(phone, code);
+    if (!result.success) return false;
+    await checkAuthState();
+    return true;
+  }, []);
+
   // SIGN IN WITH GOOGLE
   const signInGoogle = useCallback(async (idToken: string): Promise<boolean> => {
     try {
@@ -367,7 +377,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // CONTEXT VALUE
   const contextValue: AuthContextType = {
     ...state,
-    signIn,
+      signIn,
+      signInWithWhatsApp,
     signInGoogle,
     signOut,
     refreshUser,

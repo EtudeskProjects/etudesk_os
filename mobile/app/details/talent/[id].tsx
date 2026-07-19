@@ -725,7 +725,7 @@ export default function TalentDetailScreen() {
           <View style={styles.ctaContainer}>
             <Button
               title={t('settings.editProfile')}
-              onPress={() => router.push('/settings/profile' as any)}
+              onPress={() => router.push('/settings/edit-profile')}
               icon={<Edit3 size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               fullWidth
             />

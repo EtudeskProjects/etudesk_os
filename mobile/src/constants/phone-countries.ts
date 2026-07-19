@@ -5,7 +5,9 @@ export interface PhoneCountry {
   flag: string;      // Emoji drapeau
 }
 
-export const DEFAULT_COUNTRY_CODE = process.env.EXPO_PUBLIC_DEFAULT_COUNTRY_CODE || 'US';
+// Côte d'Ivoire is the default for new registrations and phone inputs.
+// Deployments can still override it through EXPO_PUBLIC_DEFAULT_COUNTRY_CODE.
+export const DEFAULT_COUNTRY_CODE = process.env.EXPO_PUBLIC_DEFAULT_COUNTRY_CODE || 'CI';
 
 /** Liste complete des pays avec indicatifs telephoniques */
 export const PHONE_COUNTRIES: PhoneCountry[] = [

@@ -913,11 +913,19 @@ const styles = StyleSheet.create({
   },
 
   historyModeBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 42,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+
+  historyModeRail: {
+    position: 'absolute',
+    left: 0,
+    width: 3,
+    height: 24,
+    borderRadius: 2,
   },
 
   historyItemText: {

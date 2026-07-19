@@ -264,7 +264,8 @@ export async function precomputeSkillEmbeddings(): Promise<void> {
 
 /**
  * Detect which skill (if any) matches the user's message for a given mode.
- * Uses semantic embedding similarity when available, falls back to static substring matching.
+ * Semantic routing is mandatory. A missing embedding is a configuration error
+ * during development, not a reason to silently select a different workflow.
  * Returns the full instructions body of the best-matching skill, or null.
  */
 export async function detectSkillFromMessage(
@@ -273,13 +274,9 @@ export async function detectSkillFromMessage(
   country?: string
 ): Promise<{ skillId: string; skillName: string; instructions: string } | null> {
   const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
-  const staticMatch = detectSkillFromMessageStatic(message, mode, country);
-  if (staticMatch) return staticMatch;
-
-  // If no skill has an embedding yet (startup not done or failed), use static fallback
   const hasEmbeddings = skills.some((s) => s.embedding);
   if (!hasEmbeddings) {
-    return null;
+    throw new Error('Skill embeddings are not ready');
   }
 
   try {
@@ -313,10 +310,8 @@ export async function detectSkillFromMessage(
       skillName: bestMatch.name,
       instructions: bestMatch.instructions,
     };
-  } catch (error) {
-    // Embedding API down → graceful fallback to static matching
-    logger.warn(`[skill.loader] Embedding-based detection failed, using static fallback: ${error}`);
-    return null;
+  } catch (error: any) {
+    throw new Error(`Skill detection failed: ${error.message}`);
   }
 }
 

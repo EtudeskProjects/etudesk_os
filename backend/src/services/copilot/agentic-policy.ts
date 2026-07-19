@@ -72,6 +72,9 @@ export function selectToolsForMessage(
   }
 
   if (mode === 'explore') {
+    if (/\b(explique(?:-moi)?|conseil(?:s)?|définition|definition|c.?est quoi|comment (?:me )?préparer|aide-moi|aide moi)\b/.test(m)) {
+      return { tools: [], reason: 'explore_guidance' };
+    }
     if (/\b(opportunit\w*|offres?|postes?|emplois?|stages?|jobs?|espaces?|coworking|salles?|studios?|réserver|reserver)\b/.test(m)) {
       return {
         tools: byNames(tools, ['smart_search', 'sql_query', 'execute_action']),
@@ -122,6 +125,11 @@ export function selectToolsForMessage(
         tools: byNames(tools, ['manage_skills', 'find_competency', 'competency_graph', 'learning_path']),
         reason: 'study_skills',
       };
+    }
+    if (/\b(quiz|qcm|flashcards?|questionnaire|explique(?:-moi)?|définition|definition|c.?est quoi)\b/.test(m)) {
+      // These assets are emitted directly in the answer. Supplying the complete
+      // tool catalogue only wastes context and encourages needless tool calls.
+      return { tools: [], reason: 'study_inline_asset' };
     }
   }
 

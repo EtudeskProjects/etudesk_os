@@ -198,10 +198,10 @@ export default function MemberDetailsScreen() {
   };
 
   const handleUpdateStatus = async (newStatus: MemberStatus) => {
-    if (!membership) return;
+    if (!membership?.community_id) return;
 
     try {
-      await communityService.updateMembershipStatus(membership.id, newStatus);
+      await communityService.updateMembershipStatus(membership.community_id, membership.id, newStatus);
       setMembership((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
       void alerts.alert(t('common.success'), t('gestion.members.statusUpdated', { status: t(STATUS_FLOW[newStatus].label) }));
@@ -211,7 +211,7 @@ export default function MemberDetailsScreen() {
   };
 
   const handleDeleteMember = () => {
-    if (!membership) return;
+    if (!membership?.community_id) return;
 
     const memberName = membership.talent?.first_name && membership.talent?.last_name
       ? `${membership.talent.first_name} ${membership.talent.last_name}`
@@ -224,7 +224,7 @@ export default function MemberDetailsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await communityService.deleteMember(membership.id);
+              await communityService.deleteMember(membership.community_id, membership.id);
               void alerts.alert(t('common.success'), t('gestion.members.removeSuccess'));
               router.back();
             } catch (error: any) {

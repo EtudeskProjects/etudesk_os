@@ -287,14 +287,15 @@ export type ThemeMode = 'light' | 'dark';
 // SPACING SYSTEM
 // Grille 4px. Les micro-tokens (xxs/xs/sm/md) restent stables car ils
 // pilotent l'intérieur des composants (gaps icône-texte, paddings).
-// Les tokens de SECTION (lg+) sont élargis pour un rendu plus aéré.
+// Les tokens de SECTION (lg+) restent assez confortables tout en laissant
+// davantage de largeur utile aux vues mobiles.
 export const SPACING = {
   xxs: 2,       // 2px - Micro (gaps d'icônes)
   xs: 4,        // 4px - Très serré
   sm: 8,        // 8px - Compact
   md: 16,       // 16px - Défaut
-  lg: 28,       // 28px - Confortable (aéré)
-  xl: 36,       // 36px - Généreux
+  lg: 20,       // 20px - Confortable, optimisé mobile
+  xl: 28,       // 28px - Généreux
   xxl: 48,      // 48px - Espacement de section
   xxxl: 64,     // 64px - Grande section
 } as const;
@@ -418,7 +419,7 @@ export const BORDER = {
 // Consistent dimensions
 export const LAYOUT = {
   // Screen padding
-  screenPadding: SPACING.lg,    // 28px
+  screenPadding: SPACING.lg,    // 20px
   screenPaddingHorizontal: SPACING.lg,
   screenPaddingVertical: SPACING.md,
 

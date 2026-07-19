@@ -988,7 +988,7 @@ export async function generateSessionTitle(
 
     const response = await client.chat.completions.create({
       model: MODEL_FAST,
-      max_tokens: 50,
+      max_completion_tokens: 50,
       messages: [
         { role: 'system', content: buildSessionTitleSystemPrompt(languageName) },
         { role: 'user', content: message },
@@ -1036,7 +1036,7 @@ export async function generateSuggestions(
     const client = getSuggestionClient();
     const completion = await client.chat.completions.create({
       model: MODEL_SUGGESTION,
-      max_tokens: 160,
+      max_completion_tokens: 160,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Generate the suggestions in ${getLanguageDisplayName(language)}.` },

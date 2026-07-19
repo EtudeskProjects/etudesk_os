@@ -121,7 +121,7 @@ export async function generateRecommendation(
     const client = getSuggestionClient();
     const completion = await client.chat.completions.create({
       model: MODEL_MATCH,
-      max_tokens: 120,
+      max_completion_tokens: 120,
       messages: [
         { role: 'system', content: RECOMMENDATION_SYSTEM_PROMPT },
         { role: 'user', content: prompt },

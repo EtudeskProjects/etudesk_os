@@ -45,19 +45,6 @@ const TEAM = [
 export default function HomeView({ lang }: { lang: Lang }) {
   const t = copy[lang];
 
-  const partners = [
-    { k: 'presidence', name: lang === 'fr' ? 'Présidence de Côte d\'Ivoire' : 'Presidency of Côte d\'Ivoire', img: '/images/partners/presidence-civ.png' },
-    { k: 'minjeunesse', name: lang === 'fr' ? 'Ministère de la Promotion de la Jeunesse' : 'Ministry for Youth Promotion', img: '/images/partners/ministere-jeunesse.jpg' },
-    { k: 'minnumerique', name: lang === 'fr' ? 'Ministère de la Transition Numérique' : 'Ministry of Digital Transition', img: '/images/partners/ministere-numerique.png' },
-    { k: 'orange', name: 'Orange Côte d\'Ivoire', img: '/images/partners/orange.svg' },
-    { k: 'socgen', name: 'Société Générale', img: '/images/partners/societe-generale.svg' },
-    { k: 'mcf', name: 'Mastercard Foundation', img: '/images/partners/mastercard-foundation.jpg' },
-    { k: 'un', name: lang === 'fr' ? 'Nations Unies' : 'United Nations', img: '/images/partners/un.svg' },
-    { k: 'wb', name: lang === 'fr' ? 'Banque Mondiale' : 'World Bank', img: '/images/partners/world-bank.svg' },
-    { k: 'bad', name: lang === 'fr' ? 'Banque Africaine de Développement' : 'African Development Bank', img: '/images/partners/bad.svg' },
-    { k: 'agl', name: 'Africa Global Logistics', img: '/images/partners/agl.png' },
-  ];
-
   const heroStats = [
     { n: '3 000 000+', l: lang === 'fr' ? 'formés' : 'trained' },
     { n: '600+', l: lang === 'fr' ? 'organisations accompagnées' : 'organisations supported' },
@@ -119,18 +106,6 @@ export default function HomeView({ lang }: { lang: Lang }) {
         </div>
       </section>
       </div>
-
-      {/* Organisations avec qui on a travaille : bande de logos, sans fond */}
-      <section className="partners">
-        <p className="partners-label">{lang === 'fr' ? 'Ils ont travaillé avec nous' : 'Worked with'}</p>
-        <div className="partners-row">
-          {partners.map((p) => (
-            p.img
-              ? <span key={p.k} className="partner"><img src={p.img} alt={p.name} loading="lazy" /></span>
-              : <span key={p.k} className="partner partner-text">{p.name}</span>
-          ))}
-        </div>
-      </section>
 
       {/* Pourquoi les competences du numerique : chaine de competences a gauche, le why a droite */}
       <section className="why">

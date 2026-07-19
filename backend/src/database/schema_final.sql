@@ -419,6 +419,7 @@ CREATE TABLE communities (
     coordinates POINT,
     cover_image_url TEXT,
     images TEXT[],
+    default_member_permissions JSONB DEFAULT '{"can_post": true, "can_create_event": false, "can_create_poll": false}'::jsonb,
     is_paid BOOLEAN DEFAULT FALSE,
     monthly_price NUMERIC(10, 2),
     currency VARCHAR(10) DEFAULT 'XOF',
@@ -1096,6 +1097,13 @@ CREATE TABLE notification_preferences (
     push_new_message BOOLEAN DEFAULT TRUE,
     push_new_application BOOLEAN DEFAULT TRUE,
     push_interview_reminder BOOLEAN DEFAULT TRUE,
+    push_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    email_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    sms_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    notify_opportunities BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_messages BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_applications BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_reminders BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(talent_id)
@@ -1459,6 +1467,8 @@ CREATE TABLE agenda_triggers (
 CREATE INDEX idx_agenda_triggers_talent_due_at ON agenda_triggers (talent_id, due_at) WHERE scope = 'TALENT';
 CREATE INDEX idx_agenda_triggers_org_due_at ON agenda_triggers (organization_id, due_at) WHERE scope = 'ORGANIZATION';
 CREATE INDEX idx_agenda_triggers_status_due_at ON agenda_triggers (status, due_at);
+CREATE TRIGGER trigger_agenda_triggers_updated_at
+    BEFORE UPDATE ON agenda_triggers FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- SECTION 22: DAILY OBJECTIVES

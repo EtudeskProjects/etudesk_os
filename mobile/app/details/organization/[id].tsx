@@ -542,11 +542,11 @@ export default function OrganizationDetailScreen() {
                 {t('organizationDetail.openOpportunities')}
               </Text>
 	              {opportunities.length > 3 && (
-	                <Button
-	                  title={t('common.seeAll')}
-	                  onPress={() => router.push(`/search?organization=${id}` as any)}
-	                  variant="ghost"
-	                  size="sm"
+		                <Button
+		                  title={t('common.seeAll')}
+		                  onPress={() => router.push('/(tabs)/explore?category=opportunities' as any)}
+		                  variant="ghost"
+		                  size="sm"
 	                  style={{ paddingHorizontal: 0, backgroundColor: 'transparent' } as any}
 	                  textStyle={[styles.seeAllText, { color: colors.primary }]}
 	                />

@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { pool } from '../services/database';
 import { resolveAgendaSchedule } from '../services/agenda-scheduling.service';
+import { debitWalletForAction } from '../services/billing/credit.service';
 
 import { logger } from '../utils';
 const router = express.Router();
@@ -164,6 +165,38 @@ router.post('/triggers', authMiddleware, async (req: AuthRequest, res: Response)
                 return res.status(403).json({ error: req.t('organizations:notMember') });
             }
 
+            const idempotencyHeader = req.headers['x-idempotency-key'];
+            const idempotencyValue = Array.isArray(idempotencyHeader)
+                ? idempotencyHeader[0]
+                : idempotencyHeader;
+            const debitKey = idempotencyValue
+                ? `org_agenda_trigger_${idempotencyValue}`
+                : `org_agenda_trigger_${orgId}_${code.trim()}_${dueAt.toISOString()}`;
+
+            try {
+                await debitWalletForAction({
+                    scope: 'ORGANIZATION',
+                    ownerId: orgId,
+                    actionCode: 'ORG_SCHEDULED_TASK',
+                    idempotencyKey: debitKey,
+                    metadata: {
+                        channel: 'calendar',
+                        code: code.trim(),
+                        title: title.trim(),
+                        due_at: dueAt.toISOString(),
+                    },
+                    createdBy: talentId,
+                });
+            } catch (debitError: any) {
+                if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+                    return res.status(402).json({
+                        error: req.t('billing:insufficientCredits'),
+                        code: 'INSUFFICIENT_CREDITS',
+                    });
+                }
+                throw debitError;
+            }
+
             const result = await pool.query(
                 `
                 INSERT INTO agenda_triggers (scope, organization_id, code, title, description, due_at, priority, metadata, created_by)
@@ -275,7 +308,11 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
               title = COALESCE($4::text, title),
               description = COALESCE($5::text, description),
               metadata = CASE WHEN $6::jsonb IS NULL THEN metadata ELSE $6::jsonb END,
-              completed_at = CASE WHEN COALESCE($2::text, status) = 'DONE' THEN CURRENT_TIMESTAMP ELSE completed_at END
+              completed_at = CASE
+                WHEN $2::text = 'DONE' THEN CURRENT_TIMESTAMP
+                WHEN $2::text IN ('PENDING', 'CANCELED') THEN NULL
+                ELSE completed_at
+              END
             WHERE id = $1::uuid
             RETURNING *
             `,

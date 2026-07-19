@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, Mail, CheckCircle, MessageCircle } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
@@ -23,12 +23,13 @@ const RESEND_COOLDOWN = 60;
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email?: string }>();
+  const { email, phone, channel } = useLocalSearchParams<{ email?: string; phone?: string; channel?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const { signIn } = useAuth();
-  const identifier = email || '';
+  const { signIn, signInWithWhatsApp } = useAuth();
+  const isWhatsApp = channel === 'whatsapp' && Boolean(phone);
+  const identifier = isWhatsApp ? phone || '' : email || '';
 
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +98,9 @@ export default function VerifyOTPScreen() {
     try {
       // Use AuthContext signIn which properly updates auth state
       // Navigation will be handled automatically by AuthContext's navigation guard
-      const success = await signIn(email || '', otpCode);
+      const success = isWhatsApp
+        ? await signInWithWhatsApp(phone || '', otpCode)
+        : await signIn(email || '', otpCode);
 
       if (success) {
         setIsVerified(true);
@@ -120,7 +123,8 @@ export default function VerifyOTPScreen() {
 
     setIsLoading(true);
     try {
-      await otpService.sendOTP(email || '');
+      if (isWhatsApp) await otpService.sendWhatsAppOTP(phone || '');
+      else await otpService.sendOTP(email || '');
       setResendCooldown(RESEND_COOLDOWN);
       setOtp(new Array(OTP_LENGTH).fill(''));
       setError('');
@@ -171,7 +175,9 @@ export default function VerifyOTPScreen() {
 
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-            <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+            {isWhatsApp
+              ? <MessageCircle size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+              : <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
           </View>
 
           <Text style={[styles.title, { color: colors.textPrimary }]}>

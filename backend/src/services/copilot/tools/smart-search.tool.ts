@@ -517,62 +517,28 @@ export const smartSearchTool = defineTool({
       const filters = rawFilters ? sanitizeFilters(rawFilters, entity) : {};
       const mapper = MAPPERS[entity];
 
-      // --- Phase 1: pgvector semantic search ---
+      // Semantic search is the sole discovery contract.
       const semanticResults: any[] = [];
-      const semanticIdSet = new Set<string>();
-      try {
-        const embedding = await generateEmbedding(query);
-        const semanticBuilder = SEMANTIC_QUERIES[entity];
-        if (semanticBuilder) {
-          const { sql, params } = semanticBuilder(filters, topK);
-          const semanticRes = await queryWithRetry(sql, [vectorToSql(embedding), ...params]);
-          for (const row of semanticRes.rows) {
-            const score = Number(row.semantic_score || 0);
-            if (score < SEMANTIC_THRESHOLD) continue;
-            semanticResults.push(mapper(row, Math.round(score * 100)));
-            semanticIdSet.add(row.id);
-          }
-        }
-      } catch (embeddingError: any) {
-        logger.warn('[smart_search] pgvector/embedding error, falling back to keyword-only:', embeddingError.message);
-      }
-
-      // --- Phase 2: keyword fallback if semantic results are sparse ---
-      let keywordResults: any[] = [];
-      let source: 'semantic' | 'keyword' | 'hybrid' = semanticResults.length > 0 ? 'semantic' : 'keyword';
-
-      if (semanticResults.length < KEYWORD_FALLBACK_THRESHOLD) {
-        const keywordBuilder = KEYWORD_QUERIES[entity];
-        if (keywordBuilder) {
-          const remainingSlots = topK - semanticResults.length;
-          if (remainingSlots > 0) {
-            const { sql, params } = keywordBuilder(query, filters, remainingSlots + 5); // fetch extra for dedup
-            const kwRes = await queryWithRetry(sql, params);
-            for (const row of kwRes.rows) {
-              if (!semanticIdSet.has(row.id)) {
-                keywordResults.push(mapper(row, 0));
-              }
-            }
-            keywordResults = keywordResults.slice(0, remainingSlots);
-            if (semanticResults.length > 0 && keywordResults.length > 0) {
-              source = 'hybrid';
-            }
-          }
+      const embedding = await generateEmbedding(query);
+      const semanticBuilder = SEMANTIC_QUERIES[entity];
+      if (semanticBuilder) {
+        const { sql, params } = semanticBuilder(filters, topK);
+        const semanticRes = await queryWithRetry(sql, [vectorToSql(embedding), ...params]);
+        for (const row of semanticRes.rows) {
+          const score = Number(row.semantic_score || 0);
+          if (score < SEMANTIC_THRESHOLD) continue;
+          semanticResults.push(mapper(row, Math.round(score * 100)));
         }
       }
 
-      // --- Phase 3: Merge + sort ---
-      const allResults = [...semanticResults, ...keywordResults];
-
-      // Sort: semantic score DESC, then keyword results at end
-      allResults.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-
-      const finalResults = allResults.slice(0, topK);
+      const finalResults = semanticResults
+        .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+        .slice(0, topK);
 
       const result = {
         results: finalResults,
         totalFound: finalResults.length,
-        source,
+        source: 'semantic',
         reranked: false,
       };
 
@@ -581,9 +547,8 @@ export const smartSearchTool = defineTool({
 
       if (finalResults.length === 0) {
         return {
-          results: [], totalFound: 0, source,
+          results: [], totalFound: 0, source: 'semantic',
           message: 'Aucun resultat trouve pour cette recherche.',
-          fallback_suggestion: `Try web_search('${query}') for information beyond the platform.`,
         };
       }
 
@@ -592,7 +557,6 @@ export const smartSearchTool = defineTool({
       logger.error('[smart_search] Error:', error);
       return {
         results: [], error: error.message,
-        fallback_suggestion: `Use web_search('${query}') for external data.`,
       };
     }
   },

@@ -41,6 +41,7 @@ import bootstrapRouter from './routes/bootstrap';
 import shortLinksRouter from './routes/short-links';
 import linkRedirectRouter from './routes/link-redirect';
 import backofficeRouter from './routes/backoffice';
+import productEventsRouter from './routes/product-events';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter, writeLimiter } from './middleware/rateLimit.middleware';
@@ -205,11 +206,14 @@ v1Router.use(apiLimiter);
 // Auth Routes with stricter rate limiting
 v1Router.use('/auth/request-otp', otpLimiter);
 v1Router.use('/auth/verify-otp', authLimiter);
+v1Router.use('/auth/request-whatsapp-otp', otpLimiter);
+v1Router.use('/auth/verify-whatsapp-otp', authLimiter);
 v1Router.use('/auth/refresh', authLimiter);
 v1Router.use('/auth/google', authLimiter);
 v1Router.use('/auth/delete-account', authLimiter);
 v1Router.use('/auth', authRouter);
 v1Router.use('/onboarding', onboardingRouter);
+v1Router.use('/product-events', writeLimiter, productEventsRouter);
 
 // Domain Routes (writeLimiter on mutation-heavy routes)
 v1Router.use('/talents', talentsRouter);

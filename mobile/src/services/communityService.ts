@@ -224,14 +224,14 @@ class CommunityService {
    * Leave a community
    */
   async leave(communityId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return api.post(`/api/communities/${communityId}/leave`, {});
+    return api.delete(`/api/communities/${communityId}/leave`);
   }
 
   /**
    * Cancel a pending membership request
    */
   async cancelRequest(communityId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return api.post(`/api/communities/${communityId}/cancel-request`, {});
+    return api.delete(`/api/communities/${communityId}/leave`);
   }
 
   /**
@@ -279,11 +279,12 @@ class CommunityService {
    * Update membership status (for organization)
    */
   async updateMembershipStatus(
+    communityId: string,
     membershipId: string,
     status: MemberStatus,
     rejectionReason?: string
   ): Promise<ApiResponse<CommunityMember>> {
-    return api.put(`/api/communities/members/${membershipId}/status`, {
+    return api.put(`/api/communities/${communityId}/members/${membershipId}`, {
       status,
       rejection_reason: rejectionReason,
     });
@@ -309,8 +310,8 @@ class CommunityService {
   /**
    * Delete a membership (hard delete, allows member to reapply)
    */
-  async deleteMember(membershipId: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.delete(`/api/communities/members/${membershipId}`);
+  async deleteMember(communityId: string, membershipId: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return api.delete(`/api/communities/${communityId}/members/${membershipId}`);
   }
 
   // MEMBER PERMISSIONS

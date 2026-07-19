@@ -25,10 +25,12 @@ import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { DEFAULT_COUNTRY_CODE } from '../../src/constants/phone-countries';
+import { GOAL_DATA, MAX_GOALS, MAX_SECTORS, SECTOR_DATA, type Goal, type Sector } from '../../src/constants/talent';
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
 import { imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
+import { trackProductEvent } from '../../src/services/productEventService';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useAlert } from '../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../src/contexts/ScrollToInputContext';
@@ -43,6 +45,8 @@ interface ProfileFormValues {
   phone: string;
   email: string;
   avatarUri: string | null;
+  goals: Goal[];
+  sectors: Sector[];
   remoteReady: boolean;
   willingToRelocate: boolean;
 }
@@ -53,6 +57,7 @@ export default function CreateProfileScreen() {
   const { t } = useI18n();
   const { completeOnboarding, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+  const [step, setStep] = useState(0);
 
   // Form management with useForm hook
   const form = useForm<ProfileFormValues>({
@@ -66,6 +71,8 @@ export default function CreateProfileScreen() {
       phone: { initialValue: '', required: false },
       email: { initialValue: '' },
       avatarUri: { initialValue: null },
+      goals: { initialValue: [] },
+      sectors: { initialValue: [] },
       remoteReady: { initialValue: true },
       willingToRelocate: { initialValue: true },
     },
@@ -84,9 +91,12 @@ export default function CreateProfileScreen() {
         willingToRelocate: values.willingToRelocate,
         gender: values.gender || undefined,
         avatarUrl: values.avatarUri || undefined,
+        goals: values.goals,
+        sectors: values.sectors,
       };
       const response = await onboardingService.complete(profileData);
       if (response.data) {
+        void trackProductEvent('onboarding_completed', { goals: values.goals, sectors: values.sectors, city: values.commune || null });
         completeOnboarding();
         router.replace('/auth/welcome');
       } else {
@@ -105,6 +115,8 @@ export default function CreateProfileScreen() {
   const phone = form.getValue('phone');
   const email = form.getValue('email');
   const avatarUri = form.getValue('avatarUri');
+  const goals = form.getValue('goals');
+  const sectors = form.getValue('sectors');
   const remoteReady = form.getValue('remoteReady');
   const willingToRelocate = form.getValue('willingToRelocate');
 
@@ -312,8 +324,22 @@ export default function CreateProfileScreen() {
   };
 
   const canProceed = () => {
-    return firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
+    return firstName.trim().length >= 2
+      && lastName.trim().length >= 2
+      && country.length > 0
+      && goals.length > 0
+      && sectors.length > 0;
   };
+
+  const canAdvance = step === 0
+    ? firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0
+    : step === 1 ? goals.length > 0 : sectors.length > 0;
+
+  const stepTitle = step === 0
+    ? t('auth.createProfile.tellUsAboutYou')
+    : step === 1
+    ? t('auth.createProfile.yourGoals')
+    : t('auth.createProfile.yourSectors');
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -351,10 +377,12 @@ export default function CreateProfileScreen() {
           >
             <View style={styles.stepContent}>
               <View style={styles.stepHeader}>
-                <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.tellUsAboutYou')}</Text>
+                <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{stepTitle}</Text>
+                <Text style={[styles.stepProgress, { color: colors.textSecondary }]}>{step + 1}/3</Text>
               </View>
 
               <View style={styles.formFields}>
+	              {step === 0 && <>
 	              {/* Photo de profil */}
 	              <View style={styles.photoSection}>
 	                <Pressable
@@ -548,7 +576,55 @@ export default function CreateProfileScreen() {
 
                 {/* Separator - Contact */}
                 <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+	              </>}
 
+                {step === 1 && <View style={styles.fieldContainer}>
+                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.yourGoals')} *</Text>
+                  <Text style={[styles.fieldHint, { color: colors.gray500 }]}>{t('auth.createProfile.goalsHint', { max: MAX_GOALS })}</Text>
+                  <View style={styles.choiceGrid}>
+                    {GOAL_DATA.map((goal) => {
+                      const selected = goals.includes(goal.id);
+                      return (
+                        <Chip
+                          key={goal.id}
+                          label={t(goal.labelKey)}
+                          selected={selected}
+                          onPress={() => {
+                            if (selected) form.setValue('goals', goals.filter((value) => value !== goal.id));
+                            else if (goals.length < MAX_GOALS) form.setValue('goals', [...goals, goal.id]);
+                          }}
+                          style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, selected && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                          textStyle={[styles.optionChipText, { color: colors.gray700 }, selected && { color: colors.textOnPrimary }]}
+                        />
+                      );
+                    })}
+                  </View>
+                </View>}
+
+                {step === 2 && <View style={styles.fieldContainer}>
+                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.yourSectors')} *</Text>
+                  <Text style={[styles.fieldHint, { color: colors.gray500 }]}>{t('auth.createProfile.sectorsHint', { max: MAX_SECTORS })}</Text>
+                  <View style={styles.choiceGrid}>
+                    {SECTOR_DATA.map((sector) => {
+                      const selected = sectors.includes(sector.id);
+                      return (
+                        <Chip
+                          key={sector.id}
+                          label={t(sector.labelKey)}
+                          selected={selected}
+                          onPress={() => {
+                            if (selected) form.setValue('sectors', sectors.filter((value) => value !== sector.id));
+                            else if (sectors.length < MAX_SECTORS) form.setValue('sectors', [...sectors, sector.id]);
+                          }}
+                          style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, selected && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                          textStyle={[styles.optionChipText, { color: colors.gray700 }, selected && { color: colors.textOnPrimary }]}
+                        />
+                      );
+                    })}
+                  </View>
+                </View>}
+
+	              {step === 0 && <>
                 {/* Téléphone */}
                 <PhoneInput
                   label={t('auth.createProfile.phone')}
@@ -600,6 +676,7 @@ export default function CreateProfileScreen() {
                     />
                   </View>
                 </View>
+	              </>}
               </View>
             </View>
           </ScrollView>
@@ -610,7 +687,7 @@ export default function CreateProfileScreen() {
               { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) },
             ]}
           >
-            <Pressable
+            {step === 0 && <Pressable
               onPress={handleDeleteAccount}
               accessibilityRole="button"
               accessibilityLabel={t('auth.createProfile.deleteAccountCta')}
@@ -619,27 +696,40 @@ export default function CreateProfileScreen() {
               <Text style={[styles.deleteFooterText, { color: colors.gray600 }]}>
                 {t('auth.createProfile.deleteAccountCta')}
               </Text>
-            </Pressable>
-            <Button
-              title={
-                form.state.isSubmitting
-                  ? t('common.creating')
-                  : t('auth.createProfile.complete')
-              }
-              onPress={handleSubmitProfile}
-              disabled={!canProceed() || form.state.isSubmitting}
-              fullWidth
-              icon={
-                form.state.isSubmitting ? undefined : (
-                  <ChevronRight
-                    size={ICON.size.md}
-                    color={colors.textOnPrimary}
-                    strokeWidth={ICON.strokeWidth}
-                  />
-                )
-              }
-              iconPosition="right"
-            />
+            </Pressable>}
+            <View style={styles.footerActions}>
+              {step > 0 && (
+                <Button
+                  title={t('common.previous')}
+                  onPress={() => setStep((value) => value - 1)}
+                  variant="secondary"
+                  style={styles.footerAction}
+                />
+              )}
+              <Button
+                title={
+                  step < 2
+                    ? t('common.next')
+                    : form.state.isSubmitting
+                    ? t('common.creating')
+                    : t('auth.createProfile.complete')
+                }
+                onPress={step < 2 ? () => setStep((value) => value + 1) : handleSubmitProfile}
+                disabled={!canAdvance || form.state.isSubmitting}
+                fullWidth={step === 0}
+                style={step > 0 ? styles.footerAction : undefined}
+                icon={
+                  form.state.isSubmitting || step === 2 ? undefined : (
+                    <ChevronRight
+                      size={ICON.size.md}
+                      color={colors.textOnPrimary}
+                      strokeWidth={ICON.strokeWidth}
+                    />
+                  )
+                }
+                iconPosition="right"
+              />
+            </View>
           </View>
         </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
@@ -713,6 +803,11 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginBottom: SPACING.sm,
   },
+  stepProgress: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginTop: SPACING.xs,
+  },
 
   formFields: {
     gap: SPACING.md,
@@ -761,6 +856,17 @@ const styles = StyleSheet.create({
   },
 
   fieldContainer: {
+    gap: SPACING.xs,
+  },
+  fieldHint: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    lineHeight: TYPOGRAPHY.fontSize.xs * 1.45,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  choiceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: SPACING.xs,
   },
 
@@ -814,6 +920,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xs,
+  },
+
+  footerActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+
+  footerAction: {
+    flex: 1,
   },
 
   // Preferences Section

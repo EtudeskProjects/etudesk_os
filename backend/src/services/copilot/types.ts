@@ -16,6 +16,10 @@ export interface TalentContext extends BaseTalentContext {
   language?: SupportedLanguage;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
+  /** Lightweight prompt for self-contained study interactions such as a mini quiz. */
+  useCompactStudyPrompt?: boolean;
+  /** Lightweight prompt for career guidance that does not query or mutate data. */
+  useCompactExplorerPrompt?: boolean;
 }
 
 export interface OrgContext {

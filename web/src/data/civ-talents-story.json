@@ -1,0 +1,3117 @@
+{
+  "generatedAt": "2026-07-04",
+  "source": "datasets/civ_talents/talents_with_interest_sector_ids.csv",
+  "summary": {
+    "profiles": 844918,
+    "columns": 22,
+    "completeRows": 210635,
+    "medianFilledFields": 18.0,
+    "sectorMentions": 2623572,
+    "averageSectorsPerProfile": 3.11,
+    "regionsKnown": 831551,
+    "abidjanCount": 442032,
+    "abidjanShareKnownRegions": 53.2,
+    "top5RegionShare": 77.5,
+    "femaleCount": 321368,
+    "maleCount": 523550,
+    "femaleShare": 38.0,
+    "medianAge": 34.5,
+    "diasporaCount": 3326,
+    "diasporaShareKnownCountries": 0.4
+  },
+  "quality": {
+    "missing": [
+      {
+        "name": "last_name",
+        "count": 23,
+        "share": 0.0
+      },
+      {
+        "name": "first_names",
+        "count": 31,
+        "share": 0.0
+      },
+      {
+        "name": "birth_date",
+        "count": 6040,
+        "share": 0.7
+      },
+      {
+        "name": "gender",
+        "count": 0,
+        "share": 0.0
+      },
+      {
+        "name": "email",
+        "count": 93677,
+        "share": 11.1
+      },
+      {
+        "name": "phone",
+        "count": 3936,
+        "share": 0.5
+      },
+      {
+        "name": "national_id_number",
+        "count": 14181,
+        "share": 1.7
+      },
+      {
+        "name": "nationality_country",
+        "count": 24122,
+        "share": 2.9
+      },
+      {
+        "name": "residence_country",
+        "count": 10039,
+        "share": 1.2
+      },
+      {
+        "name": "residence_city",
+        "count": 10778,
+        "share": 1.3
+      },
+      {
+        "name": "region",
+        "count": 13367,
+        "share": 1.6
+      },
+      {
+        "name": "education_level",
+        "count": 355982,
+        "share": 42.1
+      },
+      {
+        "name": "education_system_type",
+        "count": 406780,
+        "share": 48.1
+      },
+      {
+        "name": "institution_attended",
+        "count": 425023,
+        "share": 50.3
+      },
+      {
+        "name": "target_sector",
+        "count": 435515,
+        "share": 51.5
+      },
+      {
+        "name": "applicant_status",
+        "count": 523055,
+        "share": 61.9
+      },
+      {
+        "name": "registration_reason",
+        "count": 424736,
+        "share": 50.3
+      },
+      {
+        "name": "applicant_category",
+        "count": 496665,
+        "share": 58.8
+      },
+      {
+        "name": "marital_status",
+        "count": 73296,
+        "share": 8.7
+      },
+      {
+        "name": "disability_status",
+        "count": 31564,
+        "share": 3.7
+      },
+      {
+        "name": "aej_regional_office",
+        "count": 720,
+        "share": 0.1
+      },
+      {
+        "name": "interest_sector_ids",
+        "count": 0,
+        "share": 0.0
+      }
+    ],
+    "duplicateSignals": [
+      {
+        "name": "Numéros de téléphone",
+        "count": 57105,
+        "share": 6.8
+      },
+      {
+        "name": "Numéros identité",
+        "count": 21589,
+        "share": 2.6
+      },
+      {
+        "name": "Emails",
+        "count": 3617,
+        "share": 0.5
+      }
+    ],
+    "jan1Birthdates": {
+      "count": 79085,
+      "share": 9.4
+    }
+  },
+  "gender": [
+    {
+      "name": "Masculin",
+      "count": 523550,
+      "share": 62.0
+    },
+    {
+      "name": "Féminin",
+      "count": 321368,
+      "share": 38.0
+    }
+  ],
+  "ageDistribution": [
+    {
+      "name": "14-17",
+      "count": 295,
+      "share": 0.0
+    },
+    {
+      "name": "18-24",
+      "count": 36942,
+      "share": 4.4
+    },
+    {
+      "name": "25-29",
+      "count": 169583,
+      "share": 20.2
+    },
+    {
+      "name": "30-34",
+      "count": 229003,
+      "share": 27.3
+    },
+    {
+      "name": "35-39",
+      "count": 199658,
+      "share": 23.8
+    },
+    {
+      "name": "40-44",
+      "count": 125633,
+      "share": 15.0
+    },
+    {
+      "name": "45-49",
+      "count": 52581,
+      "share": 6.3
+    },
+    {
+      "name": "50-59",
+      "count": 20093,
+      "share": 2.4
+    },
+    {
+      "name": "60-80",
+      "count": 5090,
+      "share": 0.6
+    }
+  ],
+  "education": [
+    {
+      "name": "Supérieur",
+      "count": 312192,
+      "share": 63.9
+    },
+    {
+      "name": "Secondaire",
+      "count": 125383,
+      "share": 25.6
+    },
+    {
+      "name": "Aucun",
+      "count": 26191,
+      "share": 5.4
+    },
+    {
+      "name": "Primaire",
+      "count": 25170,
+      "share": 5.1
+    }
+  ],
+  "educationDetailed": [
+    {
+      "name": "Bac+2",
+      "count": 172727,
+      "share": 35.3
+    },
+    {
+      "name": "Terminale",
+      "count": 61127,
+      "share": 12.5
+    },
+    {
+      "name": "Bac+3",
+      "count": 40055,
+      "share": 8.2
+    },
+    {
+      "name": "Bac+1",
+      "count": 37175,
+      "share": 7.6
+    },
+    {
+      "name": "3e",
+      "count": 35781,
+      "share": 7.3
+    },
+    {
+      "name": "Bac+5",
+      "count": 32242,
+      "share": 6.6
+    },
+    {
+      "name": "Bac+4",
+      "count": 27671,
+      "share": 5.7
+    },
+    {
+      "name": "Aucun",
+      "count": 26191,
+      "share": 5.4
+    },
+    {
+      "name": "CM2",
+      "count": 15953,
+      "share": 3.3
+    },
+    {
+      "name": "1ère",
+      "count": 9296,
+      "share": 1.9
+    },
+    {
+      "name": "2nde",
+      "count": 7213,
+      "share": 1.5
+    },
+    {
+      "name": "4e",
+      "count": 5466,
+      "share": 1.1
+    },
+    {
+      "name": "5e",
+      "count": 3751,
+      "share": 0.8
+    },
+    {
+      "name": "6e",
+      "count": 2749,
+      "share": 0.6
+    },
+    {
+      "name": "CM1",
+      "count": 2574,
+      "share": 0.5
+    },
+    {
+      "name": "CE2",
+      "count": 2337,
+      "share": 0.5
+    },
+    {
+      "name": "Bac+6 et plus",
+      "count": 2322,
+      "share": 0.5
+    },
+    {
+      "name": "CE1",
+      "count": 2120,
+      "share": 0.4
+    },
+    {
+      "name": "CP2",
+      "count": 1180,
+      "share": 0.2
+    },
+    {
+      "name": "CP1",
+      "count": 1006,
+      "share": 0.2
+    }
+  ],
+  "regions": [
+    {
+      "name": "Abidjan",
+      "rank": 1,
+      "count": 442032,
+      "share": 53.2,
+      "x": 52,
+      "y": 86,
+      "femaleShare": 38.1,
+      "maleShare": 61.9,
+      "medianAge": 34.0,
+      "superiorShare": 75.5,
+      "topCities": [
+        {
+          "name": "Yopougon",
+          "count": 131941,
+          "share": 29.8
+        },
+        {
+          "name": "Abobo",
+          "count": 86454,
+          "share": 19.6
+        },
+        {
+          "name": "Cocody",
+          "count": 46338,
+          "share": 10.5
+        },
+        {
+          "name": "Adjamé",
+          "count": 36430,
+          "share": 8.2
+        },
+        {
+          "name": "Treichville",
+          "count": 26989,
+          "share": 6.1
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 376451,
+          "share": 27.0
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 216368,
+          "share": 15.5
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 176385,
+          "share": 12.6
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 148285,
+          "share": 10.6
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 132926,
+          "share": 9.5
+        }
+      ]
+    },
+    {
+      "name": "Gbêkê",
+      "rank": 2,
+      "count": 68559,
+      "share": 8.2,
+      "x": 55,
+      "y": 47,
+      "femaleShare": 37.9,
+      "maleShare": 62.1,
+      "medianAge": 34.5,
+      "superiorShare": 54.8,
+      "topCities": [
+        {
+          "name": "Bouaké",
+          "count": 43908,
+          "share": 64.0
+        },
+        {
+          "name": "Katiola",
+          "count": 2930,
+          "share": 4.3
+        },
+        {
+          "name": "Béoumi",
+          "count": 2798,
+          "share": 4.1
+        },
+        {
+          "name": "Mankono",
+          "count": 2371,
+          "share": 3.5
+        },
+        {
+          "name": "Dabakala",
+          "count": 1557,
+          "share": 2.3
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 58515,
+          "share": 26.5
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 52153,
+          "share": 23.7
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 41434,
+          "share": 18.8
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 12967,
+          "share": 5.9
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 10211,
+          "share": 4.6
+        }
+      ]
+    },
+    {
+      "name": "Haut-Sassandra",
+      "rank": 3,
+      "count": 59049,
+      "share": 7.1,
+      "x": 37,
+      "y": 56,
+      "femaleShare": 39.0,
+      "maleShare": 61.0,
+      "medianAge": 35.0,
+      "superiorShare": 40.8,
+      "topCities": [
+        {
+          "name": "Daloa",
+          "count": 33708,
+          "share": 57.1
+        },
+        {
+          "name": "Vavoua",
+          "count": 3322,
+          "share": 5.6
+        },
+        {
+          "name": "Séguéla",
+          "count": 3116,
+          "share": 5.3
+        },
+        {
+          "name": "Issia",
+          "count": 3010,
+          "share": 5.1
+        },
+        {
+          "name": "Bouaflé",
+          "count": 2587,
+          "share": 4.4
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 51073,
+          "share": 27.3
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 48391,
+          "share": 25.8
+        },
+        {
+          "name": "Numérique, informatique et télécommunications",
+          "count": 29470,
+          "share": 15.7
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 12672,
+          "share": 6.8
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 10440,
+          "share": 5.6
+        }
+      ]
+    },
+    {
+      "name": "Poro",
+      "rank": 4,
+      "count": 48424,
+      "share": 5.8,
+      "x": 53,
+      "y": 24,
+      "femaleShare": 35.9,
+      "maleShare": 64.1,
+      "medianAge": 36.0,
+      "superiorShare": 41.3,
+      "topCities": [
+        {
+          "name": "Korhogo",
+          "count": 25229,
+          "share": 52.1
+        },
+        {
+          "name": "Ferkessédougou",
+          "count": 3702,
+          "share": 7.6
+        },
+        {
+          "name": "Ouangolodougou",
+          "count": 2570,
+          "share": 5.3
+        },
+        {
+          "name": "Sinematiali",
+          "count": 1426,
+          "share": 2.9
+        },
+        {
+          "name": "Tengrela",
+          "count": 1110,
+          "share": 2.3
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 39727,
+          "share": 30.5
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 37397,
+          "share": 28.7
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 11889,
+          "share": 9.1
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 7107,
+          "share": 5.5
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 6074,
+          "share": 4.7
+        }
+      ]
+    },
+    {
+      "name": "Indénié-Djuablin",
+      "rank": 5,
+      "count": 26760,
+      "share": 3.2,
+      "x": 75,
+      "y": 57,
+      "femaleShare": 38.1,
+      "maleShare": 61.9,
+      "medianAge": 35.7,
+      "superiorShare": 51.1,
+      "topCities": [
+        {
+          "name": "Abengourou",
+          "count": 12649,
+          "share": 47.3
+        },
+        {
+          "name": "Bondoukou",
+          "count": 3422,
+          "share": 12.8
+        },
+        {
+          "name": "Agnibilékrou",
+          "count": 2406,
+          "share": 9.0
+        },
+        {
+          "name": "Bouna",
+          "count": 949,
+          "share": 3.5
+        },
+        {
+          "name": "Tanda",
+          "count": 873,
+          "share": 3.3
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 23773,
+          "share": 28.0
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 18145,
+          "share": 21.4
+        },
+        {
+          "name": "Action sociale, ONG et impact communautaire",
+          "count": 15236,
+          "share": 17.9
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 6127,
+          "share": 7.2
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 6076,
+          "share": 7.2
+        }
+      ]
+    },
+    {
+      "name": "Tonkpi",
+      "rank": 6,
+      "count": 25772,
+      "share": 3.1,
+      "x": 22,
+      "y": 58,
+      "femaleShare": 37.3,
+      "maleShare": 62.7,
+      "medianAge": 36.5,
+      "superiorShare": 32.1,
+      "topCities": [
+        {
+          "name": "Man",
+          "count": 8249,
+          "share": 32.0
+        },
+        {
+          "name": "Touba",
+          "count": 2474,
+          "share": 9.6
+        },
+        {
+          "name": "Danané",
+          "count": 2440,
+          "share": 9.5
+        },
+        {
+          "name": "Zouan-Hounien",
+          "count": 1357,
+          "share": 5.3
+        },
+        {
+          "name": "Biankouma",
+          "count": 1340,
+          "share": 5.2
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 23509,
+          "share": 28.5
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 20545,
+          "share": 24.9
+        },
+        {
+          "name": "Recherche, innovation et développement",
+          "count": 19100,
+          "share": 23.1
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 4660,
+          "share": 5.6
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 3194,
+          "share": 3.9
+        }
+      ]
+    },
+    {
+      "name": "Gôh",
+      "rank": 7,
+      "count": 25229,
+      "share": 3.0,
+      "x": 43,
+      "y": 70,
+      "femaleShare": 37.0,
+      "maleShare": 63.0,
+      "medianAge": 36.8,
+      "superiorShare": 38.9,
+      "topCities": [
+        {
+          "name": "Gagnoa",
+          "count": 9837,
+          "share": 39.0
+        },
+        {
+          "name": "Divo",
+          "count": 4095,
+          "share": 16.2
+        },
+        {
+          "name": "Oumé",
+          "count": 1808,
+          "share": 7.2
+        },
+        {
+          "name": "Diegonefla",
+          "count": 1587,
+          "share": 6.3
+        },
+        {
+          "name": "Lakota",
+          "count": 1212,
+          "share": 4.8
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 21712,
+          "share": 26.6
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 19917,
+          "share": 24.4
+        },
+        {
+          "name": "Numérique, informatique et télécommunications",
+          "count": 15074,
+          "share": 18.5
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 5844,
+          "share": 7.2
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 3937,
+          "share": 4.8
+        }
+      ]
+    },
+    {
+      "name": "Yamoussoukro",
+      "rank": 8,
+      "count": 25161,
+      "share": 3.0,
+      "x": 56,
+      "y": 60,
+      "femaleShare": 39.6,
+      "maleShare": 60.4,
+      "medianAge": 34.0,
+      "superiorShare": 57.2,
+      "topCities": [
+        {
+          "name": "Yamoussoukro",
+          "count": 20770,
+          "share": 82.5
+        },
+        {
+          "name": "Didiévi",
+          "count": 1715,
+          "share": 6.8
+        },
+        {
+          "name": "Djekanou",
+          "count": 495,
+          "share": 2.0
+        },
+        {
+          "name": "Attiegouakro",
+          "count": 298,
+          "share": 1.2
+        },
+        {
+          "name": "Tie Ndiekro",
+          "count": 239,
+          "share": 0.9
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 20342,
+          "share": 27.4
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 18792,
+          "share": 25.3
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 6605,
+          "share": 8.9
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 6282,
+          "share": 8.5
+        },
+        {
+          "name": "Agriculture, élevage et pêche",
+          "count": 2947,
+          "share": 4.0
+        }
+      ]
+    },
+    {
+      "name": "San-Pédro",
+      "rank": 9,
+      "count": 20359,
+      "share": 2.4,
+      "x": 33,
+      "y": 86,
+      "femaleShare": 40.0,
+      "maleShare": 60.0,
+      "medianAge": 35.5,
+      "superiorShare": 47.2,
+      "topCities": [
+        {
+          "name": "San-Pedro",
+          "count": 14019,
+          "share": 68.9
+        },
+        {
+          "name": "Tabou",
+          "count": 1820,
+          "share": 8.9
+        },
+        {
+          "name": "Sassandra",
+          "count": 1693,
+          "share": 8.3
+        },
+        {
+          "name": "Grand-Bereby",
+          "count": 1190,
+          "share": 5.8
+        },
+        {
+          "name": "Fresco",
+          "count": 491,
+          "share": 2.4
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 17000,
+          "share": 25.5
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 14262,
+          "share": 21.4
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 11303,
+          "share": 17.0
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 5828,
+          "share": 8.7
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 4903,
+          "share": 7.4
+        }
+      ]
+    },
+    {
+      "name": "Nzi",
+      "rank": 10,
+      "count": 19306,
+      "share": 2.3,
+      "x": 63,
+      "y": 61,
+      "femaleShare": 36.1,
+      "maleShare": 63.9,
+      "medianAge": 36.2,
+      "superiorShare": 37.7,
+      "topCities": [
+        {
+          "name": "Dimbokro",
+          "count": 6990,
+          "share": 36.2
+        },
+        {
+          "name": "Toumodi",
+          "count": 2576,
+          "share": 13.3
+        },
+        {
+          "name": "Bongouanou",
+          "count": 2202,
+          "share": 11.4
+        },
+        {
+          "name": "Bocanda",
+          "count": 1315,
+          "share": 6.8
+        },
+        {
+          "name": "Arrah",
+          "count": 1251,
+          "share": 6.5
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 16026,
+          "share": 30.2
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 14773,
+          "share": 27.8
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 5308,
+          "share": 10.0
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 3197,
+          "share": 6.0
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 2414,
+          "share": 4.5
+        }
+      ]
+    },
+    {
+      "name": "Kabadougou",
+      "rank": 11,
+      "count": 18229,
+      "share": 2.2,
+      "x": 34,
+      "y": 25,
+      "femaleShare": 41.6,
+      "maleShare": 58.4,
+      "medianAge": 37.0,
+      "superiorShare": 17.2,
+      "topCities": [
+        {
+          "name": "Odienné",
+          "count": 5086,
+          "share": 27.9
+        },
+        {
+          "name": "Boundiali",
+          "count": 1500,
+          "share": 8.2
+        },
+        {
+          "name": "Seguelon",
+          "count": 1422,
+          "share": 7.8
+        },
+        {
+          "name": "Goulia",
+          "count": 1304,
+          "share": 7.2
+        },
+        {
+          "name": "Bako",
+          "count": 1174,
+          "share": 6.4
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 16952,
+          "share": 29.8
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 16169,
+          "share": 28.4
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 14388,
+          "share": 25.3
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 2964,
+          "share": 5.2
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 1640,
+          "share": 2.9
+        }
+      ]
+    },
+    {
+      "name": "Sud-Comoé",
+      "rank": 12,
+      "count": 16457,
+      "share": 2.0,
+      "x": 70,
+      "y": 86,
+      "femaleShare": 39.5,
+      "maleShare": 60.5,
+      "medianAge": 33.6,
+      "superiorShare": 64.2,
+      "topCities": [
+        {
+          "name": "Aboisso",
+          "count": 4802,
+          "share": 29.2
+        },
+        {
+          "name": "Grand-Bassam",
+          "count": 4291,
+          "share": 26.1
+        },
+        {
+          "name": "Bonoua",
+          "count": 3099,
+          "share": 18.8
+        },
+        {
+          "name": "Adiake",
+          "count": 1038,
+          "share": 6.3
+        },
+        {
+          "name": "Assinie-Mafia",
+          "count": 645,
+          "share": 3.9
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 14649,
+          "share": 32.1
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 10623,
+          "share": 23.3
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 4012,
+          "share": 8.8
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 3727,
+          "share": 8.2
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 3624,
+          "share": 7.9
+        }
+      ]
+    },
+    {
+      "name": "Cavally",
+      "rank": 13,
+      "count": 13767,
+      "share": 1.7,
+      "x": 21,
+      "y": 73,
+      "femaleShare": 36.8,
+      "maleShare": 63.2,
+      "medianAge": 36.8,
+      "superiorShare": 24.9,
+      "topCities": [
+        {
+          "name": "Guiglo",
+          "count": 6088,
+          "share": 44.2
+        },
+        {
+          "name": "Duékoué",
+          "count": 2166,
+          "share": 15.7
+        },
+        {
+          "name": "Bangolo",
+          "count": 911,
+          "share": 6.6
+        },
+        {
+          "name": "Facobly",
+          "count": 847,
+          "share": 6.2
+        },
+        {
+          "name": "Toulepleu",
+          "count": 646,
+          "share": 4.7
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 11621,
+          "share": 26.4
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 10718,
+          "share": 24.4
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 9401,
+          "share": 21.4
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 3689,
+          "share": 8.4
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 1697,
+          "share": 3.9
+        }
+      ]
+    },
+    {
+      "name": "Nawa",
+      "rank": 14,
+      "count": 10132,
+      "share": 1.2,
+      "x": 30,
+      "y": 72,
+      "femaleShare": 39.2,
+      "maleShare": 60.8,
+      "medianAge": 36.5,
+      "superiorShare": 40.2,
+      "topCities": [
+        {
+          "name": "Soubré",
+          "count": 5392,
+          "share": 53.2
+        },
+        {
+          "name": "Meagui",
+          "count": 1500,
+          "share": 14.8
+        },
+        {
+          "name": "Lakota",
+          "count": 889,
+          "share": 8.8
+        },
+        {
+          "name": "Buyo",
+          "count": 876,
+          "share": 8.6
+        },
+        {
+          "name": "Grand-Zattry",
+          "count": 391,
+          "share": 3.9
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 8943,
+          "share": 33.9
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 8383,
+          "share": 31.7
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 1801,
+          "share": 6.8
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 1350,
+          "share": 5.1
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 1340,
+          "share": 5.1
+        }
+      ]
+    },
+    {
+      "name": "Iffou",
+      "rank": 15,
+      "count": 5513,
+      "share": 0.7,
+      "x": 67,
+      "y": 55,
+      "femaleShare": 34.0,
+      "maleShare": 66.0,
+      "medianAge": 34.5,
+      "superiorShare": 36.9,
+      "topCities": [
+        {
+          "name": "Daoukro",
+          "count": 2723,
+          "share": 49.4
+        },
+        {
+          "name": "Mbahiakro",
+          "count": 633,
+          "share": 11.5
+        },
+        {
+          "name": "Prikro",
+          "count": 537,
+          "share": 9.7
+        },
+        {
+          "name": "Sandegue",
+          "count": 524,
+          "share": 9.5
+        },
+        {
+          "name": "Ouelle",
+          "count": 326,
+          "share": 5.9
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 4750,
+          "share": 26.7
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 4388,
+          "share": 24.6
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 3534,
+          "share": 19.8
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 1365,
+          "share": 7.7
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 881,
+          "share": 4.9
+        }
+      ]
+    },
+    {
+      "name": "Gontougo",
+      "rank": 16,
+      "count": 2253,
+      "share": 0.3,
+      "x": 77,
+      "y": 43,
+      "femaleShare": 37.2,
+      "maleShare": 62.8,
+      "medianAge": 33.5,
+      "superiorShare": 33.0,
+      "topCities": [
+        {
+          "name": "Bondoukou",
+          "count": 1646,
+          "share": 73.1
+        },
+        {
+          "name": "Tanda",
+          "count": 138,
+          "share": 6.1
+        },
+        {
+          "name": "Koun-Fao",
+          "count": 98,
+          "share": 4.3
+        },
+        {
+          "name": "Kouassi-Datekro",
+          "count": 92,
+          "share": 4.1
+        },
+        {
+          "name": "Transua",
+          "count": 91,
+          "share": 4.0
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1957,
+          "share": 33.8
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 1889,
+          "share": 32.7
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 429,
+          "share": 7.4
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 406,
+          "share": 7.0
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 221,
+          "share": 3.8
+        }
+      ]
+    },
+    {
+      "name": "Tchologo",
+      "rank": 17,
+      "count": 1933,
+      "share": 0.2,
+      "x": 57,
+      "y": 14,
+      "femaleShare": 46.3,
+      "maleShare": 53.7,
+      "medianAge": 33.4,
+      "superiorShare": 41.7,
+      "topCities": [
+        {
+          "name": "Ferkessédougou",
+          "count": 1232,
+          "share": 63.7
+        },
+        {
+          "name": "Ouangolodougou",
+          "count": 264,
+          "share": 13.7
+        },
+        {
+          "name": "Toumoukoro",
+          "count": 98,
+          "share": 5.1
+        },
+        {
+          "name": "Kong",
+          "count": 82,
+          "share": 4.2
+        },
+        {
+          "name": "Badikaha",
+          "count": 61,
+          "share": 3.2
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1772,
+          "share": 27.3
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 1561,
+          "share": 24.1
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 1338,
+          "share": 20.6
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 401,
+          "share": 6.2
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 322,
+          "share": 5.0
+        }
+      ]
+    },
+    {
+      "name": "Bagoué",
+      "rank": 18,
+      "count": 1349,
+      "share": 0.2,
+      "x": 45,
+      "y": 15,
+      "femaleShare": 46.9,
+      "maleShare": 53.1,
+      "medianAge": 34.5,
+      "superiorShare": 38.4,
+      "topCities": [
+        {
+          "name": "Boundiali",
+          "count": 683,
+          "share": 50.6
+        },
+        {
+          "name": "Tengrela",
+          "count": 228,
+          "share": 16.9
+        },
+        {
+          "name": "Kouto",
+          "count": 156,
+          "share": 11.6
+        },
+        {
+          "name": "Kolia",
+          "count": 68,
+          "share": 5.0
+        },
+        {
+          "name": "Kassere",
+          "count": 42,
+          "share": 3.1
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Agriculture, élevage et pêche",
+          "count": 1028,
+          "share": 31.7
+        },
+        {
+          "name": "Environnement, climat et assainissement",
+          "count": 1018,
+          "share": 31.4
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 277,
+          "share": 8.5
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 175,
+          "share": 5.4
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 151,
+          "share": 4.7
+        }
+      ]
+    },
+    {
+      "name": "Bounkani",
+      "rank": 19,
+      "count": 1263,
+      "share": 0.2,
+      "x": 82,
+      "y": 30,
+      "femaleShare": 31.8,
+      "maleShare": 68.2,
+      "medianAge": 34.6,
+      "superiorShare": 46.2,
+      "topCities": [
+        {
+          "name": "Bouna",
+          "count": 804,
+          "share": 63.7
+        },
+        {
+          "name": "Tehini",
+          "count": 130,
+          "share": 10.3
+        },
+        {
+          "name": "Doropo",
+          "count": 109,
+          "share": 8.6
+        },
+        {
+          "name": "Nassian",
+          "count": 104,
+          "share": 8.2
+        },
+        {
+          "name": "Ondefidouo",
+          "count": 21,
+          "share": 1.7
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 1212,
+          "share": 44.1
+        },
+        {
+          "name": "Éducation, formation et pédagogie",
+          "count": 1163,
+          "share": 42.3
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 132,
+          "share": 4.8
+        },
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 64,
+          "share": 2.3
+        },
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 43,
+          "share": 1.6
+        }
+      ]
+    },
+    {
+      "name": "Marahoué",
+      "rank": 20,
+      "count": 1,
+      "share": 0.0,
+      "x": 45,
+      "y": 55,
+      "femaleShare": 0.0,
+      "maleShare": 100.0,
+      "medianAge": 42.7,
+      "superiorShare": 100.0,
+      "topCities": [
+        {
+          "name": "Zuenoula",
+          "count": 1,
+          "share": 100.0
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Industrie, production et maintenance",
+          "count": 1,
+          "share": 20.0
+        },
+        {
+          "name": "Énergie, eau et services publics",
+          "count": 1,
+          "share": 20.0
+        },
+        {
+          "name": "Administration publique et gouvernance",
+          "count": 1,
+          "share": 20.0
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1,
+          "share": 20.0
+        },
+        {
+          "name": "Transport, logistique et chaîne d'approvisionnement",
+          "count": 1,
+          "share": 20.0
+        }
+      ]
+    },
+    {
+      "name": "Béré",
+      "rank": 21,
+      "count": 1,
+      "share": 0.0,
+      "x": 50,
+      "y": 50,
+      "femaleShare": 0.0,
+      "maleShare": 100.0,
+      "medianAge": 31.3,
+      "superiorShare": 0.0,
+      "topCities": [
+        {
+          "name": "Tieningboue",
+          "count": 1,
+          "share": 100.0
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 1,
+          "share": 50.0
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1,
+          "share": 50.0
+        }
+      ]
+    },
+    {
+      "name": "Bélier",
+      "rank": 22,
+      "count": 1,
+      "share": 0.0,
+      "x": 57,
+      "y": 64,
+      "femaleShare": 0.0,
+      "maleShare": 100.0,
+      "medianAge": null,
+      "superiorShare": 0.0,
+      "topCities": [
+        {
+          "name": "Toumodi",
+          "count": 1,
+          "share": 100.0
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 1,
+          "share": 50.0
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1,
+          "share": 50.0
+        }
+      ]
+    },
+    {
+      "name": "La Mé",
+      "rank": 23,
+      "count": 1,
+      "share": 0.0,
+      "x": 50,
+      "y": 50,
+      "femaleShare": 0.0,
+      "maleShare": 100.0,
+      "medianAge": null,
+      "superiorShare": 0.0,
+      "topCities": [
+        {
+          "name": "Yakasse-Attobrou",
+          "count": 1,
+          "share": 100.0
+        }
+      ],
+      "topSectors": [
+        {
+          "name": "Commerce, vente et distribution",
+          "count": 1,
+          "share": 50.0
+        },
+        {
+          "name": "Services professionnels, administration et conseil",
+          "count": 1,
+          "share": 50.0
+        }
+      ]
+    }
+  ],
+  "cities": [
+    {
+      "name": "Yopougon",
+      "count": 132900,
+      "share": 15.9
+    },
+    {
+      "name": "Abobo",
+      "count": 87122,
+      "share": 10.4
+    },
+    {
+      "name": "Cocody",
+      "count": 46821,
+      "share": 5.6
+    },
+    {
+      "name": "Bouaké",
+      "count": 45196,
+      "share": 5.4
+    },
+    {
+      "name": "Adjamé",
+      "count": 36648,
+      "share": 4.4
+    },
+    {
+      "name": "Daloa",
+      "count": 34260,
+      "share": 4.1
+    },
+    {
+      "name": "Treichville",
+      "count": 27038,
+      "share": 3.2
+    },
+    {
+      "name": "Korhogo",
+      "count": 25558,
+      "share": 3.1
+    },
+    {
+      "name": "Yamoussoukro",
+      "count": 21609,
+      "share": 2.6
+    },
+    {
+      "name": "Port-Bouët",
+      "count": 19746,
+      "share": 2.4
+    },
+    {
+      "name": "Koumassi",
+      "count": 17241,
+      "share": 2.1
+    },
+    {
+      "name": "San-Pedro",
+      "count": 14327,
+      "share": 1.7
+    },
+    {
+      "name": "Abengourou",
+      "count": 13603,
+      "share": 1.6
+    },
+    {
+      "name": "Bingerville",
+      "count": 10205,
+      "share": 1.2
+    },
+    {
+      "name": "Gagnoa",
+      "count": 10098,
+      "share": 1.2
+    },
+    {
+      "name": "Marcory",
+      "count": 9286,
+      "share": 1.1
+    },
+    {
+      "name": "Man",
+      "count": 8519,
+      "share": 1.0
+    },
+    {
+      "name": "Dimbokro",
+      "count": 7171,
+      "share": 0.9
+    },
+    {
+      "name": "Anyama",
+      "count": 6955,
+      "share": 0.8
+    },
+    {
+      "name": "Guiglo",
+      "count": 6164,
+      "share": 0.7
+    },
+    {
+      "name": "Attécoubé",
+      "count": 6124,
+      "share": 0.7
+    },
+    {
+      "name": "Soubré",
+      "count": 5621,
+      "share": 0.7
+    },
+    {
+      "name": "Aboisso",
+      "count": 5463,
+      "share": 0.7
+    },
+    {
+      "name": "Bondoukou",
+      "count": 5234,
+      "share": 0.6
+    },
+    {
+      "name": "Odienné",
+      "count": 5183,
+      "share": 0.6
+    },
+    {
+      "name": "Ferkessédougou",
+      "count": 5016,
+      "share": 0.6
+    },
+    {
+      "name": "Grand-Bassam",
+      "count": 4708,
+      "share": 0.6
+    },
+    {
+      "name": "Divo",
+      "count": 4387,
+      "share": 0.5
+    },
+    {
+      "name": "Dabou",
+      "count": 4013,
+      "share": 0.5
+    },
+    {
+      "name": "Plateau (DG)",
+      "count": 3857,
+      "share": 0.5
+    }
+  ],
+  "sectors": [
+    {
+      "name": "Services professionnels, administration et conseil",
+      "rank": 1,
+      "mentions": 720321,
+      "profileShare": 85.3,
+      "mentionShare": 27.5,
+      "femaleShare": 39.5,
+      "maleShare": 60.5,
+      "medianAge": 34.4,
+      "superiorShare": 70.5,
+      "secondaryShare": 21.4,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 376451,
+          "share": 53.1
+        },
+        {
+          "name": "Gbêkê",
+          "count": 58515,
+          "share": 8.3
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 51073,
+          "share": 7.2
+        },
+        {
+          "name": "Poro",
+          "count": 39727,
+          "share": 5.6
+        },
+        {
+          "name": "Indénié-Djuablin",
+          "count": 23773,
+          "share": 3.4
+        }
+      ]
+    },
+    {
+      "name": "Administration publique et gouvernance",
+      "rank": 2,
+      "mentions": 441036,
+      "profileShare": 52.2,
+      "mentionShare": 16.8,
+      "femaleShare": 38.2,
+      "maleShare": 61.8,
+      "medianAge": 34.5,
+      "superiorShare": 59.7,
+      "secondaryShare": 28.7,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 216368,
+          "share": 49.8
+        },
+        {
+          "name": "Gbêkê",
+          "count": 52153,
+          "share": 12.0
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 48391,
+          "share": 11.1
+        },
+        {
+          "name": "Poro",
+          "count": 37397,
+          "share": 8.6
+        },
+        {
+          "name": "Nzi",
+          "count": 14773,
+          "share": 3.4
+        }
+      ]
+    },
+    {
+      "name": "Commerce, vente et distribution",
+      "rank": 3,
+      "mentions": 312363,
+      "profileShare": 37.0,
+      "mentionShare": 11.9,
+      "femaleShare": 42.1,
+      "maleShare": 57.9,
+      "medianAge": 35.0,
+      "superiorShare": 65.3,
+      "secondaryShare": 22.5,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 148285,
+          "share": 48.2
+        },
+        {
+          "name": "Gbêkê",
+          "count": 41434,
+          "share": 13.5
+        },
+        {
+          "name": "Gôh",
+          "count": 19917,
+          "share": 6.5
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 18792,
+          "share": 6.1
+        },
+        {
+          "name": "Kabadougou",
+          "count": 16169,
+          "share": 5.3
+        }
+      ]
+    },
+    {
+      "name": "Éducation, formation et pédagogie",
+      "rank": 4,
+      "mentions": 307795,
+      "profileShare": 36.4,
+      "mentionShare": 11.7,
+      "femaleShare": 36.8,
+      "maleShare": 63.2,
+      "medianAge": 34.2,
+      "superiorShare": 62.1,
+      "secondaryShare": 28.5,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 176385,
+          "share": 58.1
+        },
+        {
+          "name": "Tonkpi",
+          "count": 20545,
+          "share": 6.8
+        },
+        {
+          "name": "Indénié-Djuablin",
+          "count": 18145,
+          "share": 6.0
+        },
+        {
+          "name": "Kabadougou",
+          "count": 14388,
+          "share": 4.7
+        },
+        {
+          "name": "San-Pédro",
+          "count": 11303,
+          "share": 3.7
+        }
+      ]
+    },
+    {
+      "name": "Industrie, production et maintenance",
+      "rank": 5,
+      "mentions": 198332,
+      "profileShare": 23.5,
+      "mentionShare": 7.6,
+      "femaleShare": 33.9,
+      "maleShare": 66.1,
+      "medianAge": 33.5,
+      "superiorShare": 70.6,
+      "secondaryShare": 24.9,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 132926,
+          "share": 67.7
+        },
+        {
+          "name": "Gbêkê",
+          "count": 12967,
+          "share": 6.6
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 7389,
+          "share": 3.8
+        },
+        {
+          "name": "Poro",
+          "count": 7107,
+          "share": 3.6
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 6282,
+          "share": 3.2
+        }
+      ]
+    },
+    {
+      "name": "Numérique, informatique et télécommunications",
+      "rank": 6,
+      "mentions": 110107,
+      "profileShare": 13.0,
+      "mentionShare": 4.2,
+      "femaleShare": 34.0,
+      "maleShare": 66.0,
+      "medianAge": 34.7,
+      "superiorShare": 91.2,
+      "secondaryShare": 7.9,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 50262,
+          "share": 46.5
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 29470,
+          "share": 27.2
+        },
+        {
+          "name": "Gôh",
+          "count": 15074,
+          "share": 13.9
+        },
+        {
+          "name": "Gbêkê",
+          "count": 4115,
+          "share": 3.8
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 1957,
+          "share": 1.8
+        }
+      ]
+    },
+    {
+      "name": "Recherche, innovation et développement",
+      "rank": 7,
+      "mentions": 92851,
+      "profileShare": 11.0,
+      "mentionShare": 3.5,
+      "femaleShare": 36.5,
+      "maleShare": 63.5,
+      "medianAge": 34.4,
+      "superiorShare": 84.2,
+      "secondaryShare": 13.9,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 45515,
+          "share": 49.6
+        },
+        {
+          "name": "Tonkpi",
+          "count": 19100,
+          "share": 20.8
+        },
+        {
+          "name": "Gbêkê",
+          "count": 7817,
+          "share": 8.5
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 6414,
+          "share": 7.0
+        },
+        {
+          "name": "Poro",
+          "count": 3786,
+          "share": 4.1
+        }
+      ]
+    },
+    {
+      "name": "Communication, médias et contenu",
+      "rank": 8,
+      "mentions": 86297,
+      "profileShare": 10.2,
+      "mentionShare": 3.3,
+      "femaleShare": 51.3,
+      "maleShare": 48.7,
+      "medianAge": 35.0,
+      "superiorShare": 65.3,
+      "secondaryShare": 19.0,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 52413,
+          "share": 61.3
+        },
+        {
+          "name": "Gbêkê",
+          "count": 7620,
+          "share": 8.9
+        },
+        {
+          "name": "Poro",
+          "count": 4930,
+          "share": 5.8
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 3862,
+          "share": 4.5
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 2864,
+          "share": 3.4
+        }
+      ]
+    },
+    {
+      "name": "Finance, banque, assurance et comptabilité",
+      "rank": 9,
+      "mentions": 65631,
+      "profileShare": 7.8,
+      "mentionShare": 2.5,
+      "femaleShare": 44.2,
+      "maleShare": 55.8,
+      "medianAge": 34.0,
+      "superiorShare": 88.6,
+      "secondaryShare": 10.8,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 46847,
+          "share": 72.6
+        },
+        {
+          "name": "Gbêkê",
+          "count": 4321,
+          "share": 6.7
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 3347,
+          "share": 5.2
+        },
+        {
+          "name": "Indénié-Djuablin",
+          "count": 1602,
+          "share": 2.5
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 1462,
+          "share": 2.3
+        }
+      ]
+    },
+    {
+      "name": "Transport, logistique et chaîne d'approvisionnement",
+      "rank": 10,
+      "mentions": 51838,
+      "profileShare": 6.1,
+      "mentionShare": 2.0,
+      "femaleShare": 15.3,
+      "maleShare": 84.7,
+      "medianAge": 34.7,
+      "superiorShare": 52.7,
+      "secondaryShare": 36.8,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 36548,
+          "share": 71.5
+        },
+        {
+          "name": "Gbêkê",
+          "count": 3381,
+          "share": 6.6
+        },
+        {
+          "name": "Poro",
+          "count": 1748,
+          "share": 3.4
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 1656,
+          "share": 3.2
+        },
+        {
+          "name": "San-Pédro",
+          "count": 1261,
+          "share": 2.5
+        }
+      ]
+    },
+    {
+      "name": "Action sociale, ONG et impact communautaire",
+      "rank": 11,
+      "mentions": 47739,
+      "profileShare": 5.7,
+      "mentionShare": 1.8,
+      "femaleShare": 45.9,
+      "maleShare": 54.1,
+      "medianAge": 34.7,
+      "superiorShare": 49.2,
+      "secondaryShare": 44.5,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 15485,
+          "share": 32.9
+        },
+        {
+          "name": "Indénié-Djuablin",
+          "count": 15236,
+          "share": 32.3
+        },
+        {
+          "name": "Gbêkê",
+          "count": 3803,
+          "share": 8.1
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 2855,
+          "share": 6.1
+        },
+        {
+          "name": "Poro",
+          "count": 2036,
+          "share": 4.3
+        }
+      ]
+    },
+    {
+      "name": "Agriculture, élevage et pêche",
+      "rank": 12,
+      "mentions": 37768,
+      "profileShare": 4.5,
+      "mentionShare": 1.4,
+      "femaleShare": 23.4,
+      "maleShare": 76.6,
+      "medianAge": 36.2,
+      "superiorShare": 52.0,
+      "secondaryShare": 26.8,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 14541,
+          "share": 38.8
+        },
+        {
+          "name": "Poro",
+          "count": 4083,
+          "share": 10.9
+        },
+        {
+          "name": "Gbêkê",
+          "count": 3072,
+          "share": 8.2
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 2947,
+          "share": 7.9
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 2797,
+          "share": 7.5
+        }
+      ]
+    },
+    {
+      "name": "Énergie, eau et services publics",
+      "rank": 13,
+      "mentions": 37561,
+      "profileShare": 4.4,
+      "mentionShare": 1.4,
+      "femaleShare": 11.8,
+      "maleShare": 88.2,
+      "medianAge": 33.6,
+      "superiorShare": 63.5,
+      "secondaryShare": 32.2,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 26134,
+          "share": 70.6
+        },
+        {
+          "name": "Gbêkê",
+          "count": 2230,
+          "share": 6.0
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 1376,
+          "share": 3.7
+        },
+        {
+          "name": "Poro",
+          "count": 1326,
+          "share": 3.6
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 1005,
+          "share": 2.7
+        }
+      ]
+    },
+    {
+      "name": "Environnement, climat et assainissement",
+      "rank": 14,
+      "mentions": 34259,
+      "profileShare": 4.1,
+      "mentionShare": 1.3,
+      "femaleShare": 20.9,
+      "maleShare": 79.1,
+      "medianAge": 36.5,
+      "superiorShare": 43.5,
+      "secondaryShare": 32.2,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 13557,
+          "share": 40.1
+        },
+        {
+          "name": "Poro",
+          "count": 3283,
+          "share": 9.7
+        },
+        {
+          "name": "Gbêkê",
+          "count": 2885,
+          "share": 8.5
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 2765,
+          "share": 8.2
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 1993,
+          "share": 5.9
+        }
+      ]
+    },
+    {
+      "name": "BTP, construction et travaux publics",
+      "rank": 15,
+      "mentions": 21703,
+      "profileShare": 2.6,
+      "mentionShare": 0.8,
+      "femaleShare": 11.8,
+      "maleShare": 88.2,
+      "medianAge": 33.0,
+      "superiorShare": 61.9,
+      "secondaryShare": 31.3,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 13382,
+          "share": 62.3
+        },
+        {
+          "name": "Gbêkê",
+          "count": 1582,
+          "share": 7.4
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 1031,
+          "share": 4.8
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 975,
+          "share": 4.5
+        },
+        {
+          "name": "Poro",
+          "count": 871,
+          "share": 4.1
+        }
+      ]
+    },
+    {
+      "name": "Santé, médical et pharmacie",
+      "rank": 16,
+      "mentions": 18247,
+      "profileShare": 2.2,
+      "mentionShare": 0.7,
+      "femaleShare": 73.1,
+      "maleShare": 26.9,
+      "medianAge": 34.0,
+      "superiorShare": 24.1,
+      "secondaryShare": 72.3,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 7961,
+          "share": 44.0
+        },
+        {
+          "name": "Gbêkê",
+          "count": 1881,
+          "share": 10.4
+        },
+        {
+          "name": "Poro",
+          "count": 1125,
+          "share": 6.2
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 1029,
+          "share": 5.7
+        },
+        {
+          "name": "Gôh",
+          "count": 976,
+          "share": 5.4
+        }
+      ]
+    },
+    {
+      "name": "Services aux personnes",
+      "rank": 17,
+      "mentions": 13579,
+      "profileShare": 1.6,
+      "mentionShare": 0.5,
+      "femaleShare": 71.6,
+      "maleShare": 28.4,
+      "medianAge": 33.5,
+      "superiorShare": 30.1,
+      "secondaryShare": 61.0,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 6838,
+          "share": 51.2
+        },
+        {
+          "name": "Gbêkê",
+          "count": 925,
+          "share": 6.9
+        },
+        {
+          "name": "Poro",
+          "count": 862,
+          "share": 6.5
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 635,
+          "share": 4.8
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 551,
+          "share": 4.1
+        }
+      ]
+    },
+    {
+      "name": "Tourisme, hôtellerie et restauration",
+      "rank": 18,
+      "mentions": 8141,
+      "profileShare": 1.0,
+      "mentionShare": 0.3,
+      "femaleShare": 64.9,
+      "maleShare": 35.1,
+      "medianAge": 32.6,
+      "superiorShare": 58.2,
+      "secondaryShare": 35.6,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 5543,
+          "share": 69.2
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 586,
+          "share": 7.3
+        },
+        {
+          "name": "Gbêkê",
+          "count": 374,
+          "share": 4.7
+        },
+        {
+          "name": "Sud-Comoé",
+          "count": 210,
+          "share": 2.6
+        },
+        {
+          "name": "San-Pédro",
+          "count": 208,
+          "share": 2.6
+        }
+      ]
+    },
+    {
+      "name": "Artisanat et métiers manuels",
+      "rank": 19,
+      "mentions": 8062,
+      "profileShare": 1.0,
+      "mentionShare": 0.3,
+      "femaleShare": 34.5,
+      "maleShare": 65.5,
+      "medianAge": 36.5,
+      "superiorShare": 26.1,
+      "secondaryShare": 47.5,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 4161,
+          "share": 53.7
+        },
+        {
+          "name": "Gbêkê",
+          "count": 610,
+          "share": 7.9
+        },
+        {
+          "name": "Poro",
+          "count": 552,
+          "share": 7.1
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 531,
+          "share": 6.9
+        },
+        {
+          "name": "San-Pédro",
+          "count": 293,
+          "share": 3.8
+        }
+      ]
+    },
+    {
+      "name": "Ressources naturelles et extraction",
+      "rank": 20,
+      "mentions": 6377,
+      "profileShare": 0.8,
+      "mentionShare": 0.2,
+      "femaleShare": 18.0,
+      "maleShare": 82.0,
+      "medianAge": 34.3,
+      "superiorShare": 95.7,
+      "secondaryShare": 3.3,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 4826,
+          "share": 76.9
+        },
+        {
+          "name": "Gbêkê",
+          "count": 241,
+          "share": 3.8
+        },
+        {
+          "name": "Yamoussoukro",
+          "count": 210,
+          "share": 3.3
+        },
+        {
+          "name": "Tonkpi",
+          "count": 210,
+          "share": 3.3
+        },
+        {
+          "name": "Poro",
+          "count": 139,
+          "share": 2.2
+        }
+      ]
+    },
+    {
+      "name": "Sécurité, sûreté et protection",
+      "rank": 21,
+      "mentions": 3565,
+      "profileShare": 0.4,
+      "mentionShare": 0.1,
+      "femaleShare": 30.7,
+      "maleShare": 69.3,
+      "medianAge": 38.8,
+      "superiorShare": 29.0,
+      "secondaryShare": 44.1,
+      "topRegions": [
+        {
+          "name": "Abidjan",
+          "count": 2239,
+          "share": 63.2
+        },
+        {
+          "name": "Gbêkê",
+          "count": 319,
+          "share": 9.0
+        },
+        {
+          "name": "San-Pédro",
+          "count": 179,
+          "share": 5.1
+        },
+        {
+          "name": "Indénié-Djuablin",
+          "count": 113,
+          "share": 3.2
+        },
+        {
+          "name": "Haut-Sassandra",
+          "count": 106,
+          "share": 3.0
+        }
+      ]
+    }
+  ],
+  "sectorSelectionCounts": [
+    {
+      "name": "1",
+      "count": 38,
+      "share": 0.0
+    },
+    {
+      "name": "2",
+      "count": 261624,
+      "share": 31.0
+    },
+    {
+      "name": "3",
+      "count": 333776,
+      "share": 39.5
+    },
+    {
+      "name": "4",
+      "count": 148442,
+      "share": 17.6
+    },
+    {
+      "name": "5",
+      "count": 101038,
+      "share": 12.0
+    }
+  ],
+  "diasporaCountries": [
+    {
+      "name": "France",
+      "count": 503,
+      "share": 15.1
+    },
+    {
+      "name": "Congo",
+      "count": 293,
+      "share": 8.8
+    },
+    {
+      "name": "Sénégal",
+      "count": 263,
+      "share": 7.9
+    },
+    {
+      "name": "Burkina Faso",
+      "count": 232,
+      "share": 7.0
+    },
+    {
+      "name": "Tunisie",
+      "count": 170,
+      "share": 5.1
+    },
+    {
+      "name": "Maroc",
+      "count": 147,
+      "share": 4.4
+    },
+    {
+      "name": "Cameroun",
+      "count": 139,
+      "share": 4.2
+    },
+    {
+      "name": "Bénin",
+      "count": 134,
+      "share": 4.0
+    },
+    {
+      "name": "Afrique du Sud",
+      "count": 98,
+      "share": 2.9
+    },
+    {
+      "name": "Mali",
+      "count": 91,
+      "share": 2.7
+    },
+    {
+      "name": "Togo",
+      "count": 90,
+      "share": 2.7
+    },
+    {
+      "name": "Afghanistan",
+      "count": 82,
+      "share": 2.5
+    },
+    {
+      "name": "Cuba",
+      "count": 60,
+      "share": 1.8
+    },
+    {
+      "name": "Algérie",
+      "count": 57,
+      "share": 1.7
+    },
+    {
+      "name": "Dominique",
+      "count": 48,
+      "share": 1.4
+    },
+    {
+      "name": "Colombie",
+      "count": 46,
+      "share": 1.4
+    },
+    {
+      "name": "Canada",
+      "count": 42,
+      "share": 1.3
+    },
+    {
+      "name": "Royaume-Uni",
+      "count": 35,
+      "share": 1.1
+    },
+    {
+      "name": "Ghana",
+      "count": 32,
+      "share": 1.0
+    },
+    {
+      "name": "Angola",
+      "count": 29,
+      "share": 0.9
+    }
+  ],
+  "diasporaCities": [
+    {
+      "name": "Diaspora",
+      "count": 1040,
+      "share": 31.3
+    },
+    {
+      "name": "Yopougon",
+      "count": 190,
+      "share": 5.7
+    },
+    {
+      "name": "Abobo",
+      "count": 129,
+      "share": 3.9
+    },
+    {
+      "name": "Senegal",
+      "count": 87,
+      "share": 2.6
+    },
+    {
+      "name": "Cocody",
+      "count": 76,
+      "share": 2.3
+    },
+    {
+      "name": "Daloa",
+      "count": 51,
+      "share": 1.5
+    },
+    {
+      "name": "Abengourou",
+      "count": 44,
+      "share": 1.3
+    },
+    {
+      "name": "Benin",
+      "count": 42,
+      "share": 1.3
+    },
+    {
+      "name": "Logouale",
+      "count": 42,
+      "share": 1.3
+    },
+    {
+      "name": "Bouaké",
+      "count": 41,
+      "share": 1.2
+    },
+    {
+      "name": "Abie",
+      "count": 35,
+      "share": 1.1
+    },
+    {
+      "name": "Adjamé",
+      "count": 32,
+      "share": 1.0
+    },
+    {
+      "name": "Port-Bouët",
+      "count": 25,
+      "share": 0.8
+    },
+    {
+      "name": "Yamoussoukro",
+      "count": 24,
+      "share": 0.7
+    },
+    {
+      "name": "Séguéla",
+      "count": 22,
+      "share": 0.7
+    },
+    {
+      "name": "Koumassi",
+      "count": 20,
+      "share": 0.6
+    },
+    {
+      "name": "Abigui",
+      "count": 18,
+      "share": 0.5
+    },
+    {
+      "name": "Soubré",
+      "count": 16,
+      "share": 0.5
+    },
+    {
+      "name": "Bondoukou",
+      "count": 16,
+      "share": 0.5
+    },
+    {
+      "name": "Marcory",
+      "count": 16,
+      "share": 0.5
+    }
+  ],
+  "applicantStatus": [
+    {
+      "name": "Sans emploi",
+      "count": 248550,
+      "share": 77.2
+    },
+    {
+      "name": "En emploi",
+      "count": 26495,
+      "share": 8.2
+    },
+    {
+      "name": "En stage",
+      "count": 21374,
+      "share": 6.6
+    },
+    {
+      "name": "En formation",
+      "count": 18175,
+      "share": 5.6
+    },
+    {
+      "name": "Programme AEJ",
+      "count": 7269,
+      "share": 2.3
+    }
+  ],
+  "registrationReason": [
+    {
+      "name": "Emploi salarié",
+      "count": 225502,
+      "share": 53.7
+    },
+    {
+      "name": "Financement de projet",
+      "count": 52273,
+      "share": 12.4
+    },
+    {
+      "name": "Stage de qualification",
+      "count": 46926,
+      "share": 11.2
+    },
+    {
+      "name": "Stage école (validation diplôme)",
+      "count": 41967,
+      "share": 10.0
+    },
+    {
+      "name": "Formation",
+      "count": 39790,
+      "share": 9.5
+    },
+    {
+      "name": "Programme THIMO",
+      "count": 11719,
+      "share": 2.8
+    },
+    {
+      "name": "Formation en ligne OpenClassrooms",
+      "count": 2002,
+      "share": 0.5
+    },
+    {
+      "name": "Programme PIE",
+      "count": 3,
+      "share": 0.0
+    }
+  ],
+  "applicantCategory": [
+    {
+      "name": "Qualifié diplômé avec expérience",
+      "count": 122587,
+      "share": 35.2
+    },
+    {
+      "name": "Qualifié diplômé sans expérience",
+      "count": 87199,
+      "share": 25.0
+    },
+    {
+      "name": "A déjà travaillé et cherche un emploi",
+      "count": 58569,
+      "share": 16.8
+    },
+    {
+      "name": "Non qualifié diplômé sans expérience",
+      "count": 43271,
+      "share": 12.4
+    },
+    {
+      "name": "Non qualifié non diplômé avec expérience",
+      "count": 19048,
+      "share": 5.5
+    },
+    {
+      "name": "Non qualifié non diplômé sans expérience",
+      "count": 17579,
+      "share": 5.0
+    }
+  ],
+  "emailDomains": [
+    {
+      "name": "gmail.com",
+      "count": 672667,
+      "share": 89.5
+    },
+    {
+      "name": "yahoo.fr",
+      "count": 39738,
+      "share": 5.3
+    },
+    {
+      "name": "yahoo.com",
+      "count": 9048,
+      "share": 1.2
+    },
+    {
+      "name": "hotmail.fr",
+      "count": 6225,
+      "share": 0.8
+    },
+    {
+      "name": "hotmail.com",
+      "count": 4978,
+      "share": 0.7
+    },
+    {
+      "name": "outlook.fr",
+      "count": 4696,
+      "share": 0.6
+    },
+    {
+      "name": "live.fr",
+      "count": 3799,
+      "share": 0.5
+    },
+    {
+      "name": "icloud.com",
+      "count": 3008,
+      "share": 0.4
+    },
+    {
+      "name": "outlook.com",
+      "count": 1848,
+      "share": 0.2
+    },
+    {
+      "name": "uvci.edu.ci",
+      "count": 1223,
+      "share": 0.2
+    },
+    {
+      "name": "aej.com",
+      "count": 364,
+      "share": 0.0
+    },
+    {
+      "name": "univmetiers.ci",
+      "count": 295,
+      "share": 0.0
+    },
+    {
+      "name": "neper.net",
+      "count": 188,
+      "share": 0.0
+    },
+    {
+      "name": "rocketmail.com",
+      "count": 165,
+      "share": 0.0
+    },
+    {
+      "name": "live.com",
+      "count": 153,
+      "share": 0.0
+    }
+  ]
+}

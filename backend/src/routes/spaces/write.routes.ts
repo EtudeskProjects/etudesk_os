@@ -18,6 +18,7 @@ import {
   UpdateSpaceInput,
   SPACE_TYPES,
   calculateCapacity,
+  normalizeSpaceFeatures,
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
 import { upsertSpaceEmbedding, deletePgVector } from '../../services/embedding.service';
@@ -128,6 +129,16 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (!input.organization_id) {
       return res.status(400).json({ error: req.t('spaces:organizationIdRequired') });
     }
+
+    const normalizedFeatures = normalizeSpaceFeatures(input);
+    if (normalizedFeatures.invalid.length > 0) {
+      return res.status(400).json({
+        error: `Invalid space feature values: ${normalizedFeatures.invalid.join(', ')}`,
+        code: 'INVALID_SPACE_FEATURES',
+      });
+    }
+    input.equipment = normalizedFeatures.equipment;
+    input.amenities = normalizedFeatures.amenities;
 
     // Check organization exists and user is member (OWNER/ADMIN)
     const orgCheck = await pool.query(
@@ -311,6 +322,21 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       if (memberCheck.rows.length === 0) {
         throw createForbiddenError(req.t('spaces:notAuthorized'));
       }
+    }
+
+    if (input.equipment !== undefined || input.amenities !== undefined) {
+      const normalizedFeatures = normalizeSpaceFeatures({
+        equipment: input.equipment ?? space.equipment,
+        amenities: input.amenities ?? space.amenities,
+      });
+      if (normalizedFeatures.invalid.length > 0) {
+        return res.status(400).json({
+          error: `Invalid space feature values: ${normalizedFeatures.invalid.join(', ')}`,
+          code: 'INVALID_SPACE_FEATURES',
+        });
+      }
+      input.equipment = normalizedFeatures.equipment;
+      input.amenities = normalizedFeatures.amenities;
     }
 
     try {

@@ -28,8 +28,8 @@ import {
   CardHeader,
   CardMetaRow,
   type CardAction,
-  type MetaItem,
 } from './BaseCard';
+import type { MetaItem } from './BaseCard/CardMetaRow';
 
 interface StatusOverlay {
   label: string;

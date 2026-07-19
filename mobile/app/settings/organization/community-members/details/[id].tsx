@@ -273,10 +273,10 @@ export default function CommunityMemberDetailsScreen() {
   };
 
   const handleUpdateStatus = async (newStatus: MemberStatus, rejectionReason?: string) => {
-    if (!member) return;
+    if (!member?.community_id) return;
 
     try {
-      await communityService.updateMembershipStatus(member.id, newStatus, rejectionReason);
+      await communityService.updateMembershipStatus(member.community_id, member.id, newStatus, rejectionReason);
       setMember((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
       void alerts.alert(t('common.success'), t('gestion.members.statusUpdated', { status: t(STATUS_FLOW[newStatus].labelKey) }));
@@ -286,7 +286,7 @@ export default function CommunityMemberDetailsScreen() {
   };
 
   const handleDeleteMember = () => {
-    if (!member) return;
+    if (!member?.community_id) return;
 
     void alerts.showAlert({ title: t('gestion.memberDetails.deleteTitle'), message: t('gestion.memberDetails.deleteConfirmSimple', { name: t('gestion.memberDetails.thisMember') }), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
@@ -295,7 +295,7 @@ export default function CommunityMemberDetailsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await communityService.deleteMember(member.id);
+              await communityService.deleteMember(member.community_id, member.id);
               void alerts.alert(t('common.success'), t('gestion.members.removeSuccess'));
               router.back();
             } catch (error: any) {

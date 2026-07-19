@@ -1,6 +1,7 @@
 import { pool } from './database';
 import * as notificationService from './notification.service';
 import { logger } from '../utils';
+import { resolveAgendaSchedule } from './agenda-scheduling.service';
 
 type TriggerScope = 'TALENT' | 'ORGANIZATION';
 type TriggerStatus = 'PENDING' | 'DONE' | 'CANCELED';
@@ -512,6 +513,21 @@ async function executeTriggerPolicy(trigger: TriggerRow, now: Date): Promise<Pol
     return { outcome: 'REMINDER_SENT' };
   }
 
+  if (trigger.organization_id) {
+    const notified = await notifyOrganizationManagers(
+      trigger.organization_id,
+      trigger.title,
+      trigger.description || 'Rappel agenda organisation execute.',
+      {
+        triggerId: trigger.id,
+        code: trigger.code,
+        type: 'AGENDA_TRIGGER',
+      },
+      trigger.id
+    );
+    return { outcome: 'ORG_REMINDER_SENT', data: { notifiedManagers: notified } };
+  }
+
   return {
     outcome: 'NO_POLICY_ACTION',
     note: `No explicit action policy for code ${trigger.code}`,
@@ -525,7 +541,7 @@ async function updateTriggerAfterRun(
   fallbackRescheduleOnError: boolean
 ): Promise<'done' | 'rescheduled'> {
   const previousMetadata = (trigger.metadata && typeof trigger.metadata === 'object') ? trigger.metadata : {};
-  const mergedMetadata = mergeExecutionMetadata(previousMetadata, execution);
+  let mergedMetadata = mergeExecutionMetadata(previousMetadata, execution);
 
   const policyNextDue = execution.nextDueAt && !isNaN(execution.nextDueAt.getTime()) ? execution.nextDueAt : null;
   const recurringNextDue = computeRecurringNextDueAt(previousMetadata, now);
@@ -533,6 +549,40 @@ async function updateTriggerAfterRun(
   let nextDueAt = policyNextDue || recurringNextDue || null;
   if (!nextDueAt && fallbackRescheduleOnError) {
     nextDueAt = new Date(now.getTime() + 15 * 60 * 1000);
+  }
+
+  if (nextDueAt) {
+    const scheduled = await resolveAgendaSchedule({
+      scope: trigger.scope,
+      talentId: trigger.talent_id || undefined,
+      organizationId: trigger.organization_id || undefined,
+      requestedDueAt: nextDueAt,
+      excludeTriggerId: trigger.id,
+    });
+
+    if (scheduled) {
+      nextDueAt = scheduled.dueAt;
+      mergedMetadata = {
+        ...mergedMetadata,
+        scheduling: {
+          requested_due_at: scheduled.requestedDueAt.toISOString(),
+          final_due_at: scheduled.dueAt.toISOString(),
+          adjusted: scheduled.adjusted,
+          reasons: scheduled.reasons,
+          source: 'agenda_trigger_cron',
+        },
+      };
+    } else {
+      mergedMetadata = {
+        ...mergedMetadata,
+        scheduling_error: {
+          at: now.toISOString(),
+          requested_due_at: nextDueAt.toISOString(),
+          reason: 'no_available_slot',
+          source: 'agenda_trigger_cron',
+        },
+      };
+    }
   }
 
   const status: TriggerStatus = nextDueAt ? 'PENDING' : 'DONE';

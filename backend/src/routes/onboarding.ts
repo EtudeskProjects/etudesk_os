@@ -18,25 +18,13 @@ import { creditWallet, getOnboardingWelcomeBonusCredits, WELCOME_TOTAL_CREDITS }
 import { logger } from '../utils';
 import { normalizeLanguage } from '../i18n';
 import type { EmailLanguage } from '../services/email.service';
+import { CANONICAL_GOALS, CANONICAL_PROFILE_TAGS } from '../constants/tag-taxonomy';
 const router = Router();
 
 function toEmailLanguage(language: string): EmailLanguage {
   return language === 'fr' ? 'fr' : 'en';
 }
 
-// Valid profile tags (used by GET /options)
-const VALID_PROFILE_TAGS = [
-  'STUDENT', 'PUPIL', 'JOB_SEEKER', 'SALARIED', 'ENTREPRENEUR',
-  'CIVIL_SERVANT', 'MANAGER', 'CONSULTANT', 'INVESTOR',
-  'CONTENT_CREATOR', 'COACH', 'RETIRED',
-];
-
-// Valid goals (used by GET /options)
-const VALID_GOALS = [
-  'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
-  'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
-  'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
-];
 
 /**
  * POST /onboarding/complete
@@ -238,8 +226,8 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       // Link talent to user
       await client.query(
-        `UPDATE users SET talent_id = $1, updated_at = NOW() WHERE id = $2`,
-        [talentId, req.userId]
+        `UPDATE users SET talent_id = $1, phone = COALESCE($2, phone), updated_at = NOW() WHERE id = $3`,
+        [talentId, finalPhone, req.userId]
       );
 
       // Grant the onboarding remainder so the default welcome total is 30 credits.
@@ -367,11 +355,11 @@ router.get('/options', async (req, res) => {
   return res.json({
     data: {
       options: {
-        profileTags: VALID_PROFILE_TAGS.map(tag => ({
+        profileTags: CANONICAL_PROFILE_TAGS.map(tag => ({
           value: tag,
           label: req.t(`onboarding:profileTags.${tag}`),
         })),
-        goals: VALID_GOALS.map(goal => ({
+        goals: CANONICAL_GOALS.map(goal => ({
           value: goal,
           label: req.t(`onboarding:goals.${goal}`),
         })),

@@ -19,6 +19,7 @@ export interface NavItem { href: string; fr: string; en: string; match?: string;
 export const NAV: NavItem[] = [
   { href: '#produit', fr: 'Etudesk OS', en: 'Etudesk OS' },
   { href: '#referentiel', fr: 'Référentiel Digital', en: 'Digital Referential', match: 'digital-skills' },
+  { href: '/talents-civ', fr: 'Talents CIV', en: 'CIV Talents', match: 'talents-civ' },
   { href: '#tarifs', fr: 'Tarifs', en: 'Pricing' },
   { href: '#qui-sommes-nous', fr: 'Qui sommes-nous', en: 'About' },
 ];

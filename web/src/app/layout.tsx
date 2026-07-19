@@ -5,9 +5,9 @@ import { LangProvider } from '../contexts/LangContext';
 import Analytics from '../components/Analytics';
 
 const BASE = 'https://etudesk.com';
-const TITLE = 'Etudesk - Les compétences du digital, à la vitesse du marché';
+const TITLE = 'Etudesk - Les compétences numériques qui font avancer votre travail';
 const DESC =
-  'Etudesk aide chaque talent à découvrir, apprendre et valoriser les compétences numériques qui ouvrent des opportunités locales et internationales.';
+  'Etudesk aide chaque talent à découvrir, pratiquer et valoriser les compétences numériques qui améliorent le travail et ouvrent de nouvelles opportunités.';
 const SKILLS_GRAPH_IMAGE = '/images/skills-graph.png';
 
 export const metadata: Metadata = {
@@ -32,8 +32,6 @@ export const metadata: Metadata = {
     'compétences numériques',
     'apprendre la programmation',
     'data, IA, machine learning',
-    'Afrique',
-    'Côte d\'Ivoire',
   ],
   authors: [{ name: 'Etudesk' }],
   creator: 'Etudesk',
@@ -58,7 +56,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: TITLE,
     description:
-      'Découvre, apprends et valorise les compétences numériques qui ouvrent des opportunités locales et internationales.',
+      'Découvre, pratique et valorise les compétences numériques qui améliorent ton travail et ouvrent de nouvelles opportunités.',
     images: [SKILLS_GRAPH_IMAGE],
     site: '@etudesk',
     creator: '@etudesk',
