@@ -123,12 +123,14 @@ function buildDeterministicSessionTitle(
  */
 function isCompactStudyRequest(message: string, hasVoiceNote: boolean, hasAttachments: boolean): boolean {
   if (hasVoiceNote || hasAttachments) return false;
-  return /\b(quiz|qcm|flashcards?|questionnaire|explique(?:-moi)?|définition|definition|c.?est quoi)\b/i.test(message);
+  return /\b(quiz|qcm|flashcards?|questionnaire|explique(?:-moi)?|définition|definition|c.?est quoi|en tenant compte|à partir de ta réponse|ma réponse|critère concret|amélioration unique|dois-je continuer|prochain jalon|sans feuille de route)\b/i.test(message);
 }
 
 function isCompactExplorerRequest(message: string, hasVoiceNote: boolean, hasAttachments: boolean): boolean {
   if (hasVoiceNote || hasAttachments) return false;
-  return /\b(explique(?:-moi)?|conseil(?:s)?|définition|definition|c.?est quoi|comment (?:me )?préparer|aide-moi|aide moi)\b/i.test(message);
+  const requestsLiveData = /\b(opportunit|communaut|document|cv\b|candidature|offre|recherche|trouve|passeport|profil)\b/i.test(message);
+  if (requestsLiveData) return false;
+  return /\b(explique(?:-moi)?|conseil(?:s)?|définition|definition|c.?est quoi|comment (?:me )?préparer|aide-moi|aide moi|rappelle|en une phrase|conclusion courte|comment sauras-tu)\b/i.test(message);
 }
 
 function inferLanguageFromUserMessage(message: string, fallback: SupportedLanguage): SupportedLanguage {
