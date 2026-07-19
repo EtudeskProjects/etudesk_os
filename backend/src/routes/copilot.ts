@@ -1033,6 +1033,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         ]
       );
       const assistantMessageId = insertAssistantResult.rows[0]?.id || null;
+      // This deterministic fast path is not part of an OpenAI response chain.
+      delete sessionContext.openaiResponseId;
+      await persistSessionContext(sessionId, sessionContext);
 
       pool.query(
         `INSERT INTO copilot_traces
@@ -1146,6 +1149,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         [sessionId, sanitizeForPg(finalOutput), null, null]
       );
       const assistantMessageId = insertAssistantResult.rows[0]?.id || null;
+      // The replay is generated locally, so it must become the new durable
+      // transcript boundary for the next model turn.
+      delete sessionContext.openaiResponseId;
+      await persistSessionContext(sessionId, sessionContext);
 
       pool.query(
         `INSERT INTO copilot_traces
