@@ -286,6 +286,13 @@ export const TalentProgressionContextSchema = z.object({
   status: z.enum(['EXPLORING', 'ACTIVE', 'REORIENTING', 'PAUSED']),
   priorityCompetencies: z.array(z.string()),
   currentFocus: z.object({ type: z.enum(['passport', 'evidence', 'community', 'application_feedback', 'practice']), reason: z.string(), nextEvidence: z.string().optional() }),
+  growthContext: z.object({
+    stage: z.enum(['FOUNDATION', 'VALIDATION', 'ACTIVATION', 'MOMENTUM']),
+    confidence: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+    principles: z.array(z.string()),
+    explanation: z.string(),
+    nextBestLever: z.enum(['clarify', 'prove', 'connect', 'apply', 'compound']),
+  }),
   summary: z.object({
     skillsCount: z.number(), acceptedApplications: z.number(), rejectedApplications: z.number(), activeApplications: z.number(),
     communitiesCount: z.number(), completedBookings: z.number(), evidenceDocuments: z.number(),
@@ -427,7 +434,7 @@ export function summarizeContext(context: TalentContext): string {
     parts.push(`COMMUNAUTÉS: ${context.memberships.totalCount} memberships`);
   }
   if (context.progression) {
-    parts.push(`PROGRESSION: ${context.progression.direction}; focus ${context.progression.currentFocus.type}; priorités ${context.progression.priorityCompetencies.join(', ') || 'à confirmer'}`);
+    parts.push(`PROGRESSION: ${context.progression.direction}; focus ${context.progression.currentFocus.type}; levier ${context.progression.growthContext.nextBestLever}; priorités ${context.progression.priorityCompetencies.join(', ') || 'à confirmer'}`);
   }
 
   // Organization admin

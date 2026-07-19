@@ -21,6 +21,7 @@ import {
 } from '../services/billing/credit.service';
 import { normalizeCountryCode } from '../constants/countries';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
+import { refreshTalentProgression } from '../services/talent-progression.service';
 
 import { logger } from '../utils';
 import { cache } from '../utils/cache';
@@ -28,6 +29,21 @@ import { cache } from '../utils/cache';
 type QueryParam = string | number | boolean | null | Date | string[];
 
 const router = Router();
+
+/**
+ * GET /api/talents/me/progression
+ * Durable, explainable progression context for the authenticated talent.
+ * It is a backend primitive, not a new standalone product surface.
+ */
+router.get('/me/progression', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.talentId) return res.status(404).json({ error: req.t('talents:profileNotFound') });
+    res.json({ data: await refreshTalentProgression(req.talentId) });
+  } catch (error) {
+    logger.error('Error refreshing talent progression:', error);
+    res.status(500).json({ error: req.t('common:internalError') });
+  }
+});
 
 /**
  * GET /api/talents/me/talent-object

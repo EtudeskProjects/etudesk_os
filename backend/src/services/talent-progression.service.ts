@@ -1,12 +1,27 @@
 import { pool } from './database';
 
 export type ProgressionFocus = 'passport' | 'evidence' | 'community' | 'application_feedback' | 'practice';
+export type GrowthStage = 'FOUNDATION' | 'VALIDATION' | 'ACTIVATION' | 'MOMENTUM';
+
+/**
+ * Compact, derived context used to choose a useful next lever. It deliberately
+ * uses only the talent's explicit profile and observable Etudesk activity:
+ * no belief, identity, political or religious inference is ever made.
+ */
+export interface GrowthContext {
+  stage: GrowthStage;
+  confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+  principles: string[];
+  explanation: string;
+  nextBestLever: 'clarify' | 'prove' | 'connect' | 'apply' | 'compound';
+}
 
 export interface TalentProgressionSnapshot {
   direction: string;
   status: 'EXPLORING' | 'ACTIVE' | 'REORIENTING' | 'PAUSED';
   priorityCompetencies: string[];
   currentFocus: { type: ProgressionFocus; reason: string; nextEvidence?: string };
+  growthContext: GrowthContext;
   summary: {
     skillsCount: number;
     acceptedApplications: number;
@@ -34,6 +49,28 @@ function selectFocus(summary: TalentProgressionSnapshot['summary'], priorities: 
   if (summary.rejectedApplications > 0 && summary.acceptedApplications === 0) return { type: 'application_feedback', reason: 'Les candidatures récentes n’ont pas encore abouti.', nextEvidence: 'Renforcer une preuve ou préparer une réponse d’entretien ciblée.' };
   if (summary.communitiesCount === 0) return { type: 'community', reason: 'Aucun contexte de pairs n’est encore actif.', nextEvidence: 'Rejoindre une communauté utile à la direction actuelle.' };
   return { type: 'practice', reason: priorities.length ? `Consolider ${priorities[0]}.` : 'Consolider une compétence numérique avec une preuve concrète.', nextEvidence: 'Réaliser une activité courte et conservable dans le passeport.' };
+}
+
+function deriveGrowthContext(
+  summary: TalentProgressionSnapshot['summary'],
+  focus: TalentProgressionSnapshot['currentFocus'],
+): GrowthContext {
+  if (summary.skillsCount === 0) {
+    return { stage: 'FOUNDATION', confidence: 'LOW', principles: ['explicit_intent', 'evidence_before_claim'], explanation: 'Le prochain levier est de rendre une première compétence numérique explicite et vérifiable.', nextBestLever: 'clarify' };
+  }
+  if (summary.evidenceDocuments === 0) {
+    return { stage: 'VALIDATION', confidence: 'MEDIUM', principles: ['evidence_before_claim', 'practice_before_expansion'], explanation: 'La progression existe dans le passeport, mais elle doit être rendue visible par une preuve réutilisable.', nextBestLever: 'prove' };
+  }
+  if (summary.rejectedApplications > 0 && summary.acceptedApplications === 0) {
+    return { stage: 'VALIDATION', confidence: 'MEDIUM', principles: ['feedback_is_a_signal', 'evidence_before_claim'], explanation: 'Les retours de candidature sont des signaux à transformer en une preuve ou un positionnement plus précis.', nextBestLever: 'prove' };
+  }
+  if (summary.communitiesCount === 0) {
+    return { stage: 'ACTIVATION', confidence: 'MEDIUM', principles: ['peer_connection', 'contribution_creates_opportunity'], explanation: 'Une base existe ; le prochain levier est de la relier à des pairs et à des contextes de pratique.', nextBestLever: 'connect' };
+  }
+  if (summary.activeApplications > 0) {
+    return { stage: 'MOMENTUM', confidence: 'HIGH', principles: ['one_next_lever', 'feedback_is_a_signal', 'contribution_creates_opportunity'], explanation: 'Le talent est engagé dans des opportunités : la priorité est une action courte qui améliore la prochaine interaction.', nextBestLever: 'apply' };
+  }
+  return { stage: 'MOMENTUM', confidence: summary.completedBookings > 0 ? 'HIGH' : 'MEDIUM', principles: ['practice_before_expansion', 'contribution_creates_opportunity', 'one_next_lever'], explanation: `La base est active ; le meilleur levier est de consolider ${focus.nextEvidence || 'une preuve concrète'} avant d’élargir les objectifs.`, nextBestLever: 'compound' };
 }
 
 function toIso(value: unknown): string {
@@ -92,6 +129,7 @@ export async function refreshTalentProgression(talentId: string): Promise<Talent
   };
   const priorityCompetencies = skills.slice(0, 3).map((row) => row.competency_slug);
   const currentFocus = selectFocus(summary, priorityCompetencies);
+  const growthContext = deriveGrowthContext(summary, currentFocus);
   const direction = inferDirection(profile.sectors || [], profile.goals || [], stored?.direction);
   const signals: Signal[] = [
     ...applications.map((row) => ({ sourceType: 'application', sourceId: row.id, signalType: `application_${String(row.status).toLowerCase()}`, occurredAt: toIso(row.updated_at), payload: { status: row.status } })),
@@ -102,18 +140,18 @@ export async function refreshTalentProgression(talentId: string): Promise<Talent
   ];
   await upsertSignals(talentId, signals);
   const lastSignalAt = signals.map((signal) => signal.occurredAt).sort().at(-1);
-  const snapshot: TalentProgressionSnapshot = { direction, status: stored?.status || 'EXPLORING', priorityCompetencies, currentFocus, summary, lastSignalAt };
+  const snapshot: TalentProgressionSnapshot = { direction, status: stored?.status || 'EXPLORING', priorityCompetencies, currentFocus, growthContext, summary, lastSignalAt };
   await pool.query(
-    `INSERT INTO talent_progressions (talent_id, direction, status, priority_competencies, current_focus, summary, last_signal_at, last_reviewed_at)
-     VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, NOW())
+    `INSERT INTO talent_progressions (talent_id, direction, status, priority_competencies, current_focus, growth_context, summary, last_signal_at, last_reviewed_at)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, NOW())
      ON CONFLICT (talent_id) DO UPDATE SET direction = EXCLUDED.direction, priority_competencies = EXCLUDED.priority_competencies,
-       current_focus = EXCLUDED.current_focus, summary = EXCLUDED.summary, last_signal_at = EXCLUDED.last_signal_at,
+       current_focus = EXCLUDED.current_focus, growth_context = EXCLUDED.growth_context, summary = EXCLUDED.summary, last_signal_at = EXCLUDED.last_signal_at,
        last_reviewed_at = EXCLUDED.last_reviewed_at, updated_at = NOW()`,
-    [talentId, snapshot.direction, snapshot.status, snapshot.priorityCompetencies, JSON.stringify(snapshot.currentFocus), JSON.stringify(snapshot.summary), snapshot.lastSignalAt || null]
+    [talentId, snapshot.direction, snapshot.status, snapshot.priorityCompetencies, JSON.stringify(snapshot.currentFocus), JSON.stringify(snapshot.growthContext), JSON.stringify(snapshot.summary), snapshot.lastSignalAt || null]
   );
   return snapshot;
 }
 
 export function progressionPromptBlock(progression: TalentProgressionSnapshot): string {
-  return `<talent_progression>\nDirection: ${progression.direction}\nFocus: ${progression.currentFocus.type} - ${progression.currentFocus.reason}\nPriorités: ${progression.priorityCompetencies.join(', ') || 'à confirmer'}\nSignaux: ${progression.summary.activeApplications} candidatures actives, ${progression.summary.rejectedApplications} refus, ${progression.summary.communitiesCount} communautés, ${progression.summary.completedBookings} visites/réservations réalisées, ${progression.summary.evidenceDocuments} preuves documentaires.\n</talent_progression>`;
+  return `<talent_progression>\nDirection: ${progression.direction}\nFocus: ${progression.currentFocus.type} - ${progression.currentFocus.reason}\nLevier: ${progression.growthContext.nextBestLever}; étape: ${progression.growthContext.stage}; confiance: ${progression.growthContext.confidence}\nPriorités: ${progression.priorityCompetencies.join(', ') || 'à confirmer'}\nSignaux: ${progression.summary.activeApplications} candidatures actives, ${progression.summary.rejectedApplications} refus, ${progression.summary.communitiesCount} communautés, ${progression.summary.completedBookings} visites/réservations réalisées, ${progression.summary.evidenceDocuments} preuves documentaires.\n</talent_progression>`;
 }

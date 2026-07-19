@@ -839,6 +839,12 @@ Mode: Apprendre
 Topic: ${context.session?.conversationTopic || 'General learning'}
 </session>
 
+<talent_progression>
+${context.progression ? `stage=${context.progression.growthContext.stage}; next_lever=${context.progression.growthContext.nextBestLever}; focus=${context.progression.currentFocus.type}; next_evidence=${context.progression.currentFocus.nextEvidence || 'to confirm'}` : 'not available'}
+</talent_progression>
+
+Use this only to select one suitable practice or evidence action. It is derived from explicit profile choices and verified Etudesk activity, never from beliefs or sensitive personal traits.
+
 ## Learner Skills (complete list — DO NOT call any tool to read these)
 
 ${skillsBlock}
