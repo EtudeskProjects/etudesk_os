@@ -11,6 +11,7 @@ import {
   getSkillBody,
   detectSkillFromMessage,
   detectSkillFromMessageStatic,
+  precomputeSkillEmbeddings,
   reloadSkills,
 } from '../skill.loader';
 
@@ -45,6 +46,9 @@ async function main(): Promise<void> {
 
   // Force reload to clear cache
   reloadSkills();
+  // Mirror production startup: async semantic routing requires precomputed
+  // embeddings and deliberately has no fallback to keyword matching.
+  await precomputeSkillEmbeddings();
 
   test('loadAllSkillMetadata returns non-empty array', () => {
     const metadata = loadAllSkillMetadata();
