@@ -18,13 +18,12 @@ export interface SlugRelations {
 const EDGES = edgesRaw as Record<string, SlugRelations>;
 const EMPTY: SlugRelations = { pre: [], leads: [], sib: [], rel: [], d: 0 };
 
-/** Nombre total de relations (lignes d'edges dirigees) = prerequis + voisines +
- *  co-occurrences cote source ('leads' est l'inverse des prerequis, exclu pour ne
- *  pas double-compter). Dynamique -> reste juste quand le referentiel evolue. */
+/** Nombre total de relations source du référentiel. `d` conserve le degré complet
+ * de chaque nœud, alors que les listes affichées sont plafonnées à 12 éléments. */
 export const RELATION_COUNT = Object.values(EDGES).reduce(
-  (n, r) => n + r.pre.length + r.sib.length + r.rel.length,
-  0
-);
+  (n, r) => n + r.d,
+  0,
+) / 2;
 
 export function getRelations(slug: string): SlugRelations {
   return EDGES[slug] || EMPTY;

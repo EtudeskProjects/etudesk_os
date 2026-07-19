@@ -13,14 +13,9 @@ import SiteFooter from '@/components/SiteFooter';
 import StoreButtons from '@/components/StoreButtons';
 import LearningPathGraph from '@/components/LearningPathGraph';
 import { competencies, FAMILIES } from '@/data/taxonomy';
+import { REFERENTIAL_STATS } from '@/data/referential-stats';
 import type { Lang } from '@/lib/i18n';
 import { homeCopy as copy } from '@/content/home';
-
-// Nombre de relations typees du referentiel. Fige ici (et non importe de
-// relations.ts) pour ne pas charger edges.json ~175KB sur la landing : le public
-// est sensible au cout de la data. A resynchroniser avec RELATION_COUNT a chaque
-// release du referentiel (2026-Q2 : 8893).
-const RELATIONS = 8893;
 
 const LinkedInIcon = ({ size = 18 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
@@ -200,7 +195,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
               <span className="sep" />
               <div className="stat"><span className="num">{FAMILIES.length}</span><span className="lbl">{t.refFamilies}</span></div>
               <span className="sep" />
-              <div className="stat"><span className="num">{RELATIONS.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')}</span><span className="lbl">{t.refRelations}</span></div>
+              <div className="stat"><span className="num">{REFERENTIAL_STATS.relations.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')}</span><span className="lbl">{t.refRelations}</span></div>
             </div>
             <div className="ref-points">
               <div className="ref-point">
