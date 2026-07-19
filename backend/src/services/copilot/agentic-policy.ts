@@ -161,19 +161,25 @@ export function getAgentCompletionOptions(): {
   max_completion_tokens: number;
   temperature?: number;
   parallel_tool_calls: boolean;
+  reasoning_effort?: 'none';
 } {
-  const model = process.env.AI_MODEL_AGENT || 'gpt-5.4-mini';
+  const model = process.env.AI_MODEL_AGENT || 'gpt-5.6-terra';
   const isOpenAIGpt5 = !process.env.AI_BASE_URL && model.startsWith('gpt-5');
   const options: {
     max_completion_tokens: number;
     temperature?: number;
     parallel_tool_calls: boolean;
+    reasoning_effort?: 'none';
   } = {
     max_completion_tokens: AGENTIC_LIMITS.maxCompletionTokens,
     // Sequential tools are easier to cache, summarize, and debug. The model can
     // still call several tools across turns when the result of one determines the next.
     parallel_tool_calls: false,
   };
+
+  // GPT-5.6 Chat Completions supports function tools only with effective
+  // reasoning set to none. Tool reasoning migration to Responses is separate.
+  if (isOpenAIGpt5) options.reasoning_effort = 'none';
 
   // OpenAI GPT-5 Chat Completions rejects non-default temperature. Other
   // OpenAI-compatible providers still benefit from the explicit low setting.
