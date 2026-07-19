@@ -18,11 +18,13 @@ import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/e
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 import { pool } from '../database';
 import { logger } from '../../utils';
+import { suggestCompetencies, type Competency } from '../skills/catalog.service';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse: (buffer: Buffer) => Promise<{ text?: string; numpages?: number }> = require('pdf-parse');
 
 export interface ExtractedSkill {
+  slug?: string;
   name: string;
   // Coarse hint only; the authoritative type comes from the resolved catalog competency.
   type?: 'knowledge' | 'hard_skill' | 'soft_skill';
@@ -266,7 +268,12 @@ export async function extractDocumentMetadata(
       }
     }
 
-    const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills);
+    if (isPdf) {
+      extractedPdfText = await extractPdfTextFromDataUrl(fileUrl);
+      if (!extractedPdfText) return buildFallbackPdfExtraction(null, new Error('Texte PDF vide ou non lisible'));
+    }
+    const allowedCompetencies = await suggestCompetencies((extractedPdfText || 'digital professional skills').slice(0, 12000), 60);
+    const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills, allowedCompetencies);
     const aiClient = getAIClient();
 
     // Build content parts
@@ -280,10 +287,6 @@ export async function extractDocumentMetadata(
         image_url: { url: fileUrl, detail: 'high' },
       });
     } else if (isPdf) {
-      extractedPdfText = await extractPdfTextFromDataUrl(fileUrl);
-      if (!extractedPdfText) {
-        return buildFallbackPdfExtraction(null, new Error('Texte PDF vide ou non lisible'));
-      }
       contentParts.push({
         type: 'text',
         text: `<uploaded_document mime_type="application/pdf">\n${extractedPdfText}\n</uploaded_document>`,
@@ -324,6 +327,13 @@ export async function extractDocumentMetadata(
     // Normalize tags
     const tags = normalizeTags(extractedData.tags || [], extractedData);
 
+    const allowedBySlug = new Map(allowedCompetencies.map((competency) => [competency.slug, competency]));
+    const skills = Array.isArray(extractedData.skills)
+      ? extractedData.skills.flatMap((skill: ExtractedSkill) => {
+          const competency = skill.slug ? allowedBySlug.get(skill.slug) : undefined;
+          return competency ? [{ ...skill, slug: competency.slug, name: competency.name_fr || competency.name, type: competency.type }] : [];
+        })
+      : [];
     return {
       success: true,
       data: {
@@ -332,6 +342,7 @@ export async function extractDocumentMetadata(
         detected_category: detectedCategory,
         confidence_score: Math.min(1, Math.max(0, extractedData.confidence_score || 0.5)),
         tags,
+        skills,
       } as ExtractedDocumentData,
     };
   } catch (error) {

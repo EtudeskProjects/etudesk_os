@@ -4,6 +4,7 @@
  */
 
 import { toTOON } from '../toon';
+import type { Competency } from '../../skills/catalog.service';
 
 const EXTRACTION_OUTPUT_CONTRACT = {
   detected_type: 'CV | CERTIFICATE | DIPLOMA | LICENSE | PORTFOLIO | RECOMMENDATION_LETTER | TRANSCRIPT | PUBLICATION | PATENT | ID_CARD | PASSPORT | DRIVER_LICENSE | STUDENT_CARD | PROOF_OF_ADDRESS | OTHER',
@@ -16,8 +17,7 @@ const EXTRACTION_OUTPUT_CONTRACT = {
   description: 'Brève description',
   skills: [
     {
-      name: 'Nom de compétence concret et standard (sera mappé au catalogue Etudesk)',
-      type: 'hard_skill | soft_skill | knowledge',
+      slug: 'slug exact présent dans COMPÉTENCES AUTORISÉES',
       proficiency_hint: 'beginner | intermediate | advanced | master',
       context: "Contexte reliant la compétence à une expérience",
     },
@@ -33,7 +33,7 @@ const EXTRACTION_OUTPUT_CONTRACT = {
   summary: 'Résumé en une phrase',
 };
 
-export function buildExtractionPrompt(mimeType: string, talentContext?: string, existingSkills?: string[]): string {
+export function buildExtractionPrompt(mimeType: string, talentContext?: string, existingSkills?: string[], allowedCompetencies: Competency[] = []): string {
   const contextBlock = talentContext
     ? `\nContexte du talent :\n${talentContext}\n`
     : '';
@@ -41,19 +41,20 @@ export function buildExtractionPrompt(mimeType: string, talentContext?: string, 
   const existingSkillsBlock = existingSkills && existingSkills.length > 0
     ? `\nCompétences DÉJÀ enregistrées (NE PAS ré-extraire) :\n${existingSkills.join(', ')}\n`
     : '';
+  const allowedBlock = allowedCompetencies.length
+    ? `\nCOMPÉTENCES AUTORISÉES (sélection du référentiel, slug | nom | type) :\n${allowedCompetencies.map((c) => `- ${c.slug} | ${c.name_fr || c.name} | ${c.type}`).join('\n')}\n`
+    : '\nCOMPÉTENCES AUTORISÉES : aucune candidate suffisamment pertinente. Retourne [] pour skills.\n';
 
   return `Analyse ce document (${mimeType}) et extrais les informations.
-${contextBlock}${existingSkillsBlock}
+${contextBlock}${existingSkillsBlock}${allowedBlock}
 Format de sortie :
 Retourne un JSON valide.
 Contrat compact (TOON) :
 ${toTOON(EXTRACTION_OUTPUT_CONTRACT)}
 
 Règles pour les compétences :
-- Noms avec casse naturelle (ex: "Gestion de projet", "Analyse de données", "Machine learning")
-- Acronymes en majuscules quand pertinent (ex: "IA", "R&D", "SQL", "API")
-- hard_skill = technique/mesurable, soft_skill = comportemental, knowledge = savoir théorique
-- Utilise des noms de compétences concrets et standards (ils sont ensuite mappés au référentiel Etudesk ; les noms trop vagues seront ignorés)
+- Retourne UNIQUEMENT un slug exact de COMPÉTENCES AUTORISÉES. N'invente jamais un slug, nom, type ou famille.
+- Si aucune compétence autorisée ne correspond clairement, retourne un tableau skills vide.
 - Proficiency : master (5+ ans), advanced (3-5 ans), intermediate (1-3 ans), beginner (< 1 an)
 - Context : relie à l'expérience/formation avec entité et période si possible
 - EXCLURE toute compétence déjà listée dans "Compétences DÉJÀ enregistrées" — ne retourne QUE les NOUVELLES compétences
