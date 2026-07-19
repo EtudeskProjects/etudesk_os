@@ -997,9 +997,6 @@
       "submissionRecorded": "测验答案：“{{option}}” - 答案已记录。"
     },
     "flashcard": {
-      "easy": "简单",
-      "medium": "中等",
-      "hard": "困难",
       "flipCard": "翻转卡片",
       "answer": "答案",
       "question": "问题",

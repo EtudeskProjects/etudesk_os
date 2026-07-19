@@ -2008,9 +2008,6 @@
       "submissionRecorded": "Quiz answer: \"{{option}}\" - answer recorded."
     },
     "flashcard": {
-      "easy": "Easy",
-      "medium": "Medium",
-      "hard": "Hard",
       "flipCard": "Flip card",
       "answer": "Answer",
       "question": "Question",

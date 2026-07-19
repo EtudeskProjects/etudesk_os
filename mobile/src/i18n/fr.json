@@ -2031,9 +2031,6 @@
       "submissionRecorded": "Réponse au quiz : \"{{option}}\" - réponse enregistrée."
     },
     "flashcard": {
-      "easy": "Facile",
-      "medium": "Moyen",
-      "hard": "Difficile",
       "flipCard": "Retourner la carte",
       "answer": "Réponse",
       "question": "Question",

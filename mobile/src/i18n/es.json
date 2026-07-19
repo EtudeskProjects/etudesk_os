@@ -997,9 +997,6 @@
       "submissionRecorded": "Respuesta del quiz: \"{{option}}\" - respuesta registrada."
     },
     "flashcard": {
-      "easy": "Fácil",
-      "medium": "Medio",
-      "hard": "Difícil",
       "flipCard": "Voltear la tarjeta",
       "answer": "Respuesta",
       "question": "Pregunta",

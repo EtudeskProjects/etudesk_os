@@ -997,9 +997,6 @@
       "submissionRecorded": "Quizantwort: \"{{option}}\" - Antwort gespeichert."
     },
     "flashcard": {
-      "easy": "Einfach",
-      "medium": "Mittel",
-      "hard": "Schwer",
       "flipCard": "Karte umdrehen",
       "answer": "Antwort",
       "question": "Frage",

@@ -997,9 +997,6 @@
       "submissionRecorded": "إجابة الاختبار: \"{{option}}\" - تم تسجيل الإجابة."
     },
     "flashcard": {
-      "easy": "سهل",
-      "medium": "متوسط",
-      "hard": "صعب",
       "flipCard": "اقلب البطاقة",
       "answer": "الإجابة",
       "question": "السؤال",
