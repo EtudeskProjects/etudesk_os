@@ -13,7 +13,7 @@ Objectif : rendre UN block `skill_match` qui compare des niveaux ACTUELS à des 
 
 ## Condition d'application
 
-Utilise ce workflow uniquement si la demande compare explicitement le profil à un poste, une offre, un métier cible ou des compétences cibles. Une explication, un plan d'apprentissage générique ou un programme de 30/60/90 jours n'est pas un skill match. Si ce workflow est activé pour une telle demande, réponds directement à la demande au lieu de la rediriger vers le mode Étudier.
+Utilise ce workflow uniquement si la demande compare explicitement le profil à un poste, une offre, un métier cible ou des compétences cibles. Une explication ou un programme de 30/60/90 jours n'est pas un skill match. Si ce workflow est activé pour une telle demande, réponds avec le prochain jalon durable et une action immédiate, sans créer de roadmap conversationnelle.
 
 Détecte le scope :
 - **talent** (mode Explorer) : les compétences du talent vs un poste/métier qui l'intéresse.

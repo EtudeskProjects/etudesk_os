@@ -281,6 +281,18 @@ export const OrganizationsContextSchema = z.object({
 export type OrganizationRole = z.infer<typeof OrganizationRoleSchema>;
 export type OrganizationsContext = z.infer<typeof OrganizationsContextSchema>;
 
+export const TalentProgressionContextSchema = z.object({
+  direction: z.string(),
+  status: z.enum(['EXPLORING', 'ACTIVE', 'REORIENTING', 'PAUSED']),
+  priorityCompetencies: z.array(z.string()),
+  currentFocus: z.object({ type: z.enum(['passport', 'evidence', 'community', 'application_feedback', 'practice']), reason: z.string(), nextEvidence: z.string().optional() }),
+  summary: z.object({
+    skillsCount: z.number(), acceptedApplications: z.number(), rejectedApplications: z.number(), activeApplications: z.number(),
+    communitiesCount: z.number(), completedBookings: z.number(), evidenceDocuments: z.number(),
+  }),
+  lastSignalAt: z.string().optional(),
+});
+export type TalentProgressionContext = z.infer<typeof TalentProgressionContextSchema>;
 
 // --- Full Talent Context ---
 
@@ -298,6 +310,7 @@ export const TalentContextSchema = z.object({
   bookmarks: BookmarksContextSchema.optional(),
   calendar: CalendarContextSchema.optional(),
   invitations: InvitationsContextSchema.optional(),
+  progression: TalentProgressionContextSchema.optional(),
 
   // Admin context
   organizations: OrganizationsContextSchema.optional(),
@@ -413,6 +426,9 @@ export function summarizeContext(context: TalentContext): string {
   if (context.memberships && context.memberships.totalCount > 0) {
     parts.push(`COMMUNAUTÉS: ${context.memberships.totalCount} memberships`);
   }
+  if (context.progression) {
+    parts.push(`PROGRESSION: ${context.progression.direction}; focus ${context.progression.currentFocus.type}; priorités ${context.progression.priorityCompetencies.join(', ') || 'à confirmer'}`);
+  }
 
   // Organization admin
   if (context.organizations?.isOrgAdmin) {
@@ -444,6 +460,7 @@ ${summarizeContext(context)}
 // --- Context Loading From Database ---
 
 import { pool } from '../database';
+import { refreshTalentProgression } from '../talent-progression.service';
 
 import { logger } from '../../utils';
 /**
@@ -468,6 +485,7 @@ export async function loadTalentContext(
 
   // Load optional data based on options
   const loaders: Promise<void>[] = [];
+  loaders.push(refreshTalentProgression(talentId).then((progression) => { context.progression = progression; }));
 
   if (options.includeDocuments) {
     loaders.push(

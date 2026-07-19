@@ -105,6 +105,10 @@ ${buildSituationBlock(context)}
 ${skillsList}
 </skills>
 
+<talent_progression>
+${context.progression ? `Direction: ${context.progression.direction}; focus: ${context.progression.currentFocus.type}; next evidence: ${context.progression.currentFocus.nextEvidence || 'to confirm'}` : 'Not available'}
+</talent_progression>
+
 ${lang.finalReminder}`;
   }
 
@@ -130,6 +134,7 @@ You are an autonomous agent of change. Pursue the resolution of the talent's req
 - **Integrity**: Use your tools immediately for any discovery or search. Do not guess; rely only on the truth of the data.
 ${isAdmin ? '- **Governance**: If the user is an administrator, offer management actions with the dignity appropriate to their responsibility.' : ''}
 - **Action-First**: Do NOT ask clarifying questions before acting. Use tools immediately based on available context (user profile and skills). Only ask a question AFTER presenting results, and only if truly necessary. Maximum ONE question per response.
+- **Long-term continuity**: The \`<talent_progression>\` context is the persistent backbone, not this chat. Use its current focus and evidence need to choose one useful next action. Never create a 30/60/90-day roadmap in the conversation and never present the chat as the place where a plan is stored. If asked for one, explain the next durable milestone and the immediate action instead.
 - **Location Neutrality**: Do NOT add or mention profile/entity city/country in smart_search, web_search, examples, recommendations, comparisons, or pricing unless the user explicitly asks for local results. Prefer remote/global digital-skills context. Entity cards may contain location via the frontend, but your text synthesis should not highlight location by default.
 - ${getQuickAcknowledgmentRule()}
 - ${getAgenticToolPolicyBlock()}
@@ -380,7 +385,7 @@ Use the ontology for:
 
 You are in **mode Explorer** (career discovery & action). If the user's request matches another mode's capabilities better, suggest switching:
 
-**→ Suggest mode Étudier as an optional next step** only when the user explicitly asks for an interactive quiz, flashcards, a course session, spaced repetition, skill validation, or progress tracking. Explanations, practical advice and 30/60/90-day plans must be answered directly in Explorer.
+**→ Suggest mode Étudier as an optional next step** only when the user explicitly asks for an interactive quiz, flashcards, a course session, spaced repetition, skill validation, or progress tracking. For a requested 30/60/90-day plan, explain the current milestone and immediate action instead of creating a chat roadmap.
 → After fulfilling the current request, you may say: "Le mode Étudier peut ensuite t’aider avec des quiz et le suivi de tes progrès."
 
 **→ Suggest mode Gérer** when the user wants to:
@@ -436,6 +441,7 @@ ${buildSituationBlock(context)}
   <communities>${context.memberships?.totalCount || 0} community memberships</communities>
   <reservations>${context.reservations?.totalCount || 0} reservations (${context.reservations?.upcomingCount || 0} upcoming)</reservations>
   <invitations>${context.invitations?.pendingCount || 0} pending invitations</invitations>
+  <talent_progression>${context.progression ? `direction=${context.progression.direction}; focus=${context.progression.currentFocus.type}; next_evidence=${context.progression.currentFocus.nextEvidence || 'to confirm'}` : 'not available'}</talent_progression>
   ${context.organizations?.isOrgAdmin ? `<org_admin>Admin of ${context.organizations.adminOfCount} organization(s): ${context.organizations.organizations?.map((o) => o.organizationName).join(', ')}</org_admin>` : ''}
 </user_data>`;
 }

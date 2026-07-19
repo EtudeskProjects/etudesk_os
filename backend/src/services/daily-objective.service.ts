@@ -11,6 +11,7 @@ import { pool } from './database';
 import { logger } from '../utils';
 import { getLocaleForLanguage, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
+import { refreshTalentProgression, TalentProgressionSnapshot } from './talent-progression.service';
 
 const suggestionClient = getSuggestionClient();
 
@@ -213,6 +214,7 @@ async function getTalentContext(talentId: string): Promise<TalentContext> {
 async function generateTalentObjective(
   context: TalentContext,
   previousObjective: string | null,
+  progression: TalentProgressionSnapshot,
   language: SupportedLanguage = 'en'
 ): Promise<string> {
   const today = new Date();
@@ -270,6 +272,11 @@ ACTIVITÉ SUR ETUDESK:
 - Candidatures: ${context.recentApplications.length}
 - Communautés: ${context.memberships.length}
 - Événements aujourd'hui: ${context.todayEvents.length}
+\nPROGRESSION PERSISTANTE (source de priorité):
+- Direction: ${progression.direction}
+- Focus: ${progression.currentFocus.type} - ${progression.currentFocus.reason}
+- Compétences prioritaires: ${progression.priorityCompetencies.join(', ') || 'à confirmer'}
+- Preuve suivante: ${progression.currentFocus.nextEvidence || 'à déterminer'}
 ${previousContext}
 ACTIONS CONCRÈTES (choisis UNE selon le contexte):
 
@@ -280,13 +287,13 @@ ACTIONS CONCRÈTES (choisis UNE selon le contexte):
 
 3. COMMUNAUTÉS: Si peu de communautés → "Rejoins une communauté ${userSectors[0] || ''} pour élargir ton réseau"
 
-4. PROFIL: Si compétences vides → "Ajoute tes compétences clés à ton profil pour être visible des recruteurs"
+4. PASSEPORT: Si le focus est passport ou evidence → propose une action qui documente ou valide une compétence réelle, sans la déclarer acquise automatiquement.
 
 RÈGLES STRICTES:
 1. Maximum 500 caractères
 2. PAS de salutation (pas de "Bonjour"), commence directement par l'action
 3. SOIS PRÉCIS: donne un sujet de formation CONCRET, pas "un sujet qui t'intéresse"
-4. Mentionne "mode Étudier" pour les formations
+4. Ne produis pas de plan 30/60/90 jours et ne promets pas une action future
 5. Tutoiement
 6. Objectif DIFFÉRENT du précédent
 7. PAS de markdown (pas de ** ni de # ni de _) — texte brut uniquement
@@ -319,9 +326,7 @@ Génère l'objectif (500 caractères max):`;
     return objective;
   } catch (error) {
     logger.error('[DailyObjective] Error generating talent objective:', error);
-    return language === 'fr'
-      ? `Explore les opportunités disponibles sur Etudesk et postule à celle qui correspond le mieux à ton profil.`
-      : `Explore available opportunities on Etudesk and apply to the one that best matches your profile.`;
+    throw error;
   }
 }
 
@@ -355,8 +360,8 @@ export async function getTalentDailyObjective(
   const previousObjective = previousResult.rows[0]?.objective || null;
 
   // Generate new objective
-  const context = await getTalentContext(talentId);
-  const objective = await generateTalentObjective(context, previousObjective, language);
+  const [context, progression] = await Promise.all([getTalentContext(talentId), refreshTalentProgression(talentId)]);
+  const objective = await generateTalentObjective(context, previousObjective, progression, language);
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION_MS);
