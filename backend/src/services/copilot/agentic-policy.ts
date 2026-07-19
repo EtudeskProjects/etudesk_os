@@ -40,6 +40,17 @@ export function buildChatCompletionTools(tools: ToolDefinition[]): OpenAI.Chat.C
   }));
 }
 
+/** Flat function schema required by the Responses API. */
+export function buildResponsesTools(tools: ToolDefinition[]): Array<Record<string, unknown>> {
+  return tools.map((t) => ({
+    type: 'function',
+    name: t.definition.name,
+    description: t.definition.description,
+    parameters: (t.definition.input_schema as Record<string, unknown>) ?? { type: 'object', properties: {} },
+    strict: false,
+  }));
+}
+
 type ToolProfile = {
   tools: ToolDefinition[];
   reason: string;

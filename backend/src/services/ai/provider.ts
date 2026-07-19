@@ -1,9 +1,9 @@
 /**
- * AI Provider Configuration — single OpenAI-compatible provider
+ * AI Provider Configuration — direct OpenAI API only
  *
- * MIGRATION (2026-06): consolidated onto one OpenAI-compatible AI provider.
- *   base_url: AI_BASE_URL (optional; empty uses OpenAI's default API)
- *   key:      AI_API_KEY or OPENAI_API_KEY
+ * GPT-5.6 features used by the agents (Responses, native continuity and
+ * prompt-cache controls) require the official OpenAI API. Alternate base URLs
+ * are deliberately not supported in production.
  *
  * - Chat (agent, fast, suggestions, vision), embeddings → OpenAI-compatible client below.
  * - Media (image/STT/TTS) uses the provider's native inference API — see media.client.ts.
@@ -15,10 +15,7 @@ dotenv.config();
 import OpenAI from 'openai';
 import { logger } from '../../utils';
 
-const AI_BASE_URL = process.env.AI_BASE_URL || '';
-const AI_API_KEY = AI_BASE_URL
-  ? process.env.AI_API_KEY || process.env.OPENAI_API_KEY || ''
-  : process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '';
+const AI_API_KEY = process.env.OPENAI_API_KEY || '';
 
 // ---------------------------------------------------------------------------
 // OpenAI-compatible client — chat + embeddings
@@ -26,7 +23,6 @@ const AI_API_KEY = AI_BASE_URL
 
 const aiClient = new OpenAI({
   apiKey: AI_API_KEY,
-  ...(AI_BASE_URL ? { baseURL: AI_BASE_URL } : {}),
 });
 
 // ---------------------------------------------------------------------------
@@ -34,10 +30,9 @@ const aiClient = new OpenAI({
 // ---------------------------------------------------------------------------
 
 if (AI_API_KEY) {
-  const providerLabel = AI_BASE_URL ? `OpenAI-compatible provider (${AI_BASE_URL})` : 'OpenAI API';
-  logger.info(`[AI Provider] ${providerLabel} — chat + embeddings`);
+  logger.info('[AI Provider] OpenAI API — chat + embeddings');
 } else {
-  logger.warn('[AI Provider] AI_API_KEY or OPENAI_API_KEY missing — AI calls may fail');
+  logger.warn('[AI Provider] OPENAI_API_KEY missing — AI calls may fail');
 }
 
 // ---------------------------------------------------------------------------

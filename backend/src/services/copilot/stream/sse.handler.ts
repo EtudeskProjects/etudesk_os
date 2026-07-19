@@ -499,9 +499,20 @@ export async function runAgentWithSSE(
           const { parallel_tool_calls: parallelToolCalls, ...completionOptionsWithoutTools } = completionOptions;
           const stream = await client.chat.completions.create({
             model: agentConfig.model,
-            messages: [{ role: 'system', content: systemText }, ...messages],
+            // Keep the invariant system prefix first. GPT-5.6 can then reuse
+            // it across sessions without changing the mobile SSE contract.
+            messages: [{
+              role: 'system',
+              content: [{
+                type: 'text',
+                text: systemText,
+                prompt_cache_breakpoint: { mode: 'explicit' },
+              }],
+            } as any, ...messages],
             ...toolOptions,
             ...(toolDefs.length > 0 ? { ...completionOptionsWithoutTools, parallel_tool_calls: parallelToolCalls } : completionOptionsWithoutTools),
+            prompt_cache_key: `copilot:${agentConfig.mode}:${selectedToolProfile.reason}`,
+            prompt_cache_options: { mode: 'implicit', ttl: '30m' },
             stream: true,
             stream_options: { include_usage: true },
           });
@@ -565,6 +576,7 @@ export async function runAgentWithSSE(
               totalInputTokens += chunk.usage.prompt_tokens || 0;
               totalOutputTokens += chunk.usage.completion_tokens || 0;
               totalCacheReadTokens += (chunk.usage as any).prompt_tokens_details?.cached_tokens || 0;
+              totalCacheCreationTokens += (chunk.usage as any).prompt_tokens_details?.cache_write_tokens || 0;
               estimatedCostUsd = estimateCopilotCostUsd(agentConfig.model, totalInputTokens, totalOutputTokens, totalCacheReadTokens);
             }
           }
