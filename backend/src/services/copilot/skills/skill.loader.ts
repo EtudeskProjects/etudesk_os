@@ -59,6 +59,10 @@ let cachedSkills: SkillDefinition[] | null = null;
 const SKILL_MATCH_THRESHOLD = 0.45;
 const SKILL_DETECTION_TIMEOUT_MS = Number(process.env.COPILOT_SKILL_DETECTION_TIMEOUT_MS || 700);
 
+function isExplicitSkillMatchRequest(message: string): boolean {
+  return /\b(suis-je fait|qu['’]est-ce qui me manque|compétences? manquantes?|competences? manquantes?|gap|écart|ecart|prêt pour|pret pour|match avec|mon profil correspond|actuel vs cible|pour (?:ce|un) (?:poste|métier|metier|job|offre))\b/i.test(message);
+}
+
 /**
  * Parse a .skill.md file into a SkillDefinition.
  * Format:
@@ -304,6 +308,7 @@ export async function detectSkillFromMessage(
     }
 
     if (!bestMatch || bestScore < SKILL_MATCH_THRESHOLD) return null;
+    if (bestMatch.id === 'skill-match' && !isExplicitSkillMatchRequest(message)) return null;
 
     return {
       skillId: bestMatch.id,

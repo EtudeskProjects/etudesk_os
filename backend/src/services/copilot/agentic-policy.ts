@@ -75,6 +75,9 @@ export function selectToolsForMessage(
     if (/\b(explique(?:-moi)?|conseil(?:s)?|définition|definition|c.?est quoi|comment (?:me )?préparer|aide-moi|aide moi)\b/.test(m)) {
       return { tools: [], reason: 'explore_guidance' };
     }
+    if (/\b(?:plan|programme|parcours)\b.*\b(?:30|60|90)\s+jours\b|\b(?:30|60|90)\s+jours\b.*\b(?:plan|programme|parcours)\b/.test(m)) {
+      return { tools: [], reason: 'explore_timeboxed_plan' };
+    }
     if (/\b(opportunit\w*|offres?|postes?|emplois?|stages?|jobs?|espaces?|coworking|salles?|studios?|réserver|reserver)\b/.test(m)) {
       return {
         tools: byNames(tools, ['smart_search', 'sql_query', 'execute_action']),
