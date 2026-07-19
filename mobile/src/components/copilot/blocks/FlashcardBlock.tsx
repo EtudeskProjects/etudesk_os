@@ -43,38 +43,6 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
     setIsFlipped(!isFlipped);
   };
 
-  const getDifficultyColor = (difficulty?: string) => {
-    switch ((difficulty || '').toLowerCase()) {
-      case 'easy':
-      case 'facile':
-        return colors.success;
-      case 'medium':
-      case 'moyen':
-        return colors.warning;
-      case 'hard':
-      case 'difficile':
-        return colors.error;
-      default:
-        return colors.info;
-    }
-  };
-
-  const getDifficultyLabel = (difficulty?: string) => {
-    switch ((difficulty || '').toLowerCase()) {
-      case 'easy':
-      case 'facile':
-        return t('copilot.flashcard.easy');
-      case 'medium':
-      case 'moyen':
-        return t('copilot.flashcard.medium');
-      case 'hard':
-      case 'difficile':
-        return t('copilot.flashcard.hard');
-      default:
-        return sanitizeText(difficulty, 24) || '';
-    }
-  };
-
   if (!front && !back) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -83,27 +51,16 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
     );
   }
 
-  const difficultyColor = getDifficultyColor(data.difficulty);
-  const difficultyLabel = getDifficultyLabel(data.difficulty);
   const visibleTopic = topic && topic !== front && topic !== back ? topic : undefined;
   const visibleText = isFlipped && canFlip ? back : (front || back)!;
 
   return (
     <View style={styles.container}>
-      {(visibleTopic || difficultyLabel) ? (
+      {visibleTopic ? (
         <View style={styles.header}>
-          {visibleTopic ? (
-            <Text style={[styles.topic, { color: colors.textSecondary }]} numberOfLines={1}>
-              {visibleTopic}
-            </Text>
-          ) : <View />}
-          {difficultyLabel ? (
-            <View style={[styles.difficultyBadge, { backgroundColor: withOpacity(difficultyColor, OPACITY[15]) }]}>
-              <Text style={[styles.difficultyText, { color: difficultyColor }]}>
-                {difficultyLabel}
-              </Text>
-            </View>
-          ) : null}
+          <Text style={[styles.topic, { color: colors.textSecondary }]} numberOfLines={1}>
+            {visibleTopic}
+          </Text>
         </View>
       ) : null}
 
@@ -162,15 +119,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
-  },
-  difficultyBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER.radius.full,
-  },
-  difficultyText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.xs,
   },
   card: {
     borderRadius: BORDER.radius.lg,
