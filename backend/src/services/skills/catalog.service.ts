@@ -69,6 +69,28 @@ async function searchByEmbedding(query: string, limit: number): Promise<Array<Co
   }
 }
 
+/** Candidate set for document extraction: preserve every catalog axis instead
+ * of letting one broad semantic query collapse the result to a single domain. */
+export async function suggestCompetenciesByType(query: string, limitPerType = 18): Promise<Competency[]> {
+  try {
+    const vec = await generateEmbedding(query);
+    const types: CatalogType[] = ['knowledge', 'hard_skill', 'soft_skill', 'tool_platform', 'language'];
+    const groups = await Promise.all(types.map(async (type) => {
+      const { rows } = await pool.query(
+        `SELECT slug, family, type, name, name_fr, catalog_version
+         FROM competencies WHERE embedding IS NOT NULL AND type = $2
+         ORDER BY embedding <=> $1::vector LIMIT $3`,
+        [`[${vec.join(',')}]`, type, limitPerType]
+      );
+      return rows.map((r) => ({ slug: r.slug, family: r.family, type: r.type, name: r.name, name_fr: r.name_fr, catalog_version: r.catalog_version }));
+    }));
+    return groups.flat();
+  } catch (err: any) {
+    logger.warn(`[catalog] typed semantic candidate search failed: ${err.message}`);
+    return [];
+  }
+}
+
 // --- In-process cache -----------------------------------------------------------
 
 let cacheLoaded = false;
@@ -364,6 +386,7 @@ export default {
   getType,
   getCatalogVersion,
   resolveLabel,
+  suggestCompetenciesByType,
   suggestCompetencies,
   getNeighbors,
   getDependents,

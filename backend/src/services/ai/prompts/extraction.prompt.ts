@@ -55,11 +55,12 @@ ${toTOON(EXTRACTION_OUTPUT_CONTRACT)}
 Règles pour les compétences :
 - Retourne UNIQUEMENT un slug exact de COMPÉTENCES AUTORISÉES. N'invente jamais un slug, nom, type ou famille.
 - Si aucune compétence autorisée ne correspond clairement, retourne un tableau skills vide.
+- Traite indépendamment knowledge, hard_skill, soft_skill, tool_platform et language. Cherche des preuves explicites dans le document pour chaque axe, puis consolide dans un unique tableau skills sans doublon.
 - Proficiency : master (5+ ans), advanced (3-5 ans), intermediate (1-3 ans), beginner (< 1 an)
 - Context : relie à l'expérience/formation avec entité et période si possible
 - EXCLURE toute compétence déjà listée dans "Compétences DÉJÀ enregistrées" — ne retourne QUE les NOUVELLES compétences
 - Si une compétence existante a un nom similaire (variante, synonyme, traduction), ne pas la dupliquer
-- 3 à 30 compétences NOUVELLES max, pas de doublons
+- Pour un CV, vise une couverture équilibrée des axes réellement étayés, sans imposer un minimum artificiel et sans dépasser 30 compétences.
 - Si le document est un CV/résumé et contient des expériences, réalisations, expertises ou domaines d'intervention, le champ "skills" est OBLIGATOIRE
 - Pour un CV, préfère une liste de compétences explicites et actionnables plutôt que des tags génériques
 - N'utilise PAS "tags" comme substitut à "skills" sur un CV

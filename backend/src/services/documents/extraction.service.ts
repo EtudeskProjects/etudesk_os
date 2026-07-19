@@ -18,7 +18,7 @@ import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/e
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 import { pool } from '../database';
 import { logger } from '../../utils';
-import { suggestCompetencies, type Competency } from '../skills/catalog.service';
+import { suggestCompetenciesByType } from '../skills/catalog.service';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse: (buffer: Buffer) => Promise<{ text?: string; numpages?: number }> = require('pdf-parse');
@@ -272,7 +272,7 @@ export async function extractDocumentMetadata(
       extractedPdfText = await extractPdfTextFromDataUrl(fileUrl);
       if (!extractedPdfText) return buildFallbackPdfExtraction(null, new Error('Texte PDF vide ou non lisible'));
     }
-    const allowedCompetencies = await suggestCompetencies((extractedPdfText || 'digital professional skills').slice(0, 12000), 60);
+    const allowedCompetencies = await suggestCompetenciesByType((extractedPdfText || 'digital professional skills').slice(0, 12000));
     const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills, allowedCompetencies);
     const aiClient = getAIClient();
 
