@@ -17,7 +17,7 @@ import {
   FileText,
   CalendarDays,
   Bell,
-  Sparkles,
+  BadgeCheck,
   Compass,
   Clock3,
   EyeOff,
@@ -408,7 +408,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(function EntityC
     talent: { icon: User, color: colors.primary, label: t('copilot.entity.talent') },
     document: { icon: FileText, color: colors.success, label: t('copilot.entity.document') },
     event: { icon: CalendarDays, color: colors.info, label: t('copilot.entity.event') },
-    skill: { icon: Sparkles, color: colors.warning, label: t('copilot.entity.skill') },
+    skill: { icon: BadgeCheck, color: colors.warning, label: t('copilot.entity.skill') },
     notification: { icon: Bell, color: colors.primary, label: t('copilot.entity.notification') },
     maps: { icon: Compass, color: colors.success, label: t('copilot.entity.maps') },
   }[type] || { icon: Briefcase, color: colors.textSecondary, label: type };

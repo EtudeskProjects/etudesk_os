@@ -23,7 +23,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Sparkles,
   Sun,
   Moon,
   CloudSun,

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Dimensions, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Sparkles, Search, Users, MessageCircle, ArrowRight, Globe, X } from 'lucide-react-native';
+import { PartyPopper, Search, Users, MessageCircle, ArrowRight, Globe, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, IconButton, SelectCard } from '../../src/components/ui';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -65,7 +65,7 @@ export default function WelcomeScreen() {
         {/* Header with celebration */}
         <View style={styles.header}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-            <Sparkles
+            <PartyPopper
               size={ICON.size.xl * 1.5}
               color={colors.primary}
               strokeWidth={ICON.strokeWidth}

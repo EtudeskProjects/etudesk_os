@@ -230,7 +230,7 @@ La couleur encode le **type**, jamais la famille. Les familles sont monochromes,
 **Couleurs et icones (referentiel mobile)**
 
 - La couleur encode le **type**, avec son icone Lucide : `knowledge` BookOpen (bleu), `hard_skill` Wrench (cyan), `soft_skill` Users (rose), `tool_platform` Boxes (violet), `language` Languages (emeraude).
-- Les **familles** sont monochromes, differenciees par une icone Lucide. Proposition : IA `Sparkles`, Donnees `Database`, Dev `Code2`, Cloud `Cloud`, Cyber `ShieldCheck`, Produit/Design `PenTool`, Growth `TrendingUp`, Media `Clapperboard`, Fintech `Landmark`, Web3 `Blocks`, Emergentes `Atom`, Business `Briefcase`, Humaines `HeartHandshake`, Secteurs `Factory`, Durabilite `Leaf`, Litteratie `GraduationCap`.
+- Les **familles** sont monochromes, differenciees par une icone Lucide. Proposition : IA `BrainCircuit`, Donnees `Database`, Dev `Code2`, Cloud `Cloud`, Cyber `ShieldCheck`, Produit/Design `PenTool`, Growth `TrendingUp`, Media `Clapperboard`, Fintech `Landmark`, Web3 `Blocks`, Emergentes `Atom`, Business `Briefcase`, Humaines `HeartHandshake`, Secteurs `Factory`, Durabilite `Leaf`, Litteratie `GraduationCap`.
 
 **Structure**
 

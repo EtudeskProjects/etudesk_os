@@ -15,7 +15,6 @@ import {
   Languages,
   Gem,
   User,
-  Sparkles,
   FileText,
   BadgeCheck,
   type LucideIcon,
@@ -129,7 +128,7 @@ interface OriginConfig {
 
 const ORIGIN_CONFIG: Record<SkillOrigin, OriginConfig> = {
   declared: { Icon: User, color: (c) => c.gray500, labelKey: 'settings.skills.origin.declared' },
-  inferred: { Icon: Sparkles, color: (c) => c.info, labelKey: 'settings.skills.origin.inferred' },
+  inferred: { Icon: Gem, color: (c) => c.info, labelKey: 'settings.skills.origin.inferred' },
   extracted: { Icon: FileText, color: (c) => c.warning, labelKey: 'settings.skills.origin.extracted' },
   validated: { Icon: BadgeCheck, color: (c) => c.success, labelKey: 'settings.skills.origin.validated' },
 };
