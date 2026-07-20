@@ -2102,7 +2102,11 @@
       "cohortVs": "Cohort vs {{subject}}",
       "coverage": "Coverage",
       "current": "Current",
-      "target": "Target"
+      "target": "Target",
+      "met": "Met",
+      "gap": "To build",
+      "allMet": "All target skills are met.",
+      "gapsRemaining": "{{count}} remaining skill gap"
     },
     "entity": {
       "opportunity": "Opportunity",

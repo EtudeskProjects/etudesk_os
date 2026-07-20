@@ -24,11 +24,11 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Check, TrendingUp } from 'lucide-react-native';
+import { Check, Target } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
-import { SPACING, TYPOGRAPHY, BORDER } from '../../../constants/theme';
-import { getSkillTypeConfig, normalizeLevel, LEVEL_SCORE, skillDisplayName } from '../../../constants/skills';
+import { SPACING, TYPOGRAPHY, BORDER, withOpacity } from '../../../constants/theme';
+import { getLevelConfig, getSkillTypeConfig, normalizeLevel, LEVEL_SCORE, skillDisplayName } from '../../../constants/skills';
 import { SkillLevelSteps } from '../../SkillLevelSteps';
 
 interface SkillMatchItem {
@@ -76,6 +76,7 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
       : Math.round((metCount / skills.length) * 100);
 
   const insightColor = overall >= 80 ? colors.success : overall >= 50 ? colors.warning : colors.error;
+  const gapCount = skills.length - metCount;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -91,19 +92,19 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
             </Text>
           ) : null}
         </View>
+        <View style={[styles.coverageBadge, { backgroundColor: withOpacity(insightColor, 0.12) }]}>
+          <Text style={[styles.coverageValue, { color: insightColor }]}>{overall}%</Text>
+          <Text style={[styles.coverageLabel, { color: colors.textSecondary }]}>{t('copilot.skillMatch.coverage')}</Text>
+        </View>
       </View>
 
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDotFilled, { backgroundColor: colors.textPrimary }]} />
-          <Text style={[styles.legendText, { color: colors.textDisabled }]}>{t('copilot.skillMatch.current')}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDotTarget, { borderColor: colors.textPrimary }]} />
-          <Text style={[styles.legendText, { color: colors.textDisabled }]}>{t('copilot.skillMatch.target')}</Text>
-        </View>
-      </View>
+      <Text style={[styles.helper, { color: colors.textSecondary }]}>
+        {isCohort
+          ? `${metCount}/${skills.length} ${t('copilot.skillMatch.target').toLowerCase()}`
+          : gapCount === 0
+            ? t('copilot.skillMatch.allMet')
+            : t('copilot.skillMatch.gapsRemaining', { count: gapCount })}
+      </Text>
 
       {/* Skills */}
       <View style={styles.list}>
@@ -112,6 +113,8 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
           const met = isCohort && typeof s.coverage === 'number'
             ? (s.coverage ?? 0) >= 60
             : currentScore(s.current) >= currentScore(s.target);
+          const currentLevel = getLevelConfig(s.current, colors);
+          const targetLevel = getLevelConfig(s.target, colors);
           return (
             <View key={`${s.name}-${i}`} style={[styles.row, { borderTopColor: colors.borderColor }, i === 0 ? styles.firstRow : null]}>
               <View style={styles.rowHead}>
@@ -120,12 +123,26 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
                   {skillDisplayName(s, language)}
                 </Text>
                 {isCohort && typeof s.coverage === 'number' ? (
-                  <Text style={[styles.cohortPct, { color: met ? colors.success : colors.warning }]}>{Math.round(s.coverage)}%</Text>
+                  <Text style={[styles.status, { color: met ? colors.success : colors.warning }]}>{Math.round(s.coverage)}%</Text>
                 ) : met ? (
-                  <Check size={14} color={colors.success} strokeWidth={2.5} />
+                  <View style={[styles.metBadge, { backgroundColor: withOpacity(colors.success, 0.12) }]}>
+                    <Check size={12} color={colors.success} strokeWidth={2.5} />
+                    <Text style={[styles.status, { color: colors.success }]}>{t('copilot.skillMatch.met')}</Text>
+                  </View>
                 ) : (
-                  <TrendingUp size={14} color={colors.warning} strokeWidth={2.5} />
+                  <View style={[styles.gapBadge, { backgroundColor: withOpacity(colors.warning, 0.14) }]}>
+                    <Target size={12} color={colors.warning} strokeWidth={2.5} />
+                    <Text style={[styles.status, { color: colors.warning }]}>{t('copilot.skillMatch.gap')}</Text>
+                  </View>
                 )}
+              </View>
+              <View style={styles.levelLine}>
+                <Text style={[styles.levelText, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {t('copilot.skillMatch.current')} · {t(currentLevel.labelKey)}
+                </Text>
+                <Text style={[styles.levelText, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {t('copilot.skillMatch.target')} · {t(targetLevel.labelKey)}
+                </Text>
               </View>
               <SkillLevelSteps level={s.current} type={s.type} target={s.target} size="sm" />
             </View>
@@ -135,14 +152,16 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
 
       {/* Summary + insights */}
       {data.summary ? (
-        <Text style={[styles.summary, { color: colors.textSecondary }]}>{data.summary}</Text>
+        <View style={[styles.summaryBox, { backgroundColor: withOpacity(colors.primary, 0.07) }]}>
+          <Text style={[styles.summary, { color: colors.textSecondary }]} numberOfLines={3}>{data.summary}</Text>
+        </View>
       ) : null}
       {Array.isArray(data.insights) && data.insights.length > 0 && (
         <View style={styles.insights}>
-          {data.insights.slice(0, 5).map((ins, i) => (
+          {data.insights.slice(0, 3).map((ins, i) => (
             <View key={i} style={styles.insightRow}>
               <Text style={[styles.bullet, { color: insightColor }]}>•</Text>
-              <Text style={[styles.insightText, { color: colors.textSecondary }]}>{ins}</Text>
+              <Text style={[styles.insightText, { color: colors.textSecondary }]} numberOfLines={2}>{ins}</Text>
             </View>
           ))}
         </View>
@@ -159,18 +178,22 @@ const styles = StyleSheet.create({
   headerText: { flex: 1 },
   title: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   subject: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-  legend: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.sm },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDotFilled: { width: 10, height: 4, borderRadius: 2 },
-  legendDotTarget: { width: 10, height: 4, borderRadius: 2, borderWidth: 1.5 },
-  legendText: { fontSize: TYPOGRAPHY.fontSize.xs },
+  coverageBadge: { minWidth: 54, alignItems: 'center', borderRadius: BORDER.radius.md, paddingHorizontal: SPACING.xs, paddingVertical: 5 },
+  coverageValue: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.bold },
+  coverageLabel: { fontSize: 10, marginTop: 1 },
+  helper: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: SPACING.sm },
   list: { marginTop: SPACING.sm },
-  row: { paddingVertical: SPACING.sm, borderTopWidth: BORDER.width.thin, gap: 6 },
+  row: { paddingVertical: SPACING.sm, borderTopWidth: BORDER.width.thin, gap: 5 },
   firstRow: { borderTopWidth: 0 },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   skillName: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  cohortPct: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.bold },
-  summary: { fontSize: TYPOGRAPHY.fontSize.sm, marginTop: SPACING.md, fontStyle: 'italic' },
+  metBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: BORDER.radius.sm, paddingHorizontal: 5, paddingVertical: 3 },
+  gapBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: BORDER.radius.sm, paddingHorizontal: 5, paddingVertical: 3 },
+  status: { fontSize: 10, fontWeight: TYPOGRAPHY.fontWeight.bold },
+  levelLine: { flexDirection: 'row', justifyContent: 'space-between', gap: SPACING.xs },
+  levelText: { flex: 1, fontSize: 10 },
+  summaryBox: { marginTop: SPACING.md, borderRadius: BORDER.radius.md, padding: SPACING.sm },
+  summary: { fontSize: TYPOGRAPHY.fontSize.sm, lineHeight: 19 },
   insights: { marginTop: SPACING.sm, gap: 4 },
   insightRow: { flexDirection: 'row', gap: SPACING.xs },
   bullet: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.bold },

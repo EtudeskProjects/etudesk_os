@@ -2125,7 +2125,11 @@
       "cohortVs": "Cohorte vs {{subject}}",
       "coverage": "Couverture",
       "current": "Actuel",
-      "target": "Cible"
+      "target": "Cible",
+      "met": "Atteinte",
+      "gap": "À renforcer",
+      "allMet": "Toutes les compétences ciblées sont atteintes.",
+      "gapsRemaining": "{{count}} écart restant à renforcer"
     },
     "entity": {
       "opportunity": "Opportunité",
