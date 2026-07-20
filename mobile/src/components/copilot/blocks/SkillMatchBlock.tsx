@@ -24,7 +24,6 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Check, Target } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, withOpacity } from '../../../constants/theme';
@@ -92,10 +91,6 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
             </Text>
           ) : null}
         </View>
-        <View style={[styles.coverageBadge, { backgroundColor: withOpacity(insightColor, 0.12) }]}>
-          <Text style={[styles.coverageValue, { color: insightColor }]}>{overall}%</Text>
-          <Text style={[styles.coverageLabel, { color: colors.textSecondary }]}>{t('copilot.skillMatch.coverage')}</Text>
-        </View>
       </View>
 
       <Text style={[styles.helper, { color: colors.textSecondary }]}>
@@ -110,9 +105,6 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
       <View style={styles.list}>
         {skills.map((s, i) => {
           const cfg = getSkillTypeConfig(s.type, colors);
-          const met = isCohort && typeof s.coverage === 'number'
-            ? (s.coverage ?? 0) >= 60
-            : currentScore(s.current) >= currentScore(s.target);
           const currentLevel = getLevelConfig(s.current, colors);
           const targetLevel = getLevelConfig(s.target, colors);
           return (
@@ -122,26 +114,15 @@ export function SkillMatchBlock({ data }: { data: SkillMatchData }) {
                 <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
                   {skillDisplayName(s, language)}
                 </Text>
-                {isCohort && typeof s.coverage === 'number' ? (
-                  <Text style={[styles.status, { color: met ? colors.success : colors.warning }]}>{Math.round(s.coverage)}%</Text>
-                ) : met ? (
-                  <View style={[styles.metBadge, { backgroundColor: withOpacity(colors.success, 0.12) }]}>
-                    <Check size={12} color={colors.success} strokeWidth={2.5} />
-                    <Text style={[styles.status, { color: colors.success }]}>{t('copilot.skillMatch.met')}</Text>
-                  </View>
-                ) : (
-                  <View style={[styles.gapBadge, { backgroundColor: withOpacity(colors.warning, 0.14) }]}>
-                    <Target size={12} color={colors.warning} strokeWidth={2.5} />
-                    <Text style={[styles.status, { color: colors.warning }]}>{t('copilot.skillMatch.gap')}</Text>
-                  </View>
-                )}
+                <View style={[styles.targetTag, { backgroundColor: withOpacity(colors.primary, 0.1) }]}>
+                  <Text style={[styles.targetTagText, { color: colors.primary }]} numberOfLines={1}>
+                    {t('copilot.skillMatch.target')} · {t(targetLevel.labelKey)}
+                  </Text>
+                </View>
               </View>
               <View style={styles.levelLine}>
                 <Text style={[styles.levelText, { color: colors.textSecondary }]} numberOfLines={1}>
                   {t('copilot.skillMatch.current')} · {t(currentLevel.labelKey)}
-                </Text>
-                <Text style={[styles.levelText, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {t('copilot.skillMatch.target')} · {t(targetLevel.labelKey)}
                 </Text>
               </View>
               <SkillLevelSteps level={s.current} type={s.type} target={s.target} size="sm" />
@@ -178,19 +159,15 @@ const styles = StyleSheet.create({
   headerText: { flex: 1 },
   title: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   subject: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-  coverageBadge: { minWidth: 54, alignItems: 'center', borderRadius: BORDER.radius.md, paddingHorizontal: SPACING.xs, paddingVertical: 5 },
-  coverageValue: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.bold },
-  coverageLabel: { fontSize: 10, marginTop: 1 },
   helper: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: SPACING.sm },
   list: { marginTop: SPACING.sm },
   row: { paddingVertical: SPACING.sm, borderTopWidth: BORDER.width.thin, gap: 5 },
   firstRow: { borderTopWidth: 0 },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   skillName: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  metBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: BORDER.radius.sm, paddingHorizontal: 5, paddingVertical: 3 },
-  gapBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: BORDER.radius.sm, paddingHorizontal: 5, paddingVertical: 3 },
-  status: { fontSize: 10, fontWeight: TYPOGRAPHY.fontWeight.bold },
-  levelLine: { flexDirection: 'row', justifyContent: 'space-between', gap: SPACING.xs },
+  targetTag: { maxWidth: '48%', borderRadius: BORDER.radius.sm, paddingHorizontal: SPACING.xs, paddingVertical: 4 },
+  targetTagText: { fontSize: 10, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+  levelLine: { flexDirection: 'row', gap: SPACING.xs },
   levelText: { flex: 1, fontSize: 10 },
   summaryBox: { marginTop: SPACING.md, borderRadius: BORDER.radius.md, padding: SPACING.sm },
   summary: { fontSize: TYPOGRAPHY.fontSize.sm, lineHeight: 19 },
