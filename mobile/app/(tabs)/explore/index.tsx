@@ -43,6 +43,7 @@ import type {
 import { OpportunityCard, CommunityCard, SpaceCard } from '../../../src/components/cards';
 import { opportunityService, communityService, spaceService, bookmarkService, Space } from '../../../src/services';
 import type { BookmarkIdsResponse } from '../../../src/services/bookmarkService';
+import { logger } from '../../../src/services/logService';
 
 type Category = 'opportunities' | 'communities' | 'spaces';
 type SortOption = 'relevance' | 'proximity' | 'recent' | 'popularity';
@@ -140,6 +141,7 @@ export default function ExploreScreen() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [loadErrors, setLoadErrors] = useState<Partial<Record<Category, boolean>>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -179,6 +181,13 @@ export default function ExploreScreen() {
         communityService.getAll({ status: 'ACTIVE', limit: 50 }), // Communities use ACTIVE
       ]);
 
+      const nextErrors: Partial<Record<Category, boolean>> = {
+        opportunities: oppsRes.status === 'rejected',
+        spaces: spacesRes.status === 'rejected',
+        communities: communitiesRes.status === 'rejected',
+      };
+      setLoadErrors(nextErrors);
+
       if (oppsRes.status === 'fulfilled' && oppsRes.value.data) {
         // Transform organizations array to organization object
         const transformedOpps = oppsRes.value.data.map((opp: any) => ({
@@ -194,11 +203,9 @@ export default function ExploreScreen() {
       if (spacesRes.status === 'fulfilled' && spacesRes.value.data) setSpaces(spacesRes.value.data);
       if (communitiesRes.status === 'fulfilled' && communitiesRes.value.data) setCommunities(communitiesRes.value.data);
 
-      if (__DEV__) {
-        if (oppsRes.status === 'rejected') console.error('Error loading opportunities:', oppsRes.reason);
-        if (spacesRes.status === 'rejected') console.error('Error loading spaces:', spacesRes.reason);
-        if (communitiesRes.status === 'rejected') console.error('Error loading communities:', communitiesRes.reason);
-      }
+      if (oppsRes.status === 'rejected') logger.warn('Explore', 'Unable to load opportunities', oppsRes.reason);
+      if (spacesRes.status === 'rejected') logger.warn('Explore', 'Unable to load spaces', spacesRes.reason);
+      if (communitiesRes.status === 'rejected') logger.warn('Explore', 'Unable to load communities', communitiesRes.reason);
 
       // Load bookmarks after data
       loadBookmarks();
@@ -540,7 +547,15 @@ export default function ExploreScreen() {
     );
   };
 
-  const renderEmptyState = () => {
+  const renderEmptyState = (category: Category = activeCategory) => {
+    if (loadErrors[category]) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('explore.loadError')}</Text>
+          <Button title={t('common.retry')} onPress={handleRefresh} variant="outline" size="sm" style={{ marginTop: SPACING.md }} />
+        </View>
+      );
+    }
     if (searchQuery.trim()) {
       return (
         <View style={styles.emptyState}>
@@ -630,7 +645,7 @@ export default function ExploreScreen() {
             updateCellsBatchingPeriod={50}
             removeClippedSubviews
           />
-        ) : renderEmptyState();
+        ) : renderEmptyState('opportunities');
       case 'spaces':
         return filteredSpaces.length > 0 ? (
           <FlatList
@@ -652,7 +667,7 @@ export default function ExploreScreen() {
             updateCellsBatchingPeriod={50}
             removeClippedSubviews
           />
-        ) : renderEmptyState();
+        ) : renderEmptyState('spaces');
       case 'communities':
         return filteredCommunities.length > 0 ? (
           <FlatList
@@ -674,7 +689,7 @@ export default function ExploreScreen() {
             updateCellsBatchingPeriod={50}
             removeClippedSubviews
           />
-        ) : renderEmptyState();
+        ) : renderEmptyState('communities');
       default:
         return renderEmptyState();
     }

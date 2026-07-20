@@ -376,6 +376,7 @@
       "popularityDesc": "Les plus consultés"
     },
     "noResultsSearch": "Aucun résultat pour « {{query}} »",
+    "loadError": "Impossible de charger cette liste. Vérifie ta connexion puis réessaie.",
     "resultsCount": {
       "one": "{{count}} résultat",
       "other": "{{count}} résultats"

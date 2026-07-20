@@ -353,6 +353,7 @@
       "popularityDesc": "Most viewed"
     },
     "noResultsSearch": "No results for \"{{query}}\"",
+    "loadError": "This list could not be loaded. Check your connection and try again.",
     "resultsCount": {
       "one": "{{count}} result",
       "other": "{{count}} results"
