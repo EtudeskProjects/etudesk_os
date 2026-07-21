@@ -144,11 +144,14 @@ app.use(i18nMiddleware);
 // Serve uploaded files — split into public and private directories
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 
-// Public directories: avatars, logos, illustrations, seed assets (no auth required).
+// Public directories: avatars, logos, illustrations, generated images, seed assets (no auth required).
 // `seed` holds shared sample covers (opportunities/communities/orgs) shown in cards,
 // which <img>/SVG fetches load WITHOUT a Bearer token — keeping it private caused 401s.
+// Generated Copilot images are rendered by React Native's <Image>, which likewise
+// cannot attach the API Bearer token. Keep only the generated visual asset public;
+// documents and all other uploads remain protected below.
 // Private content (talent documents) lives elsewhere and stays behind the auth catch-all.
-const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations', 'seed'];
+const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations', 'generated', 'seed'];
 for (const dir of PUBLIC_UPLOAD_DIRS) {
   app.use(`/uploads/${dir}`, express.static(path.join(uploadDir, dir)));
 }
