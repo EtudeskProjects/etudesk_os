@@ -11,7 +11,7 @@
 
 import { pool } from '../database';
 import { logger } from '../../utils';
-import { MODEL_AGENT, MODEL_EMBEDDING } from './models';
+import { MODEL_EMBEDDING } from './models';
 
 export type AIProvider = 'ai';
 
@@ -35,8 +35,12 @@ export interface CharacterPricing {
  * model/provider exposes prompt caching.
  */
 export const PRICING: Record<string, TokenPricing> = {
-  // --- Current provider models ---
-  [MODEL_AGENT]: { provider: 'ai', input: 0.95, output: 3.0, cacheRead: 0.18 },
+  // --- OpenAI GPT-5.6 models (standard API, USD per 1M tokens) ---
+  // Keep explicit model IDs here: pricing must not inherit from an env alias,
+  // because an alias can point to a different model tier.
+  'gpt-5.6-sol': { provider: 'ai', input: 5.0, output: 30.0, cacheWrite: 6.25, cacheRead: 0.5 },
+  'gpt-5.6-terra': { provider: 'ai', input: 2.5, output: 15.0, cacheWrite: 3.125, cacheRead: 0.25 },
+  'gpt-5.6-luna': { provider: 'ai', input: 1.0, output: 6.0, cacheWrite: 1.25, cacheRead: 0.1 },
   [MODEL_EMBEDDING]: { provider: 'ai', input: 0.02, output: 0 },
   'Qwen/Qwen3-235B-A22B-Instruct-2507': { provider: 'ai', input: 0.09, output: 0.10 },
   'deepseek-ai/DeepSeek-V3.2': { provider: 'ai', input: 0.26, output: 0.38, cacheRead: 0.13 },
